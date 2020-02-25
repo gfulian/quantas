@@ -31,14 +31,11 @@ interference with you current working environment. The following instructions ar
 the virtualenv (https://virtualenv.pypa.io/en/latest/) tool, but you can freely use any 
 other environment manager of your choice.
 
-Create the virtual environment
-------------------------------
-
 The creation of a virtual environment using virtualenv is slightly different on Windows and 
 Unix machines.
 
 Linux and Mac OS
-^^^^^^^^^^^^^^^^
+----------------
 
   On a shell (or terminal), issue the following commands::
   
@@ -65,8 +62,9 @@ Linux and Mac OS
   
     (quantas) $ deactivate
   
+
 Windows
-^^^^^^^
+-------
 
   On a command prompt, issue the following command to install/upgrade the virtualenv package::
   
