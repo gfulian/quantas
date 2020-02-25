@@ -1,48 +1,34 @@
 Requirements
-------------
-- Python_ 3.6+
-- Cython_ 0.29+
-- click_ 7.0+
-- NumPy_ (base N-dimensional array package)
-- SciPy_ (library for scientific computing)
-- HDF5_ (library for HDF5)
-- YAML_ (library for data serialization)
+============
+- Python 3.6+ (http://www.python.org/)
+- Cython 0.29+ (https://cython.org/)
+- click 7.0+ (https://click.palletsprojects.com/en/7.x/)
+- NumPy (http://docs.scipy.org/doc/numpy/reference/)
+- SciPy (http://docs.scipy.org/doc/scipy/reference/)
+- HDF5 (https://www.h5py.org/)
+- YAML (https://pypi.org/project/PyYAML/)
 
 Optional packages
 -----------------
 
-- Matplotlib_ (used for plotting results)
+- Matplotlib (https://matplotlib.org/)
 
-.. _Python: http://www.python.org/
-.. _Cython: https://cython.org/
-.. _click: https://click.palletsprojects.com/en/7.x/
-.. _NumPy: http://docs.scipy.org/doc/numpy/reference/
-.. _SciPy: http://docs.scipy.org/doc/scipy/reference/
-.. _HDF5: https://www.h5py.org/
-.. _YAML: https://pypi.org/project/PyYAML/
-.. _Matplotlib: https://matplotlib.org/
+On Windows, you could benefit from the Unofficial Windows Binaries 
+(http://www.lfd.uci.edu/~gohlke/pythonlibs/) made available by Christoph 
+Gohlke, in particular:
 
-.. note::
+  - Numpy+MKL (http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
+  - Scipy_Numpy+MKL (http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
 
-  On Windows, you could benefit from the 
-  `Unofficial Windows Binaries <http://www.lfd.uci.edu/~gohlke/pythonlibs/>`_
-  made available Christoph Gohlke, in particular:
-
-  - Numpy+MKL_
-  - Scipy_Numpy+MKL_
-
-  After downloading the package wheels, you can install them using ``pip``.
-
-.. _Numpy+MKL: http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy
-.. _Scipy_Numpy+MKL: http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy
+After downloading the package wheels, you can install them using ``pip``.
 
 Python virtual environment
 ==========================
 
 Since Quantas depends on several third-party python packages, we strongly recommend using a 
-`virtual environment <https://docs.python.org/3/tutorial/venv.html>`_ to prevent any 
+virtual environment (https://docs.python.org/3/tutorial/venv.html) to prevent any 
 interference with you current working environment. The following instructions are focused on
-the `virtualenv <https://virtualenv.pypa.io/en/latest/>`_ tool, but you can freely use any 
+the virtualenv (https://virtualenv.pypa.io/en/latest/) tool, but you can freely use any 
 other environment manager of your choice.
 
 Create the virtual environment
@@ -113,29 +99,31 @@ Unix machines.
 
 
 Installation from source
-------------------------
+========================
 
-At the moment, it is only possible to install Quantas from its 
-:download:`source code <./downloads/quantas-0.9.0.tar.gz>`. Common alternatives such 
-as ``pip`` will be available in the next future.
+At the moment, it is only possible to install Quantas from its source code. Common 
+alternatives such as ``pip`` will be available in the next future.
 
-:Linux and Mac OS:
+Linux and Mac OS
+----------------
 
-  On a shell (or terminal), unpack the compressed file and enter in the decompressed directory:
-  
-  .. code-block:: console
+  On a shell (or terminal), unpack the compressed file and enter in the decompressed directory::
    
     $ tar -xf quantas-0.9.0.tar.gz
     $ cd quantas-0.9.0
     
-  Then, install the Quantas package:
-  
-  .. code-block:: console
+  Then, install the Quantas package::
    
     $ python3 setup.py install
 
+On Linux, you may need root privileges to install the package in the ``/usr/local``
+directory (default). If you prefer a local (user) installation, you could use the 
+`--prefix` directive to specify a different location.
+In this case, the launching scripts will be installed in the ``~/.local/bin`` directory of 
+the user.
 
-:Windows:
+Windows
+-------
 
   Use a software as 7zip or WinRar to decompress the file. On a command prompt, enter the 
   directory:
@@ -149,74 +137,18 @@ as ``pip`` will be available in the next future.
   .. code-block:: console
    
     > python setup.py install
-    
 
-.. note::
-
-    On Linux, you may need root privileges to install the package in the ``/usr/local``
-    directory (default). If you prefer a local (user) installation, you could use the 
-    :envvar:`--prefix` directive to specify a different location.
-    In this case, the launching scripts will be installed in the ``~/.local/bin`` directory of 
-    the user.
-
-
-Environment variables
----------------------
-
-If you installed Quantas in a system-wide fashion, please ensure that the following variables 
-are set.
-
-.. envvar:: PATH
-
-    Colon-separated paths where programs can be found.
-
-.. envvar:: PYTHONPATH
-
-    Colon-separated paths where Python modules can be found.
-
-Under Linux, you can set these permanently in your :file:`~/.bashrc` file::
-
-    $ export PYTHONPATH=<path-to-Quantas-package>:$PYTHONPATH
-    $ export PATH=<path-to-Quantas-command-line-tools>:$PATH
-
-or your :file:`~/.cshrc` file::
-
-    $ setenv PYTHONPATH <path-to-Quantas-package>:${PYTHONPATH}
-    $ setenv PATH <path-to-Quantas-command-line-tools>:${PATH}
-
-.. note::
-
-   If running on Mac OSX: be aware that terminal sessions will
-   source :file:`~/.bash_profile` by default and not
-   :file:`~/.bashrc`. Either put any ``export`` commands into
-   :file:`~/.bash_profile` or source :file:`~/.bashrc` in all Bash
-   sessions by adding
-
-   ::
-
-      if [ -f ${HOME}/.bashrc ]; then
-      source ${HOME}/.bashrc
-      fi
-
-   to your :file:`~/.bash_profile`.
-
-.. note::
-
-   Under Windows, the environmental variables should have been set during/after the 
-   installation of the Python 3.x package.
-
-
+	
 Test Quantas installation
--------------------------
+=========================
 
-Some :download:`input examples <./downloads/examples.zip>` are provided to test 
-the installation of Quantas. Unpack them in any folder you like.
+Some input examples are provided to test the installation of Quantas. 
+Unpack them in any folder you like.
 
-Before running the tests, make sure you have set your :envvar:`PATH`.
+Before running the tests, make sure you have set your `PATH`, so that the Quantas 
+executable can be accessed.
 
-Run the tests like:
-
-.. code-block:: console
+Run the tests like::
 
     $ quantas ha examples\mgo_b3lyp_qha.yaml
     $ quantas qha examples\mgo_b3lyp_qha.yaml
