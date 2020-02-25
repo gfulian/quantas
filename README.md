@@ -1,158 +1,42 @@
-Requirements
-============
-- Python 3.6+ (http://www.python.org/)
-- Cython 0.29+ (https://cython.org/)
-- click 7.0+ (https://click.palletsprojects.com/en/7.x/)
-- NumPy (http://docs.scipy.org/doc/numpy/reference/)
-- SciPy (http://docs.scipy.org/doc/scipy/reference/)
-- HDF5 (https://www.h5py.org/)
-- YAML (https://pypi.org/project/PyYAML/)
+# <img src="docs/source/Quantas_logo.png" alt="Quantas" width="200"/>
 
-Optional packages
------------------
+**Quantas** stands for **Quant**\itative **A**\nalysis of **S**\olids. It is an open source 
+package in Python_ for the analysis of the thermodynamics, and elastic properties of solid 
+phases starting from theoretical or experimental results.
 
-- Matplotlib (https://matplotlib.org/)
+.. _Python: https://www.python.org/
 
-On Windows, you could benefit from the Unofficial Windows Binaries 
-(http://www.lfd.uci.edu/~gohlke/pythonlibs/) made available by Christoph 
-Gohlke, in particular:
+## Features
 
-  - Numpy+MKL (http://www.lfd.uci.edu/~gohlke/pythonlibs/#numpy)
-  - Scipy_Numpy+MKL (http://www.lfd.uci.edu/~gohlke/pythonlibs/#scipy)
+- Calculation of thermodynamics of solid systems at harmonic approximation 
+  (HA) level
 
-After downloading the package wheels, you can install them using ``pip``.
+- Calculation of both thermodynamics and thermoelastic properties of solids at selected
+  pressure and temperature conditions via quasi-harmonic approximation (QHA):
 
-Python virtual environment
-==========================
+- Calculation of the equation of state (EoS) from experimental data
 
-Since Quantas depends on several third-party python packages, we strongly recommend using a 
-virtual environment (https://docs.python.org/3/tutorial/venv.html) to prevent any 
-interference with you current working environment. The following instructions are focused on
-the virtualenv (https://virtualenv.pypa.io/en/latest/) tool, but you can freely use any 
-other environment manager of your choice.
+- Analysis of the second-orderelastic constants
 
-The creation of a virtual environment using virtualenv is slightly different on Windows and 
-Unix machines.
+- Being written in Python 3, Quantas is completely **cross-platform**!
 
-Linux and Mac OS
-----------------
+## Installation
 
-  On a shell (or terminal), issue the following commands::
+Please see Quantas's [documentation](https://quantas.readthedocs.io/en/latest/).
+
+## How to cite
+
+If you use Quantas to produce data for a publication, you are kindly requested to cite the 
+following work::
+
+>  Gianfranco Ulian and Giovanni Valdre'
+>  'QUANTAS, a Python software for the analysis of solids from ab initio quantum mechanical simulations and experimental data'
+>  Journal of Applied Crystallography (volume), (pages) (2020)
+>  http://dx.doi.org/-----------------
   
-    $ pip install --user --upgrade virtualenv
-    $ python3 -m venv ~/.virtualenvs/quantas
-  
-  Using the above commands, you installed/upgraded virtualenv and created home directory of 
-  the virtual environment. If you look in the home folder under ``.virtualenv``, you can find
-  a directory named ``quantas``.
-  
-  To activate the virtual environment, just issue::
-  
-    $ source ~/.virtualenvs/quantas/bin/activate
-  
-  After activation, your prompt should appear as::
-  
-    (quantas) $
-  
-  indicating that you are working on a virtual environment. Now, the python executable of the 
-  virtualenv is the first in PATH, and that python programs have access only to packages 
-  installed inside the virtualenv.
-  
-  To leave or deactivate the ``quantas`` virtual environment, run::
-  
-    (quantas) $ deactivate
-  
+Also, the theory behind the different kind of available calculations is discussed in specific
+literature, and we kindly ask you to cite them accordingly.
 
-Windows
--------
+## License
 
-  On a command prompt, issue the following command to install/upgrade the virtualenv package::
-  
-    > pip install --user --upgrade virtualenv
-
-  
-  Then, in a folder of your choice, run the venv command as::
-  
-    > python -m venv quantas
-    
-  or::
-  
-    > virtualenv quantas
-    
-  to create the home folder of the virtual environment. To activate it, issue::
-  
-    > quantas\Scripts\activate.bat
-  
-  Differently from Linux and Mac OS, no clear indication on the successful activation of the 
-  environment is provided. However, you can run the following::
-  
-    > python
-    >>> import sys
-    >>> sys.path
-  
-  and check if in the output the path to the virtual environment directory is the first one 
-  provided.
-  
-  To leave or deactivate the ``quantas`` virtual environment, run::
-  
-    > deactivate
-
-
-Installation from source
-========================
-
-At the moment, it is only possible to install Quantas from its source code. Common 
-alternatives such as ``pip`` will be available in the next future.
-
-Linux and Mac OS
-----------------
-
-  On a shell (or terminal), unpack the compressed file and enter in the decompressed directory::
-   
-    $ tar -xf quantas-0.9.0.tar.gz
-    $ cd quantas-0.9.0
-    
-  Then, install the Quantas package::
-   
-    $ python3 setup.py install
-
-On Linux, you may need root privileges to install the package in the ``/usr/local``
-directory (default). If you prefer a local (user) installation, you could use the 
-`--prefix` directive to specify a different location.
-In this case, the launching scripts will be installed in the ``~/.local/bin`` directory of 
-the user.
-
-Windows
--------
-
-  Use a software as 7zip or WinRar to decompress the file. On a command prompt, enter the 
-  directory:
-    
-  .. code-block:: console
- 
-    > cd quantas-0.9.0
-    
-  Then, install the Quantas package:
-  
-  .. code-block:: console
-   
-    > python setup.py install
-
-	
-Test Quantas installation
-=========================
-
-Some input examples are provided to test the installation of Quantas. 
-Unpack them in any folder you like.
-
-Before running the tests, make sure you have set your `PATH`, so that the Quantas 
-executable can be accessed.
-
-Run the tests like::
-
-    $ quantas ha examples\mgo_b3lyp_qha.yaml
-    $ quantas qha examples\mgo_b3lyp_qha.yaml
-    $ quantas eos examples\PV_topaz.dat
-    $ quantas soec examples\hydroxylapatite.dat
-
-If something goes wrong, please send us an output log of the failing test.
+Quantas is distributed under the New BSD open source license (see [`LICENSE`](LICENSE)).
