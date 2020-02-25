@@ -20,7 +20,7 @@ phases starting from theoretical or experimental results.
 
 ## Installation
 
-Please see Quantas's [documentation](https://quantas.readthedocs.io/en/latest/).
+Please see Quantas' [documentation](https://quantas.readthedocs.io/en/latest/).
 
 ## How to cite
 
