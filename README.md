@@ -37,7 +37,8 @@ Create the virtual environment
 The creation of a virtual environment using virtualenv is slightly different on Windows and 
 Unix machines.
 
-:Linux and Mac OS:
+Linux and Mac OS
+^^^^^^^^^^^^^^^^
 
   On a shell (or terminal), issue the following commands::
   
@@ -64,7 +65,8 @@ Unix machines.
   
     (quantas) $ deactivate
   
-:Windows:
+Windows
+^^^^^^^
 
   On a command prompt, issue the following command to install/upgrade the virtualenv package::
   
