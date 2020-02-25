@@ -1,6 +1,6 @@
 # <img src="docs/source/Quantas_logo.png" alt="Quantas" width="200"/>
 
-**Quantas** stands for **Quant**\itative **A**\nalysis of **S**\olids. It is an open source 
+**Quantas** stands for **Quant**itative **A**nalysis of **S**olids. It is an open source 
 package in [Python](https://www.python.org/) for the analysis of the thermodynamics, and elastic properties of solid 
 phases starting from theoretical or experimental results.
 
