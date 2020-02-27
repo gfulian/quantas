@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.com/gfulian/quantas.svg?token=NP18hTNJZANbzW3QSexH&branch=master)](https://travis-ci.com/gfulian/quantas)
+
 # <img src="docs/source/Quantas_logo.png" alt="Quantas" width="200"/>
 
 **Quantas** stands for **Quant**itative **A**nalysis of **S**olids. It is an open source 
