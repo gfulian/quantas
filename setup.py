@@ -149,7 +149,7 @@ setup(name='quantas',
                     extra_link_args=extra_link_args,
                     ),
           ]),
-      python_requires='>=3.6',
+      python_requires='>=3.5',
       install_requires=requirements,
       include_package_data=True,
       zip_safe=False)
