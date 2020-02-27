@@ -80,7 +80,7 @@ phonon:
             tmp.flush()
             reader = QHAInputFileReader(filename)
 
-        self.assertTrue(reader.completed, 'Reading èrocess should be completed')
+        self.assertTrue(reader.completed, 'Reading process should be completed')
         self.assertEqual(reader.jobname, 'MgO Gamma-point frequencies',
                          "Jobname should be 'MgO Gamma-point frequencies'")
         self.assertEqual(reader.kpoints, 1, 'Should be 1')
