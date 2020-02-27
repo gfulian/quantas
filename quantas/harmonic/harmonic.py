@@ -34,7 +34,12 @@ Cv: ndarray(dtype=float, ndim=2)
     Isochoric heat capacity at selected V-T conditions.
 
 '''
-from time import thread_time as clock
+try:
+    from time import thread_time as clock
+except ImportError:
+    # Backward compatibility with Python < 3.7
+    from time import clock
+
 import numpy as np
 import h5py
 

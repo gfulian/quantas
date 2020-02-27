@@ -8,8 +8,12 @@
 # For further information on the license, see the LICENSE file               #
 ##############################################################################
 
-from time import thread_time as clock
-import logging
+try:
+    from time import thread_time as clock
+except ImportError:
+    # Backward compatibility with Python < 3.7
+    from time import clock
+
 import numpy as np
 from scipy import optimize
 import h5py
