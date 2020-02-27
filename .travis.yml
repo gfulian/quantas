@@ -13,7 +13,7 @@ matrix:
           os: osx
           osx_image: xcode11
           language: shell
-          before_install: python3 --version ; pip3 --version ; sw_vers
+          before_install: python3 --version ; pip3 --version ; sw_vers ; pip3 install pytest
 install:
     pip3 install --upgrade pip ; pip3 install -r requirements.txt ; pip3 install --editable .
 script: python3 -m pytest || python -m pytest
