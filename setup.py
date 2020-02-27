@@ -103,8 +103,8 @@ elif sys.platform == 'linux':
     extra_compile_args = ['-fopenmp']
     extra_link_args = ['-fopenmp']
 else:
-    extra_compile_args = ['-fopenmp']
-    extra_link_args = ['-lomp']
+    extra_compile_args = []
+    extra_link_args = []
 
 setup(name='quantas',
       version='0.9.0',
