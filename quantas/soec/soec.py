@@ -75,9 +75,9 @@ def maximize(func, dim):
 
 
 class SOECCalculator(BasicCalculator):
-    '''
+    """
 
-    '''
+    """
 
     _plotting = False
     _plot_basename = ''
@@ -92,8 +92,9 @@ class SOECCalculator(BasicCalculator):
         }
 
     def __init__(self, settings):
-        ''' Constructor for the second-order elastic constants calculator '''
+        """ Constructor for the second-order elastic constants calculator """
         BasicCalculator.__init__(self)
+        self.polar = settings['polar']
         self.silent = settings['silent']
         self.debug = settings['debug']
         self.log = settings['logfile']
@@ -115,16 +116,39 @@ class SOECCalculator(BasicCalculator):
         return
 
     def __init_data(self):
-        ''' Create a dictionary for the elastic properties that will be
+        """
+        Create a dictionary for the elastic properties that will be
         calculated.
-        '''
+        """
         self._soec = None
         self._job = None
         self._system = None
         results_dict = {
             'avgs': None,
             'eigv': None,
-            'polar': None,
+            'polar': {
+                'xy': {
+                    'E': np.zeros((1, 2)),
+                    'LC': np.zeros((1, 3)),
+                    'G': np.zeros((1, 3)),
+                    'Nu': np.zeros((1, 4)),
+                    'waves': np.zeros((1, 4)),
+                    },
+                'xz': {
+                    'E': np.zeros((1, 2)),
+                    'LC': np.zeros((1, 3)),
+                    'G': np.zeros((1, 3)),
+                    'Nu': np.zeros((1, 4)),
+                    'waves': np.zeros((1, 4)),
+                    },
+                'yz': {
+                    'E': np.zeros((1, 2)),
+                    'LC': np.zeros((1, 3)),
+                    'G': np.zeros((1, 3)),
+                    'Nu': np.zeros((1, 4)),
+                    'waves': np.zeros((1, 4)),
+                    }
+                },
             }
         return results_dict
 
@@ -137,20 +161,13 @@ class SOECCalculator(BasicCalculator):
         return self._soec
 
     def read_input(self, filename):
-        ''' This method read an input file for Quantas.
+        """ Read an input file for Quantas and store the elastic data.
 
         Parameters
         ----------
         file: str
             Path to the input file.
-
-        Returns
-        -------
-        data: dict
-            Dictionary containing the second-order elastic constants
-        error: str or None
-            Error in the input file.
-        '''
+        """
         
         self.echo('Reading input file: {0}'.format(filename))
         self.echo_debug('Instantiate file reader')
@@ -172,9 +189,9 @@ class SOECCalculator(BasicCalculator):
         return
 
     def report_input_data(self):
-        ''' This method write to the output stream the main information about
+        """ This method write to the output stream the main information about
         the input.
-        '''
+        """
         self.echo('\nElastic analysis of ' + self._job)
         self.echo('')
         self.echo('System is ' + self._system)
@@ -197,9 +214,9 @@ class SOECCalculator(BasicCalculator):
         return
 
     def run(self):
-        '''
+        """
         Start SOEC analysis.
-        '''
+        """
         #
         # Start timing
         tstart = clock()
@@ -245,12 +262,52 @@ class SOECCalculator(BasicCalculator):
             self.report_variation_seismic(Vp, Vs1, Vs2)
         #
         # Polar properties
+        if self.polar:
+            self.calculate_polar_properties()
+        #
+        # Finish
+        self.echo('')
+        msg = 'Calculation time: {0:8.1f} sec'.format(clock()-tstart)
+        self.echo(msg)
+        #
+        # Plotting
+        if self.polar and self._plotting and mpl:
+            self.echo('')
+            self.echo('Plotting results as requested:')
+            if self.soec.density > 0.:
+                prop_list = ['E', 'LC', 'G', 'Nu', 'waves']
+            else:
+                prop_list = ['E', 'LC', 'G', 'Nu']
+
+            for prop in prop_list:
+                figname = self._plot_basename + '_' + prop + '.png'
+                figure = self._plot_functions[prop](
+                    polar['xy'][prop], polar['xz'][prop], polar['yz'][prop])
+                figure.savefig(figname, dpi=self._plot_dpi)
+                self.echo(' - figure {} generated'.format(figname))
+
+        elif self._plotting and not mpl:
+            self.echo('')
+            self.echo('Plotting requested, but Matplotlib not found')
+        self.completed = True
+        return
+
+    def calculate_polar_properties(self, nrad=360):
+        """
+        Calculate elastic properties on the (xy), (xz) and (yz) planes.
+
+        Parameters
+        ----------
+        
+        nrad: int, optional
+            Number of radians to be considered
+        """
         polar = {}
         self.echo(' - Calculation of polar (2D) properties:')
-        phi = np.linspace(0, 2*np.pi, 360, dtype=np.float64)
+        phi = np.linspace(0, 2*np.pi, nrad, dtype=np.float64)
         self.echo('     * along (xy)')
         polar['xy'] = {}
-        theta = (np.pi/2)*np.ones(360, dtype=np.float64) # set XY
+        theta = (np.pi/2)*np.ones(nrad, dtype=np.float64) # set XY
         self.echo("         a. Young's modulus")
         young_xy = self.soec.polar_young(theta, phi)
         self.echo('         b. Linear compressibility')
@@ -265,7 +322,7 @@ class SOECCalculator(BasicCalculator):
 
         self.echo('     * along (xz)')
         polar['xz'] = {}
-        theta = np.zeros(360, dtype=np.float64) # set XZ
+        theta = np.zeros(nrad, dtype=np.float64) # set XZ
         self.echo("         a. Young's modulus")
         young_xz = self.soec.polar_young(phi, theta)
         self.echo('         b. Linear compressibility')
@@ -280,7 +337,7 @@ class SOECCalculator(BasicCalculator):
 
         self.echo('     * along (yz)')
         polar['yz'] = {}
-        theta = (np.pi/2)*np.ones(360, dtype=np.float64) # set XY
+        theta = (np.pi/2)*np.ones(nrad, dtype=np.float64) # set XY
         self.echo("         a. Young's modulus")
         young_yz = self.soec.polar_young(phi, theta)
         self.echo('         b. Linear compressibility')
@@ -315,37 +372,11 @@ class SOECCalculator(BasicCalculator):
         if self.soec.density > 0.:
             polar['yz']['waves'] = np.column_stack((np.degrees(phi).T, waves_yz))
         self._results['polar'] = polar
-        #
-        # Finish
-        self.echo('')
-        msg = 'Calculation time: {0:8.1f} sec'.format(clock()-tstart)
-        self.echo(msg)
-        #
-        # Plotting
-        if self._plotting and mpl:
-            self.echo('')
-            self.echo('Plotting results as requested:')
-            if self.soec.density > 0.:
-                prop_list = ['E', 'LC', 'G', 'Nu', 'waves']
-            else:
-                prop_list = ['E', 'LC', 'G', 'Nu']
-
-            for prop in prop_list:
-                figname = self._plot_basename + '_' + prop + '.png'
-                figure = self._plot_functions[prop](
-                    polar['xy'][prop], polar['xz'][prop], polar['yz'][prop])
-                figure.savefig(figname, dpi=self._plot_dpi)
-                self.echo(' - figure {} generated'.format(figname))
-
-        elif self._plotting and not mpl:
-            self.echo('')
-            self.echo('Plotting requested, but Matplotlib not found')
-        self.completed = True
         return
 
     def report_initial_results(self, avg, eigenval):
-        '''
-        '''
+        """
+        """
         self.echo('Average properties')
         avgnames = ['Voigt', 'Reuss', 'Hill']
         head1 = ('', 'Bulk', "Young's", 'Shear', "Poisson's")
@@ -364,8 +395,8 @@ class SOECCalculator(BasicCalculator):
         return
 
     def directional_variation(self, func, dim):
-        '''
-        '''
+        """
+        """
         #
         # Minimum and maximum value
         minval = minimize(func, dim)
@@ -391,30 +422,30 @@ class SOECCalculator(BasicCalculator):
         return [ (minval[1], maxval[1]), anisotropy, minax1, maxax1, minax2, maxax2 ]
 
     def single_vector_variation(self):
-        '''
-        '''
+        """
+        """
         E_var = self.directional_variation(self.soec.young_modulus, 2)
         LC_var = self.directional_variation(self.soec.linear_compressibility, 2)
         return E_var, LC_var
 
     def dual_vector_variation(self):
-        '''
-        '''
+        """
+        """
         G_var = self.directional_variation(self.soec.shear_modulus, 3)
         Nu_var = self.directional_variation(self.soec.poisson_ratio, 3)
         return G_var, Nu_var
 
     def phase_velocity_variation(self):
-        '''
-        '''
+        """
+        """
         Vp_var = self.directional_variation(self.soec.longitudinal_wave, 2)
         Vs1_var = self.directional_variation(self.soec.shear_wave_1, 2)
         Vs2_var = self.directional_variation(self.soec.shear_wave_2, 2)
         return Vp_var, Vs1_var, Vs2_var
 
     def report_variation_single(self, E_var, LC_var):
-        '''
-        '''
+        """
+        """
         self.echo('Variations of the elastic moduli:')
         self.echo('')
         self.echo(tl.format(''))
@@ -435,8 +466,8 @@ class SOECCalculator(BasicCalculator):
         return
 
     def report_variation_dual(self, G_var, Nu_var):
-        '''
-        '''
+        """
+        """
         self.echo(tl.format(''))
         self.echo(dh.format('', *('Shear modulus', "Poisson's ratio")))
         self.echo(ml.format(''))
