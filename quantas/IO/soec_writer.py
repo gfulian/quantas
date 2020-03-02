@@ -29,13 +29,19 @@ class SOECInputCreator(object):
     interface = None
 
     def __init__(self, interface=None):
-        """
-        """
+        """ Constructor method. """
         self.interface_flag = interface
         return
 
     def read(self, filename):
         """
+        Read the ab initio output file to collect the elastic moduli data.
+
+        Parameters
+        ----------
+
+        filename: str
+            Path to the output file.
         """
         interface = self.interface_filter[self.interface_flag]
         data = interface(filename)
@@ -47,12 +53,22 @@ class SOECInputCreator(object):
 
         return True, None
 
-    def write(self, outfile):
+    def write(self, outfile, jobname='Unknown'):
         """
+        Crate the SOEC input for Quantas using the collected results from
+        ab initio output file.
+
+        Parameters
+        ----------
+
+        outfile: str
+            Path of the Quantas SOEC input file.
+
+        jobname: str, optional
+            Job name.
+
         """
         data = []
-        msg = '\nPlease, enter a short description for the input file: '
-        jobname = input(msg)
         data.append(jobname)
         for i in range(6):
             soec_line = ''
