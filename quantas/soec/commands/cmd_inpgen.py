@@ -24,6 +24,7 @@ from quantas.cmdline.utils.messages import echo
 from quantas.cmdline.utils.messages import echo_error
 from quantas.cmdline.utils.messages import echo_highlight
 from quantas.cmdline.utils.messages import confirm
+from quantas.cmdline.utils.messages import prompt
 
 from quantas.citations import biblio_header
 from quantas.citations import biblio_footer
@@ -84,7 +85,9 @@ def soec_inpgen(filename, outfile, interface):
         return
 
     echo("Preparing the input file for Quantas: '{}'".format(outfile))
-    generator.write(outfile)
+    msg = '\nPlease, enter a short description for the input file: '
+    jobname = prompt(msg, default='Unknown', show_default=False)
+    generator.write(outfile, jobname)
 
     echo_highlight(biblio_header())
     echo_highlight(quantas_citation())
