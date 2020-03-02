@@ -4,7 +4,9 @@
 package in [Python](https://www.python.org/) for the analysis of the thermodynamics, and elastic properties of solid 
 phases starting from theoretical or experimental results.
 
-Build status: [![Build Status](https://travis-ci.com/gfulian/quantas.svg?token=NP18hTNJZANbzW3QSexH&branch=master)](https://travis-ci.com/gfulian/quantas?style=plastic&logo=travis)
+|     |      |  
+| --- |  --- |
+|**Build status:** |[![Build Status](https://travis-ci.com/gfulian/quantas.svg?token=NP18hTNJZANbzW3QSexH&branch=master)](https://travis-ci.com/gfulian/quantas)|
 
 ## Features
 
