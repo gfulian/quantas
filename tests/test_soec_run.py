@@ -36,6 +36,7 @@ class SOECCalculationTest(unittest.TestCase):
             'pressure_unit': 'GPa',
             'debug': False,
             'silent': True,
+            'polar': False,
             'plotting': False,
             'dpi': 80,
             'logfile': None,
