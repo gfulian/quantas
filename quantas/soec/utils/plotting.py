@@ -17,6 +17,23 @@ except ImportError:
         
 
 def make_polar_figure():
+    """
+    Create a generic polar figure with Matplotlib.
+
+    Returns
+    -------
+    fig: matplotlib.pyplot.figure
+        Figure object.
+
+    ax1: matplotlib.pyplot.axis
+        Axis for the (xy) plane plot.
+
+    ax2: matplotlib.pyplot.axis
+        Axis for the (xz) plane plot.
+
+    ax3: matplotlib.pyplot.axis
+        Axis for the (yz) plane plot.
+    """
     fig, (ax1, ax2, ax3) = plt.subplots(
         1, 3, figsize=(18,6), subplot_kw={'projection':'polar'})
     ax1.grid(linestyle='dotted')
@@ -29,12 +46,48 @@ def make_polar_figure():
 
 
 def add_description(ax, text):
+    """
+    Add a description in the axis plot.
+
+    Parameters
+    ----------
+
+    ax: matplotlib.pyplot.axis
+        Axis where the description will be written.
+
+    text: str
+        Textto be inserted in the axis.
+    """
     ax.text(0.2, -0.05, text, ha='center', va='center',
             transform=ax.transAxes, fontsize=12)
     return
 
 
 def young_polar_plot(xy, xz, yz):
+    """
+    Plot the Young's modulus on the (xy), (xz) and (yz) planes.
+
+    Parameters
+    ----------
+
+    xy: ndarray
+        Array containing the polar coordinates and the values of Young's
+        modulus on the (xy) plane.
+
+    xz: ndarray
+        Array containing the polar coordinates and the values of Young's
+        modulus on the (xz) plane.
+
+    yz: ndarray
+        Array containing the polar coordinates and the values of Young's
+        modulus on the (yz) plane.
+        
+    Returns
+    -------
+
+    fig: matplotlib.pyplot.figure
+        Figure object containing the polar plot of Young's modulus.
+    """
     title = "Young's modulus"
     fig, ax1, ax2, ax3 = make_polar_figure()
     ax1.plot(np.radians(xy[:, 0]), xy[:, 1], color='#009010', lw=2)
@@ -54,6 +107,30 @@ def young_polar_plot(xy, xz, yz):
 
 
 def compressibility_polar_plot(xy, xz, yz):
+    """
+    Plot the linear compressibility (LC) on the (xy), (xz) and (yz) planes.
+
+    Parameters
+    ----------
+
+    xy: ndarray
+        Array containing the polar coordinates and the values of linear
+        compressibility on the (xy) plane.
+
+    xz: ndarray
+        Array containing the polar coordinates and the values of linear
+        compressibility on the (xz) plane.
+
+    yz: ndarray
+        Array containing the polar coordinates and the values of linear
+        compressibility on the (yz) plane.
+        
+    Returns
+    -------
+
+    fig: matplotlib.pyplot.figure
+        Figure object containing the polar plot of linear compressibility.
+    """
     title = "Linear compressibility"
     fig, ax1, ax2, ax3 = make_polar_figure()
     ax1.plot(np.radians(xy[:, 0]), xy[:, 1], color='#009010', lw=2)
@@ -77,6 +154,30 @@ def compressibility_polar_plot(xy, xz, yz):
 
 
 def shear_polar_plot(xy, xz, yz):
+    """
+    Plot the shear modulus on the (xy), (xz) and (yz) planes.
+
+    Parameters
+    ----------
+
+    xy: ndarray
+        Array containing the polar coordinates and the values of shear
+        modulus on the (xy) plane.
+
+    xz: ndarray
+        Array containing the polar coordinates and the values of shear
+        modulus on the (xz) plane.
+
+    yz: ndarray
+        Array containing the polar coordinates and the values of shear
+        modulus on the (yz) plane.
+        
+    Returns
+    -------
+
+    fig: matplotlib.pyplot.figure
+        Figure object containing the polar plot of shear modulus.
+    """
     title = "Shear modulus"
     fig, ax1, ax2, ax3 = make_polar_figure()
     ax1.plot(np.radians(xy[:, 0]), xy[:, 1], "--", color='#009010', lw=2)
@@ -100,6 +201,30 @@ def shear_polar_plot(xy, xz, yz):
 
 
 def poisson_polar_plot(xy, xz, yz):
+    """
+    Plot the Poisson's ratio on the (xy), (xz) and (yz) planes.
+
+    Parameters
+    ----------
+
+    xy: ndarray
+        Array containing the polar coordinates and the values of Poisson's
+        ratio on the (xy) plane.
+
+    xz: ndarray
+        Array containing the polar coordinates and the values of Poisson's
+        ratio on the (xz) plane.
+
+    yz: ndarray
+        Array containing the polar coordinates and the values of Poisson's
+        ratio on the (yz) plane.
+        
+    Returns
+    -------
+
+    fig: matplotlib.pyplot.figure
+        Figure object containing the polar plot of Poisson's ratio.
+    """
     title = "Poisson's ratio"
     fig, ax1, ax2, ax3 = make_polar_figure()
     ax1.plot(np.radians(xy[:, 0]), xy[:, 1], "--", color='blue', lw=2)
@@ -126,6 +251,30 @@ def poisson_polar_plot(xy, xz, yz):
 
 
 def seismic_waves_polar_plot(xy, xz, yz):
+    """
+    Plot the seismic wave velocities on the (xy), (xz) and (yz) planes.
+
+    Parameters
+    ----------
+
+    xy: ndarray
+        Array containing the polar coordinates and the values of seismic wave
+        velocities on the (xy) plane.
+
+    xz: ndarray
+        Array containing the polar coordinates and the values of seismic wave
+        velocities on the (xz) plane.
+
+    yz: ndarray
+        Array containing the polar coordinates and the values of seismic wave
+        velocities on the (yz) plane.
+        
+    Returns
+    -------
+
+    fig: matplotlib.pyplot.figure
+        Figure object containing the polar plot of seismic wave velocities.
+    """
     title = "Seismic waves"
     fig, ax1, ax2, ax3 = make_polar_figure()
     ax1.plot(np.radians(xy[:, 0]), xy[:, 1], "--", color='blue', lw=2)
