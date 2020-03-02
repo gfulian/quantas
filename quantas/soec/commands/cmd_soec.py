@@ -40,8 +40,10 @@ from ..soec import SOECCalculator
 @click.option('--punit', help='Measurement unit for pressure values.',
               type=click.Choice(['GPa'], case_sensitive=True),
               default='GPa', show_default='GPa')
-@click.option('-p', '--plot', help='Create plots of the results.',
-              is_flag=True, default=False,)
+@click.option('--polar', help='Calculate elastic properties on (xy), (xz) and'
+              ' (yz) planes.', is_flag=True, default=False)
+@click.option('-p', '--plot', help='Create polar plots of the results.',
+              is_flag=True, default=False)
 @click.option('--dpi', help='Resolution (DPI) of the output figures.',
               default=80, show_default=80)
 @click.option('-q', '--quiet', 'silent', is_flag=True, default=False,
@@ -49,7 +51,7 @@ from ..soec import SOECCalculator
               )
 @click.option('-d', '--debug', is_flag=True, help='Activate debug option.',
               default=False)
-def soec_calculation(filename, outfile, punit, plot, dpi, silent, debug):
+def soec_calculation(filename, outfile, punit, polar, plot, dpi, silent, debug):
     """ Second-order elastic moduli analisys.
 
     This command requires a file (FILENAME) that will be read to provide the
@@ -75,6 +77,7 @@ def soec_calculation(filename, outfile, punit, plot, dpi, silent, debug):
         'pressure_unit': punit,
         'debug': debug,
         'silent': silent,
+        'polar': polar,
         'plotting': plot,
         'dpi': dpi,
         'logfile': logfile,
