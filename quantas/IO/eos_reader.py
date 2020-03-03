@@ -26,7 +26,7 @@ class EoSInputFileReader(BasicReader):
     completed: bool
         Flag used to assert if the input file was succesfully read.
 
-    error: str
+    error: str or None
         Text explaining the error encountered in the input file.
 
     """
@@ -256,6 +256,10 @@ class EoSInputFileReader(BasicReader):
             Index of the line where the data format is supposed to be.
 
         """
+        if not bool(self._format):
+            self.error = 'Data format (FORMAT keyword) not provided'
+            return
+
         if self._format['p'] == None:
             self.error = 'No pressure data provided in input file'
             return
