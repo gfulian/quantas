@@ -47,18 +47,69 @@ New BSD.
 Contact
 =======
 
-
 Author: `Gianfranco Ulian <mailto:gianfranco.ulian2@unibo.it>`_
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+Acknowledgements
+================
 
-   background
-   installation
-   getting_started
-   inputs
-   tutorials
-   modules/modules
-   releasenotes
+The development of QUANTAS was supported by the Regione Emilia Romagna project PA2019-11452/RER to Giovanni Valdr |egrave|. 
+The authors wish to thank also the beta testers of QUANTAS for their feedback on the program.
+
+.. |egrave| unicode:: U+00E8 .. grave accent on e
+   :ltrim:
+
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Installation
+   :hidden:
+
+   installation/prerequisites
+   installation/installation
+   installation/releasenotes
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Theoretical background
+   :hidden:
+
+   background/background_qha
+   background/background_eos
+   background/background_soec
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Getting started
+   :hidden:
    
+   usage/commands
+   usage/ha_options
+   usage/qha_options
+   usage/eosfit_options
+   usage/soec_options
+   
+.. toctree::
+   :maxdepth: 1
+   :caption: Input files
+   :hidden:
+   
+   inputs/input_generator
+   inputs/qha_input
+   inputs/eos_input
+   inputs/soec_input
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Tutorials
+   :hidden: 
+   
+   tutorials/qha_tutorial
+   tutorials/eos_tutorial
+   tutorials/soec_tutorial
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Quantas package
+   :hidden:  
+   
+   modules/modules

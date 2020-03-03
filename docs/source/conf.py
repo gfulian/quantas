@@ -19,7 +19,7 @@ import sphinx_rtd_theme
 # -- Project information -----------------------------------------------------
 
 project = 'Quantas'
-copyright = "2020, Gianfranco Ulian and Giovanni Valdre'"
+copyright = "2020, Gianfranco Ulian and Giovanni Valdrè"
 author = 'Gianfranco Ulian'
 
 # The full version, including alpha/beta/rc tags
@@ -63,11 +63,6 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'index'
 
-# General information about the project.
-project = 'Quantas'
-copyright = '2017, Gianfranco Ulian'
-author = 'Gianfranco Ulian'
-
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
@@ -101,8 +96,8 @@ todo_include_todos = True
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_logo = './Quantas_logo.png'
-html_favicon = './Quantas_favicon.ico'
+html_logo = './_static/Quantas_logo.png'
+html_favicon = './_static/Quantas_favicon.ico'
 
 html_theme = 'sphinx_rtd_theme'
 html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
@@ -152,7 +147,7 @@ latex_documents = [
      "Gianfranco Ulian and Giovanni Valdre'", 'manual'),
 ]
 
-latex_logo = 'Quantas_logo.png'
+latex_logo = './_static/Quantas_logo.png'
 # -- Options for manual page output ---------------------------------------
 
 # One entry per manual page. List of tuples

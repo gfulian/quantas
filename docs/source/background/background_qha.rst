@@ -1,8 +1,8 @@
 .. _background_qha:
 
-============================
-Analysis of *Ab initio* data
-============================
+==============================
+(Quasi-)Harmonic Approximation
+==============================
 
 .. topic:: Overview
 

@@ -26,20 +26,7 @@ This analysis is conducted in an automated mode by Quantas, so it is sufficient 
 
   > quantas soec hydroxylapatite.dat 
 
-to perform it. Some polar plots of the elastic properties can be produced in an automated mode if the command is launched as:
-
-.. code-block:: console
-
-  > quantas soec hydroxylapatite.dat --plot
-  
-.. note::
-
-  To generate publication-ready picture, it is recommended to increase the dot-per-inch (DPI) 
-  of the output images by using, for example:
-  
-  .. code-block:: console
-  
-    > quantas soec hydroxylapatite.dat --plot --dpi 300
+to perform it.
 
 Quantas reports the initial settings used in this analysis:
 
@@ -204,6 +191,15 @@ and for seismic wave velocities:
       -------------------------------------------------------------------------------------
   Notes: min/max values in km s^-1
 
+Analysis of elastic properties on :math:`(xy)`, :math:`(xz)` and :math:`(yz)` planes
+====================================================================================
+
+By using the ``--polar`` option, the elastic properties are evaluated on the cited planes:
+
+.. code-block:: console
+
+  > quantas soec hydroxylapatite.dat --polar
+
 The analysis proceeds calculating the bi-dimensional variations of the cited properties on the 
 :math:`(xy)`, :math:`(xz)` and :math:`(yz)` planes:
 
@@ -231,7 +227,22 @@ The analysis proceeds calculating the bi-dimensional variations of the cited pro
 
   Calculation time:     62.7 sec
 
-and eventually, if requested, plots of the properties are produced:
+Some polar plots of the elastic properties can be produced in an automated mode if the command is launched as:
+
+.. code-block:: console
+
+  > quantas soec hydroxylapatite.dat --polar --plot
+  
+.. note::
+
+  To generate publication-ready picture, it is recommended to increase the dot-per-inch (DPI) 
+  of the output images by using, for example:
+  
+  .. code-block:: console
+  
+    > quantas soec hydroxylapatite.dat --polar --plot --dpi 300
+
+If plots are requested, the following lines will be printed:
 
 .. code-block:: console 
 
@@ -243,6 +254,8 @@ and eventually, if requested, plots of the properties are produced:
    - figure hydroxylapatite_SOEC_waves.png generated
   
   Calculated data exported to hydroxylapatite_SOEC.hdf5
+
+The produced polar plots should be like the following ones:
 
 .. image:: ../_static/hydroxylapatite_SOEC_E.png
    :align: center

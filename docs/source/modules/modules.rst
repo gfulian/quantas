@@ -5,8 +5,7 @@ Modules
 
 .. seealso::
 
-   * :ref:`tutorials`
-   * :ref:`getting_started`
+   * :ref:`commands`
 
 
 List of all modules:

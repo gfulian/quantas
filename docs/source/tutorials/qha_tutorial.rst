@@ -34,12 +34,14 @@ cell of MgO:
 
 .. note::
 
-  CRYSTAL17 units are Hartree for energy, :math:`\require{mediawiki-texvc}\AA^3` for volume and :math:`cm^{-1}` for 
-  phonon frequency.
+  CRYSTAL17 units are Hartree for energy, cubic Angstroms ( |AA|:math:`^3`) for volume and wavenumbers 
+  (:math:`cm^{-1}`) for phonon frequency.
   
 
 .. _CRYSTAL17: http://www.crystal.unito.it/index.php
 
+.. |AA| unicode:: U+00C5 .. A ring
+   :ltrim:
 
 Harmonic approximation
 ======================

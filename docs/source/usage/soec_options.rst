@@ -25,7 +25,9 @@ are briefly presented below. This is the output of the :code:`quantas soec -h`.
                             extension.
     --punit [GPa]           Measurement unit for pressure values.  [default:
                             (GPa)]
-    -p, --plot              Create plots of the results.
+    --polar                 Calculate elastic properties on (xy), (xz) and (yz)
+                            planes.
+    -p, --plot              Create polar plots of the results.
     --dpi INTEGER           Resolution (DPI) of the output figures.  [default:
                             80]
     -q, --quiet             Output will not be printed on screen.

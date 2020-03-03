@@ -4,20 +4,15 @@
 Installation
 ============
 
-Requirements
-============
+The following Python packages, necessary to run Quantas, will be installed together 
+with the software, if not present on your system:
 
-- Python_ 3.6+
 - Cython_ 0.29+
 - click_ 7.0+
 - NumPy_ (base N-dimensional array package)
 - SciPy_ (library for scientific computing)
 - HDF5_ (library for HDF5)
 - YAML_ (library for data serialization)
-
-Optional packages
-=================
-
 - Matplotlib_ (used for plotting results)
 
 .. _Python: http://www.python.org/
@@ -29,7 +24,7 @@ Optional packages
 .. _YAML: https://pypi.org/project/PyYAML/
 .. _Matplotlib: https://matplotlib.org/
 
-.. note::
+.. hint::
 
   On Windows, you could benefit from the Unofficial Windows Binaries (link_) 
   made available Christoph Gohlke, in particular:
@@ -62,7 +57,7 @@ Unix machines.
 
   On a shell (or terminal), issue the following commands::
   
-    $ pip install --user --upgrade virtualenv
+    $ pip3 install --user --upgrade virtualenv
     $ python3 -m venv ~/.virtualenvs/quantas
   
   Using the above commands, you installed/upgraded virtualenv and created home directory of 
@@ -123,7 +118,7 @@ Installation from source
 ========================
 
 At the moment, it is only possible to install Quantas from its 
-:download:`source code <./downloads/quantas-0.9.0.tar.gz>`. Common alternatives such 
+:download:`source code <../downloads/quantas-0.9.0.tar.gz>`. Common alternatives such 
 as ``pip`` will be available in the next future.
 
 :Linux and Mac OS:
@@ -216,12 +211,37 @@ or your :file:`~/.cshrc` file::
 Test Quantas installation
 =========================
 
-Some :download:`input examples <./downloads/examples.zip>` are provided to test 
-the installation of Quantas. Unpack them in any folder you like.
+Quantas is shipped with some scripts used to test the basic functionality of the code, using 
+the `pytest <https://docs.pytest.org/en/latest/>`_ command. After Quantas has been installed,
+you can use the following command in the program root directory:
 
-Before running the tests, make sure you have set your :envvar:`PATH`.
+.. code-block:: console
 
-Run the tests like:
+  (quantas) $ pytest
+
+If everything is fine, you should see something like the following output:
+
+.. code-block:: console
+
+  ================================================= test session starts =================================================
+  platform win32 -- Python 3.7.4, pytest-5.3.5, py-1.8.1, pluggy-0.13.1
+  rootdir: E:\quantas, inifile: pytest.ini, testpaths: tests
+  collected 10 items
+  
+  tests\test_eosfit_reader.py .                                                                                    [ 10%]
+  tests\test_ha_inpgen.py .                                                                                        [ 20%]
+  tests\test_ha_reader.py ..                                                                                       [ 40%]
+  tests\test_ha_run.py .                                                                                           [ 50%]
+  tests\test_soec_inpgen.py ..                                                                                     [ 70%]
+  tests\test_soec_reader.py ..                                                                                     [ 90%]
+  tests\test_soec_run.py .                                                                                         [100%]
+  
+  ================================================= 10 passed in 2.55s ==================================================
+
+In addition, you can use some :download:`input examples <../downloads/examples.zip>` to 
+further test Quantas. 
+
+Unpack them in any folder you like and run the tests like:
 
 .. code-block:: console
 
