@@ -31,9 +31,6 @@ class SOECInputFileReader(BasicReader):
         Text explaining the error encountered in the input file.
     """
 
-    completed = False
-    error = ''
-
     _data ={
         'job': 'Unknown',
         'stiffness': None,
@@ -49,28 +46,57 @@ class SOECInputFileReader(BasicReader):
             Path of the SOEC input file.
         """
         BasicReader.__init__(self, soec_input)
-
-        self._load(soec_input)
         return
 
     @property
     def jobname(self):
-        """ This method returns the name of the current job. """
+        """
+        Return the name of the current job.
+
+        Returns
+        -------
+
+        str
+            Description of the current job.
+
+        """
         return self._data['job']
 
     @property
     def stiffness(self):
-        """ This method returns the stiffness matrix. """
+        """
+        Return the stiffness matrix.
+
+        Returns
+        -------
+
+        ndarray
+            Array with shape (6, 6) containing the elastic moduli (stiffness).
+        """
         return self._data['stiffness']
 
     @property
     def density(self):
-        """ This method returns the density of the crystal. """
+        """ Return the density of the crystal.
+
+        Returns
+        -------
+
+        float
+            Density value.
+        """
         return self._data['density']
 
-    def _load(self, filename):
+    def load(self, filename):
         """
-        This method parses the input file, looking for the SOEC data
+        Parse the input file, looking for the SOEC data.
+
+        Parameters
+        ----------
+
+        filename: str
+            Path to the input file.
+
         """
 
         with open(filename, 'r') as f:
@@ -91,7 +117,13 @@ class SOECInputFileReader(BasicReader):
             start = 1
 
         # Collect the SOEC matrix...
-        matstr = [ data[i+start] for i in range(6) ]
+        try:
+            matstr = [ data[i+start] for i in range(6) ]
+        except IndexError:
+            self.error = 'The SOEC matrix does not have the expected (6, 6) '
+            self.error += 'shape.\nPlease, check the input file and retry.'
+            return
+
         # ... and convert it to float numbers
         matrix = np.zeros((6,6), dtype=np.float64)
         try:
@@ -104,7 +136,7 @@ class SOECInputFileReader(BasicReader):
             self.error = 'SOEC components should be float numbers'
             return
         else:
-            # Take its from from the string matrix
+            # Take its form from the string matrix
             form = []
             for i in range(6):
                 form.append(len(matstr[i].split()))
