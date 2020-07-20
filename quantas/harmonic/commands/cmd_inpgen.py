@@ -49,9 +49,6 @@ interfaces = [
 @click.option('-i', '--interface', help='Interface for ab initio codes.',
               type=click.Choice(interfaces, case_sensitive=True),
               default='crystal', show_default='crystal')
-@click.option('-s', '--sym', is_flag=True, default=False, show_default=False,
-              help='Use symmetry to reduce the number of phonon bands '
-              '(Experimental)')
 def ha_inpgen(filename, outfile, is_list, ref, interface, sym):
     """ Input generator for (Quasi-)Harmonic Approximation calculations.
 
