@@ -72,7 +72,7 @@ def ha_inpgen(filename, outfile, is_list, ref, interface):
     generator = QHAInputCreator(interface)
 
     try:
-        completed, error = generator.read(filename, is_list, ref, sym)
+        completed, error = generator.read(filename, is_list, ref)
     except KeyError:
         echo_error(quantas_error(), bold=True)
         echo_error(
