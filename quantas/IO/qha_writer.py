@@ -12,7 +12,7 @@ import os
 import numpy as np
 from copy import deepcopy
 
-from quantas.cmdline.utils.messages import echo
+from click import echo
 from quantas.interfaces.crystal import CrystalPhononReader
 from quantas.interfaces.crystal import CrystalQHAReader
 from quantas.interfaces.phonopy import PhonopyReader
@@ -59,7 +59,7 @@ class QHAInputCreator(object):
             if not os.path.exists(file):
                 error = 'File {} does not exists'.format(file)
                 return False, error
-            echo('  - {} ...'.format(file), end='')
+            echo('  - {} ...'.format(file), nl='')
 
             interface = self.interface_filter[self.interface_flag]
             data = interface(file)
