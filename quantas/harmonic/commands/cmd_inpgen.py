@@ -49,7 +49,7 @@ interfaces = [
 @click.option('-i', '--interface', help='Interface for ab initio codes.',
               type=click.Choice(interfaces, case_sensitive=True),
               default='crystal', show_default='crystal')
-def ha_inpgen(filename, outfile, is_list, ref, interface, sym):
+def ha_inpgen(filename, outfile, is_list, ref, interface):
     """ Input generator for (Quasi-)Harmonic Approximation calculations.
 
     This command requires a file (FILENAME) that will be read to provide the
