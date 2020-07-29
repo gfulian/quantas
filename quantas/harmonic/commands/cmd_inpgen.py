@@ -49,10 +49,7 @@ interfaces = [
 @click.option('-i', '--interface', help='Interface for ab initio codes.',
               type=click.Choice(interfaces, case_sensitive=True),
               default='crystal', show_default='crystal')
-@click.option('-s', '--sym', is_flag=True, default=False, show_default=False,
-              help='Use symmetry to reduce the number of phonon bands '
-              '(Experimental)')
-def ha_inpgen(filename, outfile, is_list, ref, interface, sym):
+def ha_inpgen(filename, outfile, is_list, ref, interface):
     """ Input generator for (Quasi-)Harmonic Approximation calculations.
 
     This command requires a file (FILENAME) that will be read to provide the
@@ -75,7 +72,7 @@ def ha_inpgen(filename, outfile, is_list, ref, interface, sym):
     generator = QHAInputCreator(interface)
 
     try:
-        completed, error = generator.read(filename, is_list, ref, sym)
+        completed, error = generator.read(filename, is_list, ref)
     except KeyError:
         echo_error(quantas_error(), bold=True)
         echo_error(

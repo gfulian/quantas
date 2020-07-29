@@ -11,6 +11,8 @@
 import os
 import numpy as np
 from copy import deepcopy
+
+from click import echo
 from quantas.interfaces.crystal import CrystalPhononReader
 from quantas.interfaces.crystal import CrystalQHAReader
 from quantas.interfaces.phonopy import PhonopyReader
@@ -57,7 +59,7 @@ class QHAInputCreator(object):
             if not os.path.exists(file):
                 error = 'File {} does not exists'.format(file)
                 return False, error
-            print('  - {} ...'.format(file), end='')
+            echo('  - {} ...'.format(file), nl='')
 
             interface = self.interface_filter[self.interface_flag]
             data = interface(file)
@@ -71,90 +73,22 @@ class QHAInputCreator(object):
                 self.phondata.append(data)
 
             if c == reference and self.interface_flag != 'crystal-qha':
-                print(' Done! (Reference)')
+                echo(' Done! (Reference)')
             else:
-                print(' Done!')
+                echo(' Done!')
 
             c += 1
-            
-        if use_symm and self.interface_flag != 'crystal-qha':
-            print()
-            self.phonon_symmetry(reference, file_list[reference])
+
         return True, None
 
     def get_files_from_list(self, file_list):
+        """
+        """
         with open(file_list, "r") as f:
             files = f.readlines()
         for i in range(len(files)):
             files[i] = files[i].rstrip()
         return files
-
-    def phonon_symmetry(self, reference=0, fname=''):
-        """
-        """
-        refdata = self.phondata[reference]
-        tmp_total_phonons = refdata.phonons.copy()
-        reduced_phonons = {}
-        reduced_qcoord = {}
-        reduced_weights = {}
-        c = 0
-        print('Starting the reduction of phonon bands using the reference')
-        print('file: {}'.format(fname))
-        for key in refdata.phonons:
-            print_progress(key, refdata.qpoints)
-            k_phonons = refdata.phonons[key]
-            check = False  # Flag to check if the phonon band was found
-            for phon in reduced_phonons:
-                if np.array_equal(k_phonons, reduced_phonons[phon]):
-                    tmp_total_phonons.pop(key, None)
-                    reduced_weights[phon] += 1
-                    if not check:
-                        check = True
-
-            if not check:
-                reduced_phonons[c] = refdata.phonons[key]
-                reduced_weights[c] = 1
-                reduced_qcoord[c] = refdata.qcoords[key] 
-                tmp_total_phonons.pop(key, None)
-                c += 1
-        print()                
-        print(' Done!')
-        print()
-        #
-        # Store the reduced data in the reference
-        self.phondata[reference].data['qcoords'] = reduced_qcoord
-        self.phondata[reference].data['phonons'] = reduced_phonons
-        self.phondata[reference].data['weights'] = reduced_weights
-        self.phondata[reference].data['qpoints'] = len(reduced_qcoord)
-        #
-        # Search the same q-points in the other files
-        if len(self.phondata) > 1:
-            print()
-            print('Apply changes to other data')
-            for i in range(len(self.phondata)):
-                if i == reference:
-                    print(' - Skipping reference data')
-                    print()
-                    continue
-                print(' - Processing data #{}'.format(i))
-                tmp_coord = {}
-                tmp_phons = {}
-                tmp_weight = {}
-                for key, ref_qcoord in refdata.qcoords.items():
-                    print_progress(key, refdata.qpoints)
-                    for q, item in self.phondata[i].qcoords.items():
-                        if np.array_equal(ref_qcoord, item):
-                            tmp_coord[key] = item
-                            tmp_phons[key] = self.phondata[i].phonons[q]
-                            tmp_weight[key] = refdata.weights[key]
-                self.phondata[i].data['qcoords'] = tmp_coord
-                self.phondata[i].data['phonons'] = tmp_phons
-                self.phondata[i].data['weights'] = tmp_weight
-                self.phondata[i].data['qpoints'] = len(refdata.qcoords)
-                print()
-                print()
-            print('All done!')
-        return
 
     def write(self, outfile, ref=0):
         """
@@ -169,6 +103,8 @@ class QHAInputCreator(object):
         return
 
     def write_from_multiple_files(self, outfile, jobname, ref=0):
+        """
+        """
         n = len(self.phondata)
         reference = self.phondata[ref]
         data = []
@@ -221,6 +157,8 @@ class QHAInputCreator(object):
         return
 
     def write_from_single_file(self, outfile, jobname, ref=0):
+        """
+        """
         n = self.phondata.points
         data = []
         data.append('job: {}'.format(jobname))
@@ -268,28 +206,3 @@ class QHAInputCreator(object):
         with open(outfile, 'w') as f:
             f.write('\n'.join(data))
         return
-
-
-def print_progress(iteration, total, prefix = '', suffix = '',
-                   decimals = 1, length = 50, fill = '█', printEnd = '\r'):
-    """
-    Call in a loop to create terminal progress bar
-    @params:
-        iteration   - Required  : current iteration (Int)
-        total       - Required  : total iterations (Int)
-        prefix      - Optional  : prefix string (Str)
-        suffix      - Optional  : suffix string (Str)
-        decimals    - Optional  : positive number of decimals in percent complete (Int)
-        length      - Optional  : character length of bar (Int)
-        fill        - Optional  : bar fill character (Str)
-        printEnd    - Optional  : end character (e.g. '\r', '\r\n') (Str)
-    """
-    percent = ('{0:.' + str(decimals) + 'f}').format(
-        100 * (iteration / float(total)))
-    filledLength = int(length * iteration // total)
-    bar = fill * filledLength + '-' * (length - filledLength)
-    print('\r%s |%s| %s%% %s' % (prefix, bar, percent, suffix),
-          end = printEnd)
-    # Print New Line on Complete
-    if iteration == total: 
-        print()
