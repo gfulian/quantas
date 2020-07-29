@@ -89,8 +89,6 @@ Available *options* are listed below, which can be also obtained via prompting
     -i, --interface [crystal|crystal-qha|phonopy]
                                     Interface for ab initio codes.  [default:
                                     (crystal)]
-    -s, --sym                       Use symmetry to reduce the number of phonon
-                                    bands (Experimental)
     -h, --help                      Show this message and exit.
 
 :code:`-l`, :code:`--list` option
@@ -129,18 +127,6 @@ processed.
 Set the index of the file that is considered the reference of all the files provides as input. 
 The reference unit cell (and file) should be that corresponding to the equilibrium geometry.
 By default, following Python conventions, the first file has index 0.
-
-:code:`-s`, :code:`--sym` option
---------------------------------
-
-With this option, the number of **q**-points is reduced by considering the symmetry of the crystal, and the weight of each irreducible **q**-point may be accordingly increased. This can be usually employed in conjunction with the :code:`--crystal` or :code:`--crystal-qha` 
-interfaces, because the CRYSTAL14/17 outputs generally reports phonon frequencies calculated 
-on every sampled **q**-point.
-
-.. warning::
-
-  This feature is still experimental and should be treated with care. If you use it, please, 
-  carefully check the generated input file.
 
 :code:`-i`, :code:`--interface` option
 --------------------------------------
