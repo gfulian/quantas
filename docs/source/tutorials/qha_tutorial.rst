@@ -430,7 +430,7 @@ The output is consequently different (similar lines were skipped in the snippet 
   V0 = 18.8891(4)
   
 It is possible to note that, by using the EoS fitting method, slightly different pressure values 
-at each unit-cell volume were obtained. With this minimization approache, it could be possible to
+at each unit-cell volume were obtained. With this minimization approach, it could be possible to
 run the QHA calculation by considering pressures between 0 GPa and 50 GPa.
 
 :Excercise:
