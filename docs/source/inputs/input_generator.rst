@@ -140,11 +140,17 @@ Available interfaces are:
 
   - :code:`phonopy`: read phonopy output files, with extension ``.yaml``. 
 
+For phonopy, you need to provide (i) the :code:`phonopy_disp.yaml` and (ii) a suitable output 
+containing the phonon frequencies, reported in THz. For each geometry, these files must be renamed
+following this name convention: the :code:`phonopy_disp.yaml` file **must** have the same root name 
+as the phonopy output file (*e.g.* :code:`input_file_01.yaml`) with a :code:`_disp` suffix (in this 
+case, :code:`input_file_01_disp.yaml`).
+
 .. warning:: 
 
   Phonopy outputs do not contain information of the original unit cell energy. 
   Quantas needs these energy values for the (Q)HA analysis. 
-  
+
 At present, two methods can be employed to set the energy of each unit cell:
 
   - VASP is fully supported, by providing the :code:`vasprun.xml` file of a single-point energy
