@@ -93,7 +93,7 @@ def init_logfile(logfile=None):
 def echo(msg, logfile=None, silent=False, bold=False):
     """
     Print a message via the click.echo function to stdout and also to a log
-    file, it its path is provided.
+    file, if its path is provided.
 
     Parameters
     ----------
@@ -121,7 +121,7 @@ def echo(msg, logfile=None, silent=False, bold=False):
 def echo_error(msg, logfile=None, silent=False, bold=False):
     """
     Print an error message via the click.echo function to stdout and also to a
-    log file, it its path is provided.
+    log file, if its path is provided.
 
     Parameters
     ----------
@@ -147,7 +147,7 @@ def echo_error(msg, logfile=None, silent=False, bold=False):
 def echo_warning(msg, logfile=None, silent=False, bold=False):
     """
     Print a warning message via the click.echo function to stdout and also to
-    a log file, it its path is provided.
+    a log file, if its path is provided.
 
     Parameters
     ----------
@@ -174,7 +174,7 @@ def echo_warning(msg, logfile=None, silent=False, bold=False):
 def echo_highlight(msg, logfile=None, silent=False, bold=True):
     """
     Print an highlighted message via the click.echo function to stdout and
-    also to a log file, it its path is provided.
+    also to a log file, if its path is provided.
 
     Parameters
     ----------
