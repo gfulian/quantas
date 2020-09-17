@@ -12,14 +12,12 @@ import os
 import sys
 import click
 
-
 from ..utils.general import MostSimilarCommandGroup
 from ..utils.general import print_version
 
 from quantas.harmonic.commands.cmd_export import ha_export
 from quantas.qha.commands.cmd_export import qha_export
 from quantas.soec.commands.cmd_export import soec_export
-
 
 @click.group(cls=MostSimilarCommandGroup,
              context_settings={'help_option_names': ['-h', '--help']})

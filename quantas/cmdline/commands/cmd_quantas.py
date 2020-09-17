@@ -26,7 +26,6 @@ from quantas.cmdline.utils.messages import quantas_error
 from quantas.cmdline.utils.messages import echo_highlight
 from quantas.cmdline.utils.messages import echo_error
 
-
 @click.group(cls=MostSimilarCommandGroup,
              context_settings={'help_option_names': ['-h', '--help']})
 @click.option('-v', '--version', is_flag=True, callback=print_version,
@@ -43,6 +42,7 @@ ________                       __
        \__>          \/     \/          \/     \/ 
     """
     return
+
 
 cli.add_command(inpgen)
 cli.add_command(export)
