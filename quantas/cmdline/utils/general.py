@@ -60,6 +60,7 @@ class MostSimilarCommandGroup(click.Group):
 
 
 def print_version(ctx, param, value):
+    """ Check the context and print Quantas version. """
     if not value or ctx.resilient_parsing:
         return
     echo_highlight(quantas_title(), bold=True)
