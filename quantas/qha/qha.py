@@ -100,6 +100,7 @@ from quantas.utils.physics.thermodynamics import gruneisen_parameter
 
 # Equation of State formulations for energy(volume) fits
 from .utils.ev_eos import EnergyEOS
+from .utils.kieffer import Kieffer
 
 # Other utilities for fitting purposes
 from quantas.utils.math.polynomials import polyfit
@@ -157,6 +158,7 @@ class QHACalculator(BasicCalculator):
         self.thermodynamic_interpolation = Flag()
         self.polynomial_minimization = Flag()
         self.eos_minimization = Flag()
+        self.acoustic_kieffer = Flag()
 
         if settings['qha_scheme'] == 'td':
             self.thermodynamic_interpolation.on()
@@ -168,6 +170,10 @@ class QHACalculator(BasicCalculator):
         elif settings['minimization'] == 'poly':
             self.polynomial_minimization.on()
         self.eos_formulation = settings['eos_function']
+
+        if settings['kieffer']:
+            self.acoustic_kieffer.on()
+
         self._edeg = settings['edeg']
         self._fdeg = settings['fdeg']
         self._eunit = settings['energy_unit']
@@ -245,6 +251,17 @@ class QHACalculator(BasicCalculator):
             Array containing the input frequency values at each volume.
         """
         return self.input.frequencies
+
+    @property
+    def acoustic(self):
+        """ Read-only property.
+
+        Returns
+        -------
+        ndarray(dtype=float, ndim=2)
+            Array containing the acoustic frequency values at each volume.
+        """
+        return self.input.acoustic_kieffer
 
     @property
     def pressure(self):
@@ -406,6 +423,18 @@ class QHACalculator(BasicCalculator):
                 except OverflowError:
                     self.echo('{} = {}({})'.format(label, val, err))
         self.echo('')
+        # Check if Kieffer's approach was requested, even in the case of
+        # supercell. If yes, throw a warning.
+        if idata.kpoints > 1:
+            if self.acoustic_kieffer.is_on():
+                text = "WARNING! The Kieffer's method for acoustic "
+                text += 'frequencies was requested.\n'
+                text += 'However, it seems that more than Gamma-point phonons '
+                text += 'are reported in \n'
+                text += 'the provided input file.\n'
+                text += 'Please, check the consistency of the final results.'
+                self.echo_warning(text)
+        self.echo('')
         return
 
     def run(self):
@@ -427,14 +456,21 @@ class QHACalculator(BasicCalculator):
         self.echo_debug('Grid expansion set')
         #
         phonons = convert_frequency(self.phonons, self._funit, 'Hz')
+        if self.acoustic_kieffer.is_on():
+            if type(self.acoustic) == type(None):
+                self.error = 'Acoustic frequency missing in input'
+                return
+            acoustic = convert_frequency(self.acoustic, self._funit, 'Hz')
+        else:
+            acoustic = None
         if self.frequency_interpolation.is_on():
             self.echo_debug('Switch to frequency interpolation mode')
-            
-            self.run_frequency_interpolation(T, phonons, grid, idx)
+            self.run_frequency_interpolation(T, phonons, grid, idx, acoustic)
         if self.thermodynamic_interpolation.is_on():
             self.echo_debug('Switch to thermodynamics interpolation mode')
-            
-            self.run_thermodynamics_interpolation(T, phonons, grid, idx)
+            self.run_thermodynamics_interpolation(T, phonons,grid, idx,
+                                                  acoustic
+                                                  )
         self._finalize_run()
         
         self.echo('')
@@ -443,7 +479,7 @@ class QHACalculator(BasicCalculator):
         self.completed = True
         return
 
-    def run_frequency_interpolation(self, T, phonons, grid, idx):
+    def run_frequency_interpolation(self, T, phonons, grid, idx, acoustic):
         """
         Calculate QHA thermodynamic/thermoelastic properties using the
         interpolation of phonon frequencies scheme.
@@ -590,7 +626,7 @@ class QHACalculator(BasicCalculator):
         self.echo_time(t0, clock())
         return
 
-    def run_thermodynamics_interpolation(self, T, phonons, grid, idx):
+    def run_thermodynamics_interpolation(self, T, phonons, grid, idx, acoustic):
         """
         Calculate QHA thermodynamic/thermoelastic properties using the
         interpolation of thermodynamics scheme.
@@ -661,6 +697,34 @@ class QHACalculator(BasicCalculator):
         self.echo('   HA calculation time {0:15.3f} msec'.format(
             1000*(clock()-t0_ha)))
         self.echo('')
+        # If requested, calculate thermodynamics from acoustic frequencies
+        # according to Kieffer's approach
+        S_ha_optic = S_ha.copy() # to be deleted
+        
+        if self.acoustic_kieffer.is_on():
+            t0 = clock()
+            self.echo_override(
+                ' - Calculation of acoustic contribution to thermodynamics:')
+            with progressbar(self.temperature, width=50) as progress:
+                i = 0
+                for c in progress:
+                    for j in range(self.volume.shape[0]):
+                        f = acoustic[:, j]
+                        kieffer = Kieffer(f)
+                        Cv_aco = convert_energy(kieffer.heat_capacity(T[i]),
+                                                'kjmol', self._eunit)
+                        S_aco = convert_energy(kieffer.entropy(T[i]),
+                                               'kjmol', self._eunit)
+                        Cv_ha[i, j] += Cv_aco
+                        S_ha[i, j] += S_aco
+                        Fvib_ha[i, j] -= T[i] * S_aco * np.power(10., -3.)
+                        F_ha[i, j] -= T[i] * S_aco * np.power(10., -3.)
+                    i += 1
+            self.echo_time(t0, clock())
+
+##        print(S_ha_optic[0, 0], convert_energy(S_ha_optic[0, 0], self._eunit, 'kjmol'))
+##        print(S_ha[0, 0], convert_energy(S_ha[0, 0], self._eunit, 'kjmol'))
+##        print(100.*(S_ha[0, 0] - S_ha_optic[0, 0])/S_ha[0, 0])
         #
         # Fit harmonic thermodynamics
         #

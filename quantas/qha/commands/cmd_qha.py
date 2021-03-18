@@ -62,6 +62,9 @@ eos_functions = {
               'roots (poly) or equation of state fitting (eos).',
               type=click.Choice(['poly', 'eos'], case_sensitive=False),
               default='poly', show_default='poly')
+@click.option('-a', '--acoustic', 'kieffer', is_flag=True,
+              help="Enable Kieffer's method for acoustic modes.",
+              default=False)
 @click.option('-T', '--temperature', nargs=3, type=float,
               metavar='min max step',
               help='Temperature range provided as a tuple.',
@@ -99,9 +102,9 @@ eos_functions = {
               )
 @click.option('-d', '--debug', is_flag=True, help='Activate debug option.',
               default=False)
-def qha_calculation(filename, outfile, qha_scheme, minimization, temperature,
-                    pressure, fdeg, edeg, eos, eunit, vunit, funit, tunit,
-                    punit, silent, debug):
+def qha_calculation(filename, outfile, qha_scheme, minimization, kieffer,
+                    temperature, pressure, fdeg, edeg, eos, eunit, vunit,
+                    funit, tunit, punit, silent, debug):
     """Quasi-Harmonic Approximation calculation.
 
     This command requires a file (FILENAME) that will be read to provide the
@@ -125,6 +128,7 @@ def qha_calculation(filename, outfile, qha_scheme, minimization, temperature,
     runtime_settings = {
         'qha_scheme': qha_scheme,
         'minimization': minimization,
+        'kieffer': kieffer,
         'edeg': edeg,
         'fdeg': fdeg,
         'eos': eos,
@@ -207,6 +211,11 @@ def print_settings(settings):
         text += '{}\n'.format(eos_formulations[settings['eos']])
     if settings['minimization'] == 'poly':
         text += 'polynomial functions\n'
+    text += " - use Kieffer's approach: "
+    if settings['kieffer']:
+        text += 'Yes\n'
+    else:
+        text += 'No\n'
 
     text += '\nPolynomial fitting settings (degree)\n'
     text += '-------------------------------------\n'
