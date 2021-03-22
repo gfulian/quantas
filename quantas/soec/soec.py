@@ -225,6 +225,11 @@ class SOECCalculator(BasicCalculator):
         # Calculate averages
         self.echo_debug(' - Calculation of VRH average values')
         avg = self.soec.averages()
+        if self.soec.density > 0.:
+            self.echo_debug(' - Calculation of VRH wave velocities')
+            awv = self.soec.isotropic_velocities()
+        else:
+            awv = np.array([np.nan, np.nan, np.nan])
         #
         # Calculate stiffness eigenvalues
         self.echo_debug(' - Calculation stiffness eigenvalues')
@@ -232,12 +237,12 @@ class SOECCalculator(BasicCalculator):
         #
         # Report current data
         
-        self.report_initial_results(avg, eigv)
+        self.report_initial_results(avg, eigv, awv)
         #
         # Store results
-        
         self._results['avgs'] = avg
         self._results['eigv'] = eigv
+        self._results['avg_wave_velocities'] = awv
         #
         # Check SOEC eigenvalues consistency
         if any(eigv) <= 0:
@@ -374,7 +379,7 @@ class SOECCalculator(BasicCalculator):
         self._results['polar'] = polar
         return
 
-    def report_initial_results(self, avg, eigenval):
+    def report_initial_results(self, avg, eigenval, awv):
         """
         """
         self.echo('Average properties')
@@ -388,6 +393,11 @@ class SOECCalculator(BasicCalculator):
         for i in range(3):
             self.echo(sv.format(avgnames[i], *tuple(avg[i])))
         self.echo('')
+        if awv[0] != np.nan:
+            self.echo('Average (VRH) wave velocities')
+            self.echo('  - Transversal  (Vs): {: 10.5f} km/s'.format(awv[0]))
+            self.echo('  - Longitudinal (Vp): {: 10.5f} km/s'.format(awv[2]))
+            self.echo('')
         self.echo('Eigenvalues of the stiffness matrix:')
         for i in range(6):
             self.echo('    lambda_{0}: {1: ^7.5f}'.format(i+1, eigenval[i]))
