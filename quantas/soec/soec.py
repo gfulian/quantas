@@ -277,6 +277,7 @@ class SOECCalculator(BasicCalculator):
         #
         # Plotting
         if self.polar and self._plotting and mpl:
+            polar = self._results['polar']
             self.echo('')
             self.echo('Plotting results as requested:')
             if self.soec.density > 0.:
