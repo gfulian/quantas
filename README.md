@@ -18,7 +18,7 @@ phases starting from theoretical or experimental results.
 
 - Calculation of the equation of state (EoS) from experimental data
 
-- Analysis of the second-orderelastic constants
+- Analysis of the second-order elastic moduli
 
 - Being written in Python 3, Quantas is completely **cross-platform**!
 
@@ -33,7 +33,7 @@ following work::
 
 >  Gianfranco Ulian and Giovanni Valdre'
 >  'QUANTAS, a Python software for the analysis of solids from ab initio quantum mechanical simulations and experimental data'
->  Journal of Applied Crystallography (volume), (pages) (2020)
+>  Journal of Applied Crystallography (volume), (pages) (2022)
 >  http://dx.doi.org/-----------------
   
 Also, the theory behind the different kind of available calculations is discussed in specific
