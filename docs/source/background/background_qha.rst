@@ -70,7 +70,7 @@ coordinates:
 
 .. math::
     
-    H_{ij} = \frac{1}{2} \bigg[ \frac{\partial E(\boldsymbol{x})}{\partial u_i
+    H_{ij} = \frac{1}{2} \bigg[ \frac{\partial^2 E(\boldsymbol{x})}{\partial u_i
              \partial u_j} \bigg]_0
 
 
@@ -94,7 +94,7 @@ equilibrium position :math:`x_i^*`, :math:`x_j^*`:
 .. math::
     
     \sum_G H_{ij}^{0G} = \bigg[
-                            \frac{\partial E(\boldsymbol{x})}
+                            \frac{\partial^2 E(\boldsymbol{x})}
                             {\partial u_i^0\partial u_j^G} 
                             \bigg]_0
 

@@ -1,8 +1,8 @@
 .. _soec_tutorial:
 
-================================================
-Second-Order Elastic Constant Analysis tutorial
-================================================
+=============================================
+Second-Order Elastic Moduli Analysis tutorial
+=============================================
 
   :Last updated: |today|
   :Author: **Gianfranco Ulian**
@@ -10,11 +10,13 @@ Second-Order Elastic Constant Analysis tutorial
 Preliminary operations
 ======================
 
-Download the :download:`hydroxylapatite input file<../downloads/hydroxylapatite.dat>`, which 
-contains the second-order elastic constant (SOEC) tensor of hydroxylapatite in Voigt notation (values in GPa) and the density of the mineral, expressed in :math:`kg\ m^{-3}`. [1]_
+Download the :download:`hydroxylapatite input file<../downloads/hydroxylapatite.dat>`, 
+which contains the second-order elastic tensor of hydroxylapatite in Voigt 
+notation (:math:`6 \times 6` matrix, values in GPa) and the density of the mineral, 
+expressed in :math:`kg\ m^{-3}`. [1]_
 
-Put this file in a folder of your choice and enter in this folder via the command prompt (or 
-console under Linux/Mac OSX).
+Put this file in a folder of your choice and enter in this folder via the 
+command prompt (or console under Linux/Mac OSX).
 
 
 Analysis of the second-order elastic constants
