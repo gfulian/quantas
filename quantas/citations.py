@@ -29,8 +29,8 @@ For the base use of Quantas, please cite:
   Gianfranco Ulian and Giovanni Valdre'
   'QUANTAS, a Python software for the analysis of solids from ab initio
   quantum mechanical simulations and experimental data'
-  Journal of Applied Crystallography (volume), (pages) (201X)
-  http://dx.doi.org/-----------------
+  Journal of Applied Crystallography 55, (pages) (2022)
+  http://dx.doi.org/10.1107/S1600576722000085
 """
     return msg
 
@@ -42,7 +42,7 @@ For quasi-harmonic approximation calculations used in this run, please cite:
   Gianfranco Ulian and Giovanni Valdre'
   'Equation of state of hexagonal hydroxylapatite (P63) as obtained from
   density functional theory simulations.'
-  International Journal of Quantum Chemistry, in press (2018)
+  International Journal of Quantum Chemistry, 15, e25553 (2018)
   https://doi.org/10.1002/qua.25553
 """
     return msg
