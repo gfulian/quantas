@@ -12,14 +12,13 @@
 #
 import os
 import sys
-##sys.path.insert(0, os.path.abspath('../..'))
-sys.path.insert(0, os.path.abspath('E:\Programs\Python3.7\Lib\site-packages\quantas-0.9.0-py3.7-win-amd64.egg\quantas'))
+sys.path.insert(0, os.path.abspath('../../quantas'))
 import sphinx_rtd_theme
 
 # -- Project information -----------------------------------------------------
 
 project = 'Quantas'
-copyright = "2020, Gianfranco Ulian and Giovanni Valdrè"
+copyright = "2022, Gianfranco Ulian and Giovanni Valdrè"
 author = 'Gianfranco Ulian'
 
 # The full version, including alpha/beta/rc tags
@@ -42,7 +41,6 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinx.ext.graphviz',
-    'rst2pdf.pdfbuilder',
     'recommonmark'
     ]
 
