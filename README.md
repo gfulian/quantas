@@ -33,8 +33,8 @@ following work::
 
 >  Gianfranco Ulian and Giovanni Valdre'
 >  'QUANTAS, a Python software for the analysis of solids from ab initio quantum mechanical simulations and experimental data'
->  Journal of Applied Crystallography (volume), (pages) (2022)
->  http://dx.doi.org/-----------------
+>  Journal of Applied Crystallography 55, (pages) (2022)
+>  http://dx.doi.org/10.1107/S1600576722000085
   
 Also, the theory behind the different kind of available calculations is discussed in specific
 literature, and we kindly ask you to cite them accordingly.
