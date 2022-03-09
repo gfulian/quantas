@@ -24,10 +24,8 @@ except ImportError:
     print('\nWill now exit')
     sys.exit(0)
 
-
 with open("README.md", "r") as fh:
     long_description = fh.read()
-
 
 requirements = [
     'cython>=0.29',
@@ -121,7 +119,7 @@ setup(name='quantas',
         'Topic :: Scientific/Engineering :: Physics',
         'Intended Audience :: Science/Research'
       ],
-      url='',
+      url='https://github.com/gfulian/quantas',
       author='Gianfranco Ulian',
       author_email='gianfranco.ulian2@unibo.it',
       license='MIT',
