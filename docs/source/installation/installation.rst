@@ -118,7 +118,7 @@ Installation from source
 ========================
 
 At the moment, it is only possible to install Quantas from its 
-:download:`source code <https://github.com/gfulian/quantas>`_. Common alternatives such 
+`source code <https://github.com/gfulian/quantas>`_. Common alternatives such 
 as ``pip`` will be available in the next future.
 
 :Linux and Mac OS:
