@@ -29,7 +29,7 @@ For the base use of Quantas, please cite:
   Gianfranco Ulian and Giovanni Valdre'
   'QUANTAS, a Python software for the analysis of solids from ab initio
   quantum mechanical simulations and experimental data'
-  Journal of Applied Crystallography 55, (pages) (2022)
+  Journal of Applied Crystallography 55, 386-396 (2022)
   http://dx.doi.org/10.1107/S1600576722000085
 """
     return msg
