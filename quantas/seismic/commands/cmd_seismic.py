@@ -44,17 +44,26 @@ from ..seismic import SeismicCalculator
 @click.option('--punit', help='Measurement unit for pressure values.',
               type=click.Choice(['GPa'], case_sensitive=True),
               default='GPa', show_default='GPa')
-@click.option('-p', '--plot', help='Create polar plots of the results.',
+@click.option('-p', '--plot', help='Create 3D and 2D plots of the results.',
               is_flag=True, default=False)
+@click.option('--no-2D', help='Do not create 2D plots of the results.',
+              is_flag=True, default=False)
+@click.option('--no-3D', help='Do not create 3D plots of the results.',
+              is_flag=True, default=False)
+@click.option('--proj', help='Type of 2D projection', default='eqar',
+              type=click.Choice(['eqar', 'stereo'], case_sensitive=False),
+              show_default='eqar')
 @click.option('--dpi', help='Resolution (DPI) of the output figures.',
               default=80, show_default=80)
+@click.option('--only-plot', help='Plot previous results.',
+              is_flag=True, default=False)
 @click.option('-q', '--quiet', 'silent', is_flag=True, default=False,
               help='Output will not be printed on screen.',
               )
 @click.option('-d', '--debug', is_flag=True, help='Activate debug option.',
               default=False)
-def seismic_calculation(filename, outfile, ntheta, nphi, punit, plot,
-                            dpi, silent, debug):
+def seismic_calculation(filename, outfile, ntheta, nphi, punit, plot, no_2d,
+                        no_3d, proj, dpi, only_plot, silent, debug):
     """ Calculation of 3D seismic wave velocities from elastic moduli, solving
     the Christoffel's equation.
 
@@ -88,6 +97,9 @@ def seismic_calculation(filename, outfile, ntheta, nphi, punit, plot,
         'debug': debug,
         'silent': silent,
         'plotting': plot,
+        '2D': not no_2d,
+        '3D': not no_3d,
+        'projection': proj,
         'dpi': dpi,
         'logfile': logfile,
         'outfig': os.path.splitext(outfile)[0],
@@ -97,34 +109,42 @@ def seismic_calculation(filename, outfile, ntheta, nphi, punit, plot,
 
     calculator = SeismicCalculator(runtime_settings)
 
-    error = calculator.read_input(filename)
+    if only_plot:
+        error = calculator.plot(filename)
+        if not isinstance(error, type(None)):
+            echo_error(quantas_error(), bold=True)
+            echo_error(error, logfile)
+            return
 
-    if not isinstance(error, type(None)):
-        echo_error(quantas_error(), bold=True)
-        echo_error(error, logfile)
-        return
-
-    calculator.report_input_data()
-    calculator.run()
-
-    if not calculator.completed:
-        echo_error(quantas_error(), logfile, bold=True)
-        echo_error(calculator.error, logfile)
-        return
-
-    if os.path.exists(outfile):
-        ans = confirm('Output file {} exists. '
-                      'Would you like to overwrite it?'.format(outfile))
-        if ans:
-            calculator.export_hdf5(outfile)
-        else:
-            echo('Results not saved', logfile)
     else:
-        calculator.export_hdf5(outfile)
+        error = calculator.read_input(filename)
 
-    if calculator.plotting:
-        calculator.plot()
-        
+        if not isinstance(error, type(None)):
+            echo_error(quantas_error(), bold=True)
+            echo_error(error, logfile)
+            return
+
+        calculator.report_input_data()
+        calculator.run()
+
+        if not calculator.completed:
+            echo_error(quantas_error(), logfile, bold=True)
+            echo_error(calculator.error, logfile)
+            return
+
+        if os.path.exists(outfile):
+            ans = confirm('Output file {} exists. '
+                          'Would you like to overwrite it?'.format(outfile))
+            if ans:
+                calculator.export_hdf5(outfile)
+            else:
+                echo('Results not saved', logfile)
+        else:
+            calculator.export_hdf5(outfile)
+
+        if calculator.plotting:
+            calculator.plot()
+            
     echo_highlight(biblio_header(), logfile, silent=silent)
     echo_highlight(quantas_citation(), logfile, silent=silent)
     echo_highlight(christoffel_citation(), logfile, silent=silent)
@@ -160,5 +180,13 @@ def print_settings(settings):
     text += '\nPlotting\n'
     text += '-------------------------------------\n'
     text += ' - {:12} {}\n'.format('requested:', settings['plotting'])
-    text += ' - {:12} {}\n'.format('dpi:', settings['dpi'])
+    if settings['plotting']:
+        text += ' - {:12} {}\n'.format('dpi:', settings['dpi'])
+        text += ' - {:12} {}\n'.format('3D plots:', settings['3D'])
+        text += ' - {:12} {}\n'.format('2D plots:', settings['2D'])
+        if settings['2D']:
+            text += ' - {:12} {}\n'.format(
+                'projection:',
+                'Lambert equal area' if settings['projection']=='eqar'
+                else 'stereographic')
     return text

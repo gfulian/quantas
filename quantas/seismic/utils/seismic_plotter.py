@@ -114,12 +114,14 @@ class SeismicPlotter(BasicPlotter):
                 'ssecondary': None,
                 'fsecondary': None,
                 'primary': None
-                }
+                },
+            'levels': [10, 10, 10],
+            'anisotropy': True
             },
         3: {
             'name': 'relative phase velocity',
             'title': r'$\huge{v_p - v_{iso} \: (\%)}$',
-            'title2D': r'$v_p - v_{iso} \: (%)$',
+            'title2D': r'$v_p - v_{iso} \: (\%)$',
             'suffix': 'Vp_rel',
             'colorscale': default_colorscale,
             'cmin': {
@@ -132,6 +134,8 @@ class SeismicPlotter(BasicPlotter):
                 'fsecondary': None,
                 'primary': None
                 },
+            'levels': [10, 10, 10],
+            'anisotropy': False
             },
         7: {
             'name': 'group velocity',
@@ -149,11 +153,13 @@ class SeismicPlotter(BasicPlotter):
                 'fsecondary': None,
                 'primary': None
                 },
+            'levels': [10, 10, 10],
+            'anisotropy': True
             },
         8: {
             'name': 'relative group velocity',
             'title': r'$\huge{v_g - v_{iso} \: (\%)}$',
-            'title2D': r'$v_g - v_{iso} \: (%)$',
+            'title2D': r'$v_g - v_{iso} \: (\%)$',
             'suffix': 'Vg_rel',
             'colorscale': default_colorscale,
             'cmin': {
@@ -166,6 +172,8 @@ class SeismicPlotter(BasicPlotter):
                 'fsecondary': None,
                 'primary': None
                 },
+            'levels': [10, 10, 10],
+            'anisotropy': False
             },
         12: {
             'name': 'powerflow angle',
@@ -183,6 +191,8 @@ class SeismicPlotter(BasicPlotter):
                 'fsecondary': None,
                 'primary': None
                 },
+            'levels': [5, 5, 5],
+            'anisotropy': False
             },
         13: {
             'name': 'enhancement factor',
@@ -199,7 +209,10 @@ class SeismicPlotter(BasicPlotter):
                 'ssecondary': 5,
                 'fsecondary': 5,
                 'primary': 1.2
-                },
+                }
+            ,
+            'levels': [0, 0, 0],
+            'anisotropy': False
             },
         
         }
@@ -355,6 +368,9 @@ class SeismicPlotter(BasicPlotter):
         self.__mpl = settings['mpl']
         self.__plotly = settings['plotly']
         self.__dpi = settings['dpi']
+        self.__2D = settings['2D']
+        self.__3D = settings['3D']
+        self.__projection = settings['projection']
         return
 
     def read_data(self, filename):
@@ -363,7 +379,12 @@ class SeismicPlotter(BasicPlotter):
         error = None
         # Read the data
         self.data = QuantasHDF5Reader(filename)
-        self.data.read()
+
+        try:
+            self.data.read()
+        except OSError:
+            error = 'This is not a QUANTAS hdf5 file'
+            return error
 
         if not 'Phase velocity' in self.data.info:
             error = 'This file does not contain the required results'
@@ -400,16 +421,50 @@ class SeismicPlotter(BasicPlotter):
         for key in self.datasets:
             # Make 3D plots
             if self.__plotly:
-                msg = '- making 3D plots of {}'
-                self.echo(msg.format(self.datasets[key]['name']))
-                self.make_3D_plot(key)
+                if self.__3D:
+                    msg = '- making 3D plots of {}'
+                    self.echo(msg.format(self.datasets[key]['name']))
+                    self.make_3D_plot(key)
             # Make 2D plots
             if self.__mpl:
-                msg = '- making 2D plots of {}'
-                self.echo(msg.format(self.datasets[key]['name']))
-                self.make_2D_plot(key, 'equal_area')
-                self.make_2D_plot(key, 'stereo')
+                if self.__2D:
+                    msg = '- making 2D plots of {}'
+                    self.echo(msg.format(self.datasets[key]['name']))
+                    self.make_2D_plot(key)
+
+        self.echo('- making 2D plots of different ratios:')
+        self.echo('   * S-wave anisotropy = 200*(v_s1-v_s2)/(v_s1+v_s2)')
+        self.echo('   * v_P/v_s1')
+        self.echo('   * v_P/v_s2')
+        self.make_2D_plot_ratios()
+        
         return
+
+    def anisotropy(self, xmin, xmax):
+        """ Return the percentage of anisotropy A of a certain quantity x,
+        defined as:
+
+        .. math::
+
+           A = 200 \\frac{x_{max}-x_{min}}{x_{max}+x_{min}}
+
+        Parameters
+        ----------
+
+        xmin: floar or ndarray
+            Minimum value of a certain quantity.
+
+        xmax: floar or ndarray
+            Maximum value of a certain quantity.
+
+        Returns
+        -------
+
+        float or ndarray
+            Percentage of anisotropy.
+
+        """
+        return 200*(xmax-xmin)/(xmax+xmin)
 
     def make_3D_plot(self, quantity):
         """ Make and save a set of three figures containind a 3D plot of a
@@ -475,10 +530,14 @@ class SeismicPlotter(BasicPlotter):
                 )
         return
 
-    def make_2D_plot(self, quantity, mode='equal_area'):
+    def make_2D_plot(self, quantity):
         """ Make and save a figure containing three 2D (polar) plots of a
         specific result, subdivided into slow secondary, fast secondary and
         primary. The matplotlib package is employed in this method.
+
+        Two type of 2D projection on the xy plane (upper part of the
+        sphere) are implemented, i.e., 'equal_area' (default) and 'stereo'
+        projections.
 
         Parameters
         ----------
@@ -486,26 +545,22 @@ class SeismicPlotter(BasicPlotter):
         quantity: int
             Index of the column of the results dataset that will be plotted.
 
-        mode: str, optional
-            The type of 2D projection on the xy plane (upper part of the
-            sphere) that will be used. The two projections are 'equal_area'
-            (default) and 'stereo'.
-
         """
         
         # Read the dataset and create the meshgrids for stereo picture
         u, v = np.mgrid[0:np.pi/2:self.ntheta*1j, 0:2*np.pi:self.nphi*1j]
-        if mode == 'stereo':
+        if self.__projection == 'stereo':
             x = np.tan(0.5*u) * np.cos(v)
             y = np.tan(0.5*u) * np.sin(v)
-        elif mode == 'equal_area':
+        elif self.__projection == 'eqar':
             x = np.sqrt(2)*np.sin(0.5*u)*np.cos(v)
             y =  np.sqrt(2)*np.sin(0.5*u)*np.sin(v)
         
-        fig, axes = plt.subplots(1, 3, figsize=(16,4))
+        fig, axes = plt.subplots(1, 3, figsize=(16, 4))
 
-        c = 0
+        c = 0  # Pointer
         for p in ['ssecondary', 'fsecondary', 'primary']:
+            # Collect the data
             z = self.data.get_data_column(p, quantity).reshape(self.ntheta,
                                                                self.nphi)
             levels=256
@@ -519,18 +574,173 @@ class SeismicPlotter(BasicPlotter):
             
             cmap = LinearSegmentedColormap.from_list(
                 'Custom', self.datasets[quantity]['colorscale'], N=256)
-            
-            ax = axes[c]                
+
+            # Select the ax
+            ax = axes[c]
+
+            # Plot the filled contour map
             cs = ax.contourf(x, y, z,
                              levels=levels,
                              cmap=cmap, extend='both',
                              vmin=self.datasets[quantity]['cmin'][p],
                              vmax=self.datasets[quantity]['cmax'][p]
                              )
+
+            # Plot isolines 
+            if self.datasets[quantity]['levels'][c] != 0:
+                clevels = self.datasets[quantity]['levels'][c]
+                cl = ax.contour(x, y, z, colors='white', linewidths=1,
+                                levels=clevels)
+
+            # Plot a symbol for the minimum and maximum values of the quantity
+            i, j = np.unravel_index(z.argmax(), z.shape)
+            ax.scatter(x[i, j], y[i, j], s=50, c='k', marker='s',
+                       edgecolor='white')
+            i, j = np.unravel_index(z.argmin(), z.shape)
+            ax.scatter(x[i, j], y[i, j], s=40, c='white', edgecolor='k')
+
+            if self.datasets[quantity]['anisotropy']:
+                msg = '   * {: >15}: anisotropy = {: >5.1f} %'
+                self.echo(msg.format(
+                    self.titles[p], self.anisotropy(z.min(), z.max()))
+                          )
+            
             cbar = fig.colorbar(cs, ax=ax,
                                 format=tick.FormatStrFormatter('%.2f'))
             cbar.set_label(self.datasets[quantity]['title2D'], size=16)
 
+            ax.arrow(-0.95, -0.95, 0.35, 0, width=0.01, color='black')
+            ax.text(-0.55, -0.98, 'x', size=14)
+            ax.arrow(-0.95, -0.95, 0, 0.35, width=0.01, color='black')
+            ax.text(-0.98, -0.51, 'y', size=14)
+
+            # Remove the axis
+            ax.set_yticklabels([])
+            ax.set_xticklabels([])
+            ax.set_xticks([])
+            ax.set_yticks([])
+            plt.setp(ax.spines.values(), visible=False)
+
+            # Add the calculated quantity
+            ax.set_xlabel('{}'.format(self.titles[p]), size=16)
+
+            # Set the graph limit
+            ax.set_xlim(-1, 1)
+            ax.set_ylim(-1, 1)
+            ax.set_aspect('equal')
+
+            c += 1
+
+        fig.tight_layout()
+        
+        fig.savefig('{}_{}_2D_{}.png'.format(self._basename,
+                                             self.datasets[quantity]['suffix'],
+                                             self.__projection),
+                    dpi=self.__dpi)
+        return
+
+    def make_2D_plot_ratios(self):
+        """ Make and save a figure containing three 2D (polar) plots of three
+        specific results:
+
+        - S-wave anisotropy, calculated as AVs = 200*(Vs1-Vs2)/(Vs1+Vs2);
+        - v_P / v_s1 ratio (fast secondary);
+        - v_P / v_s2 ratio (slow secondary).
+
+        """
+        
+        # Read the dataset and create the meshgrids for stereo picture
+        u, v = np.mgrid[0:np.pi/2:self.ntheta*1j, 0:2*np.pi:self.nphi*1j]
+        if self.__projection == 'stereo':
+            x = np.tan(0.5*u) * np.cos(v)
+            y = np.tan(0.5*u) * np.sin(v)
+        elif self.__projection == 'eqar':
+            x = np.sqrt(2)*np.sin(0.5*u)*np.cos(v)
+            y =  np.sqrt(2)*np.sin(0.5*u)*np.sin(v)
+        
+        fig, axes = plt.subplots(1, 3, figsize=(16,4))
+
+        # Take the phase velocities
+        vp = self.data.get_data_column('primary', 2).reshape(self.ntheta,
+                                                            self.nphi)
+        vs1 = self.data.get_data_column('fsecondary', 2).reshape(self.ntheta,
+                                                                self.nphi)
+        vs2 = self.data.get_data_column('ssecondary', 2).reshape(self.ntheta,
+                                                                self.nphi)
+
+        # General settings
+        levels=256
+        
+        # Plot 1: S-wave anisotropy
+        ax = axes[0]
+        A = self.anisotropy(vs2, vs1)
+        #AVs = 200 * (vs1 - vs2) / (vs1 + vs2)
+
+        cmap = LinearSegmentedColormap.from_list('Custom', default_colorscale,
+                                                 N=levels)        
+
+        # Filled contours
+        cs = ax.contourf(x, y, A, levels=levels, cmap=cmap, extend='both')
+
+        # Levels
+        cl = ax.contour(x, y, A, colors='white', linewidths=1, levels=10)
+
+        # Min/Max values
+        i, j = np.unravel_index(A.argmax(), A.shape)
+        ax.scatter(x[i, j], y[i, j], s=50, c='k', marker='s',
+                   edgecolor='white')
+        i, j = np.unravel_index(A.argmin(), A.shape)
+        ax.scatter(x[i, j], y[i, j], s=40, c='white', edgecolor='k')
+        
+
+        cbar = fig.colorbar(cs, ax=ax,
+                            format=tick.FormatStrFormatter('%.0f'))
+        cbar.set_label('S-wave anisotropy (%)', size=16)
+
+        # Plot 2: V_P / V_S1
+        ax = axes[1]
+        ratio = vp / vs1
+
+        # Filled contours
+        cs = ax.contourf(x, y, ratio, levels=levels, cmap=cmap, extend='both')
+
+        # Levels
+        cl = ax.contour(x, y, ratio, colors='white', linewidths=1, levels=10)
+
+        # Min/Max values
+        i, j = np.unravel_index(ratio.argmax(), ratio.shape)
+        ax.scatter(x[i, j], y[i, j], s=50, c='k', marker='s',
+                   edgecolor='white')
+        i, j = np.unravel_index(ratio.argmin(), ratio.shape)
+        ax.scatter(x[i, j], y[i, j], s=40, c='white', edgecolor='k')
+        
+
+        cbar = fig.colorbar(cs, ax=ax,
+                            format=tick.FormatStrFormatter('%.1f'))
+        cbar.set_label('$v_P / v_{s1}$', size=16)
+
+        # Plot 3: V_P / V_S2
+        ax = axes[2]
+        ratio = vp / vs2
+
+        # Filled contours
+        cs = ax.contourf(x, y, ratio, levels=levels, cmap=cmap, extend='both')
+
+        # Levels
+        cl = ax.contour(x, y, ratio, colors='white', linewidths=1, levels=10)
+
+        # Min/Max values
+        i, j = np.unravel_index(ratio.argmax(), ratio.shape)
+        ax.scatter(x[i, j], y[i, j], s=50, c='k', marker='s',
+                   edgecolor='white')
+        i, j = np.unravel_index(ratio.argmin(), ratio.shape)
+        ax.scatter(x[i, j], y[i, j], s=40, c='white', edgecolor='k')
+
+        cbar = fig.colorbar(cs, ax=ax,
+                            format=tick.FormatStrFormatter('%.1f'))
+        cbar.set_label('$v_P / v_{s2}$', size=16)
+        
+        for ax in axes:
             ax.arrow(-0.95, -0.95, 0.35, 0, width=0.01, color='black')
             ax.text(-0.55, -0.98, 'x', size=14)
             ax.arrow(-0.95, -0.95, 0, 0.35, width=0.01, color='black')
@@ -542,13 +752,10 @@ class SeismicPlotter(BasicPlotter):
             ax.set_ylim(-1, 1)
             ax.set_aspect('equal')
 
-            c += 1
 
         fig.tight_layout()
         
-        fig.savefig('{}_{}_2D_{}.png'.format(self._basename,
-                                             self.datasets[quantity]['suffix'],
-                                             mode),
+        fig.savefig('{}_{}_2D.png'.format(self._basename, 'ratios'),
                     dpi=self.__dpi)
         return
 

@@ -94,7 +94,10 @@ class SeismicCalculator(BasicCalculator):
                 self._plot_settings = {
                     'mpl': _mpl,
                     'plotly': _plotly,
-                    'dpi': settings['dpi']
+                    'dpi': settings['dpi'],
+                    '2D': settings['2D'],
+                    '3D': settings['3D'],
+                    'projection': settings['projection']
                     }
             else:
                 self.echo_debug('Plotting requested, but packages not present')
@@ -310,7 +313,9 @@ Each dataset contains the following results (measurement unit):
         if filename is None:
             plotter.read_data(self.h5File)
         else:
-            plotter.read_data(filename)
+            error = plotter.read_data(filename)
+            if error is not None:
+                return error
         plotter.run()
         return
 

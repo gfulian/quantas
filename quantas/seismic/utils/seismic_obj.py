@@ -133,8 +133,12 @@ class Seismic(object):
         except:
             raise ValueError("Matrix is singular, aborting operation")
 
+        # Set the compliance matrix in its (3x3x3x3) tensorial form
+        S_tmp = map(self.S_ijkl, it.product([0,1,2], repeat=4))
+        self.Smat = np.array(list(S_tmp)).reshape(3,3,3,3)
+
         # Set the stiffness matrix in its (3x3x3x3) tensorial form
-        C_tmp = map(self._C_ijkl, it.product([0,1,2], repeat=4))
+        C_tmp = map(self.C_ijkl, it.product([0,1,2], repeat=4))
         self.Cmat = np.array(list(C_tmp)).reshape(3,3,3,3)
         
         # Convert the values for wave velocities calculation
@@ -142,7 +146,7 @@ class Seismic(object):
         self.hessM = self.hessian_christoffel_matrix(self.Cmat)
         return
 
-    def _C_ijkl(self, iters):
+    def C_ijkl(self, iters):
         """
         This method calculates the stiffness tensor element from the given
         indexes.
@@ -163,6 +167,29 @@ class Seismic(object):
         vm = [[0, 5, 4], [5, 1, 3], [4, 3, 2]]
         # Compliance coefficients
         return self.C[vm[i][j]][vm[k][l]]
+
+    def S_ijkl(self, iters):
+        """
+        This method calculates the compliance tensor element from the given
+        indexes.
+
+        Parameters
+        ----------
+        iter: tuple
+            Tuple containing the four indexes of the (3x3x3x3) S tensor.
+
+        Returns
+        -------
+        float
+            :math:`ijkl`-th element of the compliance tensor.
+
+        """
+        i, j, k, l = iters
+        # Voigt Matrix
+        vm = [[0, 5, 4], [5, 1, 3], [4, 3, 2]]
+        # Compliance coefficients
+        def sc(p,q): return 1. / ((1+p//3)*(1+q//3))
+        return sc(vm[i][j], vm[k][l]) * self.S[vm[i][j]][vm[k][l]]
 
     @property
     def stiffness(self):
@@ -219,13 +246,10 @@ class Seismic(object):
             The average between the Voigt and Reuss bulk moduli. 
         
         """
-        A = (self.C[0][0] + self.C[1][1] + self.C[2][2]) / 3
-        B = (self.C[1][2] + self.C[0][2] + self.C[0][1]) / 3
-        a = (self.S[0][0] + self.S[1][1] + self.S[2][2]) / 3
-        b = (self.S[1][2] + self.S[0][2] + self.S[0][1]) / 3
-
-        KV = (A + 2*B) / 3
-        KR = 1 / (3*a + 6*b)
+        # Voigt bound
+        KV = np.einsum('iijj', self.Cmat*self.density/1000.)/9.
+        # Reuss bound
+        KR = 1/np.einsum('iijj', self.Smat)
 
         return (KV + KR) / 2.
 
@@ -257,17 +281,18 @@ class Seismic(object):
             The average between the Voigt and Reuss shear moduli. 
         
         """
-        A = (self.C[0][0] + self.C[1][1] + self.C[2][2]) / 3
-        B = (self.C[1][2] + self.C[0][2] + self.C[0][1]) / 3
-        C = (self.C[3][3] + self.C[4][4] + self.C[5][5]) / 3
-        a = (self.S[0][0] + self.S[1][1] + self.S[2][2]) / 3
-        b = (self.S[1][2] + self.S[0][2] + self.S[0][1]) / 3
-        c = (self.S[3][3] + self.S[4][4] + self.S[5][5]) / 3
-
-        GV = (A - B + 3*C) / 5
-        GR = 5 / (4*a - 4*b + 3*c)
+        # Voigt bound
+        GV = (self.C[0][0] + self.C[1][1] + self.C[2][2] -
+              (self.C[0][1] + self.C[0][2] + self.C[1][2]) +
+              3*(self.C[3][3] + self.C[4][4] + self.C[5][5])
+              ) / 15.
+        # Reuss bound
+        GR = (15.) / (4.*(self.S[0][0] + self.S[1][1] + self.S[2][2]) -
+                      4.*(self.S[0][1] + self.S[0][2] + self.S[1][2]) +
+                      3.*(self.S[3][3] + self.S[4][4] + self.S[5][5])
+                         )
         
-        return (GV + GR) / 2.
+        return 0.5 * (GV + GR)
 
     @property
     def isotropic_velocity(self):
