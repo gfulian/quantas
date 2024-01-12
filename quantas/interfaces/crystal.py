@@ -26,6 +26,7 @@ frequency_calculation += ' MATRIX AND HARMONIC'
 scelphono_option = 'PHONON FREQUENCIES AT A SET OF K POINTS BY USING '
 scelphono_option += 'A SUPERCELL'
 hess_interpolation = 'ACTIVATED INTERPOLATION OF THE HESSIAN UP TO'
+scelphono_qpoints = 'THAT PERMITS THE CALCULATION OF MODES AT'
 central_energy = '    CENTRAL POINT'
 frequency_header = 'MODES         EIGV          FREQUENCIES     IRREP'
 # QHA-specific strings
@@ -651,7 +652,13 @@ class CrystalPhononReader(BasicReader):
             the INTERPHESS keyword in CRYSTAL
 
         """
+        # Try to search for the Hessian interpolation
+        hess = True
         sline = self._get_start_line(file, hess_interpolation)
+
+        if sline is None:
+            hess = False
+            sline = self._get_start_line(file, scelphono_qpoints)
 
         with open(file, 'r') as f:
             data = f.readlines()
@@ -661,7 +668,13 @@ class CrystalPhononReader(BasicReader):
         qmesh = np.zeros(3, dtype=float)
         qweight = np.zeros(qpoints, dtype=float)
 
-        sline += 9
+        if hess:
+            sline += 9
+        else:
+            for i in range(len(data)):
+                if 'K       WEIGHT       COORD' in data[i]:
+                    sline = i+1
+
         for i in range(qpoints):
             line = data[sline+i].split()
             qweight[i] = float(line[2])
@@ -744,14 +757,19 @@ class CrystalPhononReader(BasicReader):
         return phonons
 
     def _get_start_line(self, file, search_string):
+        found = False
         sline = 0
         with open(file, 'r') as f:
             for line in f:
                 if search_string in line:
+                    found = True
                     break
                 else:
                     sline += 1
-        return sline
+        if found:
+            return sline
+        else:
+            return None
 
 
 class CrystalQHAReader(BasicReader):
