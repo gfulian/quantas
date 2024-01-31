@@ -554,7 +554,7 @@ class SeismicPlotter(BasicPlotter):
             y = np.tan(0.5*u) * np.sin(v)
         elif self.__projection == 'eqar':
             x = np.sqrt(2)*np.sin(0.5*u)*np.cos(v)
-            y =  np.sqrt(2)*np.sin(0.5*u)*np.sin(v)
+            y = np.sqrt(2)*np.sin(0.5*u)*np.sin(v)
         
         fig, axes = plt.subplots(1, 3, figsize=(16, 4))
 
@@ -757,6 +757,103 @@ class SeismicPlotter(BasicPlotter):
         
         fig.savefig('{}_{}_2D.png'.format(self._basename, 'ratios'),
                     dpi=self.__dpi)
+        return
+
+    def make_2D_plot_polarization(self):
+        """ Make and save a figure containing three 2D (polar) plots of the
+        phase velocities and the acoustic wave polarization.
+        """
+        quantity = 2
+        
+        # Read the dataset and create the meshgrids for stereo picture
+        u, v = np.mgrid[0:np.pi/2:self.ntheta*1j, 0:2*np.pi:self.nphi*1j]
+        if self.__projection == 'stereo':
+            x = np.tan(0.5*u) * np.cos(v)
+            y = np.tan(0.5*u) * np.sin(v)
+        elif self.__projection == 'eqar':
+            x = np.sqrt(2)*np.sin(0.5*u)*np.cos(v)
+            y =  np.sqrt(2)*np.sin(0.5*u)*np.sin(v)
+        
+        fig, axes = plt.subplots(1, 3, figsize=(16,4))
+
+        c = 0  # Pointer
+        for p in ['ssecondary', 'fsecondary', 'primary']:
+
+            # Collect the phase velocity
+            z = self.data.get_data_column(p, quantity).reshape(self.ntheta,
+                                                               self.nphi)
+
+            # Collect the phase polarization
+            u = self.data.get_data_column(p, 9).reshape(self.ntheta,
+                                                        self.nphi)
+            v = self.data.get_data_column(p, 10).reshape(self.ntheta,
+                                                        self.nphi)
+
+            levels=256
+            if quantity == 13:
+                z = np.log10(z)
+                levels = np.linspace(
+                    self.datasets[quantity]['cmin'][p],
+                    self.datasets[quantity]['cmax'][p],
+                    256
+                    )
+            
+            cmap = LinearSegmentedColormap.from_list(
+                'Custom', self.datasets[quantity]['colorscale'], N=256)
+
+            # Select the ax
+            ax = axes[c]
+
+            # Plot the filled contour map
+            cs = ax.contourf(x, y, z,
+                             levels=levels,
+                             cmap=cmap, extend='both',
+                             vmin=self.datasets[quantity]['cmin'][p],
+                             vmax=self.datasets[quantity]['cmax'][p]
+                             )
+
+            # Plot isolines 
+            if self.datasets[quantity]['levels'][c] != 0:
+                clevels = self.datasets[quantity]['levels'][c]
+                cl = ax.contour(x, y, z, colors='white', linewidths=1,
+                                levels=clevels)
+            
+            cbar = fig.colorbar(cs, ax=ax,
+                                format=tick.FormatStrFormatter('%.2f'))
+            cbar.set_label(self.datasets[quantity]['title2D'], size=16)
+
+            # Plot the quivers
+            ax.quiver(x[::20, ::20], y[::20, ::20],  # position of the arrow
+                      u[::20, ::20], v[::20, ::20],  # direction of the arrow
+                      pivot='mid')
+
+            ax.arrow(-0.95, -0.95, 0.35, 0, width=0.01, color='black')
+            ax.text(-0.55, -0.98, 'x', size=14)
+            ax.arrow(-0.95, -0.95, 0, 0.35, width=0.01, color='black')
+            ax.text(-0.98, -0.51, 'y', size=14)
+
+            # Remove the axis
+            ax.set_yticklabels([])
+            ax.set_xticklabels([])
+            ax.set_xticks([])
+            ax.set_yticks([])
+            plt.setp(ax.spines.values(), visible=False)
+
+            # Add the calculated quantity
+            ax.set_xlabel('{}'.format(self.titles[p]), size=16)
+
+            # Set the graph limit
+            ax.set_xlim(-1, 1)
+            ax.set_ylim(-1, 1)
+            ax.set_aspect('equal')
+
+            c += 1
+
+        fig.tight_layout()
+        
+        fig.savefig('{}_{}_2D_{}_polarization.png'.format(
+            self._basename, self.datasets[quantity]['suffix'],
+            self.__projection), dpi=self.__dpi)
         return
 
     def add_figure_title_3D(self, figure, text):

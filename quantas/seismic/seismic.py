@@ -279,7 +279,7 @@ Each dataset contains the following results (measurement unit):
   - Columns 5-7  : Phase polarization (x,y,z)
   - Column 8     : Group absolute velocity (km s^-1)
   - Column 9     : Relative group velocity (%)
-  - Columns 10-12: Group velocity (km s^-1)
+  - Columns 10-12: x, y, and z coordinates of the ray surface
   - Column 13    : Powerflow angle (degree)
   - Column 14    : Enhancement factor (log_10A)
 """.format(self._punit, 'kg m^-3')

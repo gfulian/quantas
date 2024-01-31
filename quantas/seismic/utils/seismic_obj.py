@@ -86,8 +86,9 @@ def cofactor(A):
 
 
 class Seismic(object):
-    """ This class holds all the information and methods to analyze the tensor
-    matrix given as input.
+    """ This class holds all the information and methods to analyze the
+    elastic tensor given as input to calculate the seismic velocities by
+    solving the Christoffel's equation.
 
     Parameters
     ----------
@@ -120,7 +121,7 @@ class Seismic(object):
     _enhancement = None
     
     def __init__(self, matrix, density):
-        """ Constructor method for the Christoffel object. """
+        """ Constructor method for the Seismic object. """
         # Store the symmetric 6x6 elastic moduli matrix in Voigt's notation
         self.C = matrix
 
