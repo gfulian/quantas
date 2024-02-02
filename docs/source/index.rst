@@ -110,6 +110,7 @@ The authors wish to thank also the beta testers of QUANTAS for their feedback on
    tutorials/qha_tutorial
    tutorials/eos_tutorial
    tutorials/soec_tutorial
+   tutorials/seismic_tutorial
 
 .. toctree::
    :maxdepth: 1
