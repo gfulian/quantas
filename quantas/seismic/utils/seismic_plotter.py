@@ -438,6 +438,9 @@ class SeismicPlotter(BasicPlotter):
         self.echo('   * v_P/v_s2')
         self.make_2D_plot_ratios()
         
+        self.echo('- making 2D plots of polarization')
+        self.make_2D_plot_polarization()
+        
         return
 
     def anisotropy(self, xmin, xmax):
@@ -670,11 +673,12 @@ class SeismicPlotter(BasicPlotter):
 
         # General settings
         levels=256
-        
+
+        # ---------------------------
         # Plot 1: S-wave anisotropy
+        # ---------------------------
         ax = axes[0]
         A = self.anisotropy(vs2, vs1)
-        #AVs = 200 * (vs1 - vs2) / (vs1 + vs2)
 
         cmap = LinearSegmentedColormap.from_list('Custom', default_colorscale,
                                                  N=levels)        
@@ -697,7 +701,9 @@ class SeismicPlotter(BasicPlotter):
                             format=tick.FormatStrFormatter('%.0f'))
         cbar.set_label('S-wave anisotropy (%)', size=16)
 
+        # ---------------------------
         # Plot 2: V_P / V_S1
+        # ---------------------------
         ax = axes[1]
         ratio = vp / vs1
 
@@ -719,7 +725,9 @@ class SeismicPlotter(BasicPlotter):
                             format=tick.FormatStrFormatter('%.1f'))
         cbar.set_label('$v_P / v_{s1}$', size=16)
 
+        # ---------------------------
         # Plot 3: V_P / V_S2
+        # ---------------------------
         ax = axes[2]
         ratio = vp / vs2
 
@@ -823,8 +831,8 @@ class SeismicPlotter(BasicPlotter):
             cbar.set_label(self.datasets[quantity]['title2D'], size=16)
 
             # Plot the quivers
-            ax.quiver(x[::20, ::20], y[::20, ::20],  # position of the arrow
-                      u[::20, ::20], v[::20, ::20],  # direction of the arrow
+            ax.quiver(x[::20, ::20], y[::20, ::20],  # positions of the arrows
+                      u[::20, ::20], v[::20, ::20],  # directions of the arrows
                       pivot='mid')
 
             ax.arrow(-0.95, -0.95, 0.35, 0, width=0.01, color='black')
