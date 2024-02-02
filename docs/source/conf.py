@@ -41,7 +41,6 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
     'sphinx.ext.graphviz',
-    'rst2pdf.pdfbuilder',
     'myst_parser'
     ]
 
