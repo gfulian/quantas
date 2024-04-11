@@ -62,7 +62,7 @@ packages = [
     'quantas.utils.physics',
     ]
 
-cwd = os.path.join(os.path.dirname(__file__),'quantas')
+cwd = os.path.join('.', 'quantas')
 directories = [
     os.path.join(cwd, ''),
     os.path.join(cwd, 'cmdline'),
