@@ -24,9 +24,78 @@ except ImportError:
     print('\nWill now exit')
     sys.exit(0)
 
+# ----------------------------------------------------------------
+# Setup utilities
+# ----------------------------------------------------------------
+def convert_path(string):
+    """ Convert a string containing a path into a string containing a module."""
+    if sys.platform == 'win32':
+        new_string = string.replace('\\','.')
+    else:
+        new_string = string.replace('/','.')
+    return new_string
+
+def get_quantas_package(root_dir, cwd):
+    """ Collect all the modules within the Quantas package. """
+    package = {}
+    modules = []
+    modules.append(root_dir)
+    paths = []
+    paths.append(os.path.join(cwd, root_dir))
+    for root, dirs, files in os.walk(root_dir):
+        for directory in dirs:
+            modules.append(os.path.join(root, directory).replace('\\','.'))
+            paths.append(os.path.join(cwd, root, directory))
+    modules.sort()
+    paths.sort()
+    for i in range(len(modules)):
+        package[modules[i]] = paths[i]
+    return package, modules, paths
+
+
+def get_extension_modules(root_dir):
+    """ Collect all the cython extensions. """
+    extensions = []
+    # ------------------------------------------------------------
+    # Compiler flags for 'cythonized' modules
+    # ------------------------------------------------------------
+    if sys.platform == 'win32':
+        extra_compile_args = ['/openmp']
+        extra_link_args = []
+    elif sys.platform == 'linux':
+        extra_compile_args = ['-fopenmp']
+        extra_link_args = ['-fopenmp']
+    else:
+        extra_compile_args = []
+        extra_link_args = []
+
+    # ------------------------------------------------------------
+    # Start collection
+    # ------------------------------------------------------------
+    for root, dirs, files in os.walk(root_dir):
+        for filename in files:
+            if os.path.splitext(filename)[1] == '.pyx':
+                module = convert_path(
+                    os.path.splitext(os.path.join(root, filename))[0]
+                    )
+                path = [os.path.join(root, filename)]
+                extensions.append(
+                    Extension(module, path,
+                              extra_compile_args=extra_compile_args,
+                              extra_link_args=extra_link_args
+                              )
+                    )
+    return extensions
+
+# ----------------------------------------------------------------
+# Quantas description
+# ----------------------------------------------------------------
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+# ----------------------------------------------------------------
+# Package requirements
+# ----------------------------------------------------------------
 requirements = [
     'cython>=0.29',
     'click>=7.0',
@@ -36,64 +105,15 @@ requirements = [
     'h5py>=2.10'
     ]
 
-packages = [
-    'quantas',
-    'quantas.cmdline',
-    'quantas.cmdline.commands',
-    'quantas.cmdline.utils',
-    'quantas.core',
-    'quantas.eosfit',
-    'quantas.eosfit.commands',
-    'quantas.eosfit.utils',
-    'quantas.harmonic',
-    'quantas.harmonic.commands',
-    'quantas.harmonic.utils',
-    'quantas.interfaces',
-    'quantas.IO',
-    'quantas.qha',
-    'quantas.qha.commands',
-    'quantas.qha.utils',
-    'quantas.soec',
-    'quantas.soec.commands',
-    'quantas.soec.utils',
-    'quantas.utils',
-    'quantas.utils.chemistry',
-    'quantas.utils.math',
-    'quantas.utils.physics',
-    ]
+# ----------------------------------------------------------------
+# Package modules and folders
+# ----------------------------------------------------------------
+cwd = os.path.join(os.path.dirname(__file__))
+package, modules, paths = get_quantas_package('quantas', '.')
 
-cwd = os.path.join('.', 'quantas')
-directories = [
-    os.path.join(cwd, ''),
-    os.path.join(cwd, 'cmdline'),
-    os.path.join(cwd, 'cmdline', 'commands'),
-    os.path.join(cwd, 'cmdline', 'utils'),
-    os.path.join(cwd, 'core'),
-    os.path.join(cwd, 'eosfit'),
-    os.path.join(cwd, 'eosfit', 'commands'),
-    os.path.join(cwd, 'eosfit', 'utils'),
-    os.path.join(cwd, 'harmonic'),
-    os.path.join(cwd, 'harmonic', 'commands'),
-    os.path.join(cwd, 'harmonic', 'utils'),
-    os.path.join(cwd, 'interfaces'),
-    os.path.join(cwd, 'IO'),
-    os.path.join(cwd, 'qha'),
-    os.path.join(cwd, 'qha', 'commands'),
-    os.path.join(cwd, 'qha', 'utils'),
-    os.path.join(cwd, 'soec'),
-    os.path.join(cwd, 'soec', 'commands'),
-    os.path.join(cwd, 'soec', 'utils'),
-    os.path.join(cwd, 'utils'),
-    os.path.join(cwd, 'utils', 'chemistry'),
-    os.path.join(cwd, 'utils', 'math'),
-    os.path.join(cwd, 'utils', 'physics'),
-    ]
-
-dirs = {}
-for i in range(len(packages)):
-    dirs[packages[i]] = directories[i]
-
+# ----------------------------------------------------------------
 # Compiler flags for 'cythonized' modules
+# ----------------------------------------------------------------
 if sys.platform == 'win32':
     extra_compile_args = ['/openmp']
     extra_link_args = []
@@ -104,15 +124,22 @@ else:
     extra_compile_args = []
     extra_link_args = []
 
+# ----------------------------------------------------------------
+# Setup
+# ----------------------------------------------------------------
 setup(name='quantas',
-      version='0.9.0',
+      version='0.9.1',
       description='QUANtistic Thermomechanical Analysis of Solids',
       long_description=long_description,
       classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python :: 3 :: Only',
+        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'Operating System :: OS Independent',
         'Environment :: Console',
         'Topic :: Scientific/Engineering :: Chemistry',
@@ -122,31 +149,15 @@ setup(name='quantas',
       url='https://github.com/gfulian/quantas',
       author='Gianfranco Ulian',
       author_email='gianfranco.ulian2@unibo.it',
-      license='MIT',
-      package_dir=dirs,
-      packages=packages,
+      license='BSD',
+      package_dir=package,
+      packages=modules,
       entry_points={
           'console_scripts': [
               'quantas = quantas.cmdline.commands.cmd_quantas:cli'
           ]
       },
-      ext_modules=cythonize([
-          Extension('quantas.utils.physics.statistical_mechanics',
-                    ['quantas/utils/physics/statistical_mechanics.pyx'],
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args,
-                    ),
-          Extension('quantas.utils.physics.thermodynamics',
-                    ['quantas/utils/physics/thermodynamics.pyx'],
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args,
-                    ),
-          Extension('quantas.utils.math.fast_math',
-                    ['quantas/utils/math/fast_math.pyx'],
-                    extra_compile_args=extra_compile_args,
-                    extra_link_args=extra_link_args,
-                    ),
-          ]),
+      ext_modules=cythonize(get_extension_modules('quantas')),
       python_requires='>=3.5',
       install_requires=requirements,
       include_package_data=True,

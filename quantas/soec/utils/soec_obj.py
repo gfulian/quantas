@@ -94,7 +94,34 @@ class SOEC(object):
         # Set the compliance matrix in its (3x3x3x3) tensorial form
         S_tmp = map(self.S_ijkl, it.product([0,1,2], repeat=4))
         self.Smat = np.array(list(S_tmp)).reshape(3,3,3,3)
+
+        # Set the stiffness matrix in its (3x3x3x3) tensorial form
+        C_tmp = map(self.C_ijkl, it.product([0,1,2], repeat=4))
+        self.Cmat = np.array(list(C_tmp)).reshape(3,3,3,3)
+        
         return
+
+    def C_ijkl(self, iters):
+        """
+        This method calculates the stiffness tensor element from the given
+        indexes.
+        
+        Arguments
+        ---------
+        iter: tuple
+            Tuple containing the four indexes of the (3x3x3x3) C tensor.
+            
+        Returns
+        -------
+        C_ijkl: float
+            ijkl-th element of the stiffness tensor.
+
+        """
+        i, j, k, l = iters
+        # Voigt Matrix
+        vm = [[0, 5, 4], [5, 1, 3], [4, 3, 2]]
+        # Compliance coefficients
+        return self.C[vm[i][j]][vm[k][l]]
 
     def S_ijkl(self, iters):
         """
@@ -277,21 +304,21 @@ class SOEC(object):
         avg: list
              Averages of the elastic behaviour of the material.
         """
-        A = (self.C[0][0] + self.C[1][1] + self.C[2][2]) / 3
-        B = (self.C[1][2] + self.C[0][2] + self.C[0][1]) / 3
-        C = (self.C[3][3] + self.C[4][4] + self.C[5][5]) / 3
-        a = (self.S[0][0] + self.S[1][1] + self.S[2][2]) / 3
-        b = (self.S[1][2] + self.S[0][2] + self.S[0][1]) / 3
-        c = (self.S[3][3] + self.S[4][4] + self.S[5][5]) / 3
+        # Bulk modulus
+        KV = np.einsum('iijj', self.Cmat)/9.
+        KR = 1/np.einsum('iijj', self.Smat)
+        KH = 0.5 * (KV + KR)
 
-        KV = (A + 2*B) / 3
-        GV = (A - B + 3*C) / 5
-
-        KR = 1 / (3*a + 6*b)
-        GR = 5 / (4*a - 4*b + 3*c)
-
-        KH = (KV + KR) / 2
-        GH = (GV + GR) / 2
+        # Shear modulus
+        GV = (self.C[0][0] + self.C[1][1] + self.C[2][2] -
+              (self.C[0][1] + self.C[0][2] + self.C[1][2]) +
+              3*(self.C[3][3] + self.C[4][4] + self.C[5][5])
+              ) / 15.
+        GR = (15.) / (4.*(self.S[0][0] + self.S[1][1] + self.S[2][2]) -
+                      4.*(self.S[0][1] + self.S[0][2] + self.S[1][2]) +
+                      3.*(self.S[3][3] + self.S[4][4] + self.S[5][5])
+                         )
+        GH = 0.5 * (GV + GR)
 
         return [
             [KV, 1/(1/(3*GV) + 1/(9*KV)), GV, (1 - 3*GV/(3*KV+GV))/2],
@@ -464,6 +491,7 @@ class SOECOrtho(SOEC):
             self.C = arg.C
             self.S = arg.S
             self.Smat = arg.Smat
+            self.Cmat = arg.Cmat
             self.density = arg.density
         else:
             raise TypeError('SOECOrtho constructor argument should be a SOEC object')

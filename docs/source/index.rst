@@ -22,6 +22,8 @@ Features
 
 - Analysis of the second-order elastic moduli
 
+- *Analysis of the propagation of acoustic waves in crystalline solids (NEW!)*
+
 - Being written in Python 3, Quantas is completely **cross-platform**!
 
 References
@@ -32,7 +34,7 @@ following work::
 
   Gianfranco Ulian and Giovanni Valdre'
   'QUANTAS, a Python software for the analysis of solids from ab initio quantum mechanical simulations and experimental data'
-  Journal of Applied Crystallography 55, (pages) (2022)
+  Journal of Applied Crystallography 55, 386-396 (2022)
   http://dx.doi.org/10.1107/S1600576722000085
   
 Also, the theory behind the different kind of available calculations is discussed in specific
@@ -76,6 +78,7 @@ The authors wish to thank also the beta testers of QUANTAS for their feedback on
    background/background_qha
    background/background_eos
    background/background_soec
+   background/background_seismic
 
 .. toctree::
    :maxdepth: 1
@@ -87,6 +90,7 @@ The authors wish to thank also the beta testers of QUANTAS for their feedback on
    usage/qha_options
    usage/eosfit_options
    usage/soec_options
+   usage/seismic_options
    
 .. toctree::
    :maxdepth: 1
@@ -106,6 +110,7 @@ The authors wish to thank also the beta testers of QUANTAS for their feedback on
    tutorials/qha_tutorial
    tutorials/eos_tutorial
    tutorials/soec_tutorial
+   tutorials/seismic_tutorial
 
 .. toctree::
    :maxdepth: 1
