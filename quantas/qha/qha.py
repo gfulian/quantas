@@ -108,8 +108,6 @@ from quantas.utils.math.polynomials import R_squared
 from quantas.utils.math.polynomials import interpolate
 from quantas.utils.math.polynomials import find_polynomial_minimum
 
-np.warnings.filterwarnings('ignore')
-
 
 class QHACalculator(BasicCalculator):
     """ Quasi-Harmonic Approximation class derived from the
