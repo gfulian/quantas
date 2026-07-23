@@ -1,0 +1,11 @@
+dol_pbe0_soec_p-06.out
+dol_pbe0_soec_p-04.out
+dol_pbe0_soec_p-02.out
+dol_pbe0_soec_p+00.out
+dol_pbe0_soec_p+02.out
+dol_pbe0_soec_p+04.out
+dol_pbe0_soec_p+06.out
+dol_pbe0_soec_p+08.out
+dol_pbe0_soec_p+10.out
+dol_pbe0_soec_p+15.out
+dol_pbe0_soec_p+20.out

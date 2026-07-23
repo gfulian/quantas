@@ -1,0 +1,36 @@
+schema_version: 1
+name: dolomite-continental-demo
+
+depth:
+  min_km: 0.0
+  max_km: 80.0
+  step_km: 2.0
+  include_critical_depths: true
+
+pressure:
+  model: prem
+  max_depth_km: 2891.0
+  integration_step_km: 0.25
+
+temperature:
+  model: continental-conductive
+  name: layered-continental-demo
+  surface_temperature_K: 300.0
+  surface_heat_flow_mW_m2: 55.0
+  citation: >-
+    Illustrative layered continental conductive model based on the Quantas
+    continental-reference preset. Replace the thermal parameters with a
+    documented regional model before quantitative interpretation.
+  layers:
+    - name: upper crust
+      thickness_km: 15.0
+      conductivity_W_mK: 2.5
+      heat_production_uW_m3: 0.8
+    - name: lower crust
+      thickness_km: 20.0
+      conductivity_W_mK: 2.5
+      heat_production_uW_m3: 0.4
+    - name: lithospheric mantle
+      thickness_km: 45.0
+      conductivity_W_mK: 3.3
+      heat_production_uW_m3: 0.02

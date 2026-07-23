@@ -1,0 +1,697 @@
+EOS input summary
+-----------------
+
+         Property        |                               Value
+  -----------------------+-------------------------------------------------------------------
+  Title                  | NaF (Clough at al., 2025)
+  Source                 | /tmp/quantas_eos_tutorial/quantas-2.0.0b6/examples/eos/PVT_NaF.dat
+  Observations           | 48
+  Selected by default    | 48
+  Excluded by default    | 0
+  Data groups            | none
+  Crystal system         | unknown
+  Available quantities   | pressure, temperature, volume
+  Standard uncertainties | pressure, temperature, volume
+  Output archive         | /tmp/quantas-eos-docs-fh6nnb3n/pvt.hdf5
+
+EOS input data
+--------------
+
+  Pressure | Temperature |    Volume
+   (GPa)   |     (K)     | (cm³ mol⁻¹)
+  ---------+-------------+------------
+    0.0614 |      140.00 |   14.757340
+    0.0800 |      170.00 |   14.784670
+    0.1678 |      200.00 |   14.796600
+    0.2191 |      230.00 |   14.805900
+    0.3026 |      260.00 |   14.821990
+    0.3362 |      290.00 |   14.852820
+    0.4239 |      320.00 |   14.871630
+    0.4836 |      350.00 |   14.895770
+
+  Note: Standard uncertainties available for: Pressure, Temperature, Volume
+  Note: Default selection: 48 included, 0 excluded
+  Note: Showing 8 of 48 observations
+
+EOS input standard uncertainties
+--------------------------------
+
+  σ(Pressure) | σ(Temperature) |  σ(Volume)
+     (GPa)    |      (K)       | (cm³ mol⁻¹)
+  ------------+----------------+------------
+       0.0062 |           1.00 |    0.000590
+       0.0058 |           1.00 |    0.000660
+       0.0056 |           1.00 |    0.000660
+       0.0050 |           1.00 |    0.000660
+       0.0050 |           1.00 |    0.000670
+       0.0052 |           1.00 |    0.000670
+       0.0052 |           1.00 |    0.000700
+       0.0054 |           1.00 |    0.000720
+
+  Note: Showing 8 of 48 observations
+
+EOS batch plan
+--------------
+
+  # |        Job         |            Domain           | Quantity |                                                           Formulation                                                            |       Solver       | Selected | Accept | Replace
+  --+--------------------+-----------------------------+----------+----------------------------------------------------------------------------------------------------------------------------------+--------------------+----------+--------+--------
+  1 | linear-coupling    | Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance |       48 | False  |  False
+  2 | anderson-gruneisen | Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance |       48 | False  |  False
+  3 | hp-einstein        | Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]               | Effective variance |       48 | False  |  False
+  4 | mgd-full           | Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance |       48 |  True  |  False
+
+EOS requested fit — linear-coupling
+-----------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | linear-coupling
+  Domain                   | Pressure–volume–temperature
+  Quantity                 | Volume
+  Formulation              | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | dK0/dT=-0.02 (free)
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=48, total=48
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — anderson-gruneisen
+--------------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | anderson-gruneisen
+  Domain                   | Pressure–volume–temperature
+  Quantity                 | Volume
+  Formulation              | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | δ=4.0 (free)
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=48, total=48
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — hp-einstein
+-------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | hp-einstein
+  Domain                   | Pressure–volume–temperature
+  Quantity                 | Volume
+  Formulation              | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | θE=500.0 (free)
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=48, total=48
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — mgd-full
+----------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | mgd-full
+  Domain                   | Pressure–volume–temperature
+  Quantity                 | Volume
+  Formulation              | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | Tref=295.0 (fixed); θD,0=459.0 (free); γ0=1.5 (free); q=1.0 (free)
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=48, total=48
+  Accept successful result | True
+  Replace accepted result  | False
+
+EOS fit configuration — linear-coupling
+---------------------------------------
+
+         Property       |                                                              Value
+  ----------------------+---------------------------------------------------------------------------------------------------------------------------------
+  Job                   | linear-coupling
+  Domain                | Pressure–volume–temperature
+  Quantity              | Volume
+  Formulation           | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus]
+  Solver                | Effective variance
+  Selected observations | 48
+  Record ID             | 1
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter |  State  |    Initial    |    Value     | Final - initial |    E.S.D.    |    Unit   | Bounds
+  ----------+---------+---------------+--------------+-----------------+--------------+-----------+-------
+  K0        | free    |     43.512593 |    44.868125 |        1.355531 |     0.442168 | GPa       |
+  K′        | free    |      4.000000 |     6.720167 |        2.720167 |     0.320260 | —         |
+  K″        | implied |               |    -0.312212 |                 |     0.048762 | GPa⁻¹     |
+  V0        | free    |     14.878829 |    14.974354 |        0.095525 |     0.001758 | cm³ mol⁻¹ |
+  Tref      | fixed   |               |   298.150000 |                 |     0.000000 | K         |
+  α0        | free    | -1.944879e-05 |     0.000102 |        0.000122 | 2.021951e-06 | K⁻¹       |
+  α1        | free    | -1.534353e-06 | 2.438084e-07 |    1.778162e-06 | 2.604092e-08 | K⁻²       |
+  dK0/dT    | free    |     -0.020000 |    -0.032148 |       -0.012148 |     0.002367 | GPa K⁻¹   |
+
+EOS diagnostics — linear-coupling
+---------------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 48
+  Free parameters           | 6
+  Degrees of freedom        | 42
+  RMSE                      | 0.028589
+  MAE                       | 0.019964
+  Maximum absolute residual | 0.092926
+  Reduced chi-square        | 2.536794
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 2.53679
+
+Observed and calculated EOS data
+--------------------------------
+
+    Volume  | Temperature | Pressure observed | Pressure calculated |  Residual
+  ----------+-------------+-------------------+---------------------+----------
+  14.757340 |      140.00 |            0.0614 |              0.0678 | -0.006335
+  14.784670 |      170.00 |            0.0800 |              0.0765 |  0.003538
+  14.796600 |      200.00 |            0.1678 |              0.1463 |  0.021494
+  14.805900 |      230.00 |            0.2191 |              0.2331 | -0.014010
+  14.821990 |      260.00 |            0.3026 |              0.3056 | -0.003020
+  14.852820 |      290.00 |            0.3362 |              0.3387 | -0.002441
+  14.871630 |      320.00 |            0.4239 |              0.4181 |  0.005874
+  14.895770 |      350.00 |            0.4836 |              0.4879 | -0.004313
+  14.840960 |      350.00 |            0.6965 |              0.6612 |  0.035285
+  14.737500 |      350.00 |            1.0339 |              1.0017 |  0.032254
+  14.702460 |      350.00 |            1.1182 |              1.1211 | -0.002939
+  14.497200 |      140.00 |            1.0039 |              1.0192 | -0.015285
+  14.510290 |      170.00 |            1.0815 |              1.0637 |  0.017843
+  14.519830 |      200.00 |            1.1519 |              1.1317 |  0.020207
+  14.532110 |      230.00 |            1.1732 |              1.1986 | -0.025370
+  14.553550 |      260.00 |            1.2274 |              1.2402 | -0.012763
+  14.584140 |      290.00 |            1.2677 |              1.2575 |  0.010224
+  14.610020 |      320.00 |            1.3150 |              1.3014 |  0.013619
+  14.625270 |      350.00 |            1.3781 |              1.3917 | -0.013665
+  14.519800 |      350.00 |            1.6911 |              1.7789 | -0.087827
+  14.402050 |      350.00 |            2.1940 |              2.2360 | -0.042028
+  14.220010 |      140.00 |            2.1740 |              2.1836 | -0.009556
+  14.226480 |      170.00 |            2.2491 |              2.2423 |  0.006789
+  14.236350 |      200.00 |            2.2822 |              2.2967 | -0.014477
+  14.251800 |      230.00 |            2.3360 |              2.3372 | -0.001196
+  14.268730 |      260.00 |            2.3757 |              2.3817 | -0.006013
+  14.304240 |      290.00 |            2.3612 |              2.3576 |  0.003624
+  14.323310 |      320.00 |            2.4273 |              2.4134 |  0.013878
+  14.344680 |      350.00 |            2.4715 |              2.4686 |  0.002832
+  14.255430 |      350.00 |            2.9369 |              2.8440 |  0.092926
+  14.148010 |      350.00 |            3.2788 |              3.3184 | -0.039585
+  13.968730 |      140.00 |            3.4141 |              3.3911 |  0.022915
+  13.978110 |      170.00 |            3.4380 |              3.4229 |  0.015060
+  13.979830 |      200.00 |            3.5324 |              3.5053 |  0.027079
+  13.995210 |      230.00 |            3.5346 |              3.5307 |  0.003859
+  14.010610 |      260.00 |            3.5530 |              3.5676 | -0.014599
+  14.042900 |      290.00 |            3.5963 |              3.5340 |  0.062252
+  14.062830 |      320.00 |            3.6001 |              3.5716 |  0.028544
+  14.074750 |      350.00 |            3.6662 |              3.6568 |  0.009421
+  13.703820 |      140.00 |            4.7942 |              4.8419 | -0.047705
+  13.709900 |      170.00 |            4.8280 |              4.8755 | -0.047519
+  13.719180 |      200.00 |            4.9222 |              4.9041 |  0.018114
+  13.733970 |      230.00 |            4.9110 |              4.9144 | -0.003346
+  13.744180 |      260.00 |            4.9765 |              4.9632 |  0.013256
+  13.770490 |      290.00 |            4.9361 |              4.9349 |  0.001246
+  13.786560 |      320.00 |            4.9321 |              4.9752 | -0.043109
+  13.796140 |      350.00 |            5.0467 |              5.0613 | -0.014604
+  14.968030 |      295.00 |            0.0001 |              0.0045 | -0.004432
+
+Parameter covariance
+--------------------
+
+     Parameter    |       K0      |       KP      |      KPP      |       V0      | temperature_ref |     alpha0    |     alpha1    |     dK0_dT
+  ----------------+---------------+---------------+---------------+---------------+-----------------+---------------+---------------+--------------
+  K0              |  1.955129e-01 | -1.276738e-01 |  1.968665e-02 | -5.752592e-04 |    0.000000e+00 | -3.227869e-07 | -2.570704e-09 |  2.772223e-04
+  KP              | -1.276738e-01 |  1.025663e-01 | -1.561069e-02 |  2.918170e-04 |    0.000000e+00 |  1.141075e-07 |  1.054241e-09 | -2.385329e-05
+  KPP             |  1.968665e-02 | -1.561069e-02 |  2.377734e-03 | -4.589008e-05 |    0.000000e+00 | -1.862499e-08 | -1.692130e-10 |  5.352916e-06
+  V0              | -5.752592e-04 |  2.918170e-04 | -4.589008e-05 |  3.090405e-06 |    0.000000e+00 |  1.299736e-09 |  8.697898e-13 | -1.581594e-06
+  temperature_ref |  0.000000e+00 |  0.000000e+00 |  0.000000e+00 |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  alpha0          | -3.227869e-07 |  1.141075e-07 | -1.862499e-08 |  1.299736e-09 |    0.000000e+00 |  4.088286e-12 |  4.287194e-14 | -3.075023e-09
+  alpha1          | -2.570704e-09 |  1.054241e-09 | -1.692130e-10 |  8.697898e-13 |    0.000000e+00 |  4.287194e-14 |  6.781295e-16 | -1.621935e-11
+  dK0_dT          |  2.772223e-04 | -2.385329e-05 |  5.352916e-06 | -1.581594e-06 |    0.000000e+00 | -3.075023e-09 | -1.621935e-11 |  5.600500e-06
+
+Parameter correlation
+---------------------
+
+     Parameter    |     K0    |     KP    |    KPP    |     V0    | temperature_ref |   alpha0  |   alpha1  |   dK0_dT
+  ----------------+-----------+-----------+-----------+-----------+-----------------+-----------+-----------+----------
+  K0              |  1.000000 | -0.901595 |  0.913067 | -0.740062 |        0.000000 | -0.361042 | -0.223259 |  0.264927
+  KP              | -0.901595 |  1.000000 | -0.999627 |  0.518323 |        0.000000 |  0.176214 |  0.126410 | -0.031473
+  KPP             |  0.913067 | -0.999627 |  1.000000 | -0.535340 |        0.000000 | -0.188905 | -0.133259 |  0.046387
+  V0              | -0.740062 |  0.518323 | -0.535340 |  1.000000 |        0.000000 |  0.365659 |  0.019000 | -0.380166
+  temperature_ref |  0.000000 |  0.000000 |  0.000000 |  0.000000 |        0.000000 |  0.000000 |  0.000000 |  0.000000
+  alpha0          | -0.361042 |  0.176214 | -0.188905 |  0.365659 |        0.000000 |  1.000000 |  0.814228 | -0.642635
+  alpha1          | -0.223259 |  0.126410 | -0.133259 |  0.019000 |        0.000000 |  0.814228 |  1.000000 | -0.263187
+  dK0_dT          |  0.264927 | -0.031473 |  0.046387 | -0.380166 |        0.000000 | -0.642635 | -0.263187 |  1.000000
+
+EOS fit configuration — anderson-gruneisen
+------------------------------------------
+
+         Property       |                                                             Value
+  ----------------------+-------------------------------------------------------------------------------------------------------------------------------
+  Job                   | anderson-gruneisen
+  Domain                | Pressure–volume–temperature
+  Quantity              | Volume
+  Formulation           | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]
+  Solver                | Effective variance
+  Selected observations | 48
+  Record ID             | 2
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter |  State  |    Initial    |    Value     | Final - initial |    E.S.D.    |    Unit   | Bounds
+  ----------+---------+---------------+--------------+-----------------+--------------+-----------+-------
+  K0        | free    |     43.512593 |    44.900978 |        1.388384 |     0.441806 | GPa       |
+  K′        | free    |      4.000000 |     6.745525 |        2.745525 |     0.321014 | —         |
+  K″        | implied |               |    -0.315635 |                 |     0.049235 | GPa⁻¹     |
+  V0        | free    |     14.878829 |    14.974230 |        0.095402 |     0.001768 | cm³ mol⁻¹ |
+  Tref      | fixed   |               |   298.150000 |                 |     0.000000 | K         |
+  α0        | free    | -1.944879e-05 |     0.000104 |        0.000124 | 2.269845e-06 | K⁻¹       |
+  α1        | free    | -1.534353e-06 | 2.721504e-07 |    1.806504e-06 | 3.064201e-08 | K⁻²       |
+  δ         | free    |      4.000000 |     7.673667 |        3.673667 |     0.490715 | —         |
+
+EOS diagnostics — anderson-gruneisen
+------------------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 48
+  Free parameters           | 6
+  Degrees of freedom        | 42
+  RMSE                      | 0.028091
+  MAE                       | 0.019725
+  Maximum absolute residual | 0.099705
+  Reduced chi-square        | 2.526894
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 2.52689
+
+Observed and calculated EOS data
+--------------------------------
+
+    Volume  | Temperature | Pressure observed | Pressure calculated |  Residual
+  ----------+-------------+-------------------+---------------------+----------
+  14.757340 |      140.00 |            0.0614 |              0.0716 | -0.010156
+  14.784670 |      170.00 |            0.0800 |              0.0769 |  0.003091
+  14.796600 |      200.00 |            0.1678 |              0.1448 |  0.023019
+  14.805900 |      230.00 |            0.2191 |              0.2311 | -0.011941
+  14.821990 |      260.00 |            0.3026 |              0.3040 | -0.001419
+  14.852820 |      290.00 |            0.3362 |              0.3381 | -0.001939
+  14.871630 |      320.00 |            0.4239 |              0.4191 |  0.004792
+  14.895770 |      350.00 |            0.4836 |              0.4906 | -0.007027
+  14.840960 |      350.00 |            0.6965 |              0.6631 |  0.033343
+  14.737500 |      350.00 |            1.0339 |              1.0021 |  0.031790
+  14.702460 |      350.00 |            1.1182 |              1.1211 | -0.002897
+  14.497200 |      140.00 |            1.0039 |              1.0184 | -0.014503
+  14.510290 |      170.00 |            1.0815 |              1.0631 |  0.018395
+  14.519830 |      200.00 |            1.1519 |              1.1317 |  0.020213
+  14.532110 |      230.00 |            1.1732 |              1.1992 | -0.026025
+  14.553550 |      260.00 |            1.2274 |              1.2413 | -0.013817
+  14.584140 |      290.00 |            1.2677 |              1.2585 |  0.009237
+  14.610020 |      320.00 |            1.3150 |              1.3018 |  0.013216
+  14.625270 |      350.00 |            1.3781 |              1.3906 | -0.012496
+  14.519800 |      350.00 |            1.6911 |              1.7762 | -0.085094
+  14.402050 |      350.00 |            2.1940 |              2.2315 | -0.037515
+  14.220010 |      140.00 |            2.1740 |              2.1776 | -0.003602
+  14.226480 |      170.00 |            2.2491 |              2.2411 |  0.008029
+  14.236350 |      200.00 |            2.2822 |              2.2990 | -0.016775
+  14.251800 |      230.00 |            2.3360 |              2.3416 | -0.005557
+  14.268730 |      260.00 |            2.3757 |              2.3865 | -0.010796
+  14.304240 |      290.00 |            2.3612 |              2.3608 |  0.000401
+  14.323310 |      320.00 |            2.4273 |              2.4134 |  0.013890
+  14.344680 |      350.00 |            2.4715 |              2.4633 |  0.008225
+  14.255430 |      350.00 |            2.9369 |              2.8372 |  0.099705
+  14.148010 |      350.00 |            3.2788 |              3.3100 | -0.031110
+  13.968730 |      140.00 |            3.4141 |              3.3803 |  0.033804
+  13.978110 |      170.00 |            3.4380 |              3.4214 |  0.016551
+  13.979830 |      200.00 |            3.5324 |              3.5105 |  0.021926
+  13.995210 |      230.00 |            3.5346 |              3.5394 | -0.004843
+  14.010610 |      260.00 |            3.5530 |              3.5767 | -0.023710
+  14.042900 |      290.00 |            3.5963 |              3.5401 |  0.056197
+  14.062830 |      320.00 |            3.6001 |              3.5715 |  0.028571
+  14.074750 |      350.00 |            3.6662 |              3.6471 |  0.019068
+  13.703820 |      140.00 |            4.7942 |              4.8255 | -0.031356
+  13.709900 |      170.00 |            4.8280 |              4.8742 | -0.046204
+  13.719180 |      200.00 |            4.9222 |              4.9130 |  0.009182
+  13.733970 |      230.00 |            4.9110 |              4.9286 | -0.017555
+  13.744180 |      260.00 |            4.9765 |              4.9779 | -0.001427
+  13.770490 |      290.00 |            4.9361 |              4.9448 | -0.008656
+  13.786560 |      320.00 |            4.9321 |              4.9756 | -0.043525
+  13.796140 |      350.00 |            5.0467 |              5.0470 | -0.000372
+  14.968030 |      295.00 |            0.0001 |              0.0039 | -0.003833
+
+Parameter covariance
+--------------------
+
+     Parameter    |       K0      |       KP      |      KPP      |       V0      | temperature_ref |     alpha0    |     alpha1    |     delta
+  ----------------+---------------+---------------+---------------+---------------+-----------------+---------------+---------------+--------------
+  K0              |  1.951929e-01 | -1.283368e-01 |  1.992496e-02 | -5.790870e-04 |    0.000000e+00 | -3.510303e-07 | -3.008020e-09 | -7.943975e-02
+  KP              | -1.283368e-01 |  1.030502e-01 | -1.579948e-02 |  2.946210e-04 |    0.000000e+00 |  1.371593e-07 |  1.396325e-09 |  2.297077e-02
+  KPP             |  1.992496e-02 | -1.579948e-02 |  2.424095e-03 | -4.666223e-05 |    0.000000e+00 | -2.229585e-08 | -2.230029e-10 | -3.879167e-03
+  V0              | -5.790870e-04 |  2.946210e-04 | -4.666223e-05 |  3.126446e-06 |    0.000000e+00 |  1.339366e-09 |  1.245782e-12 |  3.518377e-04
+  temperature_ref |  0.000000e+00 |  0.000000e+00 |  0.000000e+00 |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  alpha0          | -3.510303e-07 |  1.371593e-07 | -2.229585e-08 |  1.339366e-09 |    0.000000e+00 |  5.152198e-12 |  5.953967e-14 |  6.750377e-07
+  alpha1          | -3.008020e-09 |  1.396325e-09 | -2.230029e-10 |  1.245782e-12 |    0.000000e+00 |  5.953967e-14 |  9.389330e-16 |  4.728710e-09
+  delta           | -7.943975e-02 |  2.297077e-02 | -3.879167e-03 |  3.518377e-04 |    0.000000e+00 |  6.750377e-07 |  4.728710e-09 |  2.408010e-01
+
+Parameter correlation
+---------------------
+
+     Parameter    |     K0    |     KP    |    KPP    |     V0    | temperature_ref |   alpha0  |   alpha1  |   delta
+  ----------------+-----------+-----------+-----------+-----------+-----------------+-----------+-----------+----------
+  K0              |  1.000000 | -0.904887 |  0.915990 | -0.741287 |        0.000000 | -0.350039 | -0.222194 | -0.366418
+  KP              | -0.904887 |  1.000000 | -0.999639 |  0.519055 |        0.000000 |  0.188237 |  0.141953 |  0.145822
+  KPP             |  0.915990 | -0.999639 |  1.000000 | -0.536001 |        0.000000 | -0.199505 | -0.147815 | -0.160559
+  V0              | -0.741287 |  0.519055 | -0.536001 |  1.000000 |        0.000000 |  0.333716 |  0.022993 |  0.405497
+  temperature_ref |  0.000000 |  0.000000 |  0.000000 |  0.000000 |        0.000000 |  0.000000 |  0.000000 |  0.000000
+  alpha0          | -0.350039 |  0.188237 | -0.199505 |  0.333716 |        0.000000 |  1.000000 |  0.856038 |  0.606042
+  alpha1          | -0.222194 |  0.141953 | -0.147815 |  0.022993 |        0.000000 |  0.856038 |  1.000000 |  0.314482
+  delta           | -0.366418 |  0.145822 | -0.160559 |  0.405497 |        0.000000 |  0.606042 |  0.314482 |  1.000000
+
+EOS fit configuration — hp-einstein
+-----------------------------------
+
+         Property       |                                                       Value
+  ----------------------+-------------------------------------------------------------------------------------------------------------------
+  Job                   | hp-einstein
+  Domain                | Pressure–volume–temperature
+  Quantity              | Volume
+  Formulation           | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]
+  Solver                | Effective variance
+  Selected observations | 48
+  Record ID             | 3
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter |  State  |   Initial    |   Value    | Final - initial |    E.S.D.    |    Unit   | Bounds
+  ----------+---------+--------------+------------+-----------------+--------------+-----------+-------
+  K0        | free    |    43.512593 |  44.813167 |        1.300574 |     0.493964 | GPa       |
+  K′        | free    |     4.000000 |   7.023415 |        3.023415 |     0.342231 | —         |
+  K″        | implied |              |  -0.358228 |                 |     0.057536 | GPa⁻¹     |
+  V0        | free    |    14.974613 |  14.974418 |       -0.000194 |     0.001910 | cm³ mol⁻¹ |
+  Tref      | fixed   |              | 298.150000 |                 |     0.000000 | K         |
+  αref      | free    | 3.000000e-05 |   0.000101 |    7.111959e-05 | 2.124998e-06 | K⁻¹       |
+  θE        | free    |   500.000000 | 418.824547 |      -81.175453 |    38.133332 | K         |
+
+EOS diagnostics — hp-einstein
+-----------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 48
+  Free parameters           | 5
+  Degrees of freedom        | 43
+  RMSE                      | 0.034077
+  MAE                       | 0.024283
+  Maximum absolute residual | 0.099416
+  Reduced chi-square        | 3.074269
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 3.07427
+
+Observed and calculated EOS data
+--------------------------------
+
+    Volume  | Temperature | Pressure observed | Pressure calculated |  Residual
+  ----------+-------------+-------------------+---------------------+----------
+  14.757340 |      140.00 |            0.0614 |              0.0809 | -0.019508
+  14.784670 |      170.00 |            0.0800 |              0.0795 |  0.000562
+  14.796600 |      200.00 |            0.1678 |              0.1459 |  0.021892
+  14.805900 |      230.00 |            0.2191 |              0.2329 | -0.013753
+  14.821990 |      260.00 |            0.3026 |              0.3063 | -0.003732
+  14.852820 |      290.00 |            0.3362 |              0.3392 | -0.003008
+  14.871630 |      320.00 |            0.4239 |              0.4163 |  0.007623
+  14.895770 |      350.00 |            0.4836 |              0.4810 |  0.002569
+  14.840960 |      350.00 |            0.6965 |              0.6546 |  0.041869
+  14.737500 |      350.00 |            1.0339 |              0.9963 |  0.037604
+  14.702460 |      350.00 |            1.1182 |              1.1164 |  0.001785
+  14.497200 |      140.00 |            1.0039 |              1.0174 | -0.013510
+  14.510290 |      170.00 |            1.0815 |              1.0568 |  0.024680
+  14.519830 |      200.00 |            1.1519 |              1.1263 |  0.025620
+  14.532110 |      230.00 |            1.1732 |              1.1972 | -0.023956
+  14.553550 |      260.00 |            1.2274 |              1.2425 | -0.015012
+  14.584140 |      290.00 |            1.2677 |              1.2611 |  0.006587
+  14.610020 |      320.00 |            1.3150 |              1.3034 |  0.011616
+  14.625270 |      350.00 |            1.3781 |              1.3888 | -0.010711
+  14.519800 |      350.00 |            1.6911 |              1.7793 | -0.088199
+  14.402050 |      350.00 |            2.1940 |              2.2414 | -0.047433
+  14.220010 |      140.00 |            2.1740 |              2.1654 |  0.008558
+  14.226480 |      170.00 |            2.2491 |              2.2264 |  0.022701
+  14.236350 |      200.00 |            2.2822 |              2.2886 | -0.006390
+  14.251800 |      230.00 |            2.3360 |              2.3382 | -0.002237
+  14.268730 |      260.00 |            2.3757 |              2.3904 | -0.014698
+  14.304240 |      290.00 |            2.3612 |              2.3700 | -0.008817
+  14.323310 |      320.00 |            2.4273 |              2.4261 |  0.001150
+  14.344680 |      350.00 |            2.4715 |              2.4770 | -0.005561
+  14.255430 |      350.00 |            2.9369 |              2.8578 |  0.079146
+  14.148010 |      350.00 |            3.2788 |              3.3399 | -0.061103
+  13.968730 |      140.00 |            3.4141 |              3.3580 |  0.056106
+  13.978110 |      170.00 |            3.4380 |              3.4003 |  0.037723
+  13.979830 |      200.00 |            3.5324 |              3.4975 |  0.034934
+  13.995210 |      230.00 |            3.5346 |              3.5379 | -0.003326
+  14.010610 |      260.00 |            3.5530 |              3.5873 | -0.034233
+  14.042900 |      290.00 |            3.5963 |              3.5609 |  0.035437
+  14.062830 |      320.00 |            3.6001 |              3.6012 | -0.001053
+  14.074750 |      350.00 |            3.6662 |              3.6844 | -0.018208
+  13.703820 |      140.00 |            4.7942 |              4.7927 |  0.001516
+  13.709900 |      170.00 |            4.8280 |              4.8472 | -0.019183
+  13.719180 |      200.00 |            4.9222 |              4.8996 |  0.022586
+  13.733970 |      230.00 |            4.9110 |              4.9324 | -0.021374
+  13.744180 |      260.00 |            4.9765 |              5.0003 | -0.023766
+  13.770490 |      290.00 |            4.9361 |              4.9842 | -0.048075
+  13.786560 |      320.00 |            4.9321 |              5.0315 | -0.099416
+  13.796140 |      350.00 |            5.0467 |              5.1189 | -0.072264
+  14.968030 |      295.00 |            0.0001 |              0.0049 | -0.004801
+
+Parameter covariance
+--------------------
+
+     Parameter    |       K0      |       KP      |      KPP      |       V0      | temperature_ref |   alpha_ref   |    theta_e
+  ----------------+---------------+---------------+---------------+---------------+-----------------+---------------+--------------
+  K0              |  2.440009e-01 | -1.585869e-01 |  2.688815e-02 | -7.311150e-04 |    0.000000e+00 | -4.995525e-07 | -2.179031e+00
+  KP              | -1.585869e-01 |  1.171221e-01 | -1.968507e-02 |  4.088896e-04 |    0.000000e+00 |  3.362126e-07 |  1.351751e+00
+  KPP             |  2.688815e-02 | -1.968507e-02 |  3.310398e-03 | -7.014192e-05 |    0.000000e+00 | -5.686246e-08 | -2.299803e-01
+  V0              | -7.311150e-04 |  4.088896e-04 | -7.014192e-05 |  3.646267e-06 |    0.000000e+00 |  1.453216e-09 | -7.134313e-03
+  temperature_ref |  0.000000e+00 |  0.000000e+00 |  0.000000e+00 |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  alpha_ref       | -4.995525e-07 |  3.362126e-07 | -5.686246e-08 |  1.453216e-09 |    0.000000e+00 |  4.515616e-12 |  6.252852e-05
+  theta_e         | -2.179031e+00 |  1.351751e+00 | -2.299803e-01 | -7.134313e-03 |    0.000000e+00 |  6.252852e-05 |  1.454151e+03
+
+Parameter correlation
+---------------------
+
+     Parameter    |     K0    |     KP    |    KPP    |     V0    | temperature_ref | alpha_ref |  theta_e
+  ----------------+-----------+-----------+-----------+-----------+-----------------+-----------+----------
+  K0              |  1.000000 | -0.938106 |  0.946074 | -0.775114 |        0.000000 | -0.475912 | -0.115681
+  KP              | -0.938106 |  1.000000 | -0.999717 |  0.625694 |        0.000000 |  0.462313 |  0.103579
+  KPP             |  0.946074 | -0.999717 |  1.000000 | -0.638430 |        0.000000 | -0.465079 | -0.104820
+  V0              | -0.775114 |  0.625694 | -0.638430 |  1.000000 |        0.000000 |  0.358136 | -0.097977
+  temperature_ref |  0.000000 |  0.000000 |  0.000000 |  0.000000 |        0.000000 |  0.000000 |  0.000000
+  alpha_ref       | -0.475912 |  0.462313 | -0.465079 |  0.358136 |        0.000000 |  1.000000 |  0.771640
+  theta_e         | -0.115681 |  0.103579 | -0.104820 | -0.097977 |        0.000000 |  0.771640 |  1.000000
+
+EOS fit configuration — mgd-full
+--------------------------------
+
+         Property       |                                                          Value
+  ----------------------+------------------------------------------------------------------------------------------------------------------------
+  Job                   | mgd-full
+  Domain                | Pressure–volume–temperature
+  Quantity              | Volume
+  Formulation           | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]
+  Solver                | Effective variance
+  Selected observations | 48
+  Record ID             | 4
+  Accepted              | True
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter | State |  Initial   |   Value    | Final - initial |   E.S.D.  |    Unit   | Bounds
+  ----------+-------+------------+------------+-----------------+-----------+-----------+-------
+  K0        | free  |  43.512593 |  45.339416 |        1.826823 |  0.966802 | GPa       |
+  K′        | free  |   4.000000 |   6.149515 |        2.149515 |  1.413508 | —         |
+  K″        | free  |   0.000000 |   0.117985 |        0.117985 |  0.926164 | GPa⁻¹     |
+  V0        | free  |  14.974613 |  14.969663 |       -0.004950 |  0.002184 | cm³ mol⁻¹ |
+  Tref      | fixed |            | 295.000000 |                 |  0.000000 | K         |
+  θD,0      | free  | 459.000000 | 523.146380 |       64.146380 | 52.021961 | K         |
+  γ0        | free  |   1.500000 |   1.624893 |        0.124893 |  0.071257 | —         |
+  q         | free  |   1.000000 |   2.040148 |        1.040148 |  0.788557 | —         |
+
+EOS diagnostics — mgd-full
+--------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 48
+  Free parameters           | 7
+  Degrees of freedom        | 41
+  RMSE                      | 0.029156
+  MAE                       | 0.021148
+  Maximum absolute residual | 0.102124
+  Reduced chi-square        | 2.802172
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 2.80217
+
+Observed and calculated EOS data
+--------------------------------
+
+    Volume  | Temperature | Pressure observed | Pressure calculated |   Residual
+  ----------+-------------+-------------------+---------------------+-------------
+  14.757340 |      140.00 |            0.0614 |              0.0714 |    -0.009962
+  14.784670 |      170.00 |            0.0800 |              0.0725 |     0.007535
+  14.796600 |      200.00 |            0.1678 |              0.1417 |     0.026108
+  14.805900 |      230.00 |            0.2191 |              0.2310 |    -0.011887
+  14.821990 |      260.00 |            0.3026 |              0.3064 |    -0.003783
+  14.852820 |      290.00 |            0.3362 |              0.3411 |    -0.004866
+  14.871630 |      320.00 |            0.4239 |              0.4205 |     0.003459
+  14.895770 |      350.00 |            0.4836 |              0.4878 |    -0.004215
+  14.840960 |      350.00 |            0.6965 |              0.6607 |     0.035770
+  14.737500 |      350.00 |            1.0339 |              1.0000 |     0.033966
+  14.702460 |      350.00 |            1.1182 |              1.1189 |    -0.000696
+  14.497200 |      140.00 |            1.0039 |              1.0235 |    -0.019619
+  14.510290 |      170.00 |            1.0815 |              1.0626 |     0.018861
+  14.519830 |      200.00 |            1.1519 |              1.1309 |     0.020960
+  14.532110 |      230.00 |            1.1732 |              1.2002 |    -0.027010
+  14.553550 |      260.00 |            1.2274 |              1.2440 |    -0.016503
+  14.584140 |      290.00 |            1.2677 |              1.2616 |     0.006122
+  14.610020 |      320.00 |            1.3150 |              1.3033 |     0.011718
+  14.625270 |      350.00 |            1.3781 |              1.3882 |    -0.010110
+  14.519800 |      350.00 |            1.6911 |              1.7734 |    -0.082326
+  14.402050 |      350.00 |            2.1940 |              2.2285 |    -0.034485
+  14.220010 |      140.00 |            2.1740 |              2.1816 |    -0.007640
+  14.226480 |      170.00 |            2.2491 |              2.2383 |     0.010796
+  14.236350 |      200.00 |            2.2822 |              2.2951 |    -0.012885
+  14.251800 |      230.00 |            2.3360 |              2.3391 |    -0.003084
+  14.268730 |      260.00 |            2.3757 |              2.3858 |    -0.010115
+  14.304240 |      290.00 |            2.3612 |              2.3612 | 3.766440e-05
+  14.323310 |      320.00 |            2.4273 |              2.4130 |     0.014279
+  14.344680 |      350.00 |            2.4715 |              2.4603 |     0.011188
+  14.255430 |      350.00 |            2.9369 |              2.8348 |     0.102124
+  14.148010 |      350.00 |            3.2788 |              3.3092 |    -0.030362
+  13.968730 |      140.00 |            3.4141 |              3.3818 |     0.032232
+  13.978110 |      170.00 |            3.4380 |              3.4160 |     0.022039
+  13.979830 |      200.00 |            3.5324 |              3.5039 |     0.028465
+  13.995210 |      230.00 |            3.5346 |              3.5348 |    -0.000239
+  14.010610 |      260.00 |            3.5530 |              3.5749 |    -0.021883
+  14.042900 |      290.00 |            3.5963 |              3.5404 |     0.055888
+  14.062830 |      320.00 |            3.6001 |              3.5729 |     0.027214
+  14.074750 |      350.00 |            3.6662 |              3.6484 |     0.017814
+  13.703820 |      140.00 |            4.7942 |              4.8294 |    -0.035188
+  13.709900 |      170.00 |            4.8280 |              4.8716 |    -0.043658
+  13.719180 |      200.00 |            4.9222 |              4.9105 |     0.011671
+  13.733970 |      230.00 |            4.9110 |              4.9295 |    -0.018422
+  13.744180 |      260.00 |            4.9765 |              4.9838 |    -0.007339
+  13.770490 |      290.00 |            4.9361 |              4.9549 |    -0.018813
+  13.786560 |      320.00 |            4.9321 |              4.9900 |    -0.057962
+  13.796140 |      350.00 |            5.0467 |              5.0656 |    -0.018942
+  14.968030 |      295.00 |            0.0001 |              0.0049 |    -0.004846
+
+Parameter covariance
+--------------------
+
+     Parameter    |       K0      |       KP      |      KPP      |       V0      | temperature_ref |    theta_d0   |     gamma0    |       q
+  ----------------+---------------+---------------+---------------+---------------+-----------------+---------------+---------------+--------------
+  K0              |  9.347071e-01 | -1.302464e+00 |  7.970145e-01 | -1.668374e-03 |    0.000000e+00 | -8.205892e+00 | -8.933854e-04 |  1.931336e-01
+  KP              | -1.302464e+00 |  1.998006e+00 | -1.283687e+00 |  1.997446e-03 |    0.000000e+00 |  1.098402e+01 | -1.242654e-03 | -3.523004e-01
+  KPP             |  7.970145e-01 | -1.283687e+00 |  8.577793e-01 | -1.156520e-03 |    0.000000e+00 | -6.074528e+00 |  7.536424e-04 |  1.968966e-01
+  V0              | -1.668374e-03 |  1.997446e-03 | -1.156520e-03 |  4.770123e-06 |    0.000000e+00 | -7.118799e-03 | -1.385298e-05 | -5.997464e-05
+  temperature_ref |  0.000000e+00 |  0.000000e+00 |  0.000000e+00 |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  theta_d0        | -8.205892e+00 |  1.098402e+01 | -6.074528e+00 | -7.118799e-03 |    0.000000e+00 |  2.706284e+03 |  3.331695e+00 | -1.498843e+01
+  gamma0          | -8.933854e-04 | -1.242654e-03 |  7.536424e-04 | -1.385298e-05 |    0.000000e+00 |  3.331695e+00 |  5.077515e-03 |  5.451881e-04
+  q               |  1.931336e-01 | -3.523004e-01 |  1.968966e-01 | -5.997464e-05 |    0.000000e+00 | -1.498843e+01 |  5.451881e-04 |  6.218223e-01
+
+Parameter correlation
+---------------------
+
+     Parameter    |     K0    |     KP    |    KPP    |     V0    | temperature_ref |  theta_d0 |   gamma0  |     q
+  ----------------+-----------+-----------+-----------+-----------+-----------------+-----------+-----------+----------
+  K0              |  1.000000 | -0.953080 |  0.890104 | -0.790116 |        0.000000 | -0.163155 | -0.012968 |  0.253330
+  KP              | -0.953080 |  1.000000 | -0.980558 |  0.647011 |        0.000000 |  0.149374 | -0.012337 | -0.316069
+  KPP             |  0.890104 | -0.980558 |  1.000000 | -0.571743 |        0.000000 | -0.126078 |  0.011420 |  0.269598
+  V0              | -0.790116 |  0.647011 | -0.571743 |  1.000000 |        0.000000 | -0.062655 | -0.089013 | -0.034823
+  temperature_ref |  0.000000 |  0.000000 |  0.000000 |  0.000000 |        0.000000 |  0.000000 |  0.000000 |  0.000000
+  theta_d0        | -0.163155 |  0.149374 | -0.126078 | -0.062655 |        0.000000 |  1.000000 |  0.898779 | -0.365373
+  gamma0          | -0.012968 | -0.012337 |  0.011420 | -0.089013 |        0.000000 |  0.898779 |  1.000000 |  0.009703
+  q               |  0.253330 | -0.316069 |  0.269598 | -0.034823 |        0.000000 | -0.365373 |  0.009703 |  1.000000
+
+EOS batch fit summary
+---------------------
+
+             Domain           | Quantity |                                                           Formulation                                                            |       Solver       |        Job         |  Status | Accepted | Points | Free |   RMSE   | Reduced χ² | Max residual | Condition number
+  ----------------------------+----------+----------------------------------------------------------------------------------------------------------------------------------+--------------------+--------------------+---------+----------+--------+------+----------+------------+--------------+-----------------
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance | anderson-gruneisen | success |  False   |     48 |    6 | 0.028091 |   2.526894 |     0.099705 |
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance | linear-coupling    | success |  False   |     48 |    6 | 0.028589 |   2.536794 |     0.092926 |
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]               | Effective variance | hp-einstein        | success |  False   |     48 |    5 | 0.034077 |   3.074269 |     0.099416 |
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance | mgd-full           | success |   True   |     48 |    7 | 0.029156 |   2.802172 |     0.102124 |
+
+  Note: Rows are ordered by domain, quantity, formulation, and solver.
+
+EOS batch parameter summary
+---------------------------
+
+             Domain           | Quantity |                                                           Formulation                                                            |       Solver       |        Job         | Accepted | Parameter |  State  |    Value     |    E.S.D.    |    Unit
+  ----------------------------+----------+----------------------------------------------------------------------------------------------------------------------------------+--------------------+--------------------+----------+-----------+---------+--------------+--------------+----------
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance | anderson-gruneisen |  False   | K0        | free    |    44.900978 |     0.441806 | GPa
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance | anderson-gruneisen |  False   | K′        | free    |     6.745525 |     0.321014 | —
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance | anderson-gruneisen |  False   | K″        | implied |    -0.315635 |     0.049235 | GPa⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance | anderson-gruneisen |  False   | V0        | free    |    14.974230 |     0.001768 | cm³ mol⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance | anderson-gruneisen |  False   | Tref      | fixed   |   298.150000 |     0.000000 | K
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance | anderson-gruneisen |  False   | α0        | free    |     0.000104 | 2.269845e-06 | K⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance | anderson-gruneisen |  False   | α1        | free    | 2.721504e-07 | 3.064201e-08 | K⁻²
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (anderson gruneisen) [BM3+BERMAN:quadratic+anderson-gruneisen]   | Effective variance | anderson-gruneisen |  False   | δ         | free    |     7.673667 |     0.490715 | —
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance | linear-coupling    |  False   | K0        | free    |    44.868125 |     0.442168 | GPa
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance | linear-coupling    |  False   | K′        | free    |     6.720167 |     0.320260 | —
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance | linear-coupling    |  False   | K″        | implied |    -0.312212 |     0.048762 | GPa⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance | linear-coupling    |  False   | V0        | free    |    14.974354 |     0.001758 | cm³ mol⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance | linear-coupling    |  False   | Tref      | fixed   |   298.150000 |     0.000000 | K
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance | linear-coupling    |  False   | α0        | free    |     0.000102 | 2.021951e-06 | K⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance | linear-coupling    |  False   | α1        | free    | 2.438084e-07 | 2.604092e-08 | K⁻²
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Berman, quadratic [BERMAN:quadratic] (linear bulk modulus) [BM3+BERMAN:quadratic+linear-bulk-modulus] | Effective variance | linear-coupling    |  False   | dK0/dT    | free    |    -0.032148 |     0.002367 | GPa K⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]               | Effective variance | hp-einstein        |  False   | K0        | free    |    44.813167 |     0.493964 | GPa
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]               | Effective variance | hp-einstein        |  False   | K′        | free    |     7.023415 |     0.342231 | —
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]               | Effective variance | hp-einstein        |  False   | K″        | implied |    -0.358228 |     0.057536 | GPa⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]               | Effective variance | hp-einstein        |  False   | V0        | free    |    14.974418 |     0.001910 | cm³ mol⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]               | Effective variance | hp-einstein        |  False   | Tref      | fixed   |   298.150000 |     0.000000 | K
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]               | Effective variance | hp-einstein        |  False   | αref      | free    |     0.000101 | 2.124998e-06 | K⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 3 + Holland–Powell Einstein thermal pressure (thermal pressure) [BM3+none+thermal-pressure]               | Effective variance | hp-einstein        |  False   | θE        | free    |   418.824547 |    38.133332 | K
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance | mgd-full           |   True   | K0        | free    |    45.339416 |     0.966802 | GPa
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance | mgd-full           |   True   | K′        | free    |     6.149515 |     1.413508 | —
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance | mgd-full           |   True   | K″        | free    |     0.117985 |     0.926164 | GPa⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance | mgd-full           |   True   | V0        | free    |    14.969663 |     0.002184 | cm³ mol⁻¹
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance | mgd-full           |   True   | Tref      | fixed   |   295.000000 |     0.000000 | K
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance | mgd-full           |   True   | θD,0      | free    |   523.146380 |    52.021961 | K
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance | mgd-full           |   True   | γ0        | free    |     1.624893 |     0.071257 | —
+  Pressure–volume–temperature | Volume   | Birch-Murnaghan, order 4 + Mie–Grüneisen–Debye, full (thermal pressure) [BM4+mie-gruneisen-debye:full+thermal-pressure]          | Effective variance | mgd-full           |   True   | q         | free    |     2.040148 |     0.788557 | —
+
+  Note: Machine-readable parameter names remain unchanged in HDF5 and CSV metadata.

@@ -1,0 +1,757 @@
+EOS input summary
+-----------------
+
+         Property        |                                Value
+  -----------------------+---------------------------------------------------------------------
+  Title                  | PV_Quartz
+  Source                 | /tmp/quantas_eos_tutorial/quantas-2.0.0b6/examples/eos/PV_quartz.dat
+  Observations           | 22
+  Selected by default    | 22
+  Excluded by default    | 0
+  Data groups            | none
+  Crystal system         | unknown
+  Available quantities   | pressure, volume
+  Standard uncertainties | pressure, volume
+  Output archive         | /tmp/quantas-eos-docs-fh6nnb3n/pv.hdf5
+
+EOS input data
+--------------
+
+  Pressure |   Volume
+   (GPa)   |    (Å³)
+  ---------+-----------
+    0.0000 | 112.981000
+    0.4300 | 111.725000
+    0.7940 | 110.711000
+    1.6510 | 108.597000
+    1.8450 | 108.150000
+    1.9340 | 107.974000
+    2.6290 | 106.467000
+    3.3000 | 105.141000
+
+  Note: Standard uncertainties available for: Pressure, Volume
+  Note: Default selection: 22 included, 0 excluded
+  Note: Showing 8 of 22 observations
+
+EOS input standard uncertainties
+--------------------------------
+
+  σ(Pressure)  | σ(Volume)
+     (GPa)     |    (Å³)
+  -------------+----------
+  1.000000e-06 |  0.002000
+        0.0080 |  0.014000
+        0.0080 |  0.006000
+        0.0070 |  0.007000
+        0.0070 |  0.019000
+        0.0070 |  0.008000
+        0.0120 |  0.008000
+        0.0070 |  0.009000
+
+  Note: Showing 8 of 22 observations
+
+EOS batch plan
+--------------
+
+  # |          Job           |      Domain     | Quantity |                    Formulation                    |         Solver         | Selected | Accept | Replace
+  --+------------------------+-----------------+----------+---------------------------------------------------+------------------------+----------+--------+--------
+  1 | bm3-ols                | Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Ordinary least squares |       22 | False  |  False
+  2 | bm3-wls                | Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Weighted least squares |       22 | False  |  False
+  3 | bm3-effective-variance | Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Effective variance     |       22 |  True  |  False
+  4 | bm2-effective-variance | Pressure–volume | Volume   | Birch-Murnaghan, order 2 [BM2]                    | Effective variance     |       22 | False  |  False
+  5 | pt3-effective-variance | Pressure–volume | Volume   | Natural strain (Poirier-Tarantola), order 3 [PT3] | Effective variance     |       22 | False  |  False
+  6 | v3-effective-variance  | Pressure–volume | Volume   | Vinet, order 3 [V3]                               | Effective variance     |       22 | False  |  False
+
+EOS requested fit — bm3-ols
+---------------------------
+
+          Property         |                                                                       Value
+  -------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | bm3-ols
+  Domain                   | Pressure–volume
+  Quantity                 | Volume
+  Formulation              | Birch-Murnaghan, order 3 [BM3]
+  Solver                   | Ordinary least squares
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, max_iterations=10000, metadata=, method=ordinary_least_squares, type=OLSOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=22, total=22
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — bm3-wls
+---------------------------
+
+          Property         |                                                                       Value
+  -------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | bm3-wls
+  Domain                   | Pressure–volume
+  Quantity                 | Volume
+  Formulation              | Birch-Murnaghan, order 3 [BM3]
+  Solver                   | Weighted least squares
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, max_iterations=10000, metadata=, method=weighted_least_squares, type=WLSOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=22, total=22
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — bm3-effective-variance
+------------------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | bm3-effective-variance
+  Domain                   | Pressure–volume
+  Quantity                 | Volume
+  Formulation              | Birch-Murnaghan, order 3 [BM3]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=22, total=22
+  Accept successful result | True
+  Replace accepted result  | False
+
+EOS requested fit — bm2-effective-variance
+------------------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | bm2-effective-variance
+  Domain                   | Pressure–volume
+  Quantity                 | Volume
+  Formulation              | Birch-Murnaghan, order 2 [BM2]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=22, total=22
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — pt3-effective-variance
+------------------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | pt3-effective-variance
+  Domain                   | Pressure–volume
+  Quantity                 | Volume
+  Formulation              | Natural strain (Poirier-Tarantola), order 3 [PT3]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=22, total=22
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — v3-effective-variance
+-----------------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | v3-effective-variance
+  Domain                   | Pressure–volume
+  Quantity                 | Volume
+  Formulation              | Vinet, order 3 [V3]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=22, total=22
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS fit configuration — bm3-ols
+-------------------------------
+
+         Property       |             Value
+  ----------------------+-------------------------------
+  Job                   | bm3-ols
+  Domain                | Pressure–volume
+  Quantity              | Volume
+  Formulation           | Birch-Murnaghan, order 3 [BM3]
+  Solver                | Ordinary least squares
+  Selected observations | 22
+  Record ID             | 1
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter |  State  |  Initial   |   Value    | Final - initial |  E.S.D.  |   Unit  | Bounds
+  ----------+---------+------------+------------+-----------------+----------+---------+-------
+  K0        | free    |  37.461466 |  37.285421 |       -0.176044 | 0.212932 | GPa     |
+  K′        | free    |   4.000000 |   5.933527 |        1.933527 | 0.065701 | —       |
+  K″        | implied |            |  -0.256426 |                 | 0.009990 | (GPa)⁻¹ |
+  V0        | free    | 112.937151 | 112.967525 |        0.030374 | 0.022489 | Å³      |
+
+EOS diagnostics — bm3-ols
+-------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged
+  Points                    | 22
+  Free parameters           | 3
+  Degrees of freedom        | 19
+  RMSE                      | 0.010898
+  MAE                       | 0.008270
+  Maximum absolute residual | 0.023124
+  Reduced chi-square        |
+  Condition number          |
+  Stop reason               | `gtol` termination condition is satisfied.
+
+Observed and calculated EOS data
+--------------------------------
+
+    volume   | Pressure observed | Pressure calculated |  Residual
+  -----------+-------------------+---------------------+----------
+  112.981000 |            0.0000 |             -0.0044 |  0.004446
+  111.725000 |            0.4300 |              0.4261 |  0.003878
+  110.711000 |            0.7940 |              0.7987 | -0.004684
+  108.597000 |            1.6510 |              1.6535 | -0.002532
+  108.150000 |            1.8450 |              1.8488 | -0.003794
+  107.974000 |            1.9340 |              1.9271 |  0.006858
+  106.467000 |            2.6290 |              2.6334 | -0.004373
+  105.141000 |            3.3000 |              3.3104 | -0.010445
+  104.831000 |            3.4800 |              3.4767 |  0.003265
+  104.285000 |            3.7800 |              3.7773 |  0.002676
+  103.810000 |            4.0260 |              4.0470 | -0.021037
+  102.939000 |            4.5540 |              4.5622 | -0.008235
+  102.534000 |            4.8190 |              4.8112 |  0.007783
+  101.933000 |            5.2140 |              5.1921 |  0.021851
+  101.592000 |            5.4160 |              5.4145 |  0.001458
+  101.143000 |            5.7370 |              5.7145 |  0.022520
+  100.051000 |            6.4780 |              6.4790 | -0.001021
+   99.677000 |            6.7510 |              6.7528 | -0.001759
+   99.064000 |            7.1920 |              7.2151 | -0.023124
+   98.204000 |            7.8990 |              7.8936 |  0.005393
+   97.545000 |            8.4490 |              8.4382 |  0.010846
+   96.989000 |            8.9050 |              8.9150 | -0.009961
+
+Parameter covariance
+--------------------
+
+  Parameter |       K0      |       KP      |      KPP      |       V0
+  ----------+---------------+---------------+---------------+--------------
+  K0        |  4.534012e-02 | -1.342734e-02 |  2.064559e-03 | -4.326997e-03
+  KP        | -1.342734e-02 |  4.316562e-03 | -6.558073e-04 |  1.124545e-03
+  KPP       |  2.064559e-03 | -6.558073e-04 |  9.980455e-05 | -1.765509e-04
+  V0        | -4.326997e-03 |  1.124545e-03 | -1.765509e-04 |  5.057651e-04
+
+Parameter correlation
+---------------------
+
+  Parameter |     K0    |     KP    |    KPP    |     V0
+  ----------+-----------+-----------+-----------+----------
+  K0        |  1.000000 | -0.959798 |  0.970534 | -0.903589
+  KP        | -0.959798 |  1.000000 | -0.999153 |  0.761086
+  KPP       |  0.970534 | -0.999153 |  1.000000 | -0.785815
+  V0        | -0.903589 |  0.761086 | -0.785815 |  1.000000
+
+EOS fit configuration — bm3-wls
+-------------------------------
+
+         Property       |             Value
+  ----------------------+-------------------------------
+  Job                   | bm3-wls
+  Domain                | Pressure–volume
+  Quantity              | Volume
+  Formulation           | Birch-Murnaghan, order 3 [BM3]
+  Solver                | Weighted least squares
+  Selected observations | 22
+  Record ID             | 2
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter |  State  |  Initial   |   Value    | Final - initial |    E.S.D.    |   Unit  | Bounds
+  ----------+---------+------------+------------+-----------------+--------------+---------+-------
+  K0        | free    |  37.461466 |  37.145494 |       -0.315971 |     0.086923 | GPa     |
+  K′        | free    |   4.000000 |   5.976661 |        1.976661 |     0.041379 | —       |
+  K″        | implied |            |  -0.263094 |                 |     0.006119 | (GPa)⁻¹ |
+  V0        | free    | 112.937151 | 112.981000 |        0.043849 | 3.813345e-06 | Å³      |
+
+EOS diagnostics — bm3-wls
+-------------------------
+
+            Metric          |                            Value
+  --------------------------+-------------------------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 22
+  Free parameters           | 3
+  Degrees of freedom        | 19
+  RMSE                      | 0.011033
+  MAE                       | 0.008155
+  Maximum absolute residual | 0.023919
+  Reduced chi-square        | 1.571859
+  Condition number          |
+  Stop reason               | Both `ftol` and `xtol` termination conditions are satisfied.
+
+  Note: parameter covariance inflated by reduced chi-square factor 1.57186
+
+Observed and calculated EOS data
+--------------------------------
+
+    volume   | Pressure observed | Pressure calculated |   Residual
+  -----------+-------------------+---------------------+-------------
+  112.981000 |            0.0000 |             -0.0000 | 1.543832e-10
+  111.725000 |            0.4300 |              0.4294 |     0.000645
+  110.711000 |            0.7940 |              0.8010 |    -0.007019
+  108.597000 |            1.6510 |              1.6543 |    -0.003266
+  108.150000 |            1.8450 |              1.8492 |    -0.004242
+  107.974000 |            1.9340 |              1.9275 |     0.006517
+  106.467000 |            2.6290 |              2.6329 |    -0.003941
+  105.141000 |            3.3000 |              3.3096 |    -0.009564
+  104.831000 |            3.4800 |              3.4758 |     0.004216
+  104.285000 |            3.7800 |              3.7763 |     0.003717
+  103.810000 |            4.0260 |              4.0460 |    -0.019954
+  102.939000 |            4.5540 |              4.5612 |    -0.007172
+  102.534000 |            4.8190 |              4.8102 |     0.008793
+  101.933000 |            5.2140 |              5.1913 |     0.022726
+  101.592000 |            5.4160 |              5.4138 |     0.002226
+  101.143000 |            5.7370 |              5.7139 |     0.023112
+  100.051000 |            6.4780 |              6.4790 |    -0.001035
+   99.677000 |            6.7510 |              6.7530 |    -0.002041
+   99.064000 |            7.1920 |              7.2159 |    -0.023919
+   98.204000 |            7.8990 |              7.8953 |     0.003717
+   97.545000 |            8.4490 |              8.4406 |     0.008361
+   96.989000 |            8.9050 |              8.9182 |    -0.013226
+
+Parameter covariance
+--------------------
+
+  Parameter |       K0      |       KP      |      KPP      |       V0
+  ----------+---------------+---------------+---------------+--------------
+  K0        |  7.555682e-03 | -3.504931e-03 |  5.208950e-04 | -1.314612e-10
+  KP        | -3.504931e-03 |  1.712255e-03 | -2.531525e-04 |  3.576669e-11
+  KPP       |  5.208950e-04 | -2.531525e-04 |  3.744707e-05 | -5.700571e-12
+  V0        | -1.314612e-10 |  3.576669e-11 | -5.700571e-12 |  1.454160e-11
+
+Parameter correlation
+---------------------
+
+  Parameter |     K0    |     KP    |    KPP    |     V0
+  ----------+-----------+-----------+-----------+----------
+  K0        |  1.000000 | -0.974448 |  0.979275 | -0.000397
+  KP        | -0.974448 |  1.000000 | -0.999745 |  0.000227
+  KPP       |  0.979275 | -0.999745 |  1.000000 | -0.000244
+  V0        | -0.000397 |  0.000227 | -0.000244 |  1.000000
+
+EOS fit configuration — bm3-effective-variance
+----------------------------------------------
+
+         Property       |             Value
+  ----------------------+-------------------------------
+  Job                   | bm3-effective-variance
+  Domain                | Pressure–volume
+  Quantity              | Volume
+  Formulation           | Birch-Murnaghan, order 3 [BM3]
+  Solver                | Effective variance
+  Selected observations | 22
+  Record ID             | 3
+  Accepted              | True
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter |  State  |  Initial   |   Value    | Final - initial |  E.S.D.  |   Unit  | Bounds
+  ----------+---------+------------+------------+-----------------+----------+---------+-------
+  K0        | free    |  37.461466 |  37.125926 |       -0.335540 | 0.091051 | GPa     |
+  K′        | free    |   4.000000 |   5.988260 |        1.988260 | 0.045302 | —       |
+  K″        | implied |            |  -0.264783 |                 | 0.006703 | (GPa)⁻¹ |
+  V0        | free    | 112.937151 | 112.980884 |        0.043733 | 0.001993 | Å³      |
+
+EOS diagnostics — bm3-effective-variance
+----------------------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged
+  Points                    | 22
+  Free parameters           | 3
+  Degrees of freedom        | 19
+  RMSE                      | 0.011133
+  MAE                       | 0.008139
+  Maximum absolute residual | 0.025099
+  Reduced chi-square        | 0.952062
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+Observed and calculated EOS data
+--------------------------------
+
+    volume   | Pressure observed | Pressure calculated |   Residual
+  -----------+-------------------+---------------------+-------------
+  112.981000 |            0.0000 |             -0.0000 | 3.795781e-05
+  111.725000 |            0.4300 |              0.4291 |     0.000884
+  110.711000 |            0.7940 |              0.8006 |    -0.006647
+  108.597000 |            1.6510 |              1.6537 |    -0.002716
+  108.150000 |            1.8450 |              1.8487 |    -0.003675
+  107.974000 |            1.9340 |              1.9269 |     0.007090
+  106.467000 |            2.6290 |              2.6324 |    -0.003373
+  105.141000 |            3.3000 |              3.3091 |    -0.009080
+  104.831000 |            3.4800 |              3.4753 |     0.004668
+  104.285000 |            3.7800 |              3.7759 |     0.004101
+  103.810000 |            4.0260 |              4.0456 |    -0.019642
+  102.939000 |            4.5540 |              4.5610 |    -0.007024
+  102.534000 |            4.8190 |              4.8102 |     0.008849
+  101.933000 |            5.2140 |              5.1914 |     0.022628
+  101.592000 |            5.4160 |              5.4140 |     0.002030
+  101.143000 |            5.7370 |              5.7142 |     0.022776
+  100.051000 |            6.4780 |              6.4798 |    -0.001773
+   99.677000 |            6.7510 |              6.7539 |    -0.002938
+   99.064000 |            7.1920 |              7.2171 |    -0.025099
+   98.204000 |            7.8990 |              7.8969 |     0.002087
+   97.545000 |            8.4490 |              8.4427 |     0.006340
+   96.989000 |            8.9050 |              8.9206 |    -0.015608
+
+Parameter covariance
+--------------------
+
+  Parameter |       K0      |       KP      |      KPP      |       V0
+  ----------+---------------+---------------+---------------+--------------
+  K0        |  8.290364e-03 | -3.994924e-03 |  5.946240e-04 | -3.761686e-05
+  KP        | -3.994924e-03 |  2.052291e-03 | -3.035899e-04 |  1.080674e-05
+  KPP       |  5.946240e-04 | -3.035899e-04 |  4.493537e-05 | -1.716867e-06
+  V0        | -3.761686e-05 |  1.080674e-05 | -1.716867e-06 |  3.971977e-06
+
+Parameter correlation
+---------------------
+
+  Parameter |     K0    |     KP    |    KPP    |     V0
+  ----------+-----------+-----------+-----------+----------
+  K0        |  1.000000 | -0.968506 |  0.974230 | -0.207297
+  KP        | -0.968506 |  1.000000 | -0.999709 |  0.119694
+  KPP       |  0.974230 | -0.999709 |  1.000000 | -0.128511
+  V0        | -0.207297 |  0.119694 | -0.128511 |  1.000000
+
+EOS fit configuration — bm2-effective-variance
+----------------------------------------------
+
+         Property       |             Value
+  ----------------------+-------------------------------
+  Job                   | bm2-effective-variance
+  Domain                | Pressure–volume
+  Quantity              | Volume
+  Formulation           | Birch-Murnaghan, order 2 [BM2]
+  Solver                | Effective variance
+  Selected observations | 22
+  Record ID             | 4
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter |  State  |  Initial   |   Value    | Final - initial |  E.S.D.  |   Unit  | Bounds
+  ----------+---------+------------+------------+-----------------+----------+---------+-------
+  K0        | free    |  37.461466 |  41.475671 |        4.014206 | 0.274943 | GPa     |
+  K′        | implied |            |   4.000000 |                 | 0.000000 | —       |
+  K″        | implied |            |  -0.093763 |                 | 0.000622 | (GPa)⁻¹ |
+  V0        | free    | 112.937151 | 112.968349 |        0.031198 | 0.022345 | Å³      |
+
+EOS diagnostics — bm2-effective-variance
+----------------------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 22
+  Free parameters           | 2
+  Degrees of freedom        | 20
+  RMSE                      | 0.133695
+  MAE                       | 0.108927
+  Maximum absolute residual | 0.319853
+  Reduced chi-square        | 128.265150
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 128.265
+
+Observed and calculated EOS data
+--------------------------------
+
+    volume   | Pressure observed | Pressure calculated |  Residual
+  -----------+-------------------+---------------------+----------
+  112.981000 |            0.0000 |             -0.0046 |  0.004643
+  111.725000 |            0.4300 |              0.4693 | -0.039294
+  110.711000 |            0.7940 |              0.8717 | -0.077658
+  108.597000 |            1.6510 |              1.7713 | -0.120266
+  108.150000 |            1.8450 |              1.9726 | -0.127611
+  107.974000 |            1.9340 |              2.0530 | -0.119000
+  106.467000 |            2.6290 |              2.7680 | -0.138956
+  105.141000 |            3.3000 |              3.4384 | -0.138438
+  104.831000 |            3.4800 |              3.6011 | -0.121066
+  104.285000 |            3.7800 |              3.8931 | -0.113112
+  103.810000 |            4.0260 |              4.1531 | -0.127134
+  102.939000 |            4.5540 |              4.6448 | -0.090774
+  102.534000 |            4.8190 |              4.8801 | -0.061112
+  101.933000 |            5.2140 |              5.2375 | -0.023469
+  101.592000 |            5.4160 |              5.4446 | -0.028644
+  101.143000 |            5.7370 |              5.7224 |  0.014575
+  100.051000 |            6.4780 |              6.4224 |  0.055558
+   99.677000 |            6.7510 |              6.6704 |  0.080586
+   99.064000 |            7.1920 |              7.0862 |  0.105754
+   98.204000 |            7.8990 |              7.6899 |  0.209063
+   97.545000 |            8.4490 |              8.1692 |  0.279825
+   96.989000 |            8.9050 |              8.5851 |  0.319853
+
+Parameter covariance
+--------------------
+
+  Parameter |       K0      |      KP      |      KPP      |       V0
+  ----------+---------------+--------------+---------------+--------------
+  K0        |  7.559371e-02 | 0.000000e+00 |  1.708930e-04 | -2.176957e-03
+  KP        |  0.000000e+00 | 0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  KPP       |  1.708930e-04 | 0.000000e+00 |  3.863341e-07 | -4.921398e-06
+  V0        | -2.176957e-03 | 0.000000e+00 | -4.921398e-06 |  4.993164e-04
+
+Parameter correlation
+---------------------
+
+  Parameter |     K0    |    KP    |    KPP    |     V0
+  ----------+-----------+----------+-----------+----------
+  K0        |  1.000000 | 0.000000 |  1.000000 | -0.354339
+  KP        |  0.000000 | 0.000000 |  0.000000 |  0.000000
+  KPP       |  1.000000 | 0.000000 |  1.000000 | -0.354339
+  V0        | -0.354339 | 0.000000 | -0.354339 |  1.000000
+
+EOS fit configuration — pt3-effective-variance
+----------------------------------------------
+
+         Property       |                       Value
+  ----------------------+--------------------------------------------------
+  Job                   | pt3-effective-variance
+  Domain                | Pressure–volume
+  Quantity              | Volume
+  Formulation           | Natural strain (Poirier-Tarantola), order 3 [PT3]
+  Solver                | Effective variance
+  Selected observations | 22
+  Record ID             | 5
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter |  State  |  Initial   |   Value    | Final - initial |  E.S.D.  |   Unit  | Bounds
+  ----------+---------+------------+------------+-----------------+----------+---------+-------
+  K0        | free    |  37.461466 |  36.396317 |       -1.065149 | 0.108654 | GPa     |
+  K′        | free    |   4.000000 |   6.909770 |        2.909770 | 0.066338 | —       |
+  K″        | implied |            |  -0.824688 |                 | 0.022129 | (GPa)⁻¹ |
+  V0        | free    | 112.937151 | 112.981299 |        0.044148 | 0.002145 | Å³      |
+
+EOS diagnostics — pt3-effective-variance
+----------------------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 22
+  Free parameters           | 3
+  Degrees of freedom        | 19
+  RMSE                      | 0.012001
+  MAE                       | 0.009457
+  Maximum absolute residual | 0.025617
+  Reduced chi-square        | 1.156613
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 1.15661
+
+Observed and calculated EOS data
+--------------------------------
+
+    volume   | Pressure observed | Pressure calculated |    Residual
+  -----------+-------------------+---------------------+--------------
+  112.981000 |            0.0000 |              0.0001 | -9.643249e-05
+  111.725000 |            0.4300 |              0.4229 |      0.007150
+  110.711000 |            0.7940 |              0.7915 |      0.002465
+  108.597000 |            1.6510 |              1.6443 |      0.006719
+  108.150000 |            1.8450 |              1.8400 |      0.005032
+  107.974000 |            1.9340 |              1.9186 |      0.015448
+  106.467000 |            2.6290 |              2.6281 |      0.000871
+  105.141000 |            3.3000 |              3.3094 |     -0.009436
+  104.831000 |            3.4800 |              3.4768 |      0.003213
+  104.285000 |            3.7800 |              3.7792 |      0.000765
+  103.810000 |            4.0260 |              4.0505 |     -0.024505
+  102.939000 |            4.5540 |              4.5682 |     -0.014226
+  102.534000 |            4.8190 |              4.8182 |      0.000846
+  101.933000 |            5.2140 |              5.2001 |      0.013884
+  101.592000 |            5.4160 |              5.4229 |     -0.006850
+  101.143000 |            5.7370 |              5.7229 |      0.014084
+  100.051000 |            6.4780 |              6.4859 |     -0.007883
+   99.677000 |            6.7510 |              6.7583 |     -0.007338
+   99.064000 |            7.1920 |              7.2176 |     -0.025617
+   98.204000 |            7.8990 |              7.8894 |      0.009622
+   97.545000 |            8.4490 |              8.4266 |      0.022441
+   96.989000 |            8.9050 |              8.8954 |      0.009571
+
+Parameter covariance
+--------------------
+
+  Parameter |       K0      |       KP      |      KPP      |       V0
+  ----------+---------------+---------------+---------------+--------------
+  K0        |  1.180566e-02 | -7.032414e-03 |  2.358026e-03 | -4.736057e-05
+  KP        | -7.032414e-03 |  4.400671e-03 | -1.467533e-03 |  1.793188e-05
+  KPP       |  2.358026e-03 | -1.467533e-03 |  4.896833e-04 | -6.403736e-06
+  V0        | -4.736057e-05 |  1.793188e-05 | -6.403736e-06 |  4.599231e-06
+
+Parameter correlation
+---------------------
+
+  Parameter |     K0    |     KP    |    KPP    |     V0
+  ----------+-----------+-----------+-----------+----------
+  K0        |  1.000000 | -0.975663 |  0.980722 | -0.203249
+  KP        | -0.975663 |  1.000000 | -0.999702 |  0.126044
+  KPP       |  0.980722 | -0.999702 |  1.000000 | -0.134938
+  V0        | -0.203249 |  0.126044 | -0.134938 |  1.000000
+
+EOS fit configuration — v3-effective-variance
+---------------------------------------------
+
+         Property       |         Value
+  ----------------------+----------------------
+  Job                   | v3-effective-variance
+  Domain                | Pressure–volume
+  Quantity              | Volume
+  Formulation           | Vinet, order 3 [V3]
+  Solver                | Effective variance
+  Selected observations | 22
+  Record ID             | 6
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter |  State  |  Initial   |   Value    | Final - initial |  E.S.D.  |   Unit  | Bounds
+  ----------+---------+------------+------------+-----------------+----------+---------+-------
+  K0        | free    |  37.461466 |  37.025430 |       -0.436035 | 0.087377 | GPa     |
+  K′        | free    |   4.000000 |   6.103146 |        2.103146 | 0.041066 | —       |
+  K″        | implied |            |  -0.319669 |                 | 0.004672 | (GPa)⁻¹ |
+  V0        | free    | 112.937151 | 112.980947 |        0.043796 | 0.001993 | Å³      |
+
+EOS diagnostics — v3-effective-variance
+---------------------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged
+  Points                    | 22
+  Free parameters           | 3
+  Degrees of freedom        | 19
+  RMSE                      | 0.010795
+  MAE                       | 0.007903
+  Maximum absolute residual | 0.025266
+  Reduced chi-square        | 0.902934
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+Observed and calculated EOS data
+--------------------------------
+
+    volume   | Pressure observed | Pressure calculated |   Residual
+  -----------+-------------------+---------------------+-------------
+  112.981000 |            0.0000 |             -0.0000 | 1.722684e-05
+  111.725000 |            0.4300 |              0.4282 |     0.001764
+  110.711000 |            0.7940 |              0.7993 |    -0.005343
+  108.597000 |            1.6510 |              1.6523 |    -0.001302
+  108.150000 |            1.8450 |              1.8474 |    -0.002352
+  107.974000 |            1.9340 |              1.9256 |     0.008366
+  106.467000 |            2.6290 |              2.6317 |    -0.002668
+  105.141000 |            3.3000 |              3.3091 |    -0.009054
+  104.831000 |            3.4800 |              3.4755 |     0.004527
+  104.285000 |            3.7800 |              3.7763 |     0.003669
+  103.810000 |            4.0260 |              4.0463 |    -0.020316
+  102.939000 |            4.5540 |              4.5621 |    -0.008081
+  102.534000 |            4.8190 |              4.8113 |     0.007654
+  101.933000 |            5.2140 |              5.1927 |     0.021292
+  101.592000 |            5.4160 |              5.4153 |     0.000657
+  101.143000 |            5.7370 |              5.7156 |     0.021409
+  100.051000 |            6.4780 |              6.4808 |    -0.002788
+   99.677000 |            6.7510 |              6.7547 |    -0.003699
+   99.064000 |            7.1920 |              7.2173 |    -0.025266
+   98.204000 |            7.8990 |              7.8958 |     0.003196
+   97.545000 |            8.4490 |              8.4402 |     0.008840
+   96.989000 |            8.9050 |              8.9166 |    -0.011607
+
+Parameter covariance
+--------------------
+
+  Parameter |       K0      |       KP      |      KPP      |       V0
+  ----------+---------------+---------------+---------------+--------------
+  K0        |  7.634760e-03 | -3.466162e-03 |  3.983999e-04 | -3.655165e-05
+  KP        | -3.466162e-03 |  1.686429e-03 | -1.916926e-04 |  9.744910e-06
+  KPP       |  3.983999e-04 | -1.916926e-04 |  2.182734e-05 | -1.250335e-06
+  V0        | -3.655165e-05 |  9.744910e-06 | -1.250335e-06 |  3.971112e-06
+
+Parameter correlation
+---------------------
+
+  Parameter |     K0    |     KP    |    KPP    |     V0
+  ----------+-----------+-----------+-----------+----------
+  K0        |  1.000000 | -0.965978 |  0.975935 | -0.209920
+  KP        | -0.965978 |  1.000000 | -0.999128 |  0.119080
+  KPP       |  0.975935 | -0.999128 |  1.000000 | -0.134298
+  V0        | -0.209920 |  0.119080 | -0.134298 |  1.000000
+
+EOS batch fit summary
+---------------------
+
+       Domain     | Quantity |                    Formulation                    |         Solver         |          Job           |  Status | Accepted | Points | Free |   RMSE   | Reduced χ² | Max residual | Condition number
+  ----------------+----------+---------------------------------------------------+------------------------+------------------------+---------+----------+--------+------+----------+------------+--------------+-----------------
+  Pressure–volume | Volume   | Birch-Murnaghan, order 2 [BM2]                    | Effective variance     | bm2-effective-variance | success |  False   |     22 |    2 | 0.133695 | 128.265150 |     0.319853 |
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Effective variance     | bm3-effective-variance | success |   True   |     22 |    3 | 0.011133 |   0.952062 |     0.025099 |
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Ordinary least squares | bm3-ols                | success |  False   |     22 |    3 | 0.010898 |            |     0.023124 |
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Weighted least squares | bm3-wls                | success |  False   |     22 |    3 | 0.011033 |   1.571859 |     0.023919 |
+  Pressure–volume | Volume   | Natural strain (Poirier-Tarantola), order 3 [PT3] | Effective variance     | pt3-effective-variance | success |  False   |     22 |    3 | 0.012001 |   1.156613 |     0.025617 |
+  Pressure–volume | Volume   | Vinet, order 3 [V3]                               | Effective variance     | v3-effective-variance  | success |  False   |     22 |    3 | 0.010795 |   0.902934 |     0.025266 |
+
+  Note: Rows are ordered by domain, quantity, formulation, and solver.
+
+EOS batch parameter summary
+---------------------------
+
+       Domain     | Quantity |                    Formulation                    |         Solver         |          Job           | Accepted | Parameter |  State  |   Value    |    E.S.D.    |   Unit
+  ----------------+----------+---------------------------------------------------+------------------------+------------------------+----------+-----------+---------+------------+--------------+--------
+  Pressure–volume | Volume   | Birch-Murnaghan, order 2 [BM2]                    | Effective variance     | bm2-effective-variance |  False   | K0        | free    |  41.475671 |     0.274943 | GPa
+  Pressure–volume | Volume   | Birch-Murnaghan, order 2 [BM2]                    | Effective variance     | bm2-effective-variance |  False   | K′        | implied |   4.000000 |     0.000000 | —
+  Pressure–volume | Volume   | Birch-Murnaghan, order 2 [BM2]                    | Effective variance     | bm2-effective-variance |  False   | K″        | implied |  -0.093763 |     0.000622 | (GPa)⁻¹
+  Pressure–volume | Volume   | Birch-Murnaghan, order 2 [BM2]                    | Effective variance     | bm2-effective-variance |  False   | V0        | free    | 112.968349 |     0.022345 | Å³
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Effective variance     | bm3-effective-variance |   True   | K0        | free    |  37.125926 |     0.091051 | GPa
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Effective variance     | bm3-effective-variance |   True   | K′        | free    |   5.988260 |     0.045302 | —
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Effective variance     | bm3-effective-variance |   True   | K″        | implied |  -0.264783 |     0.006703 | (GPa)⁻¹
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Effective variance     | bm3-effective-variance |   True   | V0        | free    | 112.980884 |     0.001993 | Å³
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Ordinary least squares | bm3-ols                |  False   | K0        | free    |  37.285421 |     0.212932 | GPa
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Ordinary least squares | bm3-ols                |  False   | K′        | free    |   5.933527 |     0.065701 | —
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Ordinary least squares | bm3-ols                |  False   | K″        | implied |  -0.256426 |     0.009990 | (GPa)⁻¹
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Ordinary least squares | bm3-ols                |  False   | V0        | free    | 112.967525 |     0.022489 | Å³
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Weighted least squares | bm3-wls                |  False   | K0        | free    |  37.145494 |     0.086923 | GPa
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Weighted least squares | bm3-wls                |  False   | K′        | free    |   5.976661 |     0.041379 | —
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Weighted least squares | bm3-wls                |  False   | K″        | implied |  -0.263094 |     0.006119 | (GPa)⁻¹
+  Pressure–volume | Volume   | Birch-Murnaghan, order 3 [BM3]                    | Weighted least squares | bm3-wls                |  False   | V0        | free    | 112.981000 | 3.813345e-06 | Å³
+  Pressure–volume | Volume   | Natural strain (Poirier-Tarantola), order 3 [PT3] | Effective variance     | pt3-effective-variance |  False   | K0        | free    |  36.396317 |     0.108654 | GPa
+  Pressure–volume | Volume   | Natural strain (Poirier-Tarantola), order 3 [PT3] | Effective variance     | pt3-effective-variance |  False   | K′        | free    |   6.909770 |     0.066338 | —
+  Pressure–volume | Volume   | Natural strain (Poirier-Tarantola), order 3 [PT3] | Effective variance     | pt3-effective-variance |  False   | K″        | implied |  -0.824688 |     0.022129 | (GPa)⁻¹
+  Pressure–volume | Volume   | Natural strain (Poirier-Tarantola), order 3 [PT3] | Effective variance     | pt3-effective-variance |  False   | V0        | free    | 112.981299 |     0.002145 | Å³
+  Pressure–volume | Volume   | Vinet, order 3 [V3]                               | Effective variance     | v3-effective-variance  |  False   | K0        | free    |  37.025430 |     0.087377 | GPa
+  Pressure–volume | Volume   | Vinet, order 3 [V3]                               | Effective variance     | v3-effective-variance  |  False   | K′        | free    |   6.103146 |     0.041066 | —
+  Pressure–volume | Volume   | Vinet, order 3 [V3]                               | Effective variance     | v3-effective-variance  |  False   | K″        | implied |  -0.319669 |     0.004672 | (GPa)⁻¹
+  Pressure–volume | Volume   | Vinet, order 3 [V3]                               | Effective variance     | v3-effective-variance  |  False   | V0        | free    | 112.980947 |     0.001993 | Å³
+
+  Note: Machine-readable parameter names remain unchanged in HDF5 and CSV metadata.

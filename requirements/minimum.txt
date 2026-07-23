@@ -1,0 +1,10 @@
+# Minimum dependency set declared by Quantas 2.0.0b6.
+numpy==1.23.5
+scipy==1.10.0
+h5py==3.8.0
+PyYAML==6.0
+spglib==2.0.0
+click==8.1.0
+rich==13.0.0
+odrpack==0.6.0
+matplotlib==3.7.0

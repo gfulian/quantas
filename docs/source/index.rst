@@ -1,120 +1,176 @@
-
-=====================
 Quantas documentation
 =====================
 
-**Quantas** stands for **Quant**\itative **A**\nalysis of **S**\olids. It is an open source 
-package in Python_ for the analysis of the thermodynamics, and elastic properties of solid 
-phases starting from theoretical or experimental results.
+.. image:: _static/branding/Quantas_banner-1600.png
+   :alt: Quantas banner
+   :class: hero-banner
 
-.. _Python: https://www.python.org/
+**Quantas** stands for **Quantitative Analysis of Solids**. It is a Python
+library and scientific application for the analysis of solid-state
+thermodynamics, elasticity, seismic-wave propagation, equations of state, and
+thermoelastic properties.
 
-Features
-========
+Quantas 2.0 exposes the same scientific workflows through a reusable Python API
+and a Click/Rich command-line interface. Frontend-neutral results, reports, and
+plot descriptions are designed to support a future graphical interface without
+changing the numerical core.
 
-- Calculation of thermodynamics of solid systems at harmonic approximation 
-  (HA) level
+Start here
+----------
 
-- Calculation of both thermodynamics and thermoelastic properties of solids at selected
-  pressure and temperature conditions via quasi-harmonic approximation (QHA):
-
-- Calculation of the equation of state (EoS) from experimental data
-
-- Analysis of the second-order elastic moduli
-
-- *Analysis of the propagation of acoustic waves in crystalline solids (NEW!)*
-
-- Being written in Python 3, Quantas is completely **cross-platform**!
-
-References
-==========
-
-If you use Quantas to produce data for a publication, you are kindly requested to cite the 
-following work::
-
-  Gianfranco Ulian and Giovanni Valdre'
-  'QUANTAS, a Python software for the analysis of solids from ab initio quantum mechanical simulations and experimental data'
-  Journal of Applied Crystallography 55, 386-396 (2022)
-  http://dx.doi.org/10.1107/S1600576722000085
-  
-Also, the theory behind the different kind of available calculations is discussed in specific
-literature, and we kindly ask you to cite them accordingly.
-
-License
-=======
-
-New BSD.
-
-
-Contact
-=======
-
-Author: `Gianfranco Ulian <mailto:gianfranco.ulian2@unibo.it>`_
-
-Acknowledgements
-================
-
-The development of QUANTAS was supported by the Regione Emilia Romagna project PA2019-11452/RER to Giovanni Valdr |egrave|. 
-The authors wish to thank also the beta testers of QUANTAS for their feedback on the program.
-
-.. |egrave| unicode:: U+00E8 .. grave accent on e
-   :ltrim:
-
+- New users: :doc:`introduction/overview` and
+  :doc:`getting_started/installation`.
+- Researchers choosing a method: :doc:`introduction/capabilities` and
+  :doc:`theory/index`.
+- Command-line users: :doc:`getting_started/command_line`.
+- Python users: :doc:`getting_started/python_api`.
+- Contributors: :doc:`developer/index`.
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Installation
+   :maxdepth: 2
+   :caption: INTRODUCTION
    :hidden:
 
-   installation/prerequisites
-   installation/installation
-   installation/releasenotes
+   introduction/overview
+   introduction/capabilities
+   introduction/changes_from_0_9
+   introduction/citing_quantas
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Theoretical background
+   :maxdepth: 2
+   :caption: GETTING STARTED
    :hidden:
 
-   background/background_qha
-   background/background_eos
-   background/background_soec
-   background/background_seismic
+   getting_started/installation
+   getting_started/first_calculation
+   getting_started/python_api
+   getting_started/command_line
+   getting_started/results
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Getting started
+   :maxdepth: 2
+   :caption: SCIENTIFIC BACKGROUND
    :hidden:
-   
-   usage/commands
-   usage/ha_options
-   usage/qha_options
-   usage/eosfit_options
-   usage/soec_options
-   usage/seismic_options
-   
+
+   theory/ha
+   theory/qha
+   theory/elasticity
+   theory/seismic
+   theory/eos
+   theory/thermoelasticity
+   theory/earth_profiles
+
 .. toctree::
-   :maxdepth: 1
-   :caption: Input files
+   :maxdepth: 3
+   :caption: IMPLEMENTATION AND WORKFLOWS
    :hidden:
-   
-   inputs/input_generator
-   inputs/qha_input
-   inputs/eos_input
-   inputs/soec_input
+
+   workflows/concepts/index
+   workflows/ha
+   workflows/qha
+   workflows/elasticity
+   workflows/seismic
+   workflows/eos
+   workflows/thermoelasticity
+   workflows/interoperability
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Tutorials
-   :hidden: 
-   
-   tutorials/qha_tutorial
-   tutorials/eos_tutorial
-   tutorials/soec_tutorial
-   tutorials/seismic_tutorial
+   :maxdepth: 3
+   :caption: TUTORIALS
+   :hidden:
+
+   tutorials/ha
+   tutorials/qha
+   tutorials/elasticity
+   tutorials/seismic
+   tutorials/eos
+   tutorials/thermoelasticity
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Quantas package
-   :hidden:  
-   
-   modules/modules
+   :maxdepth: 2
+   :caption: INPUT AND OUTPUT FORMATS
+   :hidden:
+
+   formats/index
+   formats/elasticity_input
+   formats/phonon_yaml
+   formats/eos_input
+   formats/eos_spec
+   formats/thermoelastic_input
+   formats/earth_profile_spec
+   formats/hdf5
+   formats/ha_qha_hdf5
+   formats/elasticity_seismic_hdf5
+   formats/eos_hdf5
+   formats/thermoelastic_hdf5
+   formats/hdf5_inspection
+   formats/tabular_outputs
+
+.. toctree::
+   :maxdepth: 2
+   :caption: COMMAND REFERENCE
+   :hidden:
+
+   cli/index
+   cli/conventions
+   cli/ha
+   cli/qha
+   cli/elasticity
+   cli/seismic
+   cli/eos
+   cli/thermoelasticity
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API REFERENCE
+   :hidden:
+
+   api/index
+   api/common
+   api/ha
+   api/qha
+   api/elasticity
+   api/seismic
+   api/eos
+   api/thermoelasticity
+   api/rendering
+   api/profiles
+   api/interoperability
+   api/registry
+
+.. toctree::
+   :maxdepth: 2
+   :caption: SCIENTIFIC VALIDATION
+   :hidden:
+
+   validation/strategy
+   validation/matrix
+   validation/ha_qha
+   validation/elasticity
+   validation/seismic
+   validation/eos
+   validation/thermoelasticity
+   validation/precision
+
+.. toctree::
+   :maxdepth: 2
+   :caption: DEVELOPMENT GUIDE
+   :hidden:
+
+   developer/getting_started
+   developer/architecture
+   developer/module_anatomy
+   developer/numerical_methods
+   developer/public_api
+   developer/change_recipes
+   developer/extending
+   developer/interfaces
+   developer/events
+   developer/persistence
+   developer/rendering_frontends
+   developer/citation_registry
+   developer/testing
+   developer/documentation
+   developer/thermoelastic_architecture
+   developer/packaging
+   developer/review_checklist

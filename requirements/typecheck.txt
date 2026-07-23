@@ -1,0 +1,3 @@
+# Reproducible type-check baseline for the Python 3.10 public contract.
+mypy
+numpy>=1.23.5,<2.3

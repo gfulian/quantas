@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: >-
+  If you use Quantas in published work, please cite the software article and
+  the scientific references reported by the calculation.
+title: Quantas
+type: software
+version: 2.0.0b6
+repository-code: https://github.com/gfulian/quantas
+url: https://quantas.readthedocs.io/
+authors:
+  - family-names: Ulian
+    given-names: Gianfranco
+  - family-names: Valdre'
+    given-names: Giovanni
+license: BSD-3-Clause
+preferred-citation:
+  type: article
+  title: >-
+    QUANTAS, a Python software for the analysis of solids from ab initio
+    quantum mechanical simulations and experimental data
+  authors:
+    - family-names: Ulian
+      given-names: Gianfranco
+    - family-names: Valdre'
+      given-names: Giovanni
+  journal: Journal of Applied Crystallography
+  year: 2022
+  volume: '55'
+  start: 386
+  end: 396
+  doi: 10.1107/S1600576722000085

@@ -1,0 +1,275 @@
+{
+  "couplings": {
+    "anderson-gruneisen": {
+      "points": [
+        {
+          "dK0_dT_GPa_K-1": -0.02112,
+          "pressure_GPa": 11.27581370453952,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 300.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 94.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02112,
+          "pressure_GPa": 3.3725866490395644,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 300.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 98.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02112,
+          "pressure_GPa": -3.0394177821013537,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 300.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 102.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.022081502057073526,
+          "pressure_GPa": 10.818691018859992,
+          "reference_volume_A3": 100.945,
+          "temperature_K": 600.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 94.88829999999999,
+          "zero_pressure_bulk_modulus_GPa": 153.51358299939992
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.022081502057073526,
+          "pressure_GPa": 3.23586162793752,
+          "reference_volume_A3": 100.945,
+          "temperature_K": 600.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 98.92609999999999,
+          "zero_pressure_bulk_modulus_GPa": 153.51358299939992
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.022081502057073526,
+          "pressure_GPa": -2.916199462265426,
+          "reference_volume_A3": 100.945,
+          "temperature_K": 600.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 102.9639,
+          "zero_pressure_bulk_modulus_GPa": 153.51358299939992
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.022797861907626442,
+          "pressure_GPa": 10.343841529281546,
+          "reference_volume_A3": 101.98,
+          "temperature_K": 900.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 95.8612,
+          "zero_pressure_bulk_modulus_GPa": 146.77562861993337
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.022797861907626442,
+          "pressure_GPa": 3.093834534299854,
+          "reference_volume_A3": 101.98,
+          "temperature_K": 900.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 99.9404,
+          "zero_pressure_bulk_modulus_GPa": 146.77562861993337
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.022797861907626442,
+          "pressure_GPa": -2.788202847540812,
+          "reference_volume_A3": 101.98,
+          "temperature_K": 900.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 104.01960000000001,
+          "zero_pressure_bulk_modulus_GPa": 146.77562861993337
+        }
+      ]
+    },
+    "linear-bulk-modulus": {
+      "points": [
+        {
+          "dK0_dT_GPa_K-1": -0.02,
+          "pressure_GPa": 11.27581370453952,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 300.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 94.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02,
+          "pressure_GPa": 3.3725866490395644,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 300.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 98.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02,
+          "pressure_GPa": -3.0394177821013537,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 300.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 102.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02,
+          "pressure_GPa": 10.852970690619289,
+          "reference_volume_A3": 100.945,
+          "temperature_K": 600.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 94.88829999999999,
+          "zero_pressure_bulk_modulus_GPa": 154.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02,
+          "pressure_GPa": 3.246114649700581,
+          "reference_volume_A3": 100.945,
+          "temperature_K": 600.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 98.92609999999999,
+          "zero_pressure_bulk_modulus_GPa": 154.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02,
+          "pressure_GPa": -2.925439615272553,
+          "reference_volume_A3": 100.945,
+          "temperature_K": 600.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 102.9639,
+          "zero_pressure_bulk_modulus_GPa": 154.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02,
+          "pressure_GPa": 10.430127676699056,
+          "reference_volume_A3": 101.98,
+          "temperature_K": 900.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 95.8612,
+          "zero_pressure_bulk_modulus_GPa": 148.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02,
+          "pressure_GPa": 3.1196426503615964,
+          "reference_volume_A3": 101.98,
+          "temperature_K": 900.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 99.9404,
+          "zero_pressure_bulk_modulus_GPa": 148.0
+        },
+        {
+          "dK0_dT_GPa_K-1": -0.02,
+          "pressure_GPa": -2.8114614484437523,
+          "reference_volume_A3": 101.98,
+          "temperature_K": 900.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 104.01960000000001,
+          "zero_pressure_bulk_modulus_GPa": 148.0
+        }
+      ]
+    },
+    "thermal-pressure": {
+      "points": [
+        {
+          "dK0_dT_GPa_K-1": 0.0048000000000000004,
+          "pressure_GPa": 11.27581370453952,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 300.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 94.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": 0.0048000000000000004,
+          "pressure_GPa": 3.3725866490395644,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 300.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 98.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": 0.0048000000000000004,
+          "pressure_GPa": -3.0394177821013537,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 300.0,
+          "thermal_pressure_GPa": 0.0,
+          "volume_A3": 102.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": 0.005682688919279883,
+          "pressure_GPa": 12.888364022120804,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 600.0,
+          "thermal_pressure_GPa": 1.6125503175812852,
+          "volume_A3": 94.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": 0.005682688919279883,
+          "pressure_GPa": 4.98513696662085,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 600.0,
+          "thermal_pressure_GPa": 1.6125503175812852,
+          "volume_A3": 98.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": 0.005682688919279883,
+          "pressure_GPa": -1.4268674645200685,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 600.0,
+          "thermal_pressure_GPa": 1.6125503175812852,
+          "volume_A3": 102.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": 0.005866799788835825,
+          "pressure_GPa": 14.62614163815076,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 900.0,
+          "thermal_pressure_GPa": 3.3503279336112404,
+          "volume_A3": 94.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": 0.005866799788835825,
+          "pressure_GPa": 6.722914582650805,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 900.0,
+          "thermal_pressure_GPa": 3.3503279336112404,
+          "volume_A3": 98.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        },
+        {
+          "dK0_dT_GPa_K-1": 0.005866799788835825,
+          "pressure_GPa": 0.31091015150988666,
+          "reference_volume_A3": 100.0,
+          "temperature_K": 900.0,
+          "thermal_pressure_GPa": 3.3503279336112404,
+          "volume_A3": 102.0,
+          "zero_pressure_bulk_modulus_GPa": 160.0
+        }
+      ]
+    }
+  },
+  "reference_parameters": {
+    "K0_GPa": 160.0,
+    "KP": 4.2,
+    "V0_A3": 100.0,
+    "alpha0_K-1": 3e-05,
+    "alpha1_K-2": 1e-08,
+    "dK0_dT_GPa_K-1": -0.02,
+    "delta": 4.4,
+    "temperature_K": 300.0,
+    "theta_E_K": 500.0
+  },
+  "schema": "quantas.eos.pvt_formula_reference/1",
+  "source": {
+    "citation": "Angel, Gonzalez-Platas, and Alvaro (2014)",
+    "doi": "10.1515/zkri-2013-1711"
+  }
+}

@@ -1,0 +1,7 @@
+dol_pbe0_crystal_pdisp_p01.out
+dol_pbe0_crystal_pdisp_p02.out
+dol_pbe0_crystal_pdisp_p03.out
+dol_pbe0_crystal_pdisp_p04.out
+dol_pbe0_crystal_pdisp_p05.out
+dol_pbe0_crystal_pdisp_p06.out
+dol_pbe0_crystal_pdisp_p07.out

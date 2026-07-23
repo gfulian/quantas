@@ -1,0 +1,19 @@
+schema_version: 1
+name: prem-custom-temperature-example
+
+depth:
+  min_km: 0.0
+  max_km: 100.0
+  step_km: 5.0
+  include_critical_depths: true
+
+pressure:
+  model: prem
+
+temperature:
+  source: table
+  file: prem_custom_temperature.dat
+  interpolation: pchip
+  citation: >-
+    Illustrative user-defined temperature table supplied with Quantas; replace
+    it with a documented geological model before quantitative interpretation.

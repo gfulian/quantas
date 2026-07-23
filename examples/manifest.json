@@ -1,0 +1,411 @@
+{
+  "files": [
+    {
+      "path": "PROVENANCE.md",
+      "sha256": "907af26de8189a000f96720031adcb2d642e6b7baf788f88619cc381697075e6",
+      "size_bytes": 4744
+    },
+    {
+      "path": "README.md",
+      "sha256": "29ea6ed2a59c7d1f19795248d75f48fc4b591e918d82918b251473d2705b155a",
+      "size_bytes": 1628
+    },
+    {
+      "path": "elasticity/README.md",
+      "sha256": "b610091ec34e2fcb717547a868d440fb8a7f02f9049370b51b942284e425bca7",
+      "size_bytes": 562
+    },
+    {
+      "path": "elasticity/calcite.dat",
+      "sha256": "44b44a9315625306a882c0a1db459a8fcdf9c1ffba9a441aa9a098f9d2a093e7",
+      "size_bytes": 493
+    },
+    {
+      "path": "elasticity/hydroxylapatite.dat",
+      "sha256": "2989351f84859622ea4a94ab0cfdf722b57ead1ac9f995c072d49b3617fd512e",
+      "size_bytes": 368
+    },
+    {
+      "path": "elasticity/plot_3d_api.py",
+      "sha256": "08b4d6c52d3e3934eaa7c310dbbe9ed84ce372f2098d4daf3ab8e6de28d2720d",
+      "size_bytes": 1000
+    },
+    {
+      "path": "elasticity/run_api.py",
+      "sha256": "2cb8e83b672068e5e5ca0c9fa3cb2fb7db4accfc2108a28c0aaa087aa390f443",
+      "size_bytes": 949
+    },
+    {
+      "path": "elasticity/tutorial_api.py",
+      "sha256": "fc37e12be4f5eae6d4f846ea6a06aa1d58facbe964b3ae653359cf7dd1ff9b41",
+      "size_bytes": 2557
+    },
+    {
+      "path": "eos/PVT_NaF.dat",
+      "sha256": "91a9b16668b4cc67224ec76c4a21c28f8ee0d20b60995a80f48819033409c74a",
+      "size_bytes": 2265
+    },
+    {
+      "path": "eos/PV_quartz.dat",
+      "sha256": "63f06b3d05437a5c6a5b455eef52e43c5933da2e044ef1248bd12537f7ab111c",
+      "size_bytes": 1200
+    },
+    {
+      "path": "eos/PV_topaz.dat",
+      "sha256": "cf33ecdf013ccf2bf2bb557d26cadae7095819449d0f6e82848a0f83ea8fb9f9",
+      "size_bytes": 1957
+    },
+    {
+      "path": "eos/README.md",
+      "sha256": "5a5d9bd8b4def784924f9ab77bf9768c20cc5fb37104224b81b9bb3ee3519cc5",
+      "size_bytes": 1092
+    },
+    {
+      "path": "eos/T_triclinic.dat",
+      "sha256": "c87aaa900e6801c7a59a3b36d5bcaed2c4b41c12ea385f8f879b4461481d3201",
+      "size_bytes": 3300
+    },
+    {
+      "path": "eos/VT_rutile.dat",
+      "sha256": "58e5c0eead138f97b98896d5786760c4913a7c05f87ab9ddfe0978b6bd1ca8d5",
+      "size_bytes": 4994
+    },
+    {
+      "path": "eos/eos.spec",
+      "sha256": "55fe9ea03c48ca8035745e4f0663ed3d76ab356fe33000e90caa76fb77fc3a6c",
+      "size_bytes": 12098
+    },
+    {
+      "path": "eos/scripts/eos_diagnostics_calculator_api.py",
+      "sha256": "ccab87523175ce1761e8d8a0c9d978ecdf11d00023ace95982f84d31796f02d4",
+      "size_bytes": 2962
+    },
+    {
+      "path": "eos/scripts/eos_plot_api.py",
+      "sha256": "6ca5927de8eb3b699e44aadfba6d9d9ee8e138f43e0e80c366881faa7a1643d5",
+      "size_bytes": 2204
+    },
+    {
+      "path": "eos/scripts/mgd_fit_api.py",
+      "sha256": "b78cb3334bce8c74b62e0260e978bc446812cb724ac8a7545c5671166934f6d5",
+      "size_bytes": 6819
+    },
+    {
+      "path": "eos/scripts/pv_fit_api.py",
+      "sha256": "48dac494c927b08f471e2645e9a693063bac1431408812b71a069c9fa71a84b8",
+      "size_bytes": 1259
+    },
+    {
+      "path": "eos/scripts/pvt_fit_api.py",
+      "sha256": "26377b404dc68170e1277f5698ca89dd7813dbadc7a979463962a297f9610d48",
+      "size_bytes": 1892
+    },
+    {
+      "path": "eos/scripts/run_spec_api.py",
+      "sha256": "0b748864cc985db8247872fcb6d82d379a497de58ea62ab42a1325aa4a044ab3",
+      "size_bytes": 2214
+    },
+    {
+      "path": "eos/scripts/vt_fit_api.py",
+      "sha256": "74109439c971d08ee3dd8479ebf09366a70964b63130b1ad0780589b21eed2d0",
+      "size_bytes": 1192
+    },
+    {
+      "path": "eos/specs/naf_pvt_tutorial.spec",
+      "sha256": "d5a1e690989e88cef18db0b11e76d0f377f1e299ec7b83235025ca81a43a3cab",
+      "size_bytes": 1352
+    },
+    {
+      "path": "eos/specs/quartz_pv_tutorial.spec",
+      "sha256": "78578f71b98b97ce4799c2d3f4e436b5bc50ccd70feaeb8194ffd37f90925ea7",
+      "size_bytes": 933
+    },
+    {
+      "path": "eos/specs/rutile_vt_tutorial.spec",
+      "sha256": "aef78ef773943b1b1c58cda1cb78d8874b847012a4aaed05a47fb2502c30abf7",
+      "size_bytes": 1090
+    },
+    {
+      "path": "ha/README.md",
+      "sha256": "4074b49fedb54b15a1f8b937ae4cb2ebfe67f073e04a3547fed6c5014b7eaa5f",
+      "size_bytes": 370
+    },
+    {
+      "path": "ha/run_api.py",
+      "sha256": "73a69770c36aa9b912d92f8a22f67123c2925a1f45b036351d4a51d48248a0d8",
+      "size_bytes": 778
+    },
+    {
+      "path": "ha/tutorial_api.py",
+      "sha256": "e1aa231e10326c4f8abf7da514ec6c9b5d2e4eec157491a291958f815534b795",
+      "size_bytes": 1944
+    },
+    {
+      "path": "interoperability/README.md",
+      "sha256": "202a58f7865fbe1e573b48691687bc76a8a5bbc98d89a18bac881013f4e24a66",
+      "size_bytes": 585
+    },
+    {
+      "path": "interoperability/workflow_api.py",
+      "sha256": "dfbd0c3f23e0911ec063835b2eefa44353fc0c7ad53352cbdbc8caf79fbc5e51",
+      "size_bytes": 5222
+    },
+    {
+      "path": "interoperability/workflow_cli.sh",
+      "sha256": "15808f74b50ccc4e11277acb8ad6525a3fea4a64579748128aa53b52f0000da4",
+      "size_bytes": 1460
+    },
+    {
+      "path": "io/README.md",
+      "sha256": "80eda831a5f759a192a1f893ddd40b55afa727c25b98be0f1ee0e0d89f49dea8",
+      "size_bytes": 529
+    },
+    {
+      "path": "io/extract_hdf5.py",
+      "sha256": "d3e2e1749c86b24b089e72b0a281121aca570fa0821e137e5ee30026a84d0478",
+      "size_bytes": 5771
+    },
+    {
+      "path": "io/inspect_hdf5.py",
+      "sha256": "6f2190a9086ca1408f71c96b65c66d094a31fe6fa68628387a9ebb7a7609c620",
+      "size_bytes": 3345
+    },
+    {
+      "path": "qha/README.md",
+      "sha256": "ffd9fbbabd63619bef5d3c514fd2e9682b279e146dc7ae2160490c1cae091ee9",
+      "size_bytes": 463
+    },
+    {
+      "path": "qha/compare_methods.py",
+      "sha256": "c0cb1cc7e06b2c3ba7a8096ce8d087e7d109fa710936841fdd8d5cc612c5f31e",
+      "size_bytes": 2964
+    },
+    {
+      "path": "qha/crystal-phonons/dol_pbe0.yaml",
+      "sha256": "6ccbe1c75eb1d159f0c0c3a23b6da473b435acdc569a8f59a7422c50e9c0b153",
+      "size_bytes": 139388
+    },
+    {
+      "path": "qha/crystal-phonons/dol_pbe0_crystal_pdisp_p01.out",
+      "sha256": "30450deeb6540e517bf7a792d60b008eb408f558c83df9efc0fb8560710195ed",
+      "size_bytes": 876665
+    },
+    {
+      "path": "qha/crystal-phonons/dol_pbe0_crystal_pdisp_p02.out",
+      "sha256": "0658cbc423bc382735680665bed9e22e502dc1f2f3b3dad0fed84194f73766ef",
+      "size_bytes": 881566
+    },
+    {
+      "path": "qha/crystal-phonons/dol_pbe0_crystal_pdisp_p03.out",
+      "sha256": "41d9ae6d3c0501f134a4b0629a82a7ad89ad78b7a5c45814da41ffe9ca708e01",
+      "size_bytes": 876596
+    },
+    {
+      "path": "qha/crystal-phonons/dol_pbe0_crystal_pdisp_p04.out",
+      "sha256": "adc5e6521b2d863a4cb0fba09c5f638f378588a0c66158ae791fbb57efe34b8a",
+      "size_bytes": 871518
+    },
+    {
+      "path": "qha/crystal-phonons/dol_pbe0_crystal_pdisp_p05.out",
+      "sha256": "4b6b18c0c1b7e1bc5e08fe6ca580604b9833be011f501b22feee4a7079225282",
+      "size_bytes": 882677
+    },
+    {
+      "path": "qha/crystal-phonons/dol_pbe0_crystal_pdisp_p06.out",
+      "sha256": "f05ad540d48ab537d46778add42eaea076f153b10fe3ad14486707d707a45d88",
+      "size_bytes": 872131
+    },
+    {
+      "path": "qha/crystal-phonons/dol_pbe0_crystal_pdisp_p07.out",
+      "sha256": "08058f1e0ec2bf9dc23eacabbf52739bec63126412525ab13c43462ae634a0a6",
+      "size_bytes": 882292
+    },
+    {
+      "path": "qha/crystal-phonons/files.txt",
+      "sha256": "ca0d14a9d2c0e18453b33975ad6b26c30da4dfe353e875964c8b24c1602cb315",
+      "size_bytes": 216
+    },
+    {
+      "path": "qha/crystal-qha/mgo-b3lyp-crystal-qha.out",
+      "sha256": "55f87ba3b9761ca7a6f151340315cc408b8f390537ae0702bb267d65f412f89f",
+      "size_bytes": 7403502
+    },
+    {
+      "path": "qha/crystal-qha/mgo_b3lyp.yaml",
+      "sha256": "55086f4bd4bdbf24d330e5867394a28aef219ab785c430015678af79c580996e",
+      "size_bytes": 54849
+    },
+    {
+      "path": "qha/run_api.py",
+      "sha256": "c97fea4fd4a07eb4be89813222d7bd8e8d0d841d82e989ebafb0f184d0090bd3",
+      "size_bytes": 792
+    },
+    {
+      "path": "qha/tutorial_api.py",
+      "sha256": "53ad743aed71e5724c92e1938c75ed84793caef4a299d3cc5ec3615e99d1dbf8",
+      "size_bytes": 3263
+    },
+    {
+      "path": "seismic/README.md",
+      "sha256": "00a2ace29722ae9d1b12825903ff8bf8f64e181c6fd057b49e021c60a3b6f6c8",
+      "size_bytes": 325
+    },
+    {
+      "path": "seismic/tutorial_api.py",
+      "sha256": "dc9d0e2de886b413925ade6e51f9e13c2b00a416dff9b9198e8f1e110c369205",
+      "size_bytes": 3737
+    },
+    {
+      "path": "thermoelasticity/README.md",
+      "sha256": "6a7e94fb562a49138206e7729f51b4db91a0bbede42cf32a74d3bd91c3b3404f",
+      "size_bytes": 1394
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec.txt",
+      "sha256": "7f3a8ff14111b7938b985907d3b7ba1d66841cc1e070f71bb233048aaab3fc16",
+      "size_bytes": 253
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p+00.out",
+      "sha256": "b022804464b60ff3ffc2bca80797d0065b5bbd57f3c9d7afa06d6672c8f5cd52",
+      "size_bytes": 128146
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p+02.out",
+      "sha256": "733b3216ef32795963ed942b8b0958616b201024e985311968562fc2dfabe072",
+      "size_bytes": 205453
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p+04.out",
+      "sha256": "a913c6d3b82220f3ebefdcf2c41c8996d4d6828586d732786e2f50b6f5be650d",
+      "size_bytes": 161082
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p+06.out",
+      "sha256": "0dc1d6fb43609442e847fc116186835803e9d04dcd022994b35b2b5d27d864a3",
+      "size_bytes": 160478
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p+08.out",
+      "sha256": "d804dfab85f9daa6c0f6c52a505fcee880e8924fb2014dbb7767fccdec0f261b",
+      "size_bytes": 152727
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p+10.out",
+      "sha256": "54adcfb7141c1535c1288d798404beb6ab2a329392be0808f038cb101b2ae9a6",
+      "size_bytes": 148525
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p+15.out",
+      "sha256": "5b9c46b34ee1577973ff5c3f6dd9e1874e79397d582cb364cfbc413227f9f9d0",
+      "size_bytes": 156720
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p+20.out",
+      "sha256": "98df29879f05ed4a621cb0c37aa1be60c2608cac9afd6c5f7c040ac5889639c7",
+      "size_bytes": 167358
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p-02.out",
+      "sha256": "0aa554ad105c212970b2bbaf664f35793ad88b28766581c173c3fe09c98ebc19",
+      "size_bytes": 184593
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p-04.out",
+      "sha256": "30f26d0c9819141c831c1b380ba734f1b59f0a120e4cfa5bc72ca15137e373ad",
+      "size_bytes": 164961
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/dol_pbe0_soec_p-06.out",
+      "sha256": "9b1a9bbf47e97950e5f38d4b94479e7d6a56e3446f95896450751a1f27f7abb0",
+      "size_bytes": 173322
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/mgo-b3lyp-soec.txt",
+      "sha256": "fa54653d46d17c748724bece3cc7b78b33ee28c6065543c2367afa329e1de70e",
+      "size_bytes": 191
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/mgo-b3lyp-soec_p+00.out",
+      "sha256": "045709f1c3e4cf36cd0e34b19b707d8635076c5df1e2bf55bb9ab687a3c81312",
+      "size_bytes": 57301
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/mgo-b3lyp-soec_p+04.out",
+      "sha256": "18befb96b47b489b59c9cb8ab843ad78582882b26cb0407ede1ff73ba5da0076",
+      "size_bytes": 95037
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/mgo-b3lyp-soec_p+08.out",
+      "sha256": "31c8dec31f7b9abf509572120a0219f5bf1d3f305eaebb49a1409da14f5e0354",
+      "size_bytes": 99581
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/mgo-b3lyp-soec_p+16.out",
+      "sha256": "1e4f97c744fd4f2934263d48184f919ed75592c4ca67cebbe2b7dc4656d0822d",
+      "size_bytes": 146231
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/mgo-b3lyp-soec_p-04.out",
+      "sha256": "b5762042c8c49e817570738c118dc9e0d2b9b9637ad157a297db1146312625d9",
+      "size_bytes": 91631
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/mgo-b3lyp-soec_p-08.out",
+      "sha256": "585dfb2baa3254ec15c9ca5df03a25a62def4bc65e67ce8395b2cd0dc08c33da",
+      "size_bytes": 103197
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/mgo-b3lyp-soec_p-12.out",
+      "sha256": "f6fe61f144500d293b79ef011c6d066379c1f7f47cd04b7c9bce435c5cb5c38f",
+      "size_bytes": 99893
+    },
+    {
+      "path": "thermoelasticity/crystal_outputs/mgo-b3lyp-soec_p-16.out",
+      "sha256": "c669730d21d9191a159ba2888b016736eb8ca1af1c8e42401e34de6f241af025",
+      "size_bytes": 94213
+    },
+    {
+      "path": "thermoelasticity/dol_pbe0_thermoelastic.yaml",
+      "sha256": "a1aa4b8942cf319249afefe201315d6d5fa1242ba2db9a424b0a03630635c766",
+      "size_bytes": 18181
+    },
+    {
+      "path": "thermoelasticity/dolomite_continental_profile.yaml",
+      "sha256": "eebc3bb611fbf636427e89458500b40f3d687f74ecd74cb5107d09489aec08e4",
+      "size_bytes": 932
+    },
+    {
+      "path": "thermoelasticity/prem_custom_temperature.dat",
+      "sha256": "68545a9caeccb14818a0b0bc5939ce0a81c3f59d209e5f220029d1d7360e3d88",
+      "size_bytes": 168
+    },
+    {
+      "path": "thermoelasticity/prem_custom_temperature.yaml",
+      "sha256": "c1347c8e1a1b710a8877f302bab66fe13b9d6f016aeb1214605389d6c5d2e199",
+      "size_bytes": 427
+    },
+    {
+      "path": "thermoelasticity/scripts/plotting_foundations.py",
+      "sha256": "ee3dfc68fe167ee4a465bf8ca06534583e38c105eb2faceae63d595f7a09b1a9",
+      "size_bytes": 2352
+    },
+    {
+      "path": "thermoelasticity/scripts/qsa_fit_and_depth_profile.py",
+      "sha256": "04e4a0e3f45faa09d366ab9b519644a58cc9557556769090fd70785a9a78201d",
+      "size_bytes": 6062
+    },
+    {
+      "path": "thermoelasticity/scripts/qsa_input_api.py",
+      "sha256": "2ddd6a6c98ce34f0f5800163608fe1a9356b360cd55645c0a5a5c110c501273c",
+      "size_bytes": 2602
+    },
+    {
+      "path": "thermoelasticity/tutorial_api.py",
+      "sha256": "49a98beee665afd9f1bc910e9fda8304b613568decb2a8126722916e7fc952a7",
+      "size_bytes": 8279
+    }
+  ],
+  "schema": "quantas-examples-manifest",
+  "version": 1
+}

@@ -1,0 +1,57 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environments and IDE files
+.venv/
+.venv-validation/
+venv/
+env/
+.tox/
+.nox/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+*.whl
+
+# Documentation build and generated tutorial products
+docs/_build/
+docs/source/_static/generated/
+docs/source/_downloads/calcite_elasticity.hdf5
+
+# Local scientific results and rendered figures
+*.hdf5
+*.h5
+*.png
+*.pdf
+*.svg
+*.log
+
+# Allow deliberate public documentation assets
+!docs/source/_static/**/*.png
+!docs/source/_static/**/*.svg
+!docs/source/_downloads/**/*.pdf
+!docs/source/_downloads/**/*.hdf5
+
+# Keep reproducibly generated tutorial products local
+docs/source/_static/generated/
+docs/source/_downloads/calcite_elasticity.hdf5
+
+# Internal refactoring workspace: retained in local archives, not public GitHub
+project_internal/
+
+# Maintainer-only validation output
+validation/
+PROJECT_STATUS.md
+PACKAGE_MANIFEST_SHA256.txt

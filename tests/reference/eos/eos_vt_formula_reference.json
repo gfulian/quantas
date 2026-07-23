@@ -1,0 +1,225 @@
+{
+  "models": {
+    "berman": {
+      "parameters": {
+        "alpha0": 3e-05,
+        "alpha1": 1e-08
+      },
+      "points": [
+        {
+          "alpha_K-1": 2.818048659078256e-05,
+          "alpha_finite_difference_K-1": 2.8180487180485445e-05,
+          "relative_derivative_error": 2.092592980856441e-08,
+          "temperature_K": 100.0,
+          "value": 99.42518171125
+        },
+        {
+          "alpha_K-1": 3e-05,
+          "alpha_finite_difference_K-1": 3.0000000128828772e-05,
+          "relative_derivative_error": 4.2942923793743565e-09,
+          "temperature_K": 298.15,
+          "value": 100.0
+        },
+        {
+          "alpha_K-1": 3.270741755654316e-05,
+          "alpha_finite_difference_K-1": 3.2707417725980126e-05,
+          "relative_derivative_error": 5.180383536779238e-09,
+          "temperature_K": 600.0,
+          "value": 100.95110671125
+        },
+        {
+          "alpha_K-1": 3.6167886745057734e-05,
+          "alpha_finite_difference_K-1": 3.6167886726440885e-05,
+          "relative_derivative_error": 5.147342223089578e-10,
+          "temperature_K": 1000.0,
+          "value": 102.35184671124999
+        }
+      ],
+      "reference_conditions": {
+        "temperature_K": 298.15,
+        "value": 100.0
+      }
+    },
+    "fei": {
+      "parameters": {
+        "alpha0": 2.5e-05,
+        "alpha1": 1e-08,
+        "alpha2": 0.1
+      },
+      "points": [
+        {
+          "alpha_K-1": 3.6e-05,
+          "alpha_finite_difference_K-1": 3.6000000302399735e-05,
+          "relative_derivative_error": 8.399992609521181e-09,
+          "temperature_K": 100.0,
+          "value": 99.40052253291263
+        },
+        {
+          "alpha_K-1": 2.9106442624410708e-05,
+          "alpha_finite_difference_K-1": 2.9106442651577467e-05,
+          "relative_derivative_error": 9.333589583185696e-10,
+          "temperature_K": 298.15,
+          "value": 100.0
+        },
+        {
+          "alpha_K-1": 3.1277777777777776e-05,
+          "alpha_finite_difference_K-1": 3.1277777745344315e-05,
+          "relative_derivative_error": 1.036949011753355e-09,
+          "temperature_K": 600.0,
+          "value": 100.91117796724308
+        },
+        {
+          "alpha_K-1": 3.5100000000000006e-05,
+          "alpha_finite_difference_K-1": 3.510000008444117e-05,
+          "relative_derivative_error": 2.405731103851206e-09,
+          "temperature_K": 1000.0,
+          "value": 102.25885273791617
+        }
+      ],
+      "reference_conditions": {
+        "temperature_K": 298.15,
+        "value": 100.0
+      }
+    },
+    "kroll_holland_powell": {
+      "parameters": {
+        "alpha_ref": 3e-05,
+        "kp": 4.0,
+        "theta_e": 500.0
+      },
+      "points": [
+        {
+          "alpha_K-1": 0.0,
+          "alpha_finite_difference_K-1": null,
+          "relative_derivative_error": null,
+          "temperature_K": 0.0,
+          "value": 99.57097775056889
+        },
+        {
+          "alpha_K-1": 6.334673925830646e-06,
+          "alpha_finite_difference_K-1": 6.334675069163243e-06,
+          "relative_derivative_error": 1.8048799521983862e-07,
+          "temperature_K": 100.0,
+          "value": 99.58350539374746
+        },
+        {
+          "alpha_K-1": 3e-05,
+          "alpha_finite_difference_K-1": 2.999999941387717e-05,
+          "relative_derivative_error": 1.9537427728523345e-08,
+          "temperature_K": 298.15,
+          "value": 100.0
+        },
+        {
+          "alpha_K-1": 3.713191732454494e-05,
+          "alpha_finite_difference_K-1": 3.7131917331094434e-05,
+          "relative_derivative_error": 1.7638453355776847e-10,
+          "temperature_K": 600.0,
+          "value": 101.04288848666823
+        },
+        {
+          "alpha_K-1": 4.1063802629121426e-05,
+          "alpha_finite_difference_K-1": 4.106380225817687e-05,
+          "relative_derivative_error": 9.0333707566784e-09,
+          "temperature_K": 1000.0,
+          "value": 102.64052836076533
+        }
+      ],
+      "reference_conditions": {
+        "temperature_K": 298.15,
+        "value": 100.0
+      }
+    },
+    "modified_holland_powell": {
+      "parameters": {
+        "alpha0": 3e-05,
+        "alpha1": 5e-05
+      },
+      "points": [
+        {
+          "alpha_K-1": -5.004291608362107e-06,
+          "alpha_finite_difference_K-1": -5.0042913112664385e-06,
+          "relative_derivative_error": 5.936817674408794e-08,
+          "temperature_K": 100.0,
+          "value": 99.91424144118753
+        },
+        {
+          "alpha_K-1": 9.73014520899656e-06,
+          "alpha_finite_difference_K-1": 9.730145055337862e-06,
+          "relative_derivative_error": 1.5792025225183806e-08,
+          "temperature_K": 298.15,
+          "value": 100.0
+        },
+        {
+          "alpha_K-1": 1.5648777534496135e-05,
+          "alpha_finite_difference_K-1": 1.5648777760188088e-05,
+          "relative_derivative_error": 1.4422337592525419e-08,
+          "temperature_K": 600.0,
+          "value": 100.39959862123933
+        },
+        {
+          "alpha_K-1": 1.8725921877239965e-05,
+          "alpha_finite_difference_K-1": 1.8725921758817458e-05,
+          "relative_derivative_error": 6.323988117994378e-09,
+          "temperature_K": 1000.0,
+          "value": 101.10064707906965
+        }
+      ],
+      "reference_conditions": {
+        "temperature_K": 298.15,
+        "value": 100.0
+      }
+    },
+    "salje": {
+      "parameters": {
+        "p1": 0.0001,
+        "theta_sat": 300.0
+      },
+      "points": [
+        {
+          "alpha_K-1": 0.0,
+          "alpha_finite_difference_K-1": null,
+          "relative_derivative_error": null,
+          "temperature_K": 0.0,
+          "value": 100.0
+        },
+        {
+          "alpha_K-1": 5.796047514444926e-06,
+          "alpha_finite_difference_K-1": 5.796047666429768e-06,
+          "relative_derivative_error": 2.622215253946382e-08,
+          "temperature_K": 100.0,
+          "value": 100.0096367533154
+        },
+        {
+          "alpha_K-1": 4.652357760897929e-05,
+          "alpha_finite_difference_K-1": 4.652357726848112e-05,
+          "relative_derivative_error": 7.31883034106087e-09,
+          "temperature_K": 298.15,
+          "value": 100.59952590387658
+        },
+        {
+          "alpha_K-1": 5.906161425824896e-05,
+          "alpha_finite_difference_K-1": 5.906161450063669e-05,
+          "relative_derivative_error": 4.10398085587395e-09,
+          "temperature_K": 600.0,
+          "value": 102.2739166177393
+        },
+        {
+          "alpha_K-1": 6.175741448576124e-05,
+          "alpha_finite_difference_K-1": 6.175741460527691e-05,
+          "relative_derivative_error": 1.935244087311645e-09,
+          "temperature_K": 1000.0,
+          "value": 104.79161599290094
+        }
+      ],
+      "reference_conditions": {
+        "temperature_K": 0.0,
+        "value": 100.0
+      }
+    }
+  },
+  "schema": "quantas.eos.vt_formula_audit/1",
+  "source": {
+    "citation": "Angel, Gonzalez-Platas, and Alvaro (2014)",
+    "doi": "10.1515/zkri-2013-1711"
+  }
+}

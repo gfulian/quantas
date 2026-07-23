@@ -1,0 +1,7 @@
+# Illustrative temperature-only depth table for profile-spec examples.
+depth_km  T_K
+0         288.15
+15        550.0
+35        800.0
+70        1250.0
+100       1500.0

@@ -1,0 +1,6 @@
+record_id,job,model,solver,V0,alpha_300_K,alpha_1000_K,RMSE,reduced_chi_square
+1,berman-ols,BERMAN:quadratic,ordinary_least_squares,1.0003878677,2.2887071414e-05,3.3198139352e-05,5.9565705459e-04,
+2,berman-wls,BERMAN:quadratic,weighted_least_squares,1.0005401182,2.1957260291e-05,3.6024358843e-05,6.8664187062e-04,13.742328620
+3,berman-effective-variance,BERMAN:quadratic,effective_variance,1.0005769060,2.1823210788e-05,3.5327785145e-05,6.4954844701e-04,8.108683444
+4,fei-effective-variance,FEI:inverse-square,effective_variance,1.0000279893,2.6837174447e-05,3.0229116452e-05,6.4863167119e-04,4.106358595
+5,salje-effective-variance,SALJE:standard,effective_variance,0.9955858144,2.6236402305e-05,2.9325518109e-05,6.4065624530e-04,3.781739666

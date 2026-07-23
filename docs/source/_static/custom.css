@@ -1,3 +1,63 @@
+.wy-side-nav-search .wy-dropdown > a,
+.wy-side-nav-search > a {
+  font-weight: 700;
+}
+
+.hero-banner {
+  margin-bottom: 1.5rem;
+}
+
+.hero-banner img {
+  width: 100%;
+  max-width: 1200px;
+  height: auto;
+  border-radius: 0.25rem;
+}
+
+.landing-intro {
+  margin-bottom: 1rem;
+}
+
+.section-summary {
+  margin: 1.2rem 0;
+  padding: 0.8rem 1rem;
+  border-left: 4px solid #2980b9;
+  background: #f8fbfd;
+}
+
+.section-summary p:last-child {
+  margin-bottom: 0;
+}
+
+.gui-banner {
+  margin: 1rem 0 1.5rem 0;
+  padding: 0.8rem 1rem;
+  border-left: 4px solid #8e44ad;
+  background: #fbf7fd;
+}
+
+.capability-note {
+  margin-top: 1rem;
+}
+
+/* Use the complete content column instead of the RTD theme's narrow default. */
 .wy-nav-content {
-   max-width: none;
+  box-sizing: border-box;
+  max-width: none;
+  width: 100%;
+}
+
+/* Keep desktop navigation fixed and independently scrollable. */
+@media screen and (min-width: 769px) {
+  .wy-nav-side {
+    height: 100vh;
+    overflow: hidden;
+    position: fixed;
+  }
+
+  .wy-side-scroll {
+    height: 100vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
 }

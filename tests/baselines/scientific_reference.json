@@ -1,0 +1,138 @@
+{
+  "arrays": [
+    "elasticity_averages",
+    "elasticity_compliance",
+    "elasticity_eigenvalues",
+    "elasticity_stiffness",
+    "elasticity_xy_poisson_ratio",
+    "elasticity_xy_shear_modulus",
+    "elasticity_xy_young_modulus",
+    "ha_free_energy",
+    "ha_isochoric_heat_capacity",
+    "ha_temperature",
+    "ha_volume",
+    "ha_zero_point_energy",
+    "qha_freq_eos_equilibrium_volume",
+    "qha_freq_eos_free_energy",
+    "qha_freq_eos_isobaric_heat_capacity",
+    "qha_freq_eos_isothermal_bulk_modulus",
+    "qha_freq_eos_valid_mask",
+    "qha_freq_poly_equilibrium_volume",
+    "qha_freq_poly_free_energy",
+    "qha_freq_poly_isobaric_heat_capacity",
+    "qha_freq_poly_isothermal_bulk_modulus",
+    "qha_freq_poly_valid_mask",
+    "qha_td_eos_equilibrium_volume",
+    "qha_td_eos_free_energy",
+    "qha_td_eos_isobaric_heat_capacity",
+    "qha_td_eos_isothermal_bulk_modulus",
+    "qha_td_eos_valid_mask",
+    "qha_td_poly_equilibrium_volume",
+    "qha_td_poly_free_energy",
+    "qha_td_poly_isobaric_heat_capacity",
+    "qha_td_poly_isothermal_bulk_modulus",
+    "qha_td_poly_valid_mask"
+  ],
+  "baseline": "Quantas 2.0 scientific checkpoint",
+  "elasticity_options": {
+    "calculate_2d": true,
+    "ntheta": 9
+  },
+  "elasticity_sampling": "exact_batched_transverse_eigensolution",
+  "ha_options": {
+    "temperature_max": 200.0,
+    "temperature_min": 0.0,
+    "temperature_step": 100.0
+  },
+  "npz_sha256": "0bbe2a3e6c54b873932479504667e965acaf7ffb0772baf10b0ff459ee1f3ba8",
+  "numpy_version": "2.3.5",
+  "python_version": "3.13.5",
+  "qha_options": {
+    "freq_eos": {
+      "eos": "BM",
+      "minimization": "eos",
+      "pressure": [
+        0.0,
+        5.0,
+        5.0
+      ],
+      "scheme": "freq",
+      "temperature": [
+        0.0,
+        200.0,
+        200.0
+      ]
+    },
+    "freq_poly": {
+      "eos": "BM",
+      "minimization": "poly",
+      "pressure": [
+        0.0,
+        5.0,
+        5.0
+      ],
+      "scheme": "freq",
+      "temperature": [
+        0.0,
+        200.0,
+        200.0
+      ]
+    },
+    "td_eos": {
+      "eos": "BM",
+      "minimization": "eos",
+      "pressure": [
+        0.0,
+        5.0,
+        5.0
+      ],
+      "scheme": "td",
+      "temperature": [
+        0.0,
+        200.0,
+        200.0
+      ]
+    },
+    "td_poly": {
+      "eos": "BM",
+      "minimization": "poly",
+      "pressure": [
+        0.0,
+        5.0,
+        5.0
+      ],
+      "scheme": "td",
+      "temperature": [
+        0.0,
+        200.0,
+        200.0
+      ]
+    }
+  },
+  "quantas_version": "2.0.0",
+  "scipy_version": "1.17.0",
+  "tolerances": {
+    "elasticity": {
+      "atol": 1e-10,
+      "rtol": 1e-10
+    },
+    "ha": {
+      "atol": 1e-12,
+      "rtol": 1e-12
+    },
+    "qha": {
+      "atol": 1e-08,
+      "rtol": 1e-07
+    },
+    "qha_derived": {
+      "isobaric_heat_capacity": {
+        "atol": 1e-06,
+        "rtol": 1e-06
+      },
+      "isothermal_bulk_modulus": {
+        "atol": 2e-06,
+        "rtol": 2e-06
+      }
+    }
+  }
+}

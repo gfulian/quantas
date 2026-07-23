@@ -1,35 +1,46 @@
-@ECHO OFF
+@echo off
+setlocal
 
-pushd %~dp0
+rem Build the Quantas Sphinx documentation on Windows.
+rem Usage from the repository root:
+rem     docs\make.bat html
+rem If no target is provided, HTML is built by default.
 
-REM Command file for Sphinx documentation
+pushd "%~dp0"
 
-if "%SPHINXBUILD%" == "" (
-	set SPHINXBUILD=sphinx-build
-)
-set SOURCEDIR=source
-set BUILDDIR=build
-
-if "%1" == "" goto help
-
-%SPHINXBUILD% >NUL 2>NUL
-if errorlevel 9009 (
-	echo.
-	echo.The 'sphinx-build' command was not found. Make sure you have Sphinx
-	echo.installed, then set the SPHINXBUILD environment variable to point
-	echo.to the full path of the 'sphinx-build' executable. Alternatively you
-	echo.may add the Sphinx directory to PATH.
-	echo.
-	echo.If you don't have Sphinx installed, grab it from
-	echo.http://sphinx-doc.org/
-	exit /b 1
+if "%PYTHON%"=="" set "PYTHON=python"
+if "%~1"=="" (
+    set "TARGET=html"
+) else (
+    set "TARGET=%~1"
 )
 
-%SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
-goto end
+%PYTHON% -c "import sphinx" >nul 2>nul
+if errorlevel 1 (
+    echo.
+    echo Sphinx is not available in the selected Python environment.
+    echo Install the documentation dependencies first:
+    echo     %PYTHON% -m pip install -e "..[docs]"
+    echo.
+    set "EXITCODE=1"
+    goto :finish
+)
 
-:help
-%SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
+if /I "%TARGET%"=="assets" (
+    %PYTHON% tools\generate_elasticity_assets.py
+    set "EXITCODE=%ERRORLEVEL%"
+    goto :finish
+)
 
-:end
+%PYTHON% -m sphinx -M "%TARGET%" source _build -W --keep-going %SPHINXOPTS%
+set "EXITCODE=%ERRORLEVEL%"
+
+if "%EXITCODE%"=="0" if /I "%TARGET%"=="html" (
+    echo.
+    echo Documentation written to:
+    echo     %CD%\_build\html\index.html
+)
+
+:finish
 popd
+endlocal & exit /b %EXITCODE%

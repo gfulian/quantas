@@ -1,0 +1,47 @@
+{
+  "name": "Quantas 0.9 SEISMIC formula reference",
+  "source": {
+    "repository": "https://github.com/gfulian/quantas",
+    "implementation": "quantas/seismic/utils/seismic_obj.py",
+    "method": "Jaeken-Cottenier analytical Christoffel derivatives"
+  },
+  "material": {
+    "name": "Hydroxylapatite",
+    "stiffness_unit": "GPa",
+    "density": 3178.0,
+    "density_unit": "kg m^-3"
+  },
+  "mode_order": [
+    "v_s2",
+    "v_s1",
+    "v_p"
+  ],
+  "mode_aliases": {
+    "v_s2": "slow_secondary",
+    "v_s1": "fast_secondary",
+    "v_p": "primary"
+  },
+  "units": {
+    "eigenvalues": "km^2 s^-2",
+    "phase_speeds": "km s^-1",
+    "group_velocities": "km s^-1",
+    "group_speeds": "km s^-1",
+    "power_flow_angles": "rad",
+    "enhancement": "dimensionless",
+    "log10_enhancement": "dimensionless"
+  },
+  "density_scaling": {
+    "reduced_stiffness": "C_GPa * 1000 / rho",
+    "reason": "10^9 Pa per GPa divided by 10^6 m^2 per km^2"
+  },
+  "known_reference_limitations": [
+    "Cartesian azimuth uses atan2(x, y) instead of atan2(y, x).",
+    "The HDF5 header labels column 14 as log10(A), but raw A is stored.",
+    "The original Quantas 0.9 2D polarization plot reads group-vector columns.",
+    "No explicit degeneracy mask or polarization sign tracking is present."
+  ],
+  "tolerance": {
+    "rtol": 1e-11,
+    "atol": 1e-11
+  }
+}

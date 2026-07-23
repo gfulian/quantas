@@ -1,44 +1,174 @@
-# <img src="docs/source/Quantas_logo.png" alt="Quantas" width="200"/>
+# Quantas
 
-**Quantas** stands for **Quant**itative **A**nalysis of **S**olids. It is an open source 
-package in [Python](https://www.python.org/) for the analysis of the thermodynamics, and elastic properties of solid 
-phases starting from theoretical or experimental results.
+Quantas is a typed Python library for quantitative analysis of solid-state
+thermodynamics, elasticity, acoustic-wave propagation, and equations of state.
+The same scientific workflows are available through a public Python API and a
+Click-based command-line interface. Frontend-neutral results, reports, plots,
+and events provide the contract for future graphical applications.
 
-|     |      |  
-| --- |  --- |
-|**Build status:** |[![Build Status](https://travis-ci.com/gfulian/quantas.svg?token=NP18hTNJZANbzW3QSexH&branch=master)](https://travis-ci.com/gfulian/quantas)|
+The numerical core is independent of Click, Rich, Matplotlib and GUI
+frameworks. Native workflow results are stored in HDF5 using `float64` and
+`complex128` numerical values.
 
-## Features
+## Scientific modules
 
-- Calculation of thermodynamics of solid systems at harmonic approximation 
-  (HA) level
+| Module | Main purpose |
+| --- | --- |
+| Elasticity | Tensor validation, stability, VRH averages, anisotropy, directional properties, and rotations |
+| SEISMIC | Christoffel analysis, phase and group velocities, polarization, degeneracies, and caustics |
+| HA | Harmonic vibrational thermodynamics |
+| QHA | Quasi-harmonic equilibrium properties over pressure and temperature |
+| EOS | PV, VT, and PVT fitting, uncertainty treatment, diagnostics, and derived properties |
+| Thermoelasticity | Quasi-static elastic tensors over pressure, temperature, grids, and geological profiles |
 
-- Calculation of both thermodynamics and thermoelastic properties of solids at selected
-  pressure and temperature conditions via quasi-harmonic approximation (QHA):
+## Requirements and installation
 
-- Calculation of the equation of state (EoS) from experimental data
+Quantas requires Python 3.10 or newer. Install the library from the repository
+with:
 
-- Analysis of the second-order elastic moduli
+```bash
+python -m pip install .
+```
 
-- Being written in Python 3, Quantas is completely **cross-platform**!
+Install optional plotting support or the complete development environment with:
 
-## Installation
+```bash
+python -m pip install ".[plot]"
+python -m pip install ".[dev]"
+```
 
-Please see Quantas' [documentation](https://quantas.readthedocs.io/en/latest/).
+ODRPACK is a runtime dependency because orthogonal-distance regression is part
+of the supported EOS workflow. The future Quantas GUI is developed separately;
+GUI frameworks are not dependencies of the scientific library.
 
-## How to cite
+## Python API
 
-If you use Quantas to produce data for a publication, you are kindly requested to cite the 
-following work::
+The supported public interface is organized by scientific domain under
+`quantas.api`:
 
->  Gianfranco Ulian and Giovanni Valdre'
->  'QUANTAS, a Python software for the analysis of solids from ab initio quantum mechanical simulations and experimental data'
->  Journal of Applied Crystallography 55, (pages) (2022)
->  http://dx.doi.org/10.1107/S1600576722000085
-  
-Also, the theory behind the different kind of available calculations is discussed in specific
-literature, and we kindly ask you to cite them accordingly.
+```python
+from quantas.api import qha
+from quantas.renderers.tables import render_tables
 
-## License
+input_data = qha.read_input("material.yaml")
+options = qha.Options(
+    temperature_min=0.0,
+    temperature_max=1000.0,
+    temperature_step=10.0,
+    pressure_min=0.0,
+    pressure_max=10.0,
+    pressure_step=1.0,
+)
 
-Quantas is distributed under the New BSD open source license (see [`LICENSE`](LICENSE)).
+result = qha.run(input_data, options=options)
+qha.write_result(result, "material_qha.hdf5")
+print(render_tables(qha.build_report(result)))
+```
+
+The public namespaces are:
+
+```python
+from quantas.api import elasticity, eos, ha, qha, seismic, thermoelasticity
+from quantas.api import interop, profiles, registry
+```
+
+`registry` exposes frontend-neutral module capabilities. `interop` contains
+validated transformations between workflows, such as QHA to thermoelasticity
+and thermoelasticity to SEISMIC.
+
+## Command-line interface
+
+List the top-level commands and module-specific help with:
+
+```bash
+quantas --help
+quantas elasticity --help
+quantas seismic --help
+quantas ha --help
+quantas qha --help
+quantas eos --help
+quantas thermoelasticity --help
+```
+
+Typical workflows separate calculation, inspection, plotting, and export:
+
+```bash
+quantas elasticity run calcite.dat -o calcite_elasticity.hdf5
+quantas elasticity plot calcite_elasticity.hdf5 --preset publication
+
+quantas qha run material.yaml -o material_qha.hdf5
+quantas qha plot material_qha.hdf5 --preset publication
+
+quantas thermoelasticity run material_soec.yaml material_qha.hdf5 \
+  -o material_thermoelastic.hdf5
+quantas thermoelasticity analysis profile material_thermoelastic.hdf5 \
+  --preset mantle-katsura-2022
+```
+
+Significant calculations create a plain-text `.log` report automatically.
+`--quiet` controls terminal output without suppressing the report. Reporting
+uses the common levels `standard`, `extended`, and `debug`.
+
+Plotting commands share the presets `screen`, `publication`, and `monochrome`.
+Explicit figure dimensions and DPI values override preset defaults.
+
+## Results and reproducibility
+
+Native HDF5 results contain:
+
+- program, version, module, method, and schema metadata;
+- normalized input data and calculation options;
+- numerical results and uncertainties;
+- warnings and persistent workflow events;
+- numerical precision and scientific provenance.
+
+Readers and exporters inspect metadata rather than infer result types from file
+names. Operational progress events are observer-only and are not persisted.
+
+Curated real-data examples are distributed in `examples/` with provenance and
+SHA-256 manifests. They support end-to-end scientific regression tests without
+replacing small unit tests that isolate formulas and error conditions.
+
+## Development and validation
+
+Run the complete isolated test matrix with:
+
+```bash
+python tools/run_tests.py all -- -q
+```
+
+Useful developer checks include:
+
+```bash
+python tools/check_architecture.py
+python tools/check_distribution.py
+python tools/project_stats.py
+```
+
+The project uses Ruff, mypy, pytest, Sphinx, wheel and source-distribution
+installation checks. Contributions should preserve API/CLI equivalence,
+frontend independence, native HDF5 contracts, and numerical behavior.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [RELEASE.md](RELEASE.md), and
+[ROADMAP.md](ROADMAP.md) for development and release policies.
+
+## Documentation
+
+The full manual is built with Sphinx:
+
+```bash
+python -m pip install ".[docs]"
+sphinx-build -E -a -b html -W --keep-going docs/source docs/_build/html
+```
+
+The hosted documentation is available at
+<https://quantas.readthedocs.io/>.
+
+## Citation and license
+
+Quantas is academic, open-source software. Please cite Quantas and the relevant
+scientific methods when publishing results derived from the package. Canonical
+software and method references are provided through `CITATION.cff` and the
+internal citation registry.
+
+Quantas is distributed under the BSD 3-Clause license. See [LICENSE](LICENSE).

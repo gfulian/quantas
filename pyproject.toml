@@ -1,0 +1,138 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quantas"
+dynamic = ["version"]
+description = "Quantitative analysis of solid-state thermodynamics, elasticity, seismic waves, and equations of state"
+readme = "README.md"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+authors = [
+    {name = "Gianfranco Ulian"},
+    {name = "Giovanni Valdre'"},
+]
+keywords = [
+    "solid-state physics",
+    "thermodynamics",
+    "elasticity",
+    "equation of state",
+    "phonons",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+    "Typing :: Typed",
+]
+dependencies = [
+    "numpy>=1.23.5",
+    "scipy>=1.10",
+    "h5py>=3.8",
+    "pyyaml>=6.0",
+    "spglib>=2.0",
+    "click>=8.1",
+    "rich>=13.0",
+    "odrpack>=0.6,<0.7",
+]
+
+[project.optional-dependencies]
+plot = ["matplotlib>=3.7"]
+test = [
+    "pytest",
+    "matplotlib>=3.7",
+    "tomli>=2; python_version < '3.11'",
+]
+docs = ["sphinx", "numpydoc", "sphinx-rtd-theme", "sphinx-click", "matplotlib>=3.7"]
+typecheck = [
+    "mypy",
+    "numpy>=1.23.5,<2.3",
+]
+dev = [
+    "pytest",
+    "matplotlib>=3.7",
+    "numpy>=1.23.5,<2.3",
+    "ruff",
+    "mypy",
+    "build",
+    "twine",
+    "tomli>=2; python_version < '3.11'",
+    "sphinx",
+    "numpydoc",
+    "sphinx-rtd-theme",
+    "sphinx-click",
+]
+
+[project.urls]
+Homepage = "https://github.com/gfulian/quantas"
+Documentation = "https://quantas.readthedocs.io/"
+Repository = "https://github.com/gfulian/quantas"
+Issues = "https://github.com/gfulian/quantas/issues"
+Changelog = "https://github.com/gfulian/quantas/blob/master/CHANGELOG.md"
+
+[project.scripts]
+quantas = "quantas.cli.main:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "quantas._version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = ["--strict-markers", "--import-mode=importlib", "-ra"]
+markers = [
+    "infrastructure: common events, models, workflows and architecture",
+    "physics: shared physical models and unit conversions",
+    "math: numerical mathematics and fitting infrastructure",
+    "chemistry: chemical data and conversion utilities",
+    "interfaces: parsers and adapters for external QM codes",
+    "module: complete scientific module workflows",
+    "elasticity: elastic-tensor analysis domain",
+    "seismic: Christoffel and acoustic-wave characterization domain",
+    "ha: harmonic thermodynamics domain",
+    "qha: quasi-harmonic thermodynamics domain",
+    "eos: equation-of-state analysis domain",
+    "thermoelasticity: quasi-static thermoelastic analysis domain",
+    "library: Python-library and workflow tests excluding CLI and plotting",
+    "scientific: scientific calculations and result contracts",
+    "architecture: package layout and public architectural contracts",
+    "cli: Click commands and terminal rendering",
+    "plotting: plot specifications and graphical rendering",
+    "matplotlib: static Matplotlib renderer tests",
+    "hdf5: native HDF5 persistence and round trips",
+    "export: table, CSV and exporter tests",
+    "io: readers, parsers and input generators",
+    "baseline: scientific regression baseline",
+    "examples: curated real-data examples and end-to-end checks",
+    "scientific_regression: real-data or external-reference scientific regression",
+    "fast: tests that do not render plots",
+    "slow: plotting and renderer tests kept in isolated suites",
+]
+
+[tool.setuptools.package-data]
+quantas = ["py.typed"]
+
+[tool.ruff]
+target-version = "py310"
+
+[tool.mypy]
+python_version = "3.10"
+files = ["src/quantas"]
+warn_unused_configs = true
+check_untyped_defs = true
+no_implicit_optional = true
+ignore_missing_imports = true
+disable_error_code = ["import-untyped"]
+

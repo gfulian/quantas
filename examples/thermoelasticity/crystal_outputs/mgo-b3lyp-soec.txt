@@ -1,0 +1,8 @@
+mgo-b3lyp-soec_p-16.out
+mgo-b3lyp-soec_p-12.out
+mgo-b3lyp-soec_p-08.out
+mgo-b3lyp-soec_p-04.out
+mgo-b3lyp-soec_p+00.out
+mgo-b3lyp-soec_p+04.out
+mgo-b3lyp-soec_p+08.out
+mgo-b3lyp-soec_p+16.out

@@ -1,0 +1,158 @@
+name: Quantas CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  static-quality:
+    name: Static quality (Python 3.10 contract)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install development and type-check dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+      - name: Lint
+        run: ruff check src tests tools docs/tools
+      - name: Type-check complete package
+        run: mypy
+      - name: Compile source
+        run: python -m compileall -q src tests tools docs/tools
+
+  runtime:
+    name: Runtime Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install runtime test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test]"
+      - name: Run Python library tests
+        run: pytest --suite library -q
+
+  minimum-dependencies:
+    name: Minimum dependencies (Python 3.10)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
+          cache: pip
+      - name: Install declared minimum dependency set
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements/minimum.txt
+          python -m pip install -e . --no-deps
+      - name: Compile and run core scientific tests
+        run: |
+          python -m compileall -q src tests tools docs/tools
+          pytest --suite core -q
+          pytest --suite eos -q
+
+  staged:
+    name: Complete staged validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install test and documentation dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test,docs]"
+      - name: Verify curated examples
+        run: python tools/update_examples_manifest.py --check
+      - name: Run staged complete suite
+        run: python tools/run_tests.py all -- -q
+      - name: Build documentation with warnings as errors
+        run: python -m sphinx -E -a -b html -W --keep-going docs/source docs/_build/html
+
+  platform:
+    name: ${{ matrix.os }} Python ${{ matrix.python-version }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install runtime test dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[test]"
+      - name: Compile source
+        run: python -m compileall -q src tests tools docs/tools
+      - name: Run library tests
+        run: pytest --suite library -q
+      - name: Run complete staged suite on current Python
+        if: matrix.python-version == '3.13'
+        run: python tools/run_tests.py all -- -q
+      - name: Build wheel on current platform
+        if: matrix.python-version == '3.13'
+        run: python -m build --wheel
+      - name: Validate installed wheel
+        if: matrix.python-version == '3.13'
+        run: python tools/check_distribution.py dist --kind wheel
+
+  windows-documentation:
+    name: Windows documentation build
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install documentation dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e ".[docs]"
+      - name: Build documentation
+        run: .\docs\make.bat html
+
+  distribution:
+    name: Wheel and source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+      - name: Build wheel and source distribution
+        run: python -m build
+      - name: Check package metadata
+        run: python -m twine check dist/*
+      - name: Validate clean installations and archive contents
+        run: python tools/check_distribution.py dist
+      - uses: actions/upload-artifact@v6
+        with:
+          name: quantas-distributions
+          path: dist/*
+          if-no-files-found: error

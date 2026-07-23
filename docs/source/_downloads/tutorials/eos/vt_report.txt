@@ -1,0 +1,1139 @@
+EOS input summary
+-----------------
+
+         Property        |                                Value
+  -----------------------+---------------------------------------------------------------------
+  Title                  | Rutile Unit cell data as f(T)
+  Source                 | /tmp/quantas_eos_tutorial/quantas-2.0.0b6/examples/eos/VT_rutile.dat
+  Observations           | 59
+  Selected by default    | 59
+  Excluded by default    | 0
+  Data groups            | none
+  Crystal system         | tetragonal
+  Available quantities   | pressure, temperature, volume, a, c
+  Standard uncertainties | pressure, temperature, volume, a, c
+  Output archive         | /tmp/quantas-eos-docs-fh6nnb3n/vt.hdf5
+
+EOS input data
+--------------
+
+  Pressure | Temperature |  Volume  | Cell parameter a | Cell parameter c
+   (GPa)   |     (K)     |          |                  |
+  ---------+-------------+----------+------------------+-----------------
+    0.0001 |      303.00 | 1.000000 |         1.000000 |         1.000100
+    0.0001 |      357.00 | 1.001400 |         1.000500 |         1.000500
+    0.0001 |      434.00 | 1.002800 |         1.000900 |         1.001100
+    0.0001 |      483.00 | 1.004600 |         1.001500 |         1.001800
+    0.0001 |      531.00 | 1.005900 |         1.001900 |         1.002300
+    0.0001 |      579.00 | 1.006800 |         1.002100 |         1.002700
+    0.0001 |      627.00 | 1.008400 |         1.002600 |         1.003300
+    0.0001 |      674.00 | 1.009600 |         1.002900 |         1.003800
+
+  Note: Standard uncertainties available for: Pressure, Temperature, Volume, Cell parameter a, Cell parameter c
+  Note: Default selection: 59 included, 0 excluded
+  Note: Showing 8 of 59 observations
+
+EOS input standard uncertainties
+--------------------------------
+
+  σ(Pressure)  | σ(Temperature) | σ(Volume) | σ(Cell parameter a) | σ(Cell parameter c)
+     (GPa)     |      (K)       |           |                     |
+  -------------+----------------+-----------+---------------------+--------------------
+  1.000000e-06 |           3.00 |  0.000500 |            0.000300 |            0.000300
+  1.000000e-06 |           3.00 |  0.000500 |            0.000300 |            0.000300
+  1.000000e-06 |           3.00 |  0.000500 |            0.000300 |            0.000300
+  1.000000e-06 |           3.00 |  0.000500 |            0.000300 |            0.000300
+  1.000000e-06 |           3.00 |  0.000500 |            0.000300 |            0.000300
+  1.000000e-06 |           3.00 |  0.000500 |            0.000300 |            0.000300
+  1.000000e-06 |           3.00 |  0.000500 |            0.000300 |            0.000300
+  1.000000e-06 |           3.00 |  0.000500 |            0.000300 |            0.000300
+
+  Note: Showing 8 of 59 observations
+
+EOS batch plan
+--------------
+
+  # |            Job            |       Domain       |     Quantity     |               Formulation                |         Solver         | Selected | Accept | Replace
+  --+---------------------------+--------------------+------------------+------------------------------------------+------------------------+----------+--------+--------
+  1 | berman-ols                | Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Ordinary least squares |       59 | False  |  False
+  2 | berman-wls                | Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Weighted least squares |       59 | False  |  False
+  3 | berman-effective-variance | Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Effective variance     |       59 |  True  |  False
+  4 | fei-effective-variance    | Volume–temperature | Volume           | Fei, inverse-square [FEI:inverse-square] | Effective variance     |       59 | False  |  False
+  5 | salje-effective-variance  | Volume–temperature | Volume           | Salje, standard [SALJE:standard]         | Effective variance     |       59 | False  |  False
+  6 | axial-a                   | Volume–temperature | Cell parameter a | Berman, quadratic [BERMAN:quadratic]     | Effective variance     |       59 | False  |  False
+  7 | axial-c                   | Volume–temperature | Cell parameter c | Berman, quadratic [BERMAN:quadratic]     | Effective variance     |       59 | False  |  False
+
+EOS requested fit — berman-ols
+------------------------------
+
+          Property         |                                                                       Value
+  -------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | berman-ols
+  Domain                   | Volume–temperature
+  Quantity                 | Volume
+  Formulation              | Berman, quadratic [BERMAN:quadratic]
+  Solver                   | Ordinary least squares
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, max_iterations=10000, metadata=, method=ordinary_least_squares, type=OLSOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=59, total=59
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — berman-wls
+------------------------------
+
+          Property         |                                                                       Value
+  -------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | berman-wls
+  Domain                   | Volume–temperature
+  Quantity                 | Volume
+  Formulation              | Berman, quadratic [BERMAN:quadratic]
+  Solver                   | Weighted least squares
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, max_iterations=10000, metadata=, method=weighted_least_squares, type=WLSOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=59, total=59
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — berman-effective-variance
+---------------------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | berman-effective-variance
+  Domain                   | Volume–temperature
+  Quantity                 | Volume
+  Formulation              | Berman, quadratic [BERMAN:quadratic]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=59, total=59
+  Accept successful result | True
+  Replace accepted result  | False
+
+EOS requested fit — fei-effective-variance
+------------------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | fei-effective-variance
+  Domain                   | Volume–temperature
+  Quantity                 | Volume
+  Formulation              | Fei, inverse-square [FEI:inverse-square]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=59, total=59
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — salje-effective-variance
+--------------------------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | salje-effective-variance
+  Domain                   | Volume–temperature
+  Quantity                 | Volume
+  Formulation              | Salje, standard [SALJE:standard]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=59, total=59
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — axial-a
+---------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | axial-a
+  Domain                   | Volume–temperature
+  Quantity                 | Cell parameter a
+  Formulation              | Berman, quadratic [BERMAN:quadratic]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=59, total=59
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS requested fit — axial-c
+---------------------------
+
+          Property         |                                                                                                                                  Value
+  -------------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+  Job                      | axial-c
+  Domain                   | Volume–temperature
+  Quantity                 | Cell parameter c
+  Formulation              | Berman, quadratic [BERMAN:quadratic]
+  Solver                   | Effective variance
+  Solver options           | covariance_scaling=inflate_only, ftol=None, gtol=None, inner_max_iterations=10000, max_iterations=10000, metadata=, method=effective_variance, parameter_atol=1e-12, parameter_rtol=1e-10, sigma_atol=1e-12, sigma_rtol=1e-10, type=EffectiveVarianceOptions, xtol=None
+  Parameter constraints    | none
+  Data selection           | base=default, exclude_groups=[], exclude_rows=[], excluded=0, include_groups=None, include_rows=None, selected=59, total=59
+  Accept successful result | False
+  Replace accepted result  | False
+
+EOS fit configuration — berman-ols
+----------------------------------
+
+         Property       |                Value
+  ----------------------+-------------------------------------
+  Job                   | berman-ols
+  Domain                | Volume–temperature
+  Quantity              | Volume
+  Formulation           | Berman, quadratic [BERMAN:quadratic]
+  Solver                | Ordinary least squares
+  Selected observations | 59
+  Record ID             | 1
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter | State |   Initial    |    Value     | Final - initial |    E.S.D.    | Unit | Bounds
+  ----------+-------+--------------+--------------+-----------------+--------------+------+-------
+  V0        | free  |     1.000281 |     1.000388 |        0.000107 |     0.000123 | —    |
+  Tref      | fixed |              |   298.150000 |                 |     0.000000 | K    |
+  α0        | free  | 2.319771e-05 | 2.285905e-05 |   -3.386632e-07 | 7.375931e-07 | K⁻¹  |
+  α1        | free  | 1.524101e-08 | 1.567267e-08 |    4.316586e-10 | 2.341924e-09 | K⁻²  |
+
+EOS diagnostics — berman-ols
+----------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged
+  Points                    | 59
+  Free parameters           | 3
+  Degrees of freedom        | 56
+  RMSE                      | 0.000596
+  MAE                       | 0.000459
+  Maximum absolute residual | 0.001731
+  Reduced chi-square        |
+  Condition number          |
+  Stop reason               | `gtol` termination condition is satisfied.
+
+Observed and calculated EOS data
+--------------------------------
+
+  Temperature | volume observed | volume calculated |    Residual
+  ------------+-----------------+-------------------+--------------
+       303.00 |        1.000000 |          1.000499 |     -0.000499
+       357.00 |        1.001400 |          1.001761 |     -0.000361
+       434.00 |        1.002800 |          1.003639 |     -0.000839
+       483.00 |        1.004600 |          1.004883 |     -0.000283
+       531.00 |        1.005900 |          1.006138 |     -0.000238
+       579.00 |        1.006800 |          1.007429 |     -0.000629
+       627.00 |        1.008400 |          1.008756 |     -0.000356
+       674.00 |        1.009600 |          1.010090 |     -0.000490
+       722.00 |        1.010700 |          1.011489 |     -0.000789
+       770.00 |        1.011900 |          1.012923 |     -0.001023
+       807.00 |        1.013200 |          1.014054 |     -0.000854
+       844.00 |        1.014500 |          1.015206 |     -0.000706
+       881.00 |        1.016000 |          1.016380 |     -0.000380
+       918.00 |        1.017100 |          1.017575 |     -0.000475
+       573.00 |        1.006700 |          1.007265 |     -0.000565
+       873.00 |        1.016200 |          1.016124 |  7.597266e-05
+       523.00 |        1.006000 |          1.005926 |  7.394306e-05
+       733.00 |        1.012500 |          1.011814 |      0.000686
+       943.00 |        1.018600 |          1.018394 |      0.000206
+       316.00 |        1.000480 |          1.000799 |     -0.000319
+       334.00 |        1.000930 |          1.001218 |     -0.000288
+       351.00 |        1.001430 |          1.001618 |     -0.000188
+       369.00 |        1.001880 |          1.002047 |     -0.000167
+       386.00 |        1.002330 |          1.002457 |     -0.000127
+       404.00 |        1.002760 |          1.002896 |     -0.000136
+       422.00 |        1.003310 |          1.003340 | -3.030533e-05
+       439.00 |        1.003800 |          1.003764 |  3.566377e-05
+       457.00 |        1.004300 |          1.004218 |  8.175108e-05
+       475.00 |        1.004830 |          1.004677 |      0.000153
+       492.00 |        1.005350 |          1.005115 |      0.000235
+       510.00 |        1.005840 |          1.005584 |      0.000256
+       528.00 |        1.006390 |          1.006058 |      0.000332
+       545.00 |        1.006900 |          1.006511 |      0.000389
+       563.00 |        1.007370 |          1.006994 |      0.000376
+       366.00 |        1.003000 |          1.001976 |      0.001024
+       459.00 |        1.006000 |          1.004269 |      0.001731
+       553.00 |        1.008300 |          1.006725 |      0.001575
+       646.00 |        1.010700 |          1.009291 |      0.001409
+       739.00 |        1.013200 |          1.011993 |      0.001207
+       786.00 |        1.014200 |          1.013410 |      0.000790
+       832.00 |        1.015700 |          1.014830 |      0.000870
+       879.00 |        1.016900 |          1.016316 |      0.000584
+       926.00 |        1.018000 |          1.017836 |      0.000164
+       972.00 |        1.019600 |          1.019357 |      0.000243
+      1019.00 |        1.020800 |          1.020946 |     -0.000146
+      1065.00 |        1.022200 |          1.022534 |     -0.000334
+       100.00 |        0.996100 |          0.996164 | -6.439161e-05
+       150.00 |        0.996900 |          0.997172 |     -0.000272
+       200.00 |        0.997800 |          0.998219 |     -0.000419
+       250.00 |        0.998900 |          0.999305 |     -0.000405
+       350.00 |        1.001300 |          1.001595 |     -0.000295
+       400.00 |        1.002500 |          1.002798 |     -0.000298
+       450.00 |        1.003800 |          1.004041 |     -0.000241
+       500.00 |        1.005100 |          1.005323 |     -0.000223
+       550.00 |        1.006400 |          1.006644 |     -0.000244
+       600.00 |        1.007800 |          1.008005 |     -0.000205
+       650.00 |        1.009100 |          1.009404 |     -0.000304
+       700.00 |        1.010500 |          1.010843 |     -0.000343
+        15.00 |        0.995580 |          0.994541 |      0.001039
+
+Parameter covariance
+--------------------
+
+     Parameter    |       V0      | temperature_ref |     alpha0    |     alpha1
+  ----------------+---------------+-----------------+---------------+--------------
+  V0              |  1.514455e-08 |    0.000000e+00 | -4.791871e-11 |  6.107696e-14
+  temperature_ref |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  alpha0          | -4.791871e-11 |    0.000000e+00 |  5.440436e-13 | -1.532501e-15
+  alpha1          |  6.107696e-14 |    0.000000e+00 | -1.532501e-15 |  5.484609e-18
+
+Parameter correlation
+---------------------
+
+     Parameter    |     V0    | temperature_ref |   alpha0  |   alpha1
+  ----------------+-----------+-----------------+-----------+----------
+  V0              |  1.000000 |        0.000000 | -0.527910 |  0.211922
+  temperature_ref |  0.000000 |        0.000000 |  0.000000 |  0.000000
+  alpha0          | -0.527910 |        0.000000 |  1.000000 | -0.887179
+  alpha1          |  0.211922 |        0.000000 | -0.887179 |  1.000000
+
+EOS fit configuration — berman-wls
+----------------------------------
+
+         Property       |                Value
+  ----------------------+-------------------------------------
+  Job                   | berman-wls
+  Domain                | Volume–temperature
+  Quantity              | Volume
+  Formulation           | Berman, quadratic [BERMAN:quadratic]
+  Solver                | Weighted least squares
+  Selected observations | 59
+  Record ID             | 2
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter | State |   Initial    |    Value     | Final - initial |    E.S.D.    | Unit | Bounds
+  ----------+-------+--------------+--------------+-----------------+--------------+------+-------
+  V0        | free  |     1.000281 |     1.000540 |        0.000259 | 6.144579e-05 | —    |
+  Tref      | fixed |              |   298.150000 |                 |     0.000000 | K    |
+  α0        | free  | 2.319771e-05 | 2.191902e-05 |   -1.278693e-06 | 3.543202e-07 | K⁻¹  |
+  α1        | free  | 1.524101e-08 | 2.115443e-08 |    5.913417e-09 | 1.541056e-09 | K⁻²  |
+
+EOS diagnostics — berman-wls
+----------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 59
+  Free parameters           | 3
+  Degrees of freedom        | 56
+  RMSE                      | 0.000687
+  MAE                       | 0.000564
+  Maximum absolute residual | 0.001658
+  Reduced chi-square        | 13.742329
+  Condition number          |
+  Stop reason               | `xtol` termination condition is satisfied.
+
+  Note: parameter covariance inflated by reduced chi-square factor 13.7423
+
+Observed and calculated EOS data
+--------------------------------
+
+  Temperature | volume observed | volume calculated |    Residual
+  ------------+-----------------+-------------------+--------------
+       303.00 |        1.000000 |          1.000647 |     -0.000647
+       357.00 |        1.001400 |          1.001867 |     -0.000467
+       434.00 |        1.002800 |          1.003715 |     -0.000915
+       483.00 |        1.004600 |          1.004956 |     -0.000356
+       531.00 |        1.005900 |          1.006221 |     -0.000321
+       579.00 |        1.006800 |          1.007534 |     -0.000734
+       627.00 |        1.008400 |          1.008897 |     -0.000497
+       674.00 |        1.009600 |          1.010278 |     -0.000678
+       722.00 |        1.010700 |          1.011737 |     -0.001037
+       770.00 |        1.011900 |          1.013244 |     -0.001344
+       807.00 |        1.013200 |          1.014440 |     -0.001240
+       844.00 |        1.014500 |          1.015664 |     -0.001164
+       881.00 |        1.016000 |          1.016918 |     -0.000918
+       918.00 |        1.017100 |          1.018200 |     -0.001100
+       573.00 |        1.006700 |          1.007367 |     -0.000667
+       873.00 |        1.016200 |          1.016644 |     -0.000444
+       523.00 |        1.006000 |          1.006006 | -6.317330e-06
+       733.00 |        1.012500 |          1.012078 |      0.000422
+       943.00 |        1.018600 |          1.019083 |     -0.000483
+       316.00 |        1.000480 |          1.000935 |     -0.000455
+       334.00 |        1.000930 |          1.001340 |     -0.000410
+       351.00 |        1.001430 |          1.001729 |     -0.000299
+       369.00 |        1.001880 |          1.002147 |     -0.000267
+       386.00 |        1.002330 |          1.002548 |     -0.000218
+       404.00 |        1.002760 |          1.002980 |     -0.000220
+       422.00 |        1.003310 |          1.003419 |     -0.000109
+       439.00 |        1.003800 |          1.003839 | -3.903077e-05
+       457.00 |        1.004300 |          1.004291 |  9.123198e-06
+       475.00 |        1.004830 |          1.004750 |  8.041943e-05
+       492.00 |        1.005350 |          1.005189 |      0.000161
+       510.00 |        1.005840 |          1.005661 |      0.000179
+       528.00 |        1.006390 |          1.006140 |      0.000250
+       545.00 |        1.006900 |          1.006599 |      0.000301
+       563.00 |        1.007370 |          1.007091 |      0.000279
+       366.00 |        1.003000 |          1.002077 |      0.000923
+       459.00 |        1.006000 |          1.004342 |      0.001658
+       553.00 |        1.008300 |          1.006817 |      0.001483
+       646.00 |        1.010700 |          1.009449 |      0.001251
+       739.00 |        1.013200 |          1.012265 |      0.000935
+       786.00 |        1.014200 |          1.013758 |      0.000442
+       832.00 |        1.015700 |          1.015264 |      0.000436
+       879.00 |        1.016900 |          1.016849 |  5.080636e-05
+       926.00 |        1.018000 |          1.018481 |     -0.000481
+       972.00 |        1.019600 |          1.020124 |     -0.000524
+      1019.00 |        1.020800 |          1.021848 |     -0.001048
+      1065.00 |        1.022200 |          1.023581 |     -0.001381
+       100.00 |        0.996100 |          0.996610 |     -0.000510
+       150.00 |        0.996900 |          0.997523 |     -0.000623
+       200.00 |        0.997800 |          0.998490 |     -0.000690
+       250.00 |        0.998900 |          0.999509 |     -0.000609
+       350.00 |        1.001300 |          1.001706 |     -0.000406
+       400.00 |        1.002500 |          1.002884 |     -0.000384
+       450.00 |        1.003800 |          1.004114 |     -0.000314
+       500.00 |        1.005100 |          1.005398 |     -0.000298
+       550.00 |        1.006400 |          1.006735 |     -0.000335
+       600.00 |        1.007800 |          1.008124 |     -0.000324
+       650.00 |        1.009100 |          1.009567 |     -0.000467
+       700.00 |        1.010500 |          1.011062 |     -0.000562
+        15.00 |        0.995580 |          0.995179 |      0.000401
+
+Parameter covariance
+--------------------
+
+     Parameter    |       V0      | temperature_ref |     alpha0    |     alpha1
+  ----------------+---------------+-----------------+---------------+--------------
+  V0              |  3.775585e-09 |    0.000000e+00 | -1.057992e-11 | -9.474272e-15
+  temperature_ref |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  alpha0          | -1.057992e-11 |    0.000000e+00 |  1.255428e-13 | -3.102137e-16
+  alpha1          | -9.474272e-15 |    0.000000e+00 | -3.102137e-16 |  2.374853e-18
+
+Parameter correlation
+---------------------
+
+     Parameter    |     V0    | temperature_ref |   alpha0  |   alpha1
+  ----------------+-----------+-----------------+-----------+----------
+  V0              |  1.000000 |        0.000000 | -0.485953 | -0.100054
+  temperature_ref |  0.000000 |        0.000000 |  0.000000 |  0.000000
+  alpha0          | -0.485953 |        0.000000 |  1.000000 | -0.568129
+  alpha1          | -0.100054 |        0.000000 | -0.568129 |  1.000000
+
+EOS fit configuration — berman-effective-variance
+-------------------------------------------------
+
+         Property       |                Value
+  ----------------------+-------------------------------------
+  Job                   | berman-effective-variance
+  Domain                | Volume–temperature
+  Quantity              | Volume
+  Formulation           | Berman, quadratic [BERMAN:quadratic]
+  Solver                | Effective variance
+  Selected observations | 59
+  Record ID             | 3
+  Accepted              | True
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter | State |   Initial    |    Value     | Final - initial |    E.S.D.    | Unit | Bounds
+  ----------+-------+--------------+--------------+-----------------+--------------+------+-------
+  V0        | free  |     1.000281 |     1.000577 |        0.000296 | 7.154198e-05 | —    |
+  Tref      | fixed |              |   298.150000 |                 |     0.000000 | K    |
+  α0        | free  | 2.319771e-05 | 2.178651e-05 |   -1.411201e-06 | 3.881976e-07 | K⁻¹  |
+  α1        | free  | 1.524101e-08 | 2.031522e-08 |    5.074208e-09 | 1.542115e-09 | K⁻²  |
+
+EOS diagnostics — berman-effective-variance
+-------------------------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 59
+  Free parameters           | 3
+  Degrees of freedom        | 56
+  RMSE                      | 0.000650
+  MAE                       | 0.000538
+  Maximum absolute residual | 0.001654
+  Reduced chi-square        | 8.108683
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 8.10868
+
+Observed and calculated EOS data
+--------------------------------
+
+  Temperature | volume observed | volume calculated |    Residual
+  ------------+-----------------+-------------------+--------------
+       303.00 |        1.000000 |          1.000683 |     -0.000683
+       357.00 |        1.001400 |          1.001895 |     -0.000495
+       434.00 |        1.002800 |          1.003726 |     -0.000926
+       483.00 |        1.004600 |          1.004954 |     -0.000354
+       531.00 |        1.005900 |          1.006204 |     -0.000304
+       579.00 |        1.006800 |          1.007501 |     -0.000701
+       627.00 |        1.008400 |          1.008845 |     -0.000445
+       674.00 |        1.009600 |          1.010206 |     -0.000606
+       722.00 |        1.010700 |          1.011642 |     -0.000942
+       770.00 |        1.011900 |          1.013126 |     -0.001226
+       807.00 |        1.013200 |          1.014301 |     -0.001101
+       844.00 |        1.014500 |          1.015504 |     -0.001004
+       881.00 |        1.016000 |          1.016735 |     -0.000735
+       918.00 |        1.017100 |          1.017994 |     -0.000894
+       573.00 |        1.006700 |          1.007336 |     -0.000636
+       873.00 |        1.016200 |          1.016467 |     -0.000267
+       523.00 |        1.006000 |          1.005992 |  7.731789e-06
+       733.00 |        1.012500 |          1.011978 |      0.000522
+       943.00 |        1.018600 |          1.018860 |     -0.000260
+       316.00 |        1.000480 |          1.000969 |     -0.000489
+       334.00 |        1.000930 |          1.001371 |     -0.000441
+       351.00 |        1.001430 |          1.001757 |     -0.000327
+       369.00 |        1.001880 |          1.002172 |     -0.000292
+       386.00 |        1.002330 |          1.002570 |     -0.000240
+       404.00 |        1.002760 |          1.002998 |     -0.000238
+       422.00 |        1.003310 |          1.003433 |     -0.000123
+       439.00 |        1.003800 |          1.003849 | -4.893622e-05
+       457.00 |        1.004300 |          1.004296 |  3.852553e-06
+       475.00 |        1.004830 |          1.004750 |  8.005540e-05
+       492.00 |        1.005350 |          1.005185 |      0.000165
+       510.00 |        1.005840 |          1.005651 |      0.000189
+       528.00 |        1.006390 |          1.006124 |      0.000266
+       545.00 |        1.006900 |          1.006577 |      0.000323
+       563.00 |        1.007370 |          1.007063 |      0.000307
+       366.00 |        1.003000 |          1.002103 |      0.000897
+       459.00 |        1.006000 |          1.004346 |      0.001654
+       553.00 |        1.008300 |          1.006793 |      0.001507
+       646.00 |        1.010700 |          1.009389 |      0.001311
+       739.00 |        1.013200 |          1.012162 |      0.001038
+       786.00 |        1.014200 |          1.013630 |      0.000570
+       832.00 |        1.015700 |          1.015111 |      0.000589
+       879.00 |        1.016900 |          1.016668 |      0.000232
+       926.00 |        1.018000 |          1.018270 |     -0.000270
+       972.00 |        1.019600 |          1.019881 |     -0.000281
+      1019.00 |        1.020800 |          1.021572 |     -0.000772
+      1065.00 |        1.022200 |          1.023270 |     -0.001070
+       100.00 |        0.996100 |          0.996656 |     -0.000556
+       150.00 |        0.996900 |          0.997570 |     -0.000670
+       200.00 |        0.997800 |          0.998535 |     -0.000735
+       250.00 |        0.998900 |          0.999551 |     -0.000651
+       350.00 |        1.001300 |          1.001735 |     -0.000435
+       400.00 |        1.002500 |          1.002903 |     -0.000403
+       450.00 |        1.003800 |          1.004121 |     -0.000321
+       500.00 |        1.005100 |          1.005391 |     -0.000291
+       550.00 |        1.006400 |          1.006712 |     -0.000312
+       600.00 |        1.007800 |          1.008083 |     -0.000283
+       650.00 |        1.009100 |          1.009505 |     -0.000405
+       700.00 |        1.010500 |          1.010978 |     -0.000478
+        15.00 |        0.995580 |          0.995219 |      0.000361
+
+Parameter covariance
+--------------------
+
+     Parameter    |       V0      | temperature_ref |     alpha0    |     alpha1
+  ----------------+---------------+-----------------+---------------+--------------
+  V0              |  5.118255e-09 |    0.000000e+00 | -9.927382e-12 | -1.453368e-14
+  temperature_ref |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  alpha0          | -9.927382e-12 |    0.000000e+00 |  1.506974e-13 | -3.874777e-16
+  alpha1          | -1.453368e-14 |    0.000000e+00 | -3.874777e-16 |  2.378117e-18
+
+Parameter correlation
+---------------------
+
+     Parameter    |     V0    | temperature_ref |   alpha0  |   alpha1
+  ----------------+-----------+-----------------+-----------+----------
+  V0              |  1.000000 |        0.000000 | -0.357455 | -0.131734
+  temperature_ref |  0.000000 |        0.000000 |  0.000000 |  0.000000
+  alpha0          | -0.357455 |        0.000000 |  1.000000 | -0.647258
+  alpha1          | -0.131734 |        0.000000 | -0.647258 |  1.000000
+
+EOS fit configuration — fei-effective-variance
+----------------------------------------------
+
+         Property       |                  Value
+  ----------------------+-----------------------------------------
+  Job                   | fei-effective-variance
+  Domain                | Volume–temperature
+  Quantity              | Volume
+  Formulation           | Fei, inverse-square [FEI:inverse-square]
+  Solver                | Effective variance
+  Selected observations | 59
+  Record ID             | 4
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter | State |   Initial    |    Value     | Final - initial |    E.S.D.    | Unit | Bounds
+  ----------+-------+--------------+--------------+-----------------+--------------+------+-------
+  V0        | free  |     1.000281 |     1.000028 |       -0.000253 | 9.825657e-05 | —    |
+  Tref      | fixed |              |   298.150000 |                 |     0.000000 | K    |
+  α0        | free  | 2.078280e-05 | 2.624010e-05 |    5.457297e-06 | 1.550447e-06 | K⁻¹  |
+  α1        | free  | 1.137639e-08 | 4.044482e-09 |   -7.331906e-09 | 2.388843e-09 | K⁻²  |
+  α2        | free  |    -0.026675 |    -0.055464 |       -0.028789 |     0.023096 | K    |
+
+EOS diagnostics — fei-effective-variance
+----------------------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 59
+  Free parameters           | 4
+  Degrees of freedom        | 55
+  RMSE                      | 0.000649
+  MAE                       | 0.000480
+  Maximum absolute residual | 0.001560
+  Reduced chi-square        | 4.106359
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 4.10636
+
+Observed and calculated EOS data
+--------------------------------
+
+  Temperature | volume observed | volume calculated |    Residual
+  ------------+-----------------+-------------------+--------------
+       303.00 |        1.000000 |          1.000158 |     -0.000158
+       357.00 |        1.001400 |          1.001621 |     -0.000221
+       434.00 |        1.002800 |          1.003743 |     -0.000943
+       483.00 |        1.004600 |          1.005112 |     -0.000512
+       531.00 |        1.005900 |          1.006468 |     -0.000568
+       579.00 |        1.006800 |          1.007836 |     -0.001036
+       627.00 |        1.008400 |          1.009217 |     -0.000817
+       674.00 |        1.009600 |          1.010581 |     -0.000981
+       722.00 |        1.010700 |          1.011986 |     -0.001286
+       770.00 |        1.011900 |          1.013404 |     -0.001504
+       807.00 |        1.013200 |          1.014504 |     -0.001304
+       844.00 |        1.014500 |          1.015612 |     -0.001112
+       881.00 |        1.016000 |          1.016727 |     -0.000727
+       918.00 |        1.017100 |          1.017849 |     -0.000749
+       573.00 |        1.006700 |          1.007664 |     -0.000964
+       873.00 |        1.016200 |          1.016485 |     -0.000285
+       523.00 |        1.006000 |          1.006241 |     -0.000241
+       733.00 |        1.012500 |          1.012310 |      0.000190
+       943.00 |        1.018600 |          1.018611 | -1.128799e-05
+       316.00 |        1.000480 |          1.000508 | -2.816448e-05
+       334.00 |        1.000930 |          1.000995 | -6.505300e-05
+       351.00 |        1.001430 |          1.001457 | -2.720682e-05
+       369.00 |        1.001880 |          1.001949 | -6.886454e-05
+       386.00 |        1.002330 |          1.002415 | -8.529740e-05
+       404.00 |        1.002760 |          1.002911 |     -0.000151
+       422.00 |        1.003310 |          1.003409 | -9.939267e-05
+       439.00 |        1.003800 |          1.003882 | -8.169983e-05
+       457.00 |        1.004300 |          1.004384 | -8.372622e-05
+       475.00 |        1.004830 |          1.004888 | -5.769946e-05
+       492.00 |        1.005350 |          1.005365 | -1.542674e-05
+       510.00 |        1.005840 |          1.005873 | -3.307955e-05
+       528.00 |        1.006390 |          1.006383 |  7.419517e-06
+       545.00 |        1.006900 |          1.006865 |  3.454932e-05
+       563.00 |        1.007370 |          1.007378 | -8.478224e-06
+       366.00 |        1.003000 |          1.001867 |      0.001133
+       459.00 |        1.006000 |          1.004440 |      0.001560
+       553.00 |        1.008300 |          1.007093 |      0.001207
+       646.00 |        1.010700 |          1.009767 |      0.000933
+       739.00 |        1.013200 |          1.012487 |      0.000713
+       786.00 |        1.014200 |          1.013879 |      0.000321
+       832.00 |        1.015700 |          1.015252 |      0.000448
+       879.00 |        1.016900 |          1.016667 |      0.000233
+       926.00 |        1.018000 |          1.018093 | -9.268762e-05
+       972.00 |        1.019600 |          1.019499 |      0.000101
+      1019.00 |        1.020800 |          1.020948 |     -0.000148
+      1065.00 |        1.022200 |          1.022377 |     -0.000177
+       100.00 |        0.996100 |          0.995050 |      0.001050
+       150.00 |        0.996900 |          0.996197 |      0.000703
+       200.00 |        0.997800 |          0.997448 |      0.000352
+       250.00 |        0.998900 |          0.998748 |      0.000152
+       350.00 |        1.001300 |          1.001430 |     -0.000130
+       400.00 |        1.002500 |          1.002801 |     -0.000301
+       450.00 |        1.003800 |          1.004188 |     -0.000388
+       500.00 |        1.005100 |          1.005591 |     -0.000491
+       550.00 |        1.006400 |          1.007008 |     -0.000608
+       600.00 |        1.007800 |          1.008439 |     -0.000639
+       650.00 |        1.009100 |          1.009883 |     -0.000783
+       700.00 |        1.010500 |          1.011341 |     -0.000841
+        15.00 |        0.995580 |          0.995939 |     -0.000359
+
+Parameter covariance
+--------------------
+
+     Parameter    |       V0      | temperature_ref |     alpha0    |     alpha1    |     alpha2
+  ----------------+---------------+-----------------+---------------+---------------+--------------
+  V0              |  9.654354e-09 |    0.000000e+00 | -1.193737e-10 |  1.644942e-13 |  6.169132e-07
+  temperature_ref |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  alpha0          | -1.193737e-10 |    0.000000e+00 |  2.403885e-12 | -3.635295e-15 | -1.665866e-08
+  alpha1          |  1.644942e-13 |    0.000000e+00 | -3.635295e-15 |  5.706571e-18 |  2.268473e-11
+  alpha2          |  6.169132e-07 |    0.000000e+00 | -1.665866e-08 |  2.268473e-11 |  5.334090e-04
+
+Parameter correlation
+---------------------
+
+     Parameter    |     V0    | temperature_ref |   alpha0  |   alpha1  |   alpha2
+  ----------------+-----------+-----------------+-----------+-----------+----------
+  V0              |  1.000000 |        0.000000 | -0.783592 |  0.700812 |  0.271852
+  temperature_ref |  0.000000 |        0.000000 |  0.000000 |  0.000000 |  0.000000
+  alpha0          | -0.783592 |        0.000000 |  1.000000 | -0.981511 | -0.465214
+  alpha1          |  0.700812 |        0.000000 | -0.981511 |  1.000000 |  0.411165
+  alpha2          |  0.271852 |        0.000000 | -0.465214 |  0.411165 |  1.000000
+
+EOS fit configuration — salje-effective-variance
+------------------------------------------------
+
+         Property       |              Value
+  ----------------------+---------------------------------
+  Job                   | salje-effective-variance
+  Domain                | Volume–temperature
+  Quantity              | Volume
+  Formulation           | Salje, standard [SALJE:standard]
+  Solver                | Effective variance
+  Selected observations | 59
+  Record ID             | 5
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter | State |   Initial    |    Value     | Final - initial |    E.S.D.    |           Unit          | Bounds
+  ----------+-------+--------------+--------------+-----------------+--------------+-------------------------+-------
+  V0        | free  |     0.998988 |     0.995586 |       -0.003402 | 9.614247e-05 | —                       |
+  Tref      | fixed |              |     0.000000 |                 |     0.000000 | K                       |
+  p1        | free  | 1.239494e-05 | 9.957938e-06 |   -2.436998e-06 | 1.167409e-07 | (dimensionless)¹/3) K⁻¹ |
+  θsat      | free  |   500.000000 |   188.428615 |     -311.571385 |     7.857210 | K                       |
+
+EOS diagnostics — salje-effective-variance
+------------------------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 59
+  Free parameters           | 3
+  Degrees of freedom        | 56
+  RMSE                      | 0.000641
+  MAE                       | 0.000450
+  Maximum absolute residual | 0.001570
+  Reduced chi-square        | 3.781740
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 3.78174
+
+Observed and calculated EOS data
+--------------------------------
+
+  Temperature | volume observed | volume calculated |    Residual
+  ------------+-----------------+-------------------+--------------
+       303.00 |        1.000000 |          1.000140 |     -0.000140
+       357.00 |        1.001400 |          1.001588 |     -0.000188
+       434.00 |        1.002800 |          1.003725 |     -0.000925
+       483.00 |        1.004600 |          1.005113 |     -0.000513
+       531.00 |        1.005900 |          1.006488 |     -0.000588
+       579.00 |        1.006800 |          1.007874 |     -0.001074
+       627.00 |        1.008400 |          1.009270 |     -0.000870
+       674.00 |        1.009600 |          1.010645 |     -0.001045
+       722.00 |        1.010700 |          1.012055 |     -0.001355
+       770.00 |        1.011900 |          1.013470 |     -0.001570
+       807.00 |        1.013200 |          1.014565 |     -0.001365
+       844.00 |        1.014500 |          1.015662 |     -0.001162
+       881.00 |        1.016000 |          1.016762 |     -0.000762
+       918.00 |        1.017100 |          1.017864 |     -0.000764
+       573.00 |        1.006700 |          1.007700 |     -0.001000
+       873.00 |        1.016200 |          1.016524 |     -0.000324
+       523.00 |        1.006000 |          1.006257 |     -0.000257
+       733.00 |        1.012500 |          1.012379 |      0.000121
+       943.00 |        1.018600 |          1.018609 | -9.422616e-06
+       316.00 |        1.000480 |          1.000484 | -3.631180e-06
+       334.00 |        1.000930 |          1.000965 | -3.514789e-05
+       351.00 |        1.001430 |          1.001425 |  4.936159e-06
+       369.00 |        1.001880 |          1.001917 | -3.678626e-05
+       386.00 |        1.002330 |          1.002385 | -5.513750e-05
+       404.00 |        1.002760 |          1.002885 |     -0.000125
+       422.00 |        1.003310 |          1.003388 | -7.768076e-05
+       439.00 |        1.003800 |          1.003865 | -6.545050e-05
+       457.00 |        1.004300 |          1.004374 | -7.394189e-05
+       475.00 |        1.004830 |          1.004885 | -5.485900e-05
+       492.00 |        1.005350 |          1.005369 | -1.940737e-05
+       510.00 |        1.005840 |          1.005884 | -4.439813e-05
+       528.00 |        1.006390 |          1.006401 | -1.120940e-05
+       545.00 |        1.006900 |          1.006891 |  9.159928e-06
+       563.00 |        1.007370 |          1.007411 | -4.076304e-05
+       366.00 |        1.003000 |          1.001835 |      0.001165
+       459.00 |        1.006000 |          1.004431 |      0.001569
+       553.00 |        1.008300 |          1.007122 |      0.001178
+       646.00 |        1.010700 |          1.009825 |      0.000875
+       739.00 |        1.013200 |          1.012556 |      0.000644
+       786.00 |        1.014200 |          1.013943 |      0.000257
+       832.00 |        1.015700 |          1.015306 |      0.000394
+       879.00 |        1.016900 |          1.016702 |      0.000198
+       926.00 |        1.018000 |          1.018102 |     -0.000102
+       972.00 |        1.019600 |          1.019475 |      0.000125
+      1019.00 |        1.020800 |          1.020881 | -8.149942e-05
+      1065.00 |        1.022200 |          1.022260 | -6.028394e-05
+       100.00 |        0.996100 |          0.995851 |      0.000249
+       150.00 |        0.996900 |          0.996577 |      0.000323
+       200.00 |        0.997800 |          0.997598 |      0.000202
+       250.00 |        0.998900 |          0.998783 |      0.000117
+       350.00 |        1.001300 |          1.001398 | -9.788344e-05
+       400.00 |        1.002500 |          1.002773 |     -0.000273
+       450.00 |        1.003800 |          1.004176 |     -0.000376
+       500.00 |        1.005100 |          1.005598 |     -0.000498
+       550.00 |        1.006400 |          1.007035 |     -0.000635
+       600.00 |        1.007800 |          1.008484 |     -0.000684
+       650.00 |        1.009100 |          1.009942 |     -0.000842
+       700.00 |        1.010500 |          1.011408 |     -0.000908
+        15.00 |        0.995580 |          0.995586 | -5.814395e-06
+
+Parameter covariance
+--------------------
+
+     Parameter    |      V0      | temperature_ref |      p1      |  theta_sat
+  ----------------+--------------+-----------------+--------------+-------------
+  V0              | 9.243375e-09 |    0.000000e+00 | 2.025792e-12 | 5.166200e-04
+  temperature_ref | 0.000000e+00 |    0.000000e+00 | 0.000000e+00 | 0.000000e+00
+  p1              | 2.025792e-12 |    0.000000e+00 | 1.362843e-14 | 7.293758e-07
+  theta_sat       | 5.166200e-04 |    0.000000e+00 | 7.293758e-07 | 6.173576e+01
+
+Parameter correlation
+---------------------
+
+     Parameter    |    V0    | temperature_ref |    p1    | theta_sat
+  ----------------+----------+-----------------+----------+----------
+  V0              | 1.000000 |        0.000000 | 0.180491 |  0.683892
+  temperature_ref | 0.000000 |        0.000000 | 0.000000 |  0.000000
+  p1              | 0.180491 |        0.000000 | 1.000000 |  0.795170
+  theta_sat       | 0.683892 |        0.000000 | 0.795170 |  1.000000
+
+EOS fit configuration — axial-a
+-------------------------------
+
+         Property       |                Value
+  ----------------------+-------------------------------------
+  Job                   | axial-a
+  Domain                | Volume–temperature
+  Quantity              | Cell parameter a
+  Formulation           | Berman, quadratic [BERMAN:quadratic]
+  Solver                | Effective variance
+  Selected observations | 59
+  Record ID             | 6
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter | State |   Initial    |    Value     | Final - initial |    E.S.D.    | Unit | Bounds
+  ----------+-------+--------------+--------------+-----------------+--------------+------+-------
+  L0        | free  |     1.000097 |     1.000161 |    6.440606e-05 | 1.742009e-05 | —    |
+  Tref      | fixed |              |   298.150000 |                 |     0.000000 | K    |
+  α0        | free  | 2.144313e-05 | 1.976343e-05 |   -1.679700e-06 | 2.371942e-07 | K⁻¹  |
+  α1        | free  | 1.212580e-08 | 1.911215e-08 |    6.986359e-09 | 1.258824e-09 | K⁻²  |
+
+EOS diagnostics — axial-a
+-------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 59
+  Free parameters           | 3
+  Degrees of freedom        | 56
+  RMSE                      | 0.000584
+  MAE                       | 0.000449
+  Maximum absolute residual | 0.001799
+  Reduced chi-square        | 4.474275
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 4.47427
+
+Observed and calculated EOS data
+--------------------------------
+
+  Temperature | a observed | a calculated |    Residual
+  ------------+------------+--------------+--------------
+       303.00 |   1.000000 |     1.000193 |     -0.000193
+       357.00 |   1.000500 |     1.000560 | -5.983489e-05
+       434.00 |   1.000900 |     1.001114 |     -0.000214
+       483.00 |   1.001500 |     1.001486 |  1.373874e-05
+       531.00 |   1.001900 |     1.001865 |  3.474617e-05
+       579.00 |   1.002100 |     1.002259 |     -0.000159
+       627.00 |   1.002600 |     1.002666 | -6.620357e-05
+       674.00 |   1.002900 |     1.003079 |     -0.000179
+       722.00 |   1.003300 |     1.003515 |     -0.000215
+       770.00 |   1.003600 |     1.003965 |     -0.000365
+       807.00 |   1.004000 |     1.004322 |     -0.000322
+       844.00 |   1.004400 |     1.004686 |     -0.000286
+       881.00 |   1.004900 |     1.005060 |     -0.000160
+       918.00 |   1.005200 |     1.005441 |     -0.000241
+       573.00 |   1.002200 |     1.002209 | -8.630855e-06
+       873.00 |   1.005000 |     1.004978 |  2.164153e-05
+       523.00 |   1.001700 |     1.001801 |     -0.000101
+       733.00 |   1.003500 |     1.003617 |     -0.000117
+       943.00 |   1.005400 |     1.005704 |     -0.000304
+       316.00 |   1.000140 |     1.000280 |     -0.000140
+       334.00 |   1.000280 |     1.000401 |     -0.000121
+       351.00 |   1.000430 |     1.000518 | -8.819795e-05
+       369.00 |   1.000560 |     1.000644 | -8.378584e-05
+       386.00 |   1.000700 |     1.000764 | -6.426100e-05
+       404.00 |   1.000830 |     1.000894 | -6.379550e-05
+       422.00 |   1.001000 |     1.001025 | -2.535736e-05
+       439.00 |   1.001150 |     1.001151 | -1.470328e-06
+       457.00 |   1.001300 |     1.001287 |  1.303032e-05
+       475.00 |   1.001460 |     1.001424 |  3.550838e-05
+       492.00 |   1.001610 |     1.001556 |  5.377091e-05
+       510.00 |   1.001770 |     1.001698 |  7.232098e-05
+       528.00 |   1.001930 |     1.001841 |  8.885346e-05
+       545.00 |   1.002090 |     1.001978 |      0.000112
+       563.00 |   1.002230 |     1.002126 |      0.000104
+       366.00 |   1.000900 |     1.000623 |      0.000277
+       459.00 |   1.001900 |     1.001302 |      0.000598
+       553.00 |   1.002400 |     1.002044 |      0.000356
+       646.00 |   1.003200 |     1.002831 |      0.000369
+       739.00 |   1.004000 |     1.003673 |      0.000327
+       786.00 |   1.004300 |     1.004118 |      0.000182
+       832.00 |   1.004800 |     1.004567 |      0.000233
+       879.00 |   1.005100 |     1.005039 |  6.060989e-05
+       926.00 |   1.005400 |     1.005525 |     -0.000125
+       972.00 |   1.005800 |     1.006013 |     -0.000213
+      1019.00 |   1.006200 |     1.006526 |     -0.000326
+      1065.00 |   1.006600 |     1.007040 |     -0.000440
+       100.00 |   0.998800 |     0.998979 |     -0.000179
+       150.00 |   0.999100 |     0.999254 |     -0.000154
+       200.00 |   0.999400 |     0.999545 |     -0.000145
+       250.00 |   0.999700 |     0.999851 |     -0.000151
+       350.00 |   1.000400 |     1.000511 |     -0.000111
+       400.00 |   1.000800 |     1.000865 | -6.483479e-05
+       450.00 |   1.001200 |     1.001234 | -3.403506e-05
+       500.00 |   1.001600 |     1.001619 | -1.884653e-05
+       550.00 |   1.002000 |     1.002019 | -1.923314e-05
+       600.00 |   1.002400 |     1.002435 | -3.515746e-05
+       650.00 |   1.002800 |     1.002867 | -6.658070e-05
+       700.00 |   1.003200 |     1.003313 |     -0.000113
+        15.00 |   0.998600 |     0.998548 |  5.160914e-05
+
+Parameter covariance
+--------------------
+
+     Parameter    |       L0      | temperature_ref |     alpha0    |     alpha1
+  ----------------+---------------+-----------------+---------------+--------------
+  L0              |  3.034597e-10 |    0.000000e+00 | -8.579107e-13 | -9.012561e-15
+  temperature_ref |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  alpha0          | -8.579107e-13 |    0.000000e+00 |  5.626108e-14 | -1.115732e-16
+  alpha1          | -9.012561e-15 |    0.000000e+00 | -1.115732e-16 |  1.584637e-18
+
+Parameter correlation
+---------------------
+
+     Parameter    |     L0    | temperature_ref |   alpha0  |   alpha1
+  ----------------+-----------+-----------------+-----------+----------
+  L0              |  1.000000 |        0.000000 | -0.207629 | -0.410991
+  temperature_ref |  0.000000 |        0.000000 |  0.000000 |  0.000000
+  alpha0          | -0.207629 |        0.000000 |  1.000000 | -0.373672
+  alpha1          | -0.410991 |        0.000000 | -0.373672 |  1.000000
+
+EOS fit configuration — axial-c
+-------------------------------
+
+         Property       |                Value
+  ----------------------+-------------------------------------
+  Job                   | axial-c
+  Domain                | Volume–temperature
+  Quantity              | Cell parameter c
+  Formulation           | Berman, quadratic [BERMAN:quadratic]
+  Solver                | Effective variance
+  Selected observations | 59
+  Record ID             | 7
+  Accepted              | False
+  Status                | success
+
+EOS parameters
+--------------
+
+  Parameter | State |   Initial    |    Value     | Final - initial |    E.S.D.    | Unit | Bounds
+  ----------+-------+--------------+--------------+-----------------+--------------+------+-------
+  L0        | free  |     1.000141 |     1.000203 |    6.254357e-05 | 2.596036e-05 | —    |
+  Tref      | fixed |              |   298.150000 |                 |     0.000000 | K    |
+  α0        | free  | 2.698927e-05 | 2.478942e-05 |   -2.199845e-06 | 3.129264e-07 | K⁻¹  |
+  α1        | free  | 2.147735e-08 | 3.482191e-08 |    1.334456e-08 | 2.180095e-09 | K⁻²  |
+
+EOS diagnostics — axial-c
+-------------------------
+
+            Metric          |                   Value
+  --------------------------+-------------------------------------------
+  Success                   | True
+  Status                    | success
+  Message                   | fit converged with diagnostic warnings
+  Points                    | 59
+  Free parameters           | 3
+  Degrees of freedom        | 56
+  RMSE                      | 0.001147
+  MAE                       | 0.000858
+  Maximum absolute residual | 0.002937
+  Reduced chi-square        | 6.668685
+  Condition number          |
+  Stop reason               | effective parameters and weights converged
+
+  Note: parameter covariance inflated by reduced chi-square factor 6.66869
+
+Observed and calculated EOS data
+--------------------------------
+
+  Temperature | c observed | c calculated |    Residual
+  ------------+------------+--------------+--------------
+       303.00 |   1.000100 |     1.000243 |     -0.000143
+       357.00 |   1.000500 |     1.000709 |     -0.000209
+       434.00 |   1.001100 |     1.001431 |     -0.000331
+       483.00 |   1.001800 |     1.001926 |     -0.000126
+       531.00 |   1.002300 |     1.002437 |     -0.000137
+       579.00 |   1.002700 |     1.002974 |     -0.000274
+       627.00 |   1.003300 |     1.003538 |     -0.000238
+       674.00 |   1.003800 |     1.004114 |     -0.000314
+       722.00 |   1.004200 |     1.004728 |     -0.000528
+       770.00 |   1.004700 |     1.005368 |     -0.000668
+       807.00 |   1.005200 |     1.005879 |     -0.000679
+       844.00 |   1.005800 |     1.006405 |     -0.000605
+       881.00 |   1.006300 |     1.006947 |     -0.000647
+       918.00 |   1.006800 |     1.007503 |     -0.000703
+       573.00 |   1.002400 |     1.002906 |     -0.000506
+       873.00 |   1.006100 |     1.006828 |     -0.000728
+       523.00 |   1.002700 |     1.002350 |      0.000350
+       733.00 |   1.005500 |     1.004873 |      0.000627
+       943.00 |   1.007700 |     1.007887 |     -0.000187
+       316.00 |   1.000180 |     1.000352 |     -0.000172
+       334.00 |   1.000360 |     1.000507 |     -0.000147
+       351.00 |   1.000550 |     1.000656 |     -0.000106
+       369.00 |   1.000730 |     1.000817 | -8.736895e-05
+       386.00 |   1.000910 |     1.000973 | -6.331577e-05
+       404.00 |   1.001080 |     1.001142 | -6.203318e-05
+       422.00 |   1.001300 |     1.001314 | -1.444695e-05
+       439.00 |   1.001480 |     1.001481 | -6.727533e-07
+       457.00 |   1.001680 |     1.001660 |  1.973716e-05
+       475.00 |   1.001890 |     1.001844 |  4.646221e-05
+       492.00 |   1.002080 |     1.002020 |  5.998938e-05
+       510.00 |   1.002280 |     1.002210 |  6.956110e-05
+       528.00 |   1.002500 |     1.002405 |  9.546013e-05
+       545.00 |   1.002690 |     1.002591 |  9.877408e-05
+       563.00 |   1.002880 |     1.002792 |  8.754406e-05
+       366.00 |   1.001400 |     1.000790 |      0.000610
+       459.00 |   1.002400 |     1.001680 |      0.000720
+       553.00 |   1.003500 |     1.002680 |      0.000820
+       646.00 |   1.004300 |     1.003768 |      0.000532
+       739.00 |   1.005200 |     1.004952 |      0.000248
+       786.00 |   1.005700 |     1.005588 |      0.000112
+       832.00 |   1.006200 |     1.006233 | -3.314331e-05
+       879.00 |   1.006800 |     1.006917 |     -0.000117
+       926.00 |   1.007200 |     1.007625 |     -0.000425
+       972.00 |   1.007900 |     1.008342 |     -0.000442
+      1019.00 |   1.008400 |     1.009098 |     -0.000698
+      1065.00 |   1.008900 |     1.009861 |     -0.000961
+       100.00 |   0.998600 |     0.998791 |     -0.000191
+       150.00 |   0.998800 |     0.999105 |     -0.000305
+       200.00 |   0.999200 |     0.999447 |     -0.000247
+       250.00 |   0.999600 |     0.999818 |     -0.000218
+       350.00 |   1.000500 |     1.000647 |     -0.000147
+       400.00 |   1.001000 |     1.001104 |     -0.000104
+       450.00 |   1.001500 |     1.001590 | -8.998417e-05
+       500.00 |   1.002100 |     1.002104 | -4.191719e-06
+       550.00 |   1.002600 |     1.002647 | -4.675577e-05
+       600.00 |   1.003100 |     1.003218 |     -0.000118
+       650.00 |   1.003700 |     1.003817 |     -0.000117
+       700.00 |   1.004200 |     1.004444 |     -0.000244
+        15.00 |   0.998370 |     0.998325 |  4.526748e-05
+
+Parameter covariance
+--------------------
+
+     Parameter    |       L0      | temperature_ref |     alpha0    |     alpha1
+  ----------------+---------------+-----------------+---------------+--------------
+  L0              |  6.739402e-10 |    0.000000e+00 | -1.402724e-12 | -3.201865e-14
+  temperature_ref |  0.000000e+00 |    0.000000e+00 |  0.000000e+00 |  0.000000e+00
+  alpha0          | -1.402724e-12 |    0.000000e+00 |  9.792292e-14 | -1.041567e-16
+  alpha1          | -3.201865e-14 |    0.000000e+00 | -1.041567e-16 |  4.752816e-18
+
+Parameter correlation
+---------------------
+
+     Parameter    |     L0    | temperature_ref |   alpha0  |   alpha1
+  ----------------+-----------+-----------------+-----------+----------
+  L0              |  1.000000 |        0.000000 | -0.172671 | -0.565740
+  temperature_ref |  0.000000 |        0.000000 |  0.000000 |  0.000000
+  alpha0          | -0.172671 |        0.000000 |  1.000000 | -0.152676
+  alpha1          | -0.565740 |        0.000000 | -0.152676 |  1.000000
+
+EOS batch fit summary
+---------------------
+
+        Domain       |     Quantity     |               Formulation                |         Solver         |            Job            |  Status | Accepted | Points | Free |   RMSE   | Reduced χ² | Max residual | Condition number
+  -------------------+------------------+------------------------------------------+------------------------+---------------------------+---------+----------+--------+------+----------+------------+--------------+-----------------
+  Volume–temperature | Cell parameter a | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-a                   | success |  False   |     59 |    3 | 0.000584 |   4.474275 |     0.001799 |
+  Volume–temperature | Cell parameter c | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-c                   | success |  False   |     59 |    3 | 0.001147 |   6.668685 |     0.002937 |
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | berman-effective-variance | success |   True   |     59 |    3 | 0.000650 |   8.108683 |     0.001654 |
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Ordinary least squares | berman-ols                | success |  False   |     59 |    3 | 0.000596 |            |     0.001731 |
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Weighted least squares | berman-wls                | success |  False   |     59 |    3 | 0.000687 |  13.742329 |     0.001658 |
+  Volume–temperature | Volume           | Fei, inverse-square [FEI:inverse-square] | Effective variance     | fei-effective-variance    | success |  False   |     59 |    4 | 0.000649 |   4.106359 |     0.001560 |
+  Volume–temperature | Volume           | Salje, standard [SALJE:standard]         | Effective variance     | salje-effective-variance  | success |  False   |     59 |    3 | 0.000641 |   3.781740 |     0.001570 |
+
+  Note: Rows are ordered by domain, quantity, formulation, and solver.
+
+EOS batch parameter summary
+---------------------------
+
+        Domain       |     Quantity     |               Formulation                |         Solver         |            Job            | Accepted | Parameter | State |    Value     |    E.S.D.    |           Unit
+  -------------------+------------------+------------------------------------------+------------------------+---------------------------+----------+-----------+-------+--------------+--------------+------------------------
+  Volume–temperature | Cell parameter a | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-a                   |  False   | L0        | free  |     1.000161 | 1.742009e-05 | —
+  Volume–temperature | Cell parameter a | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-a                   |  False   | Tref      | fixed |   298.150000 |     0.000000 | K
+  Volume–temperature | Cell parameter a | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-a                   |  False   | α0        | free  | 1.976343e-05 | 2.371942e-07 | K⁻¹
+  Volume–temperature | Cell parameter a | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-a                   |  False   | α1        | free  | 1.911215e-08 | 1.258824e-09 | K⁻²
+  Volume–temperature | Cell parameter c | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-c                   |  False   | L0        | free  |     1.000203 | 2.596036e-05 | —
+  Volume–temperature | Cell parameter c | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-c                   |  False   | Tref      | fixed |   298.150000 |     0.000000 | K
+  Volume–temperature | Cell parameter c | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-c                   |  False   | α0        | free  | 2.478942e-05 | 3.129264e-07 | K⁻¹
+  Volume–temperature | Cell parameter c | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | axial-c                   |  False   | α1        | free  | 3.482191e-08 | 2.180095e-09 | K⁻²
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | berman-effective-variance |   True   | V0        | free  |     1.000577 | 7.154198e-05 | —
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | berman-effective-variance |   True   | Tref      | fixed |   298.150000 |     0.000000 | K
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | berman-effective-variance |   True   | α0        | free  | 2.178651e-05 | 3.881976e-07 | K⁻¹
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Effective variance     | berman-effective-variance |   True   | α1        | free  | 2.031522e-08 | 1.542115e-09 | K⁻²
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Ordinary least squares | berman-ols                |  False   | V0        | free  |     1.000388 |     0.000123 | —
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Ordinary least squares | berman-ols                |  False   | Tref      | fixed |   298.150000 |     0.000000 | K
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Ordinary least squares | berman-ols                |  False   | α0        | free  | 2.285905e-05 | 7.375931e-07 | K⁻¹
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Ordinary least squares | berman-ols                |  False   | α1        | free  | 1.567267e-08 | 2.341924e-09 | K⁻²
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Weighted least squares | berman-wls                |  False   | V0        | free  |     1.000540 | 6.144579e-05 | —
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Weighted least squares | berman-wls                |  False   | Tref      | fixed |   298.150000 |     0.000000 | K
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Weighted least squares | berman-wls                |  False   | α0        | free  | 2.191902e-05 | 3.543202e-07 | K⁻¹
+  Volume–temperature | Volume           | Berman, quadratic [BERMAN:quadratic]     | Weighted least squares | berman-wls                |  False   | α1        | free  | 2.115443e-08 | 1.541056e-09 | K⁻²
+  Volume–temperature | Volume           | Fei, inverse-square [FEI:inverse-square] | Effective variance     | fei-effective-variance    |  False   | V0        | free  |     1.000028 | 9.825657e-05 | —
+  Volume–temperature | Volume           | Fei, inverse-square [FEI:inverse-square] | Effective variance     | fei-effective-variance    |  False   | Tref      | fixed |   298.150000 |     0.000000 | K
+  Volume–temperature | Volume           | Fei, inverse-square [FEI:inverse-square] | Effective variance     | fei-effective-variance    |  False   | α0        | free  | 2.624010e-05 | 1.550447e-06 | K⁻¹
+  Volume–temperature | Volume           | Fei, inverse-square [FEI:inverse-square] | Effective variance     | fei-effective-variance    |  False   | α1        | free  | 4.044482e-09 | 2.388843e-09 | K⁻²
+  Volume–temperature | Volume           | Fei, inverse-square [FEI:inverse-square] | Effective variance     | fei-effective-variance    |  False   | α2        | free  |    -0.055464 |     0.023096 | K
+  Volume–temperature | Volume           | Salje, standard [SALJE:standard]         | Effective variance     | salje-effective-variance  |  False   | V0        | free  |     0.995586 | 9.614247e-05 | —
+  Volume–temperature | Volume           | Salje, standard [SALJE:standard]         | Effective variance     | salje-effective-variance  |  False   | Tref      | fixed |     0.000000 |     0.000000 | K
+  Volume–temperature | Volume           | Salje, standard [SALJE:standard]         | Effective variance     | salje-effective-variance  |  False   | p1        | free  | 9.957938e-06 | 1.167409e-07 | (dimensionless)¹/3) K⁻¹
+  Volume–temperature | Volume           | Salje, standard [SALJE:standard]         | Effective variance     | salje-effective-variance  |  False   | θsat      | free  |   188.428615 |     7.857210 | K
+
+  Note: Machine-readable parameter names remain unchanged in HDF5 and CSV metadata.
