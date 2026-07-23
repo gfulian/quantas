@@ -69,7 +69,11 @@ def main() -> None:
     )
     rows = [run_case(args.input, *case) for case in cases]
     with args.output.open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(
+                stream, 
+                fieldnames=list(rows[0]),
+                lineterminator="\n",
+                )
         writer.writeheader()
         writer.writerows(rows)
 

@@ -330,7 +330,10 @@ def _write_records(
     delimiter = "," if file_format == "csv" else "\t"
     with path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(
-            stream, fieldnames=list(records[0]), delimiter=delimiter
+            stream, 
+            fieldnames=list(records[0]), 
+            delimiter=delimiter,
+            lineterminator="\n",
         )
         writer.writeheader()
         writer.writerows(records)

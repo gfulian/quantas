@@ -363,7 +363,11 @@ def _write_tensor_csv(
         if include_uncertainties:
             fieldnames.append(f"sigma_{label}")
     with path.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=fieldnames)
+        writer = csv.DictWriter(
+                stream, 
+                fieldnames=fieldnames,
+                lineterminator="\n",
+                )
         writer.writeheader()
         writer.writerows(
             _iter_export_rows(

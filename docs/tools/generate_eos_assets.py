@@ -41,7 +41,11 @@ def _write_rows(
 ) -> None:
     """Write one deterministic CSV table."""
     with path.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer = csv.DictWriter(
+                handle,
+                fieldnames=fieldnames,
+                lineterminator="\n",
+                )
         writer.writeheader()
         writer.writerows(rows)
 

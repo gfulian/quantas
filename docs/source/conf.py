@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -55,8 +56,15 @@ htmlhelp_basename = "Quantasdoc"
 
 
 def _prepare_generated_assets(app: object) -> None:
-    """Generate reproducible tutorial assets before Sphinx reads sources."""
+    """
+    Generate reproducible tutorial assets before Sphinx reads sources.
+    This function should be called only when explicitly requested.
+    """
     del app
+
+    if os.environ.get("QUANTAS_REGENERATE_DOC_ASSETS") != "1":
+        return
+
     for script in (
         "generate_elasticity_seismic_assets.py",
         "generate_thermoelasticity_assets.py",
@@ -69,6 +77,7 @@ def _prepare_generated_assets(app: object) -> None:
 
 
 def setup(app: object) -> dict[str, bool]:
-    """Register deterministic documentation build preparation."""
+    """Register optional documentation asset preparation/regeneration."""
     app.connect("builder-inited", _prepare_generated_assets)
     return {"parallel_read_safe": True, "parallel_write_safe": True}
+

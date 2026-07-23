@@ -167,7 +167,7 @@ def _write_csv(
     destination.parent.mkdir(parents=True, exist_ok=True)
     headers = [name if not unit else f"{name} [{unit}]" for name, _, unit in columns]
     with destination.open("w", encoding="utf-8", newline="") as handle:
-        writer = csv.writer(handle)
+        writer = csv.writer(handle, lineterminator="\n")
         writer.writerow(headers)
         for index in range(nrows):
             writer.writerow([_csv_value(values[index]) for _, values, _ in columns])
