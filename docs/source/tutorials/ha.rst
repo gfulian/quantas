@@ -26,7 +26,7 @@ For each sampled volume and temperature, calculate:
 Dataset
 -------
 
-The example is derived from a CRYSTAL23 quasi-harmonic calculation for MgO.
+The example is derived from a CRYSTAL17 quasi-harmonic calculation for MgO.
 The normalized Quantas YAML contains:
 
 - 2 atoms in the primitive cell;
@@ -46,7 +46,7 @@ volume-dependent structures and all frequency arrays.
 
 .. code-block:: yaml
 
-   job: MgO Periclase (CRYSTAL23 QHA)
+   job: MgO Periclase (CRYSTAL17 QHA)
    natom: 2
    formula_units: 1
    mode_continuity: assumed

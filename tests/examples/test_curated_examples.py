@@ -189,7 +189,7 @@ def generated_mgo_qha_yaml(tmp_path_factory: pytest.TempPathFactory) -> Path:
         EXAMPLES / "qha/crystal-qha/mgo-b3lyp-crystal-qha.out",
         destination,
         interface="crystal-qha",
-        jobname="MgO Periclase (CRYSTAL23 QHA)",
+        jobname="MgO Periclase (CRYSTAL17 QHA)",
     )
     return destination
 
