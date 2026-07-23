@@ -177,8 +177,8 @@
     },
     {
       "path": "qha/compare_methods.py",
-      "sha256": "c0cb1cc7e06b2c3ba7a8096ce8d087e7d109fa710936841fdd8d5cc612c5f31e",
-      "size_bytes": 2964
+      "sha256": "d434c6c7fc01f1225551281b57509c7e67fd99487d20ee30dbefaf070488b02a",
+      "size_bytes": 3053
     },
     {
       "path": "qha/crystal-phonons/dol_pbe0.yaml",
