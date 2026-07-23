@@ -10,6 +10,10 @@ public Python API or the installed ``quantas`` command.
   the complete source, test, documentation, packaging, distribution, and Git
   validation sequence. It is the preferred final check for an unpacked source
   tree or release candidate.
+- ``post_validation_cleanup.sh`` removes disposable validation environments,
+  build products, caches, generated reports, and optionally validation logs
+  without deleting tracked source or documentation assets. Use ``--dry-run``
+  before the first cleanup.
 - ``run_tests.py`` runs named pytest suites. The ``all`` target isolates the
   shared core, each scientific module, the CLI, plotting, and curated examples
   in separate processes.
