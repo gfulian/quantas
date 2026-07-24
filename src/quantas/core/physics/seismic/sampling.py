@@ -344,7 +344,11 @@ def _solve_batch(
     )
     power_flow_angles = np.full((q.shape[0], 3), np.nan, dtype=float)
     cosine = np.einsum("nmi,ni->nm", ray_directions, q, optimize=True)
-    power_flow_angles[group_valid] = np.arccos(np.clip(cosine[group_valid], -1.0, 1.0))
+    valid_cosine = np.clip(cosine[group_valid], -1.0, 1.0)
+    endpoint_tolerance = 8.0 * np.finfo(float).eps
+    valid_cosine[np.abs(valid_cosine - 1.0) <= endpoint_tolerance] = 1.0
+    valid_cosine[np.abs(valid_cosine + 1.0) <= endpoint_tolerance] = -1.0
+    power_flow_angles[group_valid] = np.arccos(valid_cosine)
     group_resolved = group_valid & ~degeneracy
 
     values.update(

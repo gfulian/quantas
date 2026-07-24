@@ -12,7 +12,10 @@ from quantas.core.physics.seismic import (
     WaveMode,
     cofactor_matrix,
 )
-from tests.reference.seismic_reference import SeismicFormulaReference
+from tests.reference.seismic_reference import (
+    SeismicFormulaReference,
+    reference_cofactor
+)
 
 
 def _isotropic_stiffness(lame: float, shear: float) -> np.ndarray:
@@ -365,9 +368,14 @@ def test_cofactor_matrix_supports_regular_and_singular_inputs() -> None:
     np.testing.assert_allclose(cofactor_matrix(regular), expected)
 
     singular = np.diag([1.0, 1.0, 0.0])
+    expected_singular = np.diag([0.0, 0.0, 1.0])
     np.testing.assert_array_equal(
         cofactor_matrix(singular),
-        np.diag([0.0, 0.0, 1.0]),
+        expected_singular,
+    )
+    np.testing.assert_array_equal(
+        reference_cofactor(singular),
+        expected_singular,
     )
     with pytest.raises(ValueError, match="shape"):
         cofactor_matrix(np.eye(2))

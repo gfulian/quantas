@@ -427,7 +427,11 @@ class ChristoffelSolver:
             phase.direction,
             optimize=True,
         )
-        power_flow_angles[valid_mask] = np.arccos(np.clip(cosines, -1.0, 1.0))
+        cosines = np.clip(cosines, -1.0, 1.0)
+        endpoint_tolerance = 8.0 * np.finfo(float).eps
+        cosines[np.abs(cosines - 1.0) <= endpoint_tolerance] = 1.0
+        cosines[np.abs(cosines + 1.0) <= endpoint_tolerance] = -1.0
+        power_flow_angles[valid_mask] = np.arccos(cosines)
         resolved_mask = valid_mask & ~phase.degeneracy_mask
 
         arrays = (

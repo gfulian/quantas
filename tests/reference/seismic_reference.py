@@ -144,6 +144,9 @@ def physical_cartesian_angles(direction: ArrayLike) -> tuple[float, float]:
 def reference_cofactor(matrix: ArrayLike) -> NDArray[np.float64]:
     """Return the 3x3 cofactor matrix following the frozen branch logic.
 
+    The explicit expression remains valid for singular and nearly singular
+    matrices and avoids backend-dependent ``inv(A).T * det(A)`` evaluation.
+
     Parameters
     ----------
     matrix : array_like
@@ -155,9 +158,6 @@ def reference_cofactor(matrix: ArrayLike) -> NDArray[np.float64]:
         Cofactor matrix.
     """
     value = np.asarray(matrix, dtype=float)
-    determinant = np.linalg.det(value)
-    if determinant != 0.0:
-        return np.linalg.inv(value).T * determinant
 
     result = np.empty((3, 3), dtype=float)
     result[0, 0] = value[1, 1] * value[2, 2] - value[1, 2] * value[2, 1]
