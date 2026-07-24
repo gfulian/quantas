@@ -30,7 +30,10 @@ def _sha256(path: Path) -> str:
 def build_manifest() -> dict[str, object]:
     """Return deterministic metadata for every curated example file."""
     files: list[dict[str, object]] = []
-    for path in sorted(EXAMPLES_ROOT.rglob("*")):
+    for path in sorted(
+        EXAMPLES_ROOT.rglob("*"),
+        key=lambda item: item.relative_to(EXAMPLES_ROOT).as_posix(),
+    ):
         if not path.is_file():
             continue
         relative_path = path.relative_to(EXAMPLES_ROOT)

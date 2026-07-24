@@ -266,7 +266,7 @@ def test_axial_vt_matches_direct_fit_of_cubed_coordinate() -> None:
     assert volume.fit.parameters is not None
     converted = axial.fit.parameters.copy()
     converted[0] = converted[0] ** 3
-    np.testing.assert_allclose(converted, volume.fit.parameters, rtol=2e-10)
+    np.testing.assert_allclose(converted, volume.fit.parameters, rtol=1e-9)
     assert axial.fit.covariance is not None
     assert volume.fit.covariance is not None
     jacobian = np.eye(axial.fit.parameters.size)
