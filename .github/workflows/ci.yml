@@ -61,12 +61,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements/minimum.txt
+          python -m pip install pytest tomli
           python -m pip install -e . --no-deps
       - name: Compile and run core scientific tests
         run: |
           python -m compileall -q src tests tools docs/tools
-          pytest --suite core -q
-          pytest --suite eos -q
+          python -m pytest --suite core -q
+          python -m pytest --suite eos -q
 
   staged:
     name: Complete staged validation
@@ -118,6 +119,9 @@ jobs:
       - name: Run complete staged suite on current Python
         if: matrix.python-version == '3.13'
         run: python tools/run_tests.py all -- -q
+      - name: Install wheel build tools
+        if: matrix.python-version == '3.13'
+        run: python -m pip install build
       - name: Build wheel on current platform
         if: matrix.python-version == '3.13'
         run: python -m build --wheel
