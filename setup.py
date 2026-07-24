@@ -22,7 +22,7 @@ except ImportError:
     print("\nPlease, install Cython via 'pip install cython'")
     print('before installing this package')
     print('\nWill now exit')
-    sys.exit(0)
+    sys.exit(1)
 
 # ----------------------------------------------------------------
 # Setup utilities
