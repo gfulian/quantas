@@ -52,6 +52,6 @@ docs/source/_downloads/calcite_elasticity.hdf5
 project_internal/
 
 # Maintainer-only validation output
-validation/
+/validation/
 PROJECT_STATUS.md
 PACKAGE_MANIFEST_SHA256.txt
