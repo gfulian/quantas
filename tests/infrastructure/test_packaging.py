@@ -54,5 +54,5 @@ def test_typecheck_extra_pins_numpy_stub_generation() -> None:
     """The Python 3.10 type-check baseline uses compatible NumPy stubs."""
     metadata = _pyproject()
     extras = metadata["project"]["optional-dependencies"]
-    assert "numpy>=1.23.5,<2.3" in extras["typecheck"]
+    assert "numpy>=1.24,<2.3" in extras["typecheck"]
     assert (PROJECT_ROOT / "requirements" / "typecheck.txt").is_file()
