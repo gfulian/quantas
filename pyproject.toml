@@ -35,7 +35,7 @@ classifiers = [
     "Typing :: Typed",
 ]
 dependencies = [
-    "numpy>=1.23.5",
+    "numpy>=1.24",
     "scipy>=1.10",
     "h5py>=3.8",
     "pyyaml>=6.0",
@@ -55,12 +55,12 @@ test = [
 docs = ["sphinx", "numpydoc", "sphinx-rtd-theme", "sphinx-click", "matplotlib>=3.7"]
 typecheck = [
     "mypy",
-    "numpy>=1.23.5,<2.3",
+    "numpy>=1.24,<2.3",
 ]
 dev = [
     "pytest",
     "matplotlib>=3.7",
-    "numpy>=1.23.5,<2.3",
+    "numpy>=1.24,<2.3",
     "ruff",
     "mypy",
     "build",
