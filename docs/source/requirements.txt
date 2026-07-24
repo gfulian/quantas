@@ -1,3 +1,7 @@
-sphinx==4.2.0
+# Legacy toolchain for Quantas v0.9.1
+setuptools==80.9.0
+Cython==0.29.37
+Jinja2==3.0.3
+Sphinx==4.2.0
 sphinx_rtd_theme==1.0.0
-myst_parser
+myst_parser==0.18.1
