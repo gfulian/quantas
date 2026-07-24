@@ -194,6 +194,7 @@ class EnergyEOS:
                         np.clip(np.diag(resolved_covariance), 0.0, None)
                     ).tolist()
                 else:
+                    assert covariance_warning is not None
                     result.covariance = None
                     result.errors = None
                     result.optimizer_covariance = None
