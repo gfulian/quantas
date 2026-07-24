@@ -11,6 +11,7 @@ import numpy as np
 
 from quantas.core.math.fitting import (
     BaseFitModel,
+    FitQuality,
     FitResult,
     FitStatus,
     LeastSquaresFitter,
@@ -161,15 +162,56 @@ class EnergyEOS:
                 },
             }
             if result.covariance is not None:
-                resolved_covariance = resolved_energy_parameter_covariance(
-                    model_spec,
-                    result.parameters,
-                    result.covariance,
-                )
-                resolved_metadata["resolved_covariance"] = resolved_covariance.tolist()
-                resolved_metadata["resolved_errors"] = np.sqrt(
-                    np.clip(np.diag(resolved_covariance), 0.0, None)
-                ).tolist()
+                covariance = np.asarray(result.covariance, dtype=np.float64)
+                covariance_status: str | None = None
+                covariance_warning: str | None = None
+                if result.dof == 0:
+                    covariance_status = "unavailable_zero_degrees_of_freedom"
+                    covariance_warning = (
+                        f"the {model_spec.tag} fit is exactly determined: "
+                        f"{result.n_points} observations and "
+                        f"{result.n_parameters} free parameters give zero "
+                        "residual degrees of freedom; parameter covariance and "
+                        "statistical uncertainties are unavailable"
+                    )
+                elif not np.all(np.isfinite(covariance)):
+                    covariance_status = "unavailable_non_finite"
+                    covariance_warning = (
+                        "the optimizer returned a non-finite EOS covariance; "
+                        "parameter uncertainties are unavailable"
+                    )
+
+                if covariance_status is None:
+                    resolved_covariance = resolved_energy_parameter_covariance(
+                        model_spec,
+                        result.parameters,
+                        covariance,
+                    )
+                    resolved_metadata["resolved_covariance"] = (
+                        resolved_covariance.tolist()
+                    )
+                    resolved_metadata["resolved_errors"] = np.sqrt(
+                        np.clip(np.diag(resolved_covariance), 0.0, None)
+                    ).tolist()
+                else:
+                    assert covariance_warning is not None
+                    result.covariance = None
+                    result.errors = None
+                    result.optimizer_covariance = None
+                    result.optimizer_errors = None
+                    result.condition_number = None
+                    result.quality = FitQuality.POOR
+                    result.message = "fit converged with diagnostic warnings"
+                    if covariance_warning not in result.warnings:
+                        result.warnings.append(covariance_warning)
+                    if result.diagnostics is not None:
+                        result.diagnostics.correlation = None
+                        if covariance_warning not in result.diagnostics.warnings:
+                            result.diagnostics.warnings.append(covariance_warning)
+                        result.diagnostics.metadata["covariance_status"] = (
+                            covariance_status
+                        )
+                    resolved_metadata["covariance_status"] = covariance_status
             result.metadata.update(resolved_metadata)
         return result
 
@@ -199,11 +241,12 @@ class EnergyEOS:
     ) -> EOSParameters:
         """Estimate a complete physical parameter set from a polynomial fit."""
         volume_array, energy_array = validate_xy(volume, energy)
-        if volume_array.size < 5:
+        if volume_array.size < 4:
             raise ValueError(
-                "at least five points are required for the EOS initial estimate"
+                "at least four points are required for the EOS initial estimate"
             )
-        coefficients = np.polyfit(volume_array, energy_array, 4)
+        degree = 4 if volume_array.size >= 5 else 2
+        coefficients = np.polyfit(volume_array, energy_array, degree)
         first = np.polyder(coefficients, 1)
         second = np.polyder(coefficients, 2)
         roots = np.roots(first)

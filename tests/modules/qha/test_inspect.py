@@ -93,3 +93,4 @@ def test_pressure_volume_preview_reports_failed_eos_without_failing_polynomial()
     assert preview.eos is not None
     assert not preview.eos.success
     assert preview.warnings
+    assert all(row["pressure_eos"] is None for row in preview.table_rows())

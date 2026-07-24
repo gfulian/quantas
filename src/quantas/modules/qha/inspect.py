@@ -164,8 +164,20 @@ class PressureVolumePreview:
             Rows containing volume, energy, polynomial pressure and EOS
             pressure.  Missing estimates are represented by ``None``.
         """
-        poly = None if self.polynomial is None else self.polynomial.pressure
-        eos = None if self.eos is None else self.eos.pressure
+        poly = (
+            None
+            if self.polynomial is None
+            or not self.polynomial.success
+            or self.polynomial.pressure.shape != self.volume.shape
+            else self.polynomial.pressure
+        )
+        eos = (
+            None
+            if self.eos is None
+            or not self.eos.success
+            or self.eos.pressure.shape != self.volume.shape
+            else self.eos.pressure
+        )
         rows: list[dict[str, float | None]] = []
         for index, (volume, energy) in enumerate(
             zip(self.volume, self.energy, strict=True)
