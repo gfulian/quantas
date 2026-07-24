@@ -2,6 +2,8 @@
 
 <p align="center"><img src="docs/source/_static/branding/Quantas_banner-1600.png" alt="Quantas — quantitative analysis of solid-state properties" width="900" ></p>
 
+[![Quantas CI](https://github.com/gfulian/quantas/actions/workflows/ci.yml/badge.svg?branch=dev%2Frefactor)](https://github.com/gfulian/quantas/actions/workflows/ci.yml)
+
 Quantas is a typed Python library for quantitative analysis of solid-state
 thermodynamics, elasticity, acoustic-wave propagation, and equations of state.
 The same scientific workflows are available through a public Python API and a
