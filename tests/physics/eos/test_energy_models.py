@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from quantas.core.physics.eos import EnergyEOS
-from quantas.core.math.fitting import FitStatus
+from quantas.core.math.fitting import FitQuality, FitStatus
 
 
 def _reference_murnaghan(volume, E0, K0, KP, V0):
@@ -106,13 +106,38 @@ def test_energy_fit_returns_failure_for_invalid_data():
     assert result.status is FitStatus.INVALID_INPUT
 
 
-def test_energy_fit_reports_initial_guess_failure():
+def test_energy_fit_accepts_exactly_determined_four_point_bm3():
     eos = EnergyEOS()
-    result = eos.fit("BM", [1.0, 2.0, 3.0, 4.0], [3.0, 2.0, 2.0, 3.0])
+    volume = np.array([68.0, 70.5, 73.0, 76.0], dtype=np.float64)
+    expected = np.array([-100.0, 0.55, 4.2, 72.0], dtype=np.float64)
+    energy = eos.evaluate("BM3", volume, expected)
+
+    result = eos.fit("BM3", volume, energy)
+
+    assert result.success, result.message
+    assert result.status is FitStatus.SUCCESS
+    assert result.quality is FitQuality.POOR
+    assert result.dof == 0
+    assert result.covariance is None
+    assert result.errors is None
+    assert result.metadata["covariance_status"] == (
+        "unavailable_zero_degrees_of_freedom"
+    )
+    assert any("exactly determined" in warning for warning in result.warnings)
+    np.testing.assert_allclose(result.parameters, expected, rtol=1.0e-7, atol=1.0e-8)
+
+
+def test_energy_fit_rejects_four_points_for_five_parameter_bm4():
+    eos = EnergyEOS()
+    volume = np.array([68.0, 70.5, 73.0, 76.0], dtype=np.float64)
+    parameters = np.array([-100.0, 0.55, 4.2, -0.04, 72.0], dtype=np.float64)
+    energy = eos.evaluate("BM4", volume, parameters)
+
+    result = eos.fit("BM4", volume, energy)
 
     assert not result.success
-    assert result.status is FitStatus.FAILED
-    assert "initial EOS parameters" in result.message
+    assert result.status is FitStatus.INVALID_INPUT
+    assert "smaller than the number of parameters" in result.message
 
 
 def test_energy_eos_pressure_is_zero_at_reference_volume():

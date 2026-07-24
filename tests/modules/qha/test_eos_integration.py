@@ -264,3 +264,36 @@ def test_bm_alias_is_identical_to_bm3_in_qha() -> None:
     np.testing.assert_array_equal(
         alias.bulk_modulus_derivative, explicit.bulk_modulus_derivative
     )
+
+
+def test_qha_eos_workflow_accepts_four_volume_bm3_without_covariance() -> None:
+    volume = np.array([68.0, 70.5, 73.0, 76.0], dtype=np.float64)
+    k0_gpa = 160.0
+    k0_native = float(pressure_to_energy(k0_gpa, "eV", "A", "GPa"))
+    parameters = np.array([-100.0, k0_native, 4.2, 72.0], dtype=np.float64)
+    energy = EnergyEOS().evaluate("BM3", volume, parameters)
+    input_data = QHAInput(jobname="four-volume-bm3", volume=volume, energy=energy)
+    options = _options(
+        eos="BM3",
+        pressure_max=0.0,
+        estimate_uncertainties=True,
+        uncertainty_method="covariance",
+    )
+
+    result = run_volume_minimization_workflow(
+        input_data,
+        options,
+        free_energy=energy[np.newaxis, :],
+    )
+
+    assert result.completed
+    assert result.valid_mask.all()
+    fit = result.fit_records[0].fit
+    assert fit.success
+    assert fit.dof == 0
+    assert fit.covariance is None
+    assert any("exactly determined" in warning for warning in fit.warnings)
+    np.testing.assert_allclose(result.equilibrium_volume[0, 0], 72.0, atol=1.0e-7)
+    np.testing.assert_allclose(
+        result.isothermal_bulk_modulus[0, 0], k0_gpa, rtol=1.0e-7
+    )
