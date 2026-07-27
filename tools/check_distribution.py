@@ -157,7 +157,7 @@ from importlib import metadata, resources
 from pathlib import Path
 
 import quantas
-from quantas.api import elasticity, eos, ha, plotting, registry, seismic, thermoelasticity
+from quantas.api import elasticity, eos, ha, plotting, qha, registry, seismic, thermoelasticity
 from quantas.api.registry import Capability
 from quantas.core.physics.elasticity import cold_finite_strain_component
 
@@ -165,14 +165,19 @@ version = metadata.version("quantas")
 assert version == quantas.__version__
 assert registry.get("eos").has(Capability.FIT)
 assert registry.get("thermoelasticity").has(Capability.RUN_CONTEXT)
-for name in ("elasticity", "seismic", "ha"):
-    assert registry.get(name).has(Capability.PLOT_INVENTORY)
-    assert callable(registry.get(name).operation(Capability.PLOT_INVENTORY))
-for name in ("qha", "thermoelasticity", "eos"):
-    assert not registry.get(name).has(Capability.PLOT_INVENTORY)
-assert callable(elasticity.describe_plots)
-assert callable(seismic.describe_plots)
-assert callable(ha.describe_plots)
+plot_namespaces = {
+    "elasticity": elasticity,
+    "seismic": seismic,
+    "ha": ha,
+    "qha": qha,
+    "thermoelasticity": thermoelasticity,
+    "eos": eos,
+}
+for name, namespace in plot_namespaces.items():
+    descriptor = registry.get(name)
+    assert descriptor.has(Capability.PLOT_INVENTORY)
+    assert callable(descriptor.operation(Capability.PLOT_INVENTORY))
+    assert callable(namespace.describe_plots)
 assert plotting.PlotInventory.__module__ == "quantas.models.plot_inventory"
 assert {item.name for item in registry.list_modules()} == {
     "elasticity", "seismic", "ha", "qha", "eos", "thermoelasticity"

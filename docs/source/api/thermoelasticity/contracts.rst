@@ -11,6 +11,7 @@ Scientific selectors
 .. autodata:: quantas.api.thermoelasticity.InputInterface
 
 .. autoclass:: quantas.api.thermoelasticity.FitMethod
+   :no-index:
    :members:
    :show-inheritance:
 
@@ -36,10 +37,12 @@ These aliases close the public annotations of :class:`Input` and
 parser implementations.
 
 .. autoclass:: quantas.api.thermoelasticity.CrystalStructure
+   :no-index:
    :members:
    :show-inheritance:
 
 .. autoclass:: quantas.api.thermoelasticity.SymmetryMetadata
+   :no-index:
    :members:
    :show-inheritance:
 

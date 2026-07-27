@@ -154,11 +154,17 @@ class EOSSlotPlotDescriptor:
             raise ValueError("EOS slot record identifiers must be unique")
         if not set(self.plottable_record_ids).issubset(self.record_ids):
             raise ValueError("EOS plottable records must belong to the slot history")
-        for identifier in (*self.record_ids, *self.plottable_record_ids):
-            if int(identifier) <= 0:
+        for record_identifier in (
+            *self.record_ids,
+            *self.plottable_record_ids,
+        ):
+            if int(record_identifier) <= 0:
                 raise ValueError("EOS slot record identifiers must be positive")
-        for identifier in (self.accepted_record_id, self.last_record_id):
-            if identifier is not None and int(identifier) not in self.record_ids:
+        for state_identifier in (self.accepted_record_id, self.last_record_id):
+            if (
+                state_identifier is not None
+                and int(state_identifier) not in self.record_ids
+            ):
                 raise ValueError("EOS slot state must reference its record history")
         object.__setattr__(self, "key", slot.key)
         object.__setattr__(self, "domain", domain)
@@ -418,10 +424,10 @@ def _select_record(
         return record, None
     if slot is not None:
         resolved = EOSResultSlot.parse(slot)
-        record = archive.accepted(resolved)
-        if record is None:
+        accepted_record = archive.accepted(resolved)
+        if accepted_record is None:
             return None, f"EOS result slot {resolved.key!r} has no accepted record"
-        return record, None
+        return accepted_record, None
     accepted = tuple(
         archive.record(state.accepted_record_id)
         for state in archive.slots()
@@ -578,7 +584,7 @@ def _representation_descriptor(
 ) -> PlotRepresentationDescriptor:
     """Describe one canonical EOS plot representation."""
     property_keys: tuple[str, ...]
-    supported_contexts = (
+    supported_contexts: tuple[str, ...] = (
         "record_id",
         "dataset_id",
         "result_slot",

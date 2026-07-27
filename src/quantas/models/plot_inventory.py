@@ -250,25 +250,31 @@ class PlotInventory:
         property_keys = {item.key for item in self.properties}
         representation_keys = {item.key for item in self.representations}
         context_keys = {item.key for item in self.contexts}
-        for item in self.properties:
-            unknown = set(item.representations) - representation_keys
+        for property_descriptor in self.properties:
+            unknown = (
+                set(property_descriptor.representations) - representation_keys
+            )
             if unknown:
                 raise ValueError(
-                    f"property {item.key!r} references unknown representations: "
-                    f"{sorted(unknown)}"
+                    f"property {property_descriptor.key!r} references unknown "
+                    f"representations: {sorted(unknown)}"
                 )
-        for item in self.representations:
-            unknown_properties = set(item.property_keys) - property_keys
+        for representation_descriptor in self.representations:
+            unknown_properties = (
+                set(representation_descriptor.property_keys) - property_keys
+            )
             if unknown_properties:
                 raise ValueError(
-                    f"representation {item.key!r} references unknown properties: "
-                    f"{sorted(unknown_properties)}"
+                    f"representation {representation_descriptor.key!r} references "
+                    f"unknown properties: {sorted(unknown_properties)}"
                 )
-            unknown_contexts = set(item.supported_contexts) - context_keys
+            unknown_contexts = (
+                set(representation_descriptor.supported_contexts) - context_keys
+            )
             if unknown_contexts:
                 raise ValueError(
-                    f"representation {item.key!r} references unknown contexts: "
-                    f"{sorted(unknown_contexts)}"
+                    f"representation {representation_descriptor.key!r} references "
+                    f"unknown contexts: {sorted(unknown_contexts)}"
                 )
 
     def property_by_key(self, key: str) -> PlotPropertyDescriptor:

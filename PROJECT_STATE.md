@@ -13,7 +13,7 @@ recorded separately in the Quantas/Quantas GUI architectural decisions.
 | Current development version | `2.0.0b7` |
 | Baseline | `2.0.0b6`, `dev-refactor` line |
 | Working branch target | `dev/public-plot-api` |
-| Development status | Public lifecycle API stabilization — validation pending |
+| Development status | Public lifecycle API stabilization — validated |
 | Numerical baseline | Unchanged from `2.0.0b6` |
 | Persistence schemas | Unchanged |
 
@@ -31,10 +31,10 @@ Legacy code is not an architectural model for Quantas 2.
 
 ## Active objective
 
-Consolidate the complete public `quantas.api` lifecycle so CLI, Quantas GUI,
-notebooks, and advanced library clients can create supported inputs, execute
-workflows, persist and reopen native results, build reports and plots, and
-produce derived exports without importing implementation packages or
+Finalize and merge the validated `quantas.api` lifecycle baseline so the CLI,
+Quantas GUI, notebooks, and library clients can create supported inputs,
+execute workflows, persist and reopen native results, build reports and plots,
+and produce derived exports without importing implementation packages or
 maintaining duplicate scientific catalogs.
 
 EOS remains session-oriented and is not forced into the one-shot workflow used
@@ -50,7 +50,7 @@ by the other scientific modules.
 - routed immediately affected CLI plotting type imports through the public API;
 - added frozen surface, identity, typed-dispatch, and renderer-independence tests;
 - documented the complete plotting namespace and updated API navigation;
-- reopened the roadmap freeze only for the scoped `2.0.0b7` public plotting pass;
+- reopened the roadmap freeze only for the scoped `2.0.0b7` public lifecycle pass;
 - bumped package, citation, minimum-baseline comment, and version tests to
   `2.0.0b7`.
 - added frozen descriptors for plot properties, representations, contexts, and
@@ -58,8 +58,8 @@ by the other scientific modules.
 - added public ``describe_plots(result)`` discovery for Elasticity, SEISMIC,
   HA, QHA, and Thermoelasticity without introducing a generic mapping-based
   build request;
-- added the incremental registry capability ``PLOT_INVENTORY`` only for modules
-  whose inventories are currently implemented and tested;
+- introduced ``PLOT_INVENTORY`` incrementally and completed it for every
+  supported scientific module;
 - exposed Elasticity branches, principal planes, and physical/unit-sphere
   geometry compatibility;
 - exposed SEISMIC properties according to the calculation level actually stored
@@ -88,7 +88,7 @@ by the other scientific modules.
   analyses so it falls back to archived fit diagnostics instead of attempting
   an invalid P--T contour;
 - added a focused/full Windows PowerShell validation script for the public
-  lifecycle API stabilization branch.
+  lifecycle API stabilization branch;
 - added a separate public EOS archive plot inventory covering embedded
   datasets, persistent result slots, immutable record history, acceptance state,
   and representation availability without forcing EOS into the one-shot module
@@ -113,70 +113,65 @@ by the other scientific modules.
   discovery for input generation, templates, tabular exports, tensor exports,
   profile exports, interoperability exports, and EOS post-fit CSV products.
 
-Existing default plot-builder behavior for complete profile and two-dimensional
-grid results, numerical arrays, unit conversion, HDF5 schemas, and scientific
-calculations were not intentionally changed.  New HA/QHA section directions and
-coordinate selections are opt-in and operate only on exact, unique native grid
-points.  Alternative volume or pressure sections are advertised only when at
-least two coordinates exist.  The point/one-dimensional Thermoelasticity
-fallback is a plotting-dispatch correction and does not change calculation
-results.
+Default plot construction for complete profile and two-dimensional grid
+results remains unchanged.  New HA/QHA section directions are opt-in and use
+only exact native grid points; alternative volume or pressure sections are
+offered only when at least two coordinates exist.  The point/one-dimensional
+Thermoelasticity fallback corrects plot selection without changing calculation
+results.  Numerical arrays, unit conversion, HDF5 schemas, and approved
+scientific calculations were not changed.
 
 ## Verified evidence
 
-- complete infrastructure, public-surface, type-closure, documentation, source
-  hygiene, registry, and lifecycle selection: `215 passed`;
-- complete Elasticity, HA, QHA, and SEISMIC module selections: `361 passed`;
-- focused CLI/API lifecycle tests verify byte-identical Elasticity input text and
-  HA/QHA table exports produced through the public functions and CLI commands;
-- complete Thermoelasticity selection: `49 passed`; the remaining `4` failures
-  require ``spglib``, unavailable in the current environment, and belong to the
-  CRYSTAL structural input generator;
-- complete EOS selection: `248 passed`; the remaining `25` failures require the
-  unavailable real ``odrpack`` backend;
-- fail-fast full-suite run: `488 passed` before the known real-ODRPACK backend
-  test failed because the runtime backend is unavailable in this environment;
-- public callable type hints resolve successfully and require no unexported
-  Quantas type identities; public ``Input``, ``Options``, requests, and contexts
-  are closed against implementation-only imports;
-- architecture audit: no failures, `74` complexity warnings and `24`
-  information items;
-- source and test trees compile successfully with ``compileall``.
+The complete Windows validation passed in the project virtual environment with:
 
-## Environment limitations
+| Component | Validated version |
+|---|---|
+| Python | `3.10.11` |
+| NumPy | `2.2.6` |
+| spglib | `2.7.0` |
+| odrpack | `0.6.1` |
 
-The current execution environment does not provide Ruff, mypy, Sphinx,
-PowerShell, a working `odrpack` backend, or `spglib`.  Therefore the following
-checks remain mandatory in the project development environment before merge:
+Validated checks include:
 
-```powershell
-ruff check src tests tools docs/tools
-mypy
-python -m sphinx -W --keep-going -b html docs/source docs/build/html
-python -m pytest -q
-python tools/check_architecture.py --root .
-```
+- public lifecycle surface and documentation: `83 passed`;
+- input generation and CLI/API equivalence: `51 passed`;
+- public exports and persistence: `81 passed`;
+- frontend-neutral plot contracts: `88 passed`;
+- every staged scientific, CLI, plotting, and example suite;
+- Ruff with no findings;
+- mypy with no issues in `365` source files;
+- Sphinx HTML build with warnings treated as errors;
+- wheel and source-distribution builds;
+- `twine check` for both distributions;
+- clean installation and public-API smoke testing from the built wheel;
+- architecture audit with no errors (`74` maintainability warnings and `24`
+  information items).
 
-The full test suite failure observed here is environmental and occurs in the
-real ODRPACK backend test; it is not a plotting-contract failure.
+The EOS tests emit a small number of expected NumPy ``RankWarning`` messages
+for deliberately sparse P--V--T fits.  They do not fail validation and do not
+indicate a change in scientific behavior.
 
 ## Immediate next operation
 
-Run the complete Windows validation against the consolidated public lifecycle,
-including real input generators, table exports, CLI/API equivalence, Ruff,
-mypy, Sphinx, packaging, ``odrpack``, and ``spglib``.  Then migrate Quantas GUI
-to require the validated backend and consume registry, inventory, report, and
-plot contracts without payload inspection or duplicate catalogs.
+Push the validated `dev/public-plot-api` branch, review the complete diff, and
+merge it into `dev/refactor` after the normal repository review.  Then update
+Quantas GUI to require this backend baseline and consume the public registry,
+input, report, plot, persistence, and export contracts without internal imports
+or duplicate scientific catalogs.
 
-## Open work for `2.0.0b7`
+## Remaining release steps for `2.0.0b7`
 
-- Windows validation of public input generation and every derived export;
-- full CLI/API scientific-equivalence tests for representative lifecycle paths;
-- frontend-neutral symbol and unit metadata consolidation;
-- PlotSpec and descriptor serialization contract with round-trip tests;
-- review of remaining CLI-only incremental report helpers, which may stay
-  frontend-specific only when a complete public report equivalent exists;
-- Quantas GUI migration from class-name, payload inspection, and manual-family
-  dispatch to public typed contracts;
-- final cross-platform Ruff, mypy, Sphinx, packaging, ``odrpack``, and
-  ``spglib`` validation before declaring ``2.0.0b7`` complete.
+No functional backend blocker remains from the public-lifecycle stabilization.
+Before merge or publication:
+
+- confirm that `git status` contains no build directories, caches, generated
+  documentation, local reports, or virtual environments;
+- review the final branch diff and commit history;
+- push the feature branch and run the repository CI checks;
+- merge into `dev/refactor` only after review;
+- update the release date and final distribution checksums when the beta is
+  actually published.
+
+Quantas GUI integration is the next coordinated project step, but it is not a
+backend validation blocker for this beta.

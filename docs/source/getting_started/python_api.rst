@@ -65,9 +65,9 @@ has the correct type.
 Creating, reading, and normalizing input
 ----------------------------------------
 
-A workflow may expose ``create_input`` when Quantas supports converting an
-external-code output to its normalized input contract.  This operation belongs
-to the public scientific namespace; the CLI is only one caller.
+A workflow exposes ``create_input`` when Quantas can convert output from a
+supported external code into its standard input format.  The same function is
+available to the CLI, notebooks, scripts, and graphical frontends.
 
 .. code-block:: python
 
@@ -86,12 +86,11 @@ to the public scientific namespace; the CLI is only one caller.
        is_list=True,
    )
 
-HA and QHA intentionally share one normalized phonon generator, but each
-namespace exposes its own lifecycle entry point.  Thermoelasticity similarly
-converts supported elastic-volume output series through
-``thermoelasticity.create_input``.  SEISMIC and EOS accept already normalized
-public data contracts or their documented text formats and therefore do not
-claim the same generator operation.
+HA and QHA use the same phonon input format, but both namespaces expose
+``create_input`` so users can remain within the workflow they are running.
+Thermoelasticity provides the corresponding conversion for supported
+elastic-volume output series.  SEISMIC and EOS instead read their documented
+input formats or accept public Python data objects directly.
 
 Public modules commonly expose two related parsing operations:
 
@@ -149,9 +148,9 @@ use the same numerical result.
 Public table and CSV exports
 ----------------------------
 
-Derived tables remain non-canonical exports, but their scientific selection,
-units, and data organization are public operations.  Frontends choose where
-the resulting file is offered or downloaded.
+HDF5 remains the complete scientific record.  Text and CSV tables are
+convenient derived exports, built by public functions so the CLI, notebooks,
+and GUI use the same property selection, units, and data layout.
 
 .. code-block:: python
 

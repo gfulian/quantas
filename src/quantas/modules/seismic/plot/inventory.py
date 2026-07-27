@@ -393,7 +393,7 @@ def describe_seismic_plots(result: SeismicResult) -> PlotInventory:
             ),
         ),
     )
-    warnings = ()
+    warnings: tuple[str, ...] = ()
     if result.field.tracking is None:
         warnings = (
             "Tracked polarization axes are unavailable; polarization-overlay "

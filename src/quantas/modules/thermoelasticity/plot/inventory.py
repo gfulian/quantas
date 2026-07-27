@@ -14,6 +14,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 import numpy as np
+from numpy.typing import NDArray
 
 from quantas.models import (
     PlotContextDescriptor,
@@ -639,6 +640,7 @@ def _compare_coordinates(
     if result.stiffness_isothermal is None or result.stiffness_adiabatic is None:
         return (), ()
     valid = result.adiabatic_valid_mask
+    mask: NDArray[np.bool_]
     if valid is None:
         mask = np.ones(
             (result.temperature.size, result.pressure.size),

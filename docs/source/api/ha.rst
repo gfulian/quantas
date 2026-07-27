@@ -49,6 +49,7 @@ Passive contracts
 .. autodata:: quantas.api.ha.PhononInterface
 
 .. autoclass:: quantas.api.ha.StructureVolumeSeries
+   :no-index:
    :members:
    :show-inheritance:
 

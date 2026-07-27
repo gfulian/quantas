@@ -2,15 +2,15 @@
 
 ## Source-freeze status
 
-The scientific source tree, CLI contracts, persistence layer, curated examples,
-and staged test runner remain frozen for the Quantas 2.0 release-candidate
-line.  The public Python API is temporarily reopened for the ``2.0.0b7``
-public-lifecycle stabilization required to make the already accepted
-frontend-neutral architecture usable by the CLI, Quantas GUI, notebooks, and
-advanced library clients.  This exception is limited to public input
-generation, passive type closure, operation discovery, derived exports, plot
-specifications and builders, and their tests and documentation; it must not
-change approved numerical baselines or HDF5 schemas.
+The ``2.0.0b7`` public-lifecycle stabilization has completed full Windows
+validation.  The scientific source tree, CLI contracts, persistence layer,
+curated examples, and staged test runner now return to the release-candidate
+freeze while the feature branch is reviewed and merged.
+
+The completed exception covered public input generation, public type closure,
+operation discovery, derived exports, plot specifications and builders, and
+their tests and documentation.  It did not change approved numerical baselines
+or HDF5 schemas.
 
 Other changes before the first release candidate are limited to:
 
@@ -25,20 +25,18 @@ Other changes before the first release candidate are limited to:
 - Finish the manual-style documentation, CLI reference, API guide, and tutorials.
 - Exercise CI on all supported operating systems and Python versions.
 - Verify documentation hosting and the complete TestPyPI installation workflow.
-- Complete and validate the ``2.0.0b7`` public lifecycle-contract pass.
-- Validate exact-grid HA V--T and QHA P--T section construction through API,
-  CLI, and Quantas GUI adapters without changing stored scientific arrays;
-  alternative axes require at least two unique native coordinates.
-- Validate cumulative Thermoelasticity plot discovery for calibration, P--T,
-  point/grid, profile, comparison, and domain archives through the same public
-  API used by CLI and Quantas GUI.
-- Validate the separate EOS session/archive plotting inventory through Python,
-  CLI, and Quantas GUI without forcing EOS into the one-shot module contract.
-- Validate public Elasticity, HA, QHA, and Thermoelasticity input generation and
-  every public table/CSV/tensor export against the historical CLI behavior.
-- Verify that public ``Input``, ``Options``, requests, and contexts require no
-  imports from implementation namespaces.
+- Merge the validated ``2.0.0b7`` public lifecycle-contract pass.
+- Integrate the validated HA V--T and QHA P--T section controls into Quantas
+  GUI without changing stored scientific arrays.
+- Integrate cumulative Thermoelasticity discovery for calibration, P--T,
+  point/grid, profile, comparison, and domain archives through the public API.
+- Integrate the separate EOS session/archive inventory into Quantas GUI without
+  forcing EOS into the one-shot module contract.
 - Review the resulting public API inventory and HDF5 schema compatibility one final time.
+
+Backend CLI/API validation is complete.  Quantas GUI adapter validation follows
+on the independent GUI roadmap and does not reopen the backend scientific
+implementation.
 
 ## After Quantas 2.0
 

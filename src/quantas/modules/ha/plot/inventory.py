@@ -65,18 +65,22 @@ def describe_ha_plots(result: HAResult) -> PlotInventory:
                 warnings.append(f"{property_info.attribute}: {exc}")
             continue
 
-        representations = ["temperature_curves"]
+        property_representations = ["temperature_curves"]
         volume = _matched_volume(result, values.shape[1])
         if volume is not None:
             physical_volume = volume
             if volume.size >= 2:
-                representations.append("volume_curves")
+                property_representations.append("volume_curves")
                 volume_capable_keys.append(property_info.attribute)
             if temperature.size >= 2 and volume.size >= 2:
-                representations.append("volume_temperature_contour")
+                property_representations.append("volume_temperature_contour")
                 contour_capable_keys.append(property_info.attribute)
         available.append(
-            (property_info, _normalize_unit(unit), tuple(representations))
+            (
+                property_info,
+                _normalize_unit(unit),
+                tuple(property_representations),
+            )
         )
 
     property_keys = tuple(item[0].attribute for item in available)
@@ -143,7 +147,7 @@ def describe_ha_plots(result: HAResult) -> PlotInventory:
         )
     )
 
-    representations: list[PlotRepresentationDescriptor] = [
+    representation_descriptors: list[PlotRepresentationDescriptor] = [
         PlotRepresentationDescriptor(
             key="temperature_curves",
             name="Temperature sections",
@@ -162,7 +166,7 @@ def describe_ha_plots(result: HAResult) -> PlotInventory:
         )
     ]
     if volume_capable_keys:
-        representations.append(
+        representation_descriptors.append(
             PlotRepresentationDescriptor(
                 key="volume_curves",
                 name="Volume sections",
@@ -180,7 +184,7 @@ def describe_ha_plots(result: HAResult) -> PlotInventory:
             )
         )
     if contour_capable_keys:
-        representations.append(
+        representation_descriptors.append(
             PlotRepresentationDescriptor(
                 key="volume_temperature_contour",
                 name="Volume-temperature map",
@@ -206,14 +210,14 @@ def describe_ha_plots(result: HAResult) -> PlotInventory:
             unit=unit,
             description=property_info.description,
             category=property_info.category,
-            representations=representations,
+            representations=property_representations,
         )
-        for property_info, unit, representations in available
+        for property_info, unit, property_representations in available
     )
     return PlotInventory(
         module="ha",
         properties=properties,
-        representations=tuple(representations),
+        representations=tuple(representation_descriptors),
         contexts=tuple(contexts),
         warnings=tuple(warnings),
     )

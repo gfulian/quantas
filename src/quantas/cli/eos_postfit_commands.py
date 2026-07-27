@@ -412,22 +412,26 @@ def plot(
                 for warning in inventory.warnings:
                     click.echo(f"Warning: {warning}")
                 click.echo("Available EOS result slots and plottable records:")
-                for item in inventory.slots:
+                for slot_descriptor in inventory.slots:
                     records = ", ".join(
-                        str(value) for value in item.plottable_record_ids
+                        str(value)
+                        for value in slot_descriptor.plottable_record_ids
                     ) or "none"
                     accepted = (
                         "none"
-                        if item.accepted_record_id is None
-                        else str(item.accepted_record_id)
+                        if slot_descriptor.accepted_record_id is None
+                        else str(slot_descriptor.accepted_record_id)
                     )
                     click.echo(
-                        f"{item.key:20s} status={item.status.value}; "
+                        f"{slot_descriptor.key:20s} "
+                        f"status={slot_descriptor.status.value}; "
                         f"accepted={accepted}; plottable={records}"
                     )
                 return
-            for item in inventory.selected_plots.representations:
-                click.echo(f"{item.key:28s} {item.description}")
+            for representation in inventory.selected_plots.representations:
+                click.echo(
+                    f"{representation.key:28s} {representation.description}"
+                )
             return
         if output_dir is None:
             stem = archive.with_suffix("")

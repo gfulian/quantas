@@ -44,10 +44,12 @@ Passive contracts and selectors
 .. autodata:: quantas.api.elasticity.InputInterface
 
 .. autoclass:: quantas.api.elasticity.TensorRotation
+   :no-index:
    :members:
    :show-inheritance:
 
 .. autoclass:: quantas.api.elasticity.TensorRotationKind
+   :no-index:
    :members:
    :show-inheritance:
 

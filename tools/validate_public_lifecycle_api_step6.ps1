@@ -20,20 +20,6 @@ $ErrorActionPreference = "Stop"
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
 
-$Python = Join-Path $Root ".venv\Scripts\python.exe"
-if (-not (Test-Path $Python)) {
-    throw @"
-The expected virtual-environment interpreter was not found:
-
-  $Python
-
-Create the worktree environment first, for example:
-
-  py -3.10 -m venv .venv
-  & ".\.venv\Scripts\python.exe" -m pip install -e ".[dev]"
-"@
-}
-
 function Invoke-Checked {
     param(
         [Parameter(Mandatory = $true)]
@@ -49,7 +35,7 @@ function Invoke-Checked {
 }
 
 Invoke-Checked "Python environment and required backends" {
-    $PythonCheck = @'
+    python -c @"
 import sys
 import quantas
 import numpy
@@ -62,16 +48,15 @@ print("Quantas:", quantas.__version__)
 print("NumPy:", numpy.__version__)
 print("spglib:", getattr(spglib, "__version__", "available"))
 print("odrpack:", getattr(odrpack, "__version__", "available"))
-'@
-    $PythonCheck | & $Python -
+"@
 }
 
 Invoke-Checked "Source compilation" {
-    & $Python -m compileall -q src tests tools docs/tools
+    python -m compileall -q src tests tools docs/tools
 }
 
 Invoke-Checked "Public lifecycle surface and documentation" {
-    & $Python -m pytest -q `
+    python -m pytest -q `
         tests/infrastructure/test_api_surface.py `
         tests/infrastructure/test_public_api.py `
         tests/infrastructure/test_public_lifecycle.py `
@@ -86,7 +71,7 @@ Invoke-Checked "Public lifecycle surface and documentation" {
 }
 
 Invoke-Checked "Input generation and CLI/API equivalence" {
-    & $Python -m pytest -q `
+    python -m pytest -q `
         tests/modules/elasticity/test_cli.py `
         tests/modules/elasticity/test_run_rotations.py `
         tests/modules/ha/test_input_generation.py `
@@ -96,7 +81,7 @@ Invoke-Checked "Input generation and CLI/API equivalence" {
 }
 
 Invoke-Checked "Public exports and persistence" {
-    & $Python -m pytest -q `
+    python -m pytest -q `
         tests/modules/elasticity/test_export.py `
         tests/modules/ha/test_export.py `
         tests/modules/qha/test_export.py `
@@ -110,7 +95,7 @@ Invoke-Checked "Public exports and persistence" {
 }
 
 Invoke-Checked "Frontend-neutral plot contracts" {
-    & $Python -m pytest -q `
+    python -m pytest -q `
         tests/modules/elasticity/test_plotting.py `
         tests/modules/seismic/test_outputs.py `
         tests/modules/ha/test_plotting.py `
@@ -122,30 +107,30 @@ Invoke-Checked "Frontend-neutral plot contracts" {
 }
 
 Invoke-Checked "Architecture audit" {
-    & $Python tools/check_architecture.py --root .
+    python tools/check_architecture.py --root .
 }
 
 if ($Full) {
     Invoke-Checked "Ruff" {
-        & $Python -m ruff check src tests tools docs/tools
+        ruff check src tests tools docs/tools
     }
     Invoke-Checked "mypy" {
-        & $Python -m mypy
+        mypy
     }
     Invoke-Checked "Complete staged test suite" {
-        & $Python tools/run_tests.py all --stage-timeout $StageTimeout -- -q
+        python tools/run_tests.py all --stage-timeout $StageTimeout -- -q
     }
     Invoke-Checked "Sphinx warning-as-error build" {
-        & $Python -m sphinx -E -a -W --keep-going -b html docs/source docs/_build/html
+        python -m sphinx -E -a -W --keep-going -b html docs/source docs/_build/html
     }
     Invoke-Checked "Distribution build" {
-        & $Python -m build
+        python -m build
         $Artifacts = Get-ChildItem -Path dist -File
         if (-not $Artifacts) {
             throw "Distribution build produced no files under dist"
         }
-        & $Python -m twine check @($Artifacts.FullName)
-        & $Python tools/check_distribution.py dist
+        python -m twine check @($Artifacts.FullName)
+        python tools/check_distribution.py dist
     }
 }
 

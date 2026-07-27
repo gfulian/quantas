@@ -91,6 +91,7 @@ Passive contracts
    :show-inheritance:
 
 .. autoclass:: quantas.api.qha.StructureVolumeSeries
+   :no-index:
    :members:
    :show-inheritance:
 

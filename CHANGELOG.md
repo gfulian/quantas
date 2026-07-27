@@ -35,9 +35,9 @@ public contract; they must still be documented and validated.
 - Added result-aware CLI discovery through
   ``quantas thermoelasticity plot --list-plots --archive RESULT.hdf5`` while
   retaining the existing static family overview when no archive is supplied.
-- Added a Windows PowerShell validation entry point for the in-development
-  public plotting API, with focused checks by default and the complete static,
-  scientific, documentation, and distribution checks under ``-Full``.
+- Added a Windows PowerShell validation entry point for the public lifecycle
+  API, with focused checks by default and complete static, scientific,
+  documentation, and distribution checks under ``-Full``.
 - Added a separate session-aware EOS archive plotting inventory exposing
   lightweight dataset, result-slot, immutable-record, acceptance-state, and
   representation descriptors.  Detailed common plot metadata is returned only
@@ -79,8 +79,8 @@ public contract; they must still be documented and validated.
   exporters.
 - Expanded the scoped beta API stabilization from plotting alone to the full
   supported lifecycle required by CLI, GUI, notebooks, and library clients.
-- Reopened the pre-RC public-API freeze for the narrowly scoped plotting-contract
-  stabilization required by CLI, GUI, notebooks, and scientific-library users.
+- Reopened the pre-RC public-API freeze only for the scoped lifecycle
+  stabilization required by CLI, GUI, notebooks, and library users.
 
 ### Fixed
 
@@ -90,25 +90,28 @@ public contract; they must still be documented and validated.
   calibration fit; point and one-dimensional archives now fall back to their
   archived calibration plots.
 
+### Validation
+
+- Completed the full Windows lifecycle validation with Python 3.10.11,
+  NumPy 2.2.6, spglib 2.7.0, and odrpack 0.6.1.
+- Ruff, mypy, all staged scientific and CLI test suites, the Sphinx
+  warning-as-error build, wheel/source-distribution builds, ``twine check``,
+  and clean-wheel installation all passed.
+- The remaining EOS ``RankWarning`` messages occur only in deliberately sparse
+  P--V--T test fits and do not represent test failures.
+
 ### Scientific compatibility
 
-The public-lifecycle increments completed so far alias existing authoritative
-contracts, wrap established input/export implementations, add passive plotting
-discovery metadata, and add opt-in exact-grid
-sections over already stored HA/QHA arrays.  Alternative volume or pressure
-sections are exposed only when at least two native coordinates are present.
-Thermoelasticity discovery inspects archived fit, tensor, uncertainty, profile,
-mask, and grid availability without recalculating or mutating scientific data.
-EOS discovery opens archives read-only and exposes only lightweight dataset,
-slot, history, and representation metadata; it neither changes acceptance state
-nor replaces the persistent session lifecycle.  Existing default construction
-for profile and two-dimensional P--T archives is unchanged; the
-point/one-dimensional fallback corrects a previously invalid automatic contour
-request.  No numerical algorithm, thermodynamic calculation, stored array,
-tensor convention, or HDF5 schema is modified.  Input and table wrappers call
-the same established implementations used by the CLI.  The ``2.0.0b7``
-development cycle remains open until serialization, frontend equivalence, and
-full release validation are complete.
+The public-lifecycle work reuses the established scientific implementations for
+input generation, calculation, persistence, plotting, and export.  New HA/QHA
+sections use exact stored grid coordinates; Thermoelasticity and EOS discovery
+inspect archived data without recalculating or changing it.  No numerical
+algorithm, thermodynamic calculation, stored array, tensor convention, or HDF5
+schema was changed.
+
+The Quantas backend lifecycle for ``2.0.0b7`` has completed full Windows
+validation.  Adoption of these contracts by Quantas GUI is tracked separately
+in the GUI project.
 
 ## [2.0.0b6] - 2026-07-24
 

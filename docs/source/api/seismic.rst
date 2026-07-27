@@ -71,10 +71,12 @@ implementation packages.
    :show-inheritance:
 
 .. autoclass:: quantas.api.seismic.TensorRotation
+   :no-index:
    :members:
    :show-inheritance:
 
 .. autoclass:: quantas.api.seismic.TensorRotationKind
+   :no-index:
    :members:
    :show-inheritance:
 

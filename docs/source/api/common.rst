@@ -86,6 +86,7 @@ are documented in :mod:`quantas.api.plotting`; rendering is delegated to
    :show-inheritance:
 
 .. autoclass:: quantas.api.common.PlotCollection
+   :no-index:
    :members:
    :show-inheritance:
 
