@@ -55,7 +55,8 @@ by the other scientific modules.
 - added frozen descriptors for plot properties, representations, contexts, and
   complete result-aware inventories;
 - added public ``describe_plots(result)`` discovery for Elasticity, SEISMIC,
-  HA, and QHA without introducing a generic mapping-based build request;
+  HA, QHA, and Thermoelasticity without introducing a generic mapping-based
+  build request;
 - added the incremental registry capability ``PLOT_INVENTORY`` only for modules
   whose inventories are currently implemented and tested;
 - exposed Elasticity branches, principal planes, and physical/unit-sphere
@@ -74,36 +75,57 @@ by the other scientific modules.
 - exposed the same HA/QHA scientific section controls through the CLI without
   moving renderer-specific output handling into the public API;
 - centralized the SEISMIC scalar-property catalogue used by inventory discovery
-  and existing plot construction.
+  and existing plot construction;
+- added public result-aware Thermoelasticity discovery for cumulative
+  calibration, P--T grid, profile, comparison, and domain plot families;
+- exposed only successful fitted components, available tensor conditions,
+  stored profiles, valid uncertainty quantities, and buildable comparison
+  coordinates through the Thermoelasticity inventory;
+- added archive-aware CLI family listing through the same public
+  ``describe_plots`` contract while retaining the previous static help/listing;
+- corrected automatic Thermoelasticity plotting for point and one-dimensional
+  analyses so it falls back to archived fit diagnostics instead of attempting
+  an invalid P--T contour;
+- added a focused/full Windows PowerShell validation script for the public plot
+  API stabilization branch.
 
-Existing default plot-builder behavior, numerical arrays, unit conversion,
-HDF5 schemas, and scientific calculations were not intentionally changed.
-New section directions and coordinate selections are opt-in and operate only
-on exact, unique native grid points.  Alternative volume or pressure sections
-are advertised only when at least two coordinates exist.
+Existing default plot-builder behavior for complete profile and two-dimensional
+grid results, numerical arrays, unit conversion, HDF5 schemas, and scientific
+calculations were not intentionally changed.  New HA/QHA section directions and
+coordinate selections are opt-in and operate only on exact, unique native grid
+points.  Alternative volume or pressure sections are advertised only when at
+least two coordinates exist.  The point/one-dimensional Thermoelasticity
+fallback is a plotting-dispatch correction and does not change calculation
+results.
 
 ## Verified evidence
 
-- infrastructure, public API, registry, documentation contracts, source hygiene,
-  and complete HA/QHA module selections: `466 passed`;
+- focused public API, registry, module-contract, documentation,
+  source-hygiene, and cross-module plotting/CLI selection: `151 passed`, with
+  the pre-existing sparse-grid EOS ``RankWarning``;
+- complete infrastructure plus Thermoelasticity selection: `253 passed`; the
+  four remaining failures require ``spglib``, which is unavailable in the
+  current environment and is exercised by the CRYSTAL input generator rather
+  than the plotting contract;
 - complete Elasticity and SEISMIC module selections: `100 passed`;
-- Thermoelasticity and EOS plotting regression selection: `19 passed`, with one
-  pre-existing EOS `RankWarning` for a deliberately sparse polynomial fit;
-- fail-fast full-suite run: `478 passed` before the known real-ODRPACK backend
+- complete HA and QHA module selections: `261 passed`;
+- EOS plotting regression selection: `8 passed`, with one pre-existing EOS
+  `RankWarning` for a deliberately sparse polynomial fit;
+- fail-fast full-suite run: `479 passed` before the known real-ODRPACK backend
   test failed because the runtime backend is unavailable in this environment;
-- architecture audit: no failures, `70` complexity warnings and `24`
+- architecture audit: no failures, `71` complexity warnings and `24`
   information items;
 - source and test trees compile successfully with ``compileall``;
 - the intermediate `2.0.0b7` wheel builds successfully through the declared
-  setuptools backend, contains the HA/QHA inventory modules and `py.typed`, and
-  passes an installed-package public API smoke test.  This wheel is a
-  development artifact, not a completed release.
+  setuptools backend, contains the HA/QHA/Thermoelasticity inventory modules
+  and ``py.typed``, and passes an installed-package public API smoke test.  This
+  wheel is a development artifact, not a completed release.
 
 ## Environment limitations
 
-The current execution environment does not provide Ruff, mypy, Sphinx, a
-working `odrpack` backend, or `spglib`.  Therefore the following checks remain
-mandatory in the project development environment before merge:
+The current execution environment does not provide Ruff, mypy, Sphinx,
+PowerShell, a working `odrpack` backend, or `spglib`.  Therefore the following
+checks remain mandatory in the project development environment before merge:
 
 ```powershell
 ruff check src tests tools docs/tools
@@ -118,14 +140,14 @@ real ODRPACK backend test; it is not a plotting-contract failure.
 
 ## Immediate next operation
 
-Review and validate the HA/QHA exact-grid section contract in the real project
-environment.  Then implement Thermoelasticity family and stage discovery.  A
-universal generic build request remains explicitly out of scope.
+Review and validate the HA/QHA exact-grid section contract and the cumulative
+Thermoelasticity inventory in the real project environment.  Then implement the
+separate EOS session/archive inventory.  A universal generic build request
+remains explicitly out of scope.
 
 ## Open work for `2.0.0b7`
 
 - final review of the common inventory contract and terminology;
-- Thermoelasticity public family/stage discovery;
 - EOS session-oriented archive plot inventory;
 - frontend-neutral symbol and unit metadata consolidation;
 - PlotSpec serialization contract and round-trip tests;

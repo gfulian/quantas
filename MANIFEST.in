@@ -13,7 +13,7 @@ include requirements/typecheck.txt
 recursive-include examples *
 recursive-include docs/source *.rst *.inc *.py *.css *.png *.txt *.dat *.csv *.yaml *.spec
 recursive-include docs/tools *.py
-recursive-include tools *.py *.sh *.md
+recursive-include tools *.py *.sh *.ps1 *.md
 
 global-exclude *.py[cod]
 global-exclude __pycache__

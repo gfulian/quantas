@@ -15,7 +15,7 @@ public contract; they must still be documented and validated.
 - Added frozen frontend-neutral descriptors for plot properties,
   representations, scientific contexts, and complete result-aware inventories.
 - Added public ``describe_plots(result)`` discovery for Elasticity, SEISMIC,
-  HA, and QHA, together with the incremental registry capability
+  HA, QHA, and Thermoelasticity, together with the incremental registry capability
   ``PLOT_INVENTORY``.
 - Added frozen API-surface, renderer-independence, and typed-dispatch tests for
   the public plotting contracts.
@@ -27,6 +27,17 @@ public contract; they must still be documented and validated.
 - Added exact native-grid QHA sections along temperature or pressure, including
   selected pressure/temperature conditions and result-aware P--T inventory
   metadata.
+- Added cumulative Thermoelasticity discovery for elastic-volume fits, P--T
+  stiffness maps, depth profiles, isothermal--adiabatic comparisons, and
+  calibration-domain diagnostics.  The inventory reports only families,
+  components, tensor conditions, profiles, and coordinates that are buildable
+  from the supplied archive stage.
+- Added result-aware CLI discovery through
+  ``quantas thermoelasticity plot --list-plots --archive RESULT.hdf5`` while
+  retaining the existing static family overview when no archive is supplied.
+- Added a Windows PowerShell validation entry point for the in-development
+  public plotting API, with focused checks by default and the complete static,
+  scientific, documentation, and distribution checks under ``-Full``.
 
 ### Changed
 
@@ -41,8 +52,18 @@ public contract; they must still be documented and validated.
   authoritative backend catalogue.
 - Extended the HA and QHA CLI plot commands with the same public scientific
   axis and exact-coordinate selections used by the library API.
+- Routed result-aware Thermoelasticity family listing through the same public
+  ``describe_plots`` contract used by Python clients and Quantas GUI.
 - Reopened the pre-RC public-API freeze for the narrowly scoped plotting-contract
   stabilization required by CLI, GUI, notebooks, and scientific-library users.
+
+### Fixed
+
+- Prevented the default Thermoelasticity plot builder from attempting an
+  invalid P--T contour for point or one-dimensional analysis archives.  The
+  pre-existing priority remains profile, two-dimensional P--T grid, then
+  calibration fit; point and one-dimensional archives now fall back to their
+  archived calibration plots.
 
 ### Scientific compatibility
 
@@ -50,10 +71,13 @@ The public-plotting increments completed so far alias the existing authoritative
 plot specifications, add passive discovery metadata, and add opt-in exact-grid
 sections over already stored HA/QHA arrays.  Alternative volume or pressure
 sections are exposed only when at least two native coordinates are present.
-Default plot construction remains unchanged.  No numerical algorithm,
-thermodynamic calculation, stored array, tensor convention, or HDF5 schema is
-modified.  The ``2.0.0b7`` development
-cycle remains open until the remaining module inventories, serialization,
+Thermoelasticity discovery inspects archived fit, tensor, uncertainty, profile,
+mask, and grid availability without recalculating or mutating scientific data.
+Existing default construction for profile and two-dimensional P--T archives is
+unchanged; the point/one-dimensional fallback corrects a previously invalid
+automatic contour request.  No numerical algorithm, thermodynamic calculation,
+stored array, tensor convention, or HDF5 schema is modified.  The ``2.0.0b7``
+development cycle remains open until the EOS archive inventory, serialization,
 frontend equivalence, and full release validation are complete.
 
 ## [2.0.0b6] - 2026-07-24

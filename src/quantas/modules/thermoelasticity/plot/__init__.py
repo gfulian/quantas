@@ -15,6 +15,7 @@ from .components import (
 )
 from .domain import build_thermoelastic_domain_plot
 from .fit import build_thermoelastic_fit_plots
+from .inventory import describe_thermoelastic_plots
 from .options import (
     ThermoelasticComparePlotOptions,
     ThermoelasticDomainPlotOptions,
@@ -55,6 +56,7 @@ __all__ = [
     "build_thermoelastic_compare_plots",
     "build_thermoelastic_domain_plot",
     "build_thermoelastic_fit_plots",
+    "describe_thermoelastic_plots",
     "build_thermoelastic_profile_plots",
     "build_thermoelastic_pt_plots",
     "component_indices",

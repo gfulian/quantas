@@ -136,6 +136,13 @@ No frontend should implement these sections by slicing result arrays directly.
 The public builder records native and displayed coordinates in the resulting
 plot metadata and rejects values that are absent from the stored grid.
 
+Thermoelasticity uses the same discovery contract without flattening its staged
+workflow.  Its inventory is cumulative and result-aware: calibration fits,
+P--T maps, depth profiles, isothermal--adiabatic comparisons, and the analysis
+domain are advertised independently according to stored tensors, grid shape,
+profile records, uncertainty fields, and adiabatic validity.  Point and
+one-dimensional results are therefore not misrepresented as contour maps.
+
 Mathematical symbols are renderer-neutral source strings without MathText or
 MathJax delimiters.  Plain symbols are supplied separately for terminals,
 tables, accessibility text, and renderers that do not parse mathematical

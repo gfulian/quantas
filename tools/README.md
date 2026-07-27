@@ -10,6 +10,10 @@ public Python API or the installed ``quantas`` command.
   the complete source, test, documentation, packaging, distribution, and Git
   validation sequence. It is the preferred final check for an unpacked source
   tree or release candidate.
+- ``validate_public_plot_api.ps1`` runs the focused public plotting API,
+  registry, CLI, module plotting, and architecture checks on Windows.  The
+  ``-Full`` switch adds Ruff, mypy, the complete staged suite, Sphinx, and
+  distribution validation for a candidate ``2.0.0b7`` snapshot.
 - ``post_validation_cleanup.sh`` removes disposable validation environments,
   build products, caches, generated reports, and optionally validation logs
   without deleting tracked source or documentation assets. Use ``--dry-run``

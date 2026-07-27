@@ -53,6 +53,7 @@ from quantas.modules.thermoelasticity.plot import (
     build_thermoelastic_compare_plots as build_compare_plots,
     build_thermoelastic_domain_plot as build_domain_plot,
     build_thermoelastic_fit_plots as build_fit_plots,
+    describe_thermoelastic_plots as _describe_plots,
     build_thermoelastic_profile_plots as build_profile_plots,
     build_thermoelastic_pt_plots as build_pt_plots,
     resolve_components,
@@ -91,7 +92,7 @@ from .common import (
     _public_dir,
     get_result_payload,
 )
-from .plotting import PlotCollection
+from .plotting import PlotCollection, PlotInventory
 
 
 def create_input(
@@ -424,6 +425,25 @@ def build_report(
     return list(_build_report(result, level=level))
 
 
+def describe_plots(result: ResultData) -> PlotInventory:
+    """Return result-aware thermoelastic plot families and scientific context.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete thermoelastic result envelope.
+
+    Returns
+    -------
+    PlotInventory
+        Available calibration, P-T, profile, comparison, and domain families,
+        together with exact stored grids, components, tensor conditions, and
+        profile names.
+    """
+    get_result(result)
+    return _describe_plots(result)
+
+
 def build_plots(result: ResultData | Result) -> PlotCollection:
     """Build default plots appropriate for the result stage.
 
@@ -483,6 +503,7 @@ __all__ = [
     "analyze_profiles",
     "build_compare_plots",
     "build_domain_plot",
+    "describe_plots",
     "build_fit_plots",
     "build_plots",
     "build_profile_plots",

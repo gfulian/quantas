@@ -29,6 +29,11 @@ Other changes before the first release candidate are limited to:
 - Validate exact-grid HA V--T and QHA P--T section construction through API,
   CLI, and Quantas GUI adapters without changing stored scientific arrays;
   alternative axes require at least two unique native coordinates.
+- Validate cumulative Thermoelasticity plot discovery for calibration, P--T,
+  point/grid, profile, comparison, and domain archives through the same public
+  API used by CLI and Quantas GUI.
+- Complete the separate EOS session/archive plotting inventory without forcing
+  EOS into the one-shot module contract.
 - Review the resulting public API inventory and HDF5 schema compatibility one final time.
 
 ## After Quantas 2.0

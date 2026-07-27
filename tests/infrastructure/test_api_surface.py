@@ -284,6 +284,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "build_pt_plots",
         "build_report",
         "create_input",
+        "describe_plots",
         "get_result",
         "grid_info_table",
         "normalize_input",

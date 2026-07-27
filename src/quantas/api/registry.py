@@ -351,10 +351,12 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
                 Capability.PROFILE,
                 Capability.EXPORT,
                 Capability.INTEROP,
+                Capability.PLOT_INVENTORY,
             }
         ),
         operations=(
             *_STANDARD_RESULT_OPERATIONS,
+            _PLOT_INVENTORY_OPERATION,
             (Capability.CREATE_INPUT, "create_input"),
             (Capability.RUN_CONTEXT, "run_context"),
             (Capability.PROFILE, "analyze_profiles"),
