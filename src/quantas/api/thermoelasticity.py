@@ -8,8 +8,6 @@ from collections.abc import Sequence
 from pathlib import Path
 
 from quantas.core.events import Observer
-from quantas.models import PlotCollection, ReportTable, ResultData
-from quantas.models.phonons import PhononInputData
 from quantas.modules.qha.models import QHAInput, QHAOptions
 from quantas.modules.thermoelasticity.api import (
     build_thermoelastic_plots as _build_plots,
@@ -86,7 +84,14 @@ from quantas.modules.thermoelasticity.io.tensor_export import (
     write_thermoelastic_tensor_export as write_tensor_export,
 )
 
-from .common import _public_dir, get_result_payload
+from .common import (
+    PhononInputData,
+    ReportTable,
+    ResultData,
+    _public_dir,
+    get_result_payload,
+)
+from .plotting import PlotCollection
 
 
 def create_input(

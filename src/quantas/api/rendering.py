@@ -15,13 +15,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from quantas.models import PlotCollection, ReportTable
 from quantas.renderers.tables.text import (
     render_table as _render_table,
     render_tables as _render_tables,
 )
 
-from .common import _public_dir
+from .common import ReportTable, _public_dir
+from .plotting import PlotCollection
 
 
 @dataclass(frozen=True, slots=True)
@@ -194,7 +194,7 @@ def render_plots(
     ------
     TypeError
         If ``collection`` is not a
-        :class:`~quantas.api.common.PlotCollection`.
+        :class:`~quantas.api.plotting.PlotCollection`.
     ValueError
         If rendering options or a plot specification are invalid.
     """

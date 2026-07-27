@@ -15,8 +15,10 @@ from quantas.core.events import (
     NullObserver,
     Observer,
 )
-from quantas.models import InputData, PlotCollection, ReportTable, ResultData
+from quantas.models import InputData, ReportTable, ResultData
 from quantas.models.phonons import PhononInputData
+
+from .plotting import PlotCollection
 
 PayloadT = TypeVar("PayloadT")
 

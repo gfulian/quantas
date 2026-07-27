@@ -5,7 +5,32 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
-## [2.0.0b6] - Unreleased
+## [2.0.0b7] - Unreleased
+
+### Added
+
+- Added the public ``quantas.api.plotting`` namespace for the existing
+  frontend-neutral plot specifications, axes, series, masks, overlays, surface
+  layers, directional fields, composite panels, and plot collections.
+- Added frozen API-surface, renderer-independence, and typed-dispatch tests for
+  the public plotting contracts.
+
+### Changed
+
+- Public workflow facades and the immediately affected CLI plotting adapters now
+  reference plot contracts through ``quantas.api.plotting`` instead of relying
+  on the implementation namespace.
+- Reopened the pre-RC public-API freeze for the narrowly scoped plotting-contract
+  stabilization required by CLI, GUI, notebooks, and scientific-library users.
+
+### Scientific compatibility
+
+This first public-plotting increment aliases the existing authoritative
+contracts. It does not change numerical algorithms, scientific selection,
+array values or shapes, units, tensor conventions, HDF5 schemas, or rendered
+plot data.
+
+## [2.0.0b6] - 2026-07-24
 
 ### Added
 
@@ -212,6 +237,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b7]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b7
 [2.0.0b6]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b6
 [2.0.0b5]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b5
 [2.0.0b4]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b4

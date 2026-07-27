@@ -26,7 +26,6 @@ from quantas.core.math.fitting import (
     default_solver_options,
 )
 from quantas.core.physics.eos import MGDNormalization, PVTModel
-from quantas.models import PlotCollection
 
 from quantas.modules.eos import (
     EOSArchive as Archive,
@@ -78,6 +77,7 @@ from quantas.modules.eos.io import read_eos_input as _read_input
 from quantas.modules.eos.contracts import EOS_DOMAIN_CAPABILITIES as DOMAIN_CAPABILITIES
 
 from .common import _public_dir
+from .plotting import PlotCollection
 
 
 def read_input(

@@ -2,7 +2,7 @@ Rendering API
 =============
 
 Scientific modules return neutral :class:`quantas.api.common.ReportTable` and
-:class:`quantas.api.common.PlotCollection` objects.  The supported functions in
+:class:`quantas.api.plotting.PlotCollection` objects.  The supported functions in
 :mod:`quantas.api.rendering` turn those contracts into deterministic text and
 static figures without exposing concrete renderer classes.
 

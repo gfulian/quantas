@@ -236,7 +236,7 @@ large prediction or residual arrays.
 
 The calculator, diagnostics, CSV exporters, and static plotter derive their
 outputs from immutable records without introducing additional persisted sources
-of truth. A separate future Quantas GUI package will consume the same session,
+of truth. The separate Quantas GUI package consumes the same session,
 inspection, calculator, and neutral plotting contracts; a prompt-driven
 Click/Rich EOS session is not part of the current roadmap.
 

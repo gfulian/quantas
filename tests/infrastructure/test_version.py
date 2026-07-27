@@ -17,7 +17,7 @@ from quantas.cli.main import main
 from quantas.models import ResultMetadata
 
 
-EXPECTED_VERSION = "2.0.0b6"
+EXPECTED_VERSION = "2.0.0b7"
 
 
 def test_public_version_uses_authoritative_version():

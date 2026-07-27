@@ -2,9 +2,17 @@
 
 ## Source-freeze status
 
-The scientific source tree, public Python API, CLI contracts, persistence layer,
-curated examples, and staged test runner are frozen for the Quantas 2.0 release
-candidate line. Changes before the first release candidate are limited to:
+The scientific source tree, CLI contracts, persistence layer, curated examples,
+and staged test runner remain frozen for the Quantas 2.0 release-candidate
+line.  The public Python API is temporarily reopened for the ``2.0.0b7``
+plotting-contract stabilization required to make the already accepted
+frontend-neutral architecture usable by the CLI, Quantas GUI, notebooks, and
+advanced library clients.  This exception is limited to public discovery,
+plot specifications, scientifically necessary plot builders, and their tests
+and documentation; it must not change approved numerical baselines or HDF5
+schemas.
+
+Other changes before the first release candidate are limited to:
 
 - corrections required by final validation;
 - manual-style documentation and tutorials;
@@ -17,7 +25,8 @@ candidate line. Changes before the first release candidate are limited to:
 - Finish the manual-style documentation, CLI reference, API guide, and tutorials.
 - Exercise CI on all supported operating systems and Python versions.
 - Verify documentation hosting and the complete TestPyPI installation workflow.
-- Review the frozen public API inventory and HDF5 schema compatibility one final time.
+- Complete and validate the ``2.0.0b7`` public plotting-contract pass.
+- Review the resulting public API inventory and HDF5 schema compatibility one final time.
 
 ## After Quantas 2.0
 
@@ -25,4 +34,5 @@ candidate line. Changes before the first release candidate are limited to:
 - Extend the standalone EOS workflow, including coupled P-V-T diagnostics.
 - Develop additional code interfaces and scientific modules behind the same public
   API and capability registry.
-- Build a GUI as a frontend over ``quantas.api`` without duplicating numerical logic.
+- Continue Quantas GUI as an independent frontend over ``quantas.api`` without
+  duplicating numerical logic; backend and GUI release milestones remain separate.

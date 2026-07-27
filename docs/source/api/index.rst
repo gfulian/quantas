@@ -2,8 +2,8 @@ API overview
 ============
 
 The supported Python contract begins at :mod:`quantas.api`.  Applications,
-notebooks, services, the command-line interface, and future graphical
-frontends should import from these namespaces rather than from implementation packages.  Those packages may change as the
+notebooks, services, the command-line interface, Quantas GUI, and other
+graphical frontends should import from these namespaces rather than from implementation packages.  Those packages may change as the
 code evolves and are not application contracts.
 
 The API is organized by scientific domain rather than as one flat collection
@@ -18,6 +18,7 @@ of functions:
        ha,
        interop,
        profiles,
+       plotting,
        qha,
        registry,
        rendering,
@@ -79,7 +80,8 @@ Frontend-neutral reporting and plotting
 ---------------------------------------
 
 Calculations build :class:`quantas.api.common.ReportTable` and
-:class:`quantas.api.common.PlotCollection` objects.  Concrete plain-text and
+:class:`quantas.api.plotting.PlotCollection` objects.  Concrete plot types and
+primitives are public through :mod:`quantas.api.plotting`; plain-text and
 Matplotlib output is produced separately by :mod:`quantas.api.rendering`.
 This keeps numerical workflows independent from terminals, notebooks, web
 applications, and graphical interfaces.
@@ -139,6 +141,9 @@ Public namespaces
    * - :mod:`quantas.api.profiles`
      - Frontend-neutral terrestrial profile specifications.
      - :doc:`profiles`
+   * - :mod:`quantas.api.plotting`
+     - Frontend-neutral plot specifications and reusable plotting primitives.
+     - :doc:`plotting`
    * - :mod:`quantas.api.rendering`
      - Supported rendering bridge for neutral tables and plots.
      - :doc:`rendering`

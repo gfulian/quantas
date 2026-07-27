@@ -2,7 +2,7 @@ Python API
 ==========
 
 The supported Python contract begins at :mod:`quantas.api`.  Applications,
-notebooks, services, the command-line interface, and a future GUI should import
+notebooks, services, the command-line interface, and Quantas GUI should import
 from this namespace rather than from implementation packages under
 :mod:`quantas.core`, :mod:`quantas.modules`, or :mod:`quantas.renderers`.
 
@@ -16,6 +16,7 @@ Public namespaces are organized by scientific domain:
        ha,
        interop,
        profiles,
+       plotting,
        qha,
        registry,
        rendering,
@@ -95,7 +96,7 @@ artifacts:
 .. code-block:: python
 
    from pathlib import Path
-   from quantas.api import elasticity, rendering
+   from quantas.api import elasticity, plotting, rendering
 
    options = elasticity.Options(calculate_2d=True)
    result = elasticity.run("calcite.dat", options=options)
@@ -105,6 +106,7 @@ artifacts:
    Path("calcite.log").write_text(report_text, encoding="utf-8")
 
    plots = elasticity.build_plots(result)
+   assert all(isinstance(item, plotting.PlotSpec) for item in plots.plots)
    rendered = rendering.render_plots(
        plots,
        output_dir="figures",

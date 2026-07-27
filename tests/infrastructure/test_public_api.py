@@ -16,6 +16,7 @@ from quantas.api import (
     elasticity,
     eos,
     ha,
+    plotting,
     qha,
     registry,
     rendering,
@@ -32,6 +33,7 @@ EXPECTED_NAMESPACES = {
     "ha",
     "interop",
     "profiles",
+    "plotting",
     "qha",
     "rendering",
     "registry",
@@ -46,6 +48,7 @@ def test_public_api_is_organized_by_scientific_namespace() -> None:
     assert api.elasticity is elasticity
     assert api.eos is eos
     assert api.ha is ha
+    assert api.plotting is plotting
     assert api.qha is qha
     assert api.rendering is rendering
     assert api.seismic is seismic

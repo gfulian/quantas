@@ -4,6 +4,7 @@ include CHANGELOG.md
 include CONTRIBUTING.md
 include SECURITY.md
 include ROADMAP.md
+include PROJECT_STATE.md
 include RELEASE.md
 include CITATION.cff
 include pyproject.toml

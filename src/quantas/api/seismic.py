@@ -9,7 +9,6 @@ from typing import Literal
 
 from quantas.core.events import Observer
 from quantas.core.physics.seismic import ElasticMedium
-from quantas.models import PlotCollection, ReportTable, ResultData, SphericalSummarySpec
 from quantas.modules.seismic.api import (
     build_seismic_plots as _build_plots,
     build_seismic_report as _build_report,
@@ -36,7 +35,8 @@ from quantas.modules.seismic.plot.spec import (
     SurfaceType,
 )
 
-from .common import _public_dir, get_result_payload
+from .common import ReportTable, ResultData, _public_dir, get_result_payload
+from .plotting import PlotCollection, SphericalSummarySpec
 
 
 def read_input(source: str | Path) -> Input:

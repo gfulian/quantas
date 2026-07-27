@@ -4,7 +4,7 @@ EOS batch, archive, and session API
 Batch plans describe a deterministic sequence of fit requests.  Native archives
 preserve every immutable attempt together with accepted/candidate state and
 history.  ``Session`` provides the stateful public surface appropriate for a
-notebook, service, or future GUI.
+notebook, service, or Quantas GUI.
 
 Batch contracts
 ---------------

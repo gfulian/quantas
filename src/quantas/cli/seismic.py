@@ -47,10 +47,10 @@ from quantas.cli.tensor_rotation import (
 )
 from quantas.core.geometry import Hemisphere
 from quantas.core.physics.seismic import SamplingLevel, WaveMode
-from quantas.models import (
+from quantas.api.plotting import (
     PlotCollection,
-    SphericalProjection,
     SphericalMapSpec,
+    SphericalProjection,
     SphericalSummarySpec,
     SurfacePlotSpec,
 )

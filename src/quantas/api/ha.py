@@ -7,8 +7,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from quantas.core.events import Observer
-from quantas.models import PlotCollection, ReportTable, ResultData
-from quantas.models.phonons import PhononInputData
 from quantas.modules.ha.api import (
     build_ha_plots as _build_plots,
     build_ha_report as _build_report,
@@ -25,7 +23,14 @@ from quantas.modules.ha.models import (
     HAResult as Result,
 )
 
-from .common import _public_dir, get_result_payload
+from .common import (
+    PhononInputData,
+    ReportTable,
+    ResultData,
+    _public_dir,
+    get_result_payload,
+)
+from .plotting import PlotCollection
 
 
 def create_input(

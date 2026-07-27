@@ -75,7 +75,7 @@ Python API
 ----------
 
 The API first prepares frontend-neutral
-:class:`~quantas.api.common.PlotCollection` objects. Matplotlib is invoked only
+:class:`~quantas.api.plotting.PlotCollection` objects. Matplotlib is invoked only
 through the public rendering bridge:
 
 .. code-block:: python
@@ -107,8 +107,8 @@ through the public rendering bridge:
    for path in rendered.paths:
        print(path)
 
-The same neutral specifications are intended for the future GUI renderer in
-the separate Quantas GUI package.
+The same neutral specifications are consumed by the separate Quantas GUI
+package and may be reused by other renderers.
 
 Downloadable example
 --------------------

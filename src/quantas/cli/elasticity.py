@@ -55,7 +55,7 @@ from quantas.api.elasticity import (
     write_result as write_elasticity_hdf5,
 )
 from quantas.modules.elasticity.io import ElasticityInputCreator, ElasticityTableExport
-from quantas.models import PlotCollection
+from quantas.api.plotting import PlotCollection
 from quantas.renderers.plots import (
     MatplotlibOptions,
     render_plot_collection,

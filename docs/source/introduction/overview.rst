@@ -30,7 +30,7 @@ Quantas 2.0 follows a small number of explicit architectural principles.
    Numerical conventions, units, and historical behavior are preserved unless a
    correction is scientifically justified and validated.
 2. **One scientific workflow, multiple frontends.**
-   API, CLI, and future GUI must agree numerically and consume the same
+   API, CLI, and Quantas GUI must agree numerically and consume the same
    passive contracts whenever possible.
 3. **Frontend-neutral core.**
    The numerical core must not depend on Click, Rich, Dash, Matplotlib,

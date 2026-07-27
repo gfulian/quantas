@@ -142,7 +142,7 @@ Report builder
 --------------
 
 A report builder converts a result into ordered
-:class:`quantas.models.ReportTable` objects. The table rows retain raw values.
+:class:`quantas.api.common.ReportTable` objects. The table rows retain raw values.
 Formatting profiles, alignment, and units are metadata interpreted by a
 renderer.
 
@@ -152,7 +152,7 @@ That destroys reuse by CSV and GUI renderers.
 Plot builder
 ------------
 
-A module plot builder prepares :class:`quantas.models.PlotCollection` objects.
+A module plot builder prepares :class:`quantas.api.plotting.PlotCollection` objects.
 It selects scientific quantities, masks, labels, uncertainty bands, and
 geometries. It does not create a Matplotlib figure.
 

@@ -3,7 +3,7 @@ Rendering and frontend integration
 
 Quantas separates scientific preparation from concrete presentation. Reports
 and plots are first represented by passive frontend-neutral contracts, then
-rendered by Rich, plain text, Matplotlib, or a future GUI.
+rendered by Rich, plain text, Matplotlib, Quantas GUI, or another frontend.
 
 Report pipeline
 ---------------
@@ -22,7 +22,7 @@ Report pipeline
        +--> Rich renderer
        +--> CSV/custom frontend
 
-A :class:`quantas.models.ReportTable` stores:
+A :class:`quantas.api.common.ReportTable` stores:
 
 * title;
 * ordered columns;
@@ -84,7 +84,7 @@ Plot pipeline
    PlotCollection
        |
        +--> Matplotlib renderer
-       +--> future GUI renderer
+       +--> Quantas GUI / other renderer
 
 Neutral plot contracts describe axes, series, bands, contours, spherical maps,
 3D surfaces, vector overlays, scalar backgrounds, and panel layouts. They

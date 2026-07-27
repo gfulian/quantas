@@ -48,8 +48,9 @@ Neutral reporting and plotting
 
 ``ReportTable`` stores raw values, labels, units, alignment, and display
 metadata without embedding Rich or terminal behavior.  ``PlotCollection``
-stores frontend-neutral plot specifications; concrete rendering is delegated
-to :mod:`quantas.api.rendering`.
+stores frontend-neutral plot specifications.  Their concrete public types
+are documented in :mod:`quantas.api.plotting`; rendering is delegated to
+:mod:`quantas.api.rendering`.
 
 .. autoclass:: quantas.api.common.ReportTable
    :members:
@@ -110,5 +111,6 @@ See also
 
 - :doc:`../getting_started/results`
 - :doc:`../workflows/concepts/reporting_and_events`
+- :doc:`plotting`
 - :doc:`rendering`
 - :doc:`../formats/hdf5`
