@@ -6,9 +6,10 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
+from typing import Literal
 
 from quantas.core.events import Observer
-from quantas.modules.qha.models import QHAInput, QHAOptions
+from quantas.core.math.fitting import FitMethod
 from quantas.modules.thermoelasticity.api import (
     build_thermoelastic_plots as _build_plots,
     create_thermoelastic_input as _create_input,
@@ -20,6 +21,9 @@ from quantas.modules.thermoelasticity.api import (
     write_thermoelastic_hdf5 as _write_result,
 )
 from quantas.modules.thermoelasticity.models import (
+    ElasticVolumePoint,
+    ElasticVolumeSeries,
+    QHAThermoelasticPayload,
     ThermoelasticAdiabaticMode as AdiabaticMode,
     ThermoelasticContext as Context,
     ThermoelasticDepthProfile as DepthProfile,
@@ -64,6 +68,7 @@ from quantas.modules.thermoelasticity.postfit import (
     regular_grid,
 )
 from quantas.modules.thermoelasticity.profiles import (
+    ThermoelasticProfilePreset as ProfilePreset,
     build_thermoelastic_profile_preset as build_profile_preset,
     thermoelastic_profile_presets as profile_presets,
 )
@@ -86,20 +91,27 @@ from quantas.modules.thermoelasticity.io.tensor_export import (
 )
 
 from .common import (
+    CrystalStructure,
     PhononInputData,
     ReportTable,
     ResultData,
+    SymmetryMetadata,
     _public_dir,
     get_result_payload,
 )
 from .plotting import PlotCollection, PlotInventory
+from .qha import Input as QHAInput
+from .qha import Options as QHAOptions
+
+
+InputInterface = Literal["crystal"]
 
 
 def create_input(
     sources: str | Path | Sequence[str | Path],
     destination: str | Path,
     *,
-    interface: str = "crystal",
+    interface: InputInterface = "crystal",
     is_list: bool = False,
     jobname: str = "Quantas quasi-static thermoelastic input",
     reference: int | None = None,
@@ -476,12 +488,17 @@ __all__ = [
     "ComparePlotOptions",
     "ComponentGroup",
     "Context",
+    "CrystalStructure",
     "DepthProfile",
     "DomainPlotOptions",
+    "ElasticVolumePoint",
+    "ElasticVolumeSeries",
     "ExtrapolationPolicy",
     "FitFailurePolicy",
+    "FitMethod",
     "FitPlotOptions",
     "Input",
+    "InputInterface",
     "Options",
     "PTPlotOptions",
     "PTQuantity",
@@ -492,11 +509,16 @@ __all__ = [
     "ProfileColor",
     "ProfileMode",
     "ProfilePlotOptions",
+    "ProfilePreset",
     "ProfileResult",
+    "QHAInput",
+    "QHAOptions",
+    "QHAThermoelasticPayload",
     "QualityPolicy",
     "ReportLevel",
     "Result",
     "StabilityPolicy",
+    "SymmetryMetadata",
     "TensorCondition",
     "UncertaintyMode",
     "analyze_grid",

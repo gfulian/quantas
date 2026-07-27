@@ -20,11 +20,10 @@ classes or forcing every workflow into one inheritance hierarchy.
    if elasticity.has(Capability.PLOT_INVENTORY):
        describe = elasticity.operation(Capability.PLOT_INVENTORY)
 
-``PLOT_INVENTORY`` is introduced incrementally.  In the current development
-snapshot it is declared by Elasticity, SEISMIC, and HA.  A module must not
-advertise it until its result-aware inventory is public and covered by builder
-compatibility tests.  EOS will use a separate session-oriented inventory rather
-than pretending to be a one-shot result workflow.
+All supported scientific modules now advertise ``PLOT_INVENTORY``.  The
+one-shot modules describe a typed result, while EOS describes an archive plus
+an optional slot or immutable fit record.  The capability therefore remains
+semantically uniform without forcing EOS into the one-shot lifecycle.
 
 Capability and descriptor contracts
 -----------------------------------
@@ -36,6 +35,23 @@ Capability and descriptor contracts
 .. autoclass:: quantas.api.registry.ModuleDescriptor
    :members:
    :show-inheritance:
+
+.. autoclass:: quantas.api.registry.OperationDescriptor
+   :members:
+   :show-inheritance:
+
+A capability may have one canonical operation and additional named operations.
+For example, Thermoelasticity and EOS expose several scientifically distinct
+exports.  Use ``operations_for`` to enumerate them and ``named_operation`` to
+resolve one stable operation key.
+
+.. code-block:: python
+
+   eos = registry.get("eos")
+   for operation in eos.list_operations(Capability.EXPORT):
+       print(operation.key, operation.name)
+
+   write_diagnostics = eos.named_operation("export_diagnostics_csv")
 
 Discovery
 ---------

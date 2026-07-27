@@ -18,6 +18,7 @@ from quantas.cli.grouped_options import GroupedCommand
 from quantas.cli.messages import confirm, echo, echo_error, echo_warning
 from quantas.io.phonons import PhononInputFileReader
 from quantas.api.ha import create_input as create_ha_input
+from quantas.api.qha import create_input as create_qha_input
 
 
 @click.command(
@@ -136,7 +137,8 @@ def phonon_inpgen(
             return
 
     try:
-        output = create_ha_input(
+        create_input = create_qha_input if workflow == "qha" else create_ha_input
+        output = create_input(
             filename,
             destination,
             interface=interface.lower(),

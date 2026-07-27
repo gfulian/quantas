@@ -10,7 +10,7 @@ work to the library layer.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 import click
 
@@ -45,8 +45,7 @@ from quantas.cli.messages import (
     quantas_finish,
     quantas_title,
 )
-from quantas.core.events import EventLevel
-from quantas.core.physics.eos import available_eos_tags
+from quantas.api.common import EventLevel
 from quantas.api.qha import (
     CurveAxis as QHACurveAxis,
     FitFailurePolicy as QHAFitFailurePolicy,
@@ -57,6 +56,7 @@ from quantas.api.qha import (
     PolynomialDerivativeMethod as QHAPolynomialDerivativeMethod,
     Scheme as QHAScheme,
     ThermalExpansionMethod as QHAThermalExpansionMethod,
+    available_energy_eos,
     build_plots as build_qha_plots,
     inspect as inspect_qha_input,
     list_plot_properties as list_available_plot_properties,
@@ -64,19 +64,16 @@ from quantas.api.qha import (
     read_result as read_qha_hdf5,
     run as run_qha,
     write_result as write_qha_hdf5,
+    write_table as write_qha_table,
 )
 from quantas.cli.output import CLIOutput
 from quantas.cli.qha_observer import QHATextObserver
 from quantas.cli.phonon_input import phonon_inpgen
 from quantas.cli.qha_render import preview_report_tables
-from quantas.modules.qha.io.export import QHATableExport
 from quantas.renderers.plots import MatplotlibOptions, render_plot_collection
 from quantas.references import module_citation_keys, render_citation_notice
 
-_QHA_ENERGY_EOS_CHOICES = available_eos_tags(
-    require_energy=True,
-    include_default_aliases=True,
-)
+_QHA_ENERGY_EOS_CHOICES = available_energy_eos()
 
 
 @click.group(name="qha")
@@ -805,19 +802,18 @@ def export(
         tag = property_name if property_name is not None else "table"
         outfile = stem.with_name(f"{stem.name}_{tag}").with_suffix(suffix)
 
-    delimiter = "," if table_format.lower() == "csv" else None
     try:
         result = read_qha_hdf5(filename)
-        QHATableExport().export(
+        outfile = write_qha_table(
             result,
             outfile,
             property_name=property_name,
             include_uncertainty=not no_uncertainty,
-            delimiter=delimiter,
+            file_format=cast(Literal["txt", "csv"], table_format.lower()),
         )
     except Exception as exc:
         raise click.ClickException(str(exc)) from exc
 
     echo(f"Written {outfile}")
 
-apply_reference_help(qha, ('qha',))
+apply_reference_help(qha, ("qha",))

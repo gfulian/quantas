@@ -28,6 +28,22 @@ Batch contracts
 Specification files
 -------------------
 
+.. autoclass:: quantas.api.eos.SpecDocument
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.ResolvedSpec
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.SpecInputOptions
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.SpecError
+   :members:
+   :show-inheritance:
+
 .. autodata:: quantas.api.eos.SPEC_TEMPLATE_FILENAME
 
 .. autofunction:: quantas.api.eos.read_spec

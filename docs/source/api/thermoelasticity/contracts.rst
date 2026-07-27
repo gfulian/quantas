@@ -8,6 +8,12 @@ frontends can expose the same accepted values.
 Scientific selectors
 --------------------
 
+.. autodata:: quantas.api.thermoelasticity.InputInterface
+
+.. autoclass:: quantas.api.thermoelasticity.FitMethod
+   :members:
+   :show-inheritance:
+
 .. autodata:: quantas.api.thermoelasticity.AdiabaticMode
 
 .. autodata:: quantas.api.thermoelasticity.ExtrapolationPolicy
@@ -21,6 +27,41 @@ Scientific selectors
 .. autodata:: quantas.api.thermoelasticity.TensorCondition
 
 .. autodata:: quantas.api.thermoelasticity.ReportLevel
+
+Reusable input structures
+-------------------------
+
+These aliases close the public annotations of :class:`Input` and
+:class:`Context`.  They are passive scientific contracts, not calculator or
+parser implementations.
+
+.. autoclass:: quantas.api.thermoelasticity.CrystalStructure
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.thermoelasticity.SymmetryMetadata
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.thermoelasticity.ElasticVolumePoint
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.thermoelasticity.ElasticVolumeSeries
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.thermoelasticity.QHAInput
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.thermoelasticity.QHAOptions
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.thermoelasticity.QHAThermoelasticPayload
+   :members:
+   :show-inheritance:
 
 Calibration and result contracts
 --------------------------------
@@ -43,6 +84,10 @@ Calibration and result contracts
 
 Profile contracts
 -----------------
+
+.. autoclass:: quantas.api.thermoelasticity.ProfilePreset
+   :members:
+   :show-inheritance:
 
 .. autoclass:: quantas.api.thermoelasticity.DepthProfile
    :members:

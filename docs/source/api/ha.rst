@@ -46,6 +46,12 @@ Passive contracts
 
 .. autodata:: quantas.api.ha.CurveAxis
 
+.. autodata:: quantas.api.ha.PhononInterface
+
+.. autoclass:: quantas.api.ha.StructureVolumeSeries
+   :members:
+   :show-inheritance:
+
 .. autoclass:: quantas.api.ha.Result
    :members:
    :show-inheritance:
@@ -110,6 +116,8 @@ by :func:`describe_plots`; Quantas does not interpolate missing coordinates.
 .. autofunction:: quantas.api.ha.write_result
 
 .. autofunction:: quantas.api.ha.read_result
+
+.. autofunction:: quantas.api.ha.write_table
 
 See also
 --------

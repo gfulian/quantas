@@ -54,6 +54,30 @@ Passive contracts and selectors
    :members:
    :show-inheritance:
 
+The public enums below are the same types used by :class:`Options` and
+:class:`SurfaceOptions`; CLI and GUI clients do not need imports from
+implementation packages.
+
+.. autoclass:: quantas.api.seismic.Hemisphere
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.seismic.SamplingLevel
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.seismic.WaveMode
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.seismic.TensorRotation
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.seismic.TensorRotationKind
+   :members:
+   :show-inheritance:
+
 ``SurfaceType`` accepts ``phase``, ``slowness``, or ``group``.
 ``SurfaceGeometry`` accepts ``physical`` or ``unit_sphere``.
 

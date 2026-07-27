@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Literal
 
 from quantas.core.events import Observer
-from quantas.core.physics.seismic import ElasticMedium
+from quantas.core.geometry import Hemisphere, TensorRotation, TensorRotationKind
+from quantas.core.physics.seismic import ElasticMedium, SamplingLevel, WaveMode
 from quantas.modules.seismic.api import (
     build_seismic_plots as _build_plots,
     describe_seismic_plot_inventory as _describe_plots,
@@ -37,7 +38,7 @@ from quantas.modules.seismic.plot.spec import (
 )
 
 from .common import ReportTable, ResultData, _public_dir, get_result_payload
-from .plotting import PlotCollection, SphericalSummarySpec
+from .plotting import PlotCollection, PlotInventory, SphericalSummarySpec
 
 
 def read_input(source: str | Path) -> Input:
@@ -349,13 +350,18 @@ def __dir__() -> list[str]:
 
 __all__ = [
     "ElasticMedium",
+    "Hemisphere",
     "Input",
     "Options",
     "PlotOptions",
     "Result",
+    "SamplingLevel",
     "SurfaceGeometry",
     "SurfaceOptions",
     "SurfaceType",
+    "TensorRotation",
+    "TensorRotationKind",
+    "WaveMode",
     "build_plots",
     "build_report",
     "describe_plots",

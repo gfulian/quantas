@@ -47,11 +47,46 @@ class Capability(str, Enum):
     PLOT = "plot"
     PLOT_INVENTORY = "plot_inventory"
     EXPORT = "export"
+    TEMPLATE = "template"
     ARCHIVE = "archive"
     CALCULATE = "calculate"
     DIAGNOSE = "diagnose"
     PROFILE = "profile"
     INTEROP = "interop"
+
+
+@dataclass(frozen=True, slots=True)
+class OperationDescriptor:
+    """Describe one named public operation within a module capability.
+
+    Parameters
+    ----------
+    key : str
+        Stable operation identifier unique within the module.
+    capability : Capability
+        Broad frontend-neutral capability implemented by the operation.
+    function_name : str
+        Public callable name in the module API namespace.
+    name : str
+        Human-readable operation name.
+    description : str, optional
+        Concise workflow description suitable for application discovery.
+    """
+
+    key: str
+    capability: Capability
+    function_name: str
+    name: str
+    description: str = ""
+
+    def resolve(self, module: ModuleType) -> Callable[..., Any]:
+        """Resolve the described callable from an imported API namespace."""
+        operation = getattr(module, self.function_name)
+        if not callable(operation):
+            raise AttributeError(
+                f"{module.__name__}.{self.function_name} is not callable"
+            )
+        return operation
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,7 +106,10 @@ class ModuleDescriptor:
     capabilities : frozenset of Capability
         Operations supported by the namespace.
     operations : tuple of tuple
-        Mapping from capabilities to public function names.
+        Mapping from capabilities to canonical public function names.
+    operation_catalog : tuple of OperationDescriptor, optional
+        Named public operations used when a capability has several distinct
+        supported functions or when applications need stable operation keys.
     input_type_name, options_type_name, result_type_name : str or None
         Public type aliases resolved lazily from the namespace.
     """
@@ -82,6 +120,7 @@ class ModuleDescriptor:
     result_key: str | None
     capabilities: frozenset[Capability]
     operations: tuple[tuple[Capability, str], ...]
+    operation_catalog: tuple[OperationDescriptor, ...] = ()
     input_type_name: str | None = None
     options_type_name: str | None = None
     result_type_name: str | None = None
@@ -138,6 +177,13 @@ class ModuleDescriptor:
             )
         operation_name = dict(self.operations).get(resolved)
         if operation_name is None:
+            named = self.list_operations(resolved)
+            if named:
+                raise ValueError(
+                    f"module {self.name!r} exposes multiple named operations "
+                    f"for {resolved.value!r}; use operations_for() or "
+                    f"named_operation()"
+                )
             raise ValueError(
                 f"module {self.name!r} does not expose an operation for "
                 f"{resolved.value!r}"
@@ -148,6 +194,54 @@ class ModuleDescriptor:
                 f"{self.api_module}.{operation_name} is not callable"
             )
         return operation
+
+    def list_operations(
+        self,
+        capability: Capability | str | None = None,
+    ) -> tuple[OperationDescriptor, ...]:
+        """Return named public operations, optionally filtered by capability.
+
+        Canonical single-operation capabilities that predate the named catalog
+        are exposed through synthesized descriptors, so frontends can use one
+        discovery path for both simple and multi-operation workflows.
+        """
+        selected = None if capability is None else Capability(capability)
+        catalog = self.operation_catalog
+        known = {(item.capability, item.function_name) for item in catalog}
+        synthesized = tuple(
+            OperationDescriptor(
+                key=function_name,
+                capability=operation_capability,
+                function_name=function_name,
+                name=function_name.replace("_", " ").title(),
+            )
+            for operation_capability, function_name in self.operations
+            if (operation_capability, function_name) not in known
+        )
+        combined = (*catalog, *synthesized)
+        if selected is None:
+            return combined
+        return tuple(item for item in combined if item.capability is selected)
+
+    def operations_for(
+        self,
+        capability: Capability | str,
+    ) -> tuple[Callable[..., Any], ...]:
+        """Resolve all public callables implementing one capability."""
+        resolved = Capability(capability)
+        if resolved not in self.capabilities:
+            raise ValueError(
+                f"module {self.name!r} does not support {resolved.value!r}"
+            )
+        module = self.load()
+        return tuple(item.resolve(module) for item in self.list_operations(resolved))
+
+    def named_operation(self, key: str) -> Callable[..., Any]:
+        """Resolve one public operation by its stable module-local key."""
+        for item in self.list_operations():
+            if item.key == key:
+                return item.resolve(self.load())
+        raise KeyError(f"unknown operation {key!r} for module {self.name!r}")
 
     def resolve_type(self, name: str | None) -> type[Any] | None:
         """Resolve a declared public type alias lazily.
@@ -236,10 +330,33 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
         capabilities=frozenset(
             {
                 *(capability for capability, _ in _STANDARD_RESULT_OPERATIONS),
+                Capability.CREATE_INPUT,
+                Capability.EXPORT,
                 Capability.PLOT_INVENTORY,
             }
         ),
-        operations=(*_STANDARD_RESULT_OPERATIONS, _PLOT_INVENTORY_OPERATION),
+        operations=(
+            *_STANDARD_RESULT_OPERATIONS,
+            _PLOT_INVENTORY_OPERATION,
+            (Capability.CREATE_INPUT, "create_input"),
+            (Capability.EXPORT, "write_table"),
+        ),
+        operation_catalog=(
+            OperationDescriptor(
+                key="create_input",
+                capability=Capability.CREATE_INPUT,
+                function_name="create_input",
+                name="Create elasticity input",
+                description="Convert CRYSTAL or VASP elastic output to Quantas input.",
+            ),
+            OperationDescriptor(
+                key="export_2d_table",
+                capability=Capability.EXPORT,
+                function_name="write_table",
+                name="Export 2D elasticity table",
+                description="Write principal-plane directional properties.",
+            ),
+        ),
         input_type_name="Input",
         options_type_name="Options",
         result_type_name="Result",
@@ -261,6 +378,15 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             _PLOT_INVENTORY_OPERATION,
             (Capability.EXPORT, "write_csv"),
         ),
+        operation_catalog=(
+            OperationDescriptor(
+                key="export_csv",
+                capability=Capability.EXPORT,
+                function_name="write_csv",
+                name="Export seismic CSV",
+                description="Write sampled directional seismic fields.",
+            ),
+        ),
         input_type_name="Input",
         options_type_name="Options",
         result_type_name="Result",
@@ -274,6 +400,7 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             {
                 *(capability for capability, _ in _STANDARD_RESULT_OPERATIONS),
                 Capability.CREATE_INPUT,
+                Capability.EXPORT,
                 Capability.PLOT_INVENTORY,
             }
         ),
@@ -281,6 +408,23 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             *_STANDARD_RESULT_OPERATIONS,
             _PLOT_INVENTORY_OPERATION,
             (Capability.CREATE_INPUT, "create_input"),
+            (Capability.EXPORT, "write_table"),
+        ),
+        operation_catalog=(
+            OperationDescriptor(
+                key="create_input",
+                capability=Capability.CREATE_INPUT,
+                function_name="create_input",
+                name="Create HA input",
+                description="Convert supported phonon outputs to Quantas YAML.",
+            ),
+            OperationDescriptor(
+                key="export_property_table",
+                capability=Capability.EXPORT,
+                function_name="write_table",
+                name="Export HA property table",
+                description="Write one harmonic thermodynamic property.",
+            ),
         ),
         input_type_name="Input",
         options_type_name="Options",
@@ -295,6 +439,8 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             {
                 *(capability for capability, _ in _STANDARD_RESULT_OPERATIONS),
                 Capability.INSPECT,
+                Capability.CREATE_INPUT,
+                Capability.EXPORT,
                 Capability.PLOT_INVENTORY,
             }
         ),
@@ -302,6 +448,24 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             *_STANDARD_RESULT_OPERATIONS,
             _PLOT_INVENTORY_OPERATION,
             (Capability.INSPECT, "inspect"),
+            (Capability.CREATE_INPUT, "create_input"),
+            (Capability.EXPORT, "write_table"),
+        ),
+        operation_catalog=(
+            OperationDescriptor(
+                key="create_input",
+                capability=Capability.CREATE_INPUT,
+                function_name="create_input",
+                name="Create QHA input",
+                description="Convert supported phonon outputs to Quantas YAML.",
+            ),
+            OperationDescriptor(
+                key="export_pt_table",
+                capability=Capability.EXPORT,
+                function_name="write_table",
+                name="Export QHA pressure-temperature table",
+                description="Write scalar and structural QHA properties.",
+            ),
         ),
         input_type_name="Input",
         options_type_name="Options",
@@ -323,6 +487,8 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
                 Capability.DIAGNOSE,
                 Capability.PLOT,
                 Capability.PLOT_INVENTORY,
+                Capability.EXPORT,
+                Capability.TEMPLATE,
             }
         ),
         operations=(
@@ -335,6 +501,30 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             (Capability.DIAGNOSE, "diagnose"),
             (Capability.PLOT, "build_plots"),
             (Capability.PLOT_INVENTORY, "describe_plots"),
+            (Capability.TEMPLATE, "write_spec_template"),
+        ),
+        operation_catalog=(
+            OperationDescriptor(
+                key="write_spec_template",
+                capability=Capability.TEMPLATE,
+                function_name="write_spec_template",
+                name="Write EOS specification template",
+                description="Create an editable EOS batch specification.",
+            ),
+            OperationDescriptor(
+                key="export_diagnostics_csv",
+                capability=Capability.EXPORT,
+                function_name="write_diagnostic_csv",
+                name="Export EOS diagnostics",
+                description="Write post-fit diagnostic values as CSV.",
+            ),
+            OperationDescriptor(
+                key="export_calculation_csv",
+                capability=Capability.EXPORT,
+                function_name="write_calculation_csv",
+                name="Export EOS calculation",
+                description="Write post-fit calculated values as CSV.",
+            ),
         ),
         input_type_name="Dataset",
         options_type_name="FitOptions",
@@ -354,6 +544,7 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
                 Capability.EXPORT,
                 Capability.INTEROP,
                 Capability.PLOT_INVENTORY,
+                Capability.TEMPLATE,
             }
         ),
         operations=(
@@ -364,6 +555,51 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             (Capability.PROFILE, "analyze_profiles"),
             (Capability.EXPORT, "write_tensor_export"),
             (Capability.INTEROP, "prepare_context"),
+            (Capability.TEMPLATE, "write_profile_template"),
+        ),
+        operation_catalog=(
+            OperationDescriptor(
+                key="create_input",
+                capability=Capability.CREATE_INPUT,
+                function_name="create_input",
+                name="Create thermoelastic input",
+                description="Normalize CRYSTAL elastic-volume output series.",
+            ),
+            OperationDescriptor(
+                key="write_profile_template",
+                capability=Capability.TEMPLATE,
+                function_name="write_profile_template",
+                name="Write profile template",
+                description="Create an editable thermoelastic profile specification.",
+            ),
+            OperationDescriptor(
+                key="export_tensor",
+                capability=Capability.EXPORT,
+                function_name="write_tensor_export",
+                name="Export thermoelastic tensor",
+                description="Write selected stiffness tensors and metadata.",
+            ),
+            OperationDescriptor(
+                key="export_grid_table",
+                capability=Capability.EXPORT,
+                function_name="write_grid_table",
+                name="Export thermoelastic grid",
+                description="Write pressure-temperature grid values.",
+            ),
+            OperationDescriptor(
+                key="export_profile_table",
+                capability=Capability.EXPORT,
+                function_name="write_profile_table",
+                name="Export thermoelastic profile",
+                description="Write geothermobarometric profile values.",
+            ),
+            OperationDescriptor(
+                key="export_seismic_input",
+                capability=Capability.EXPORT,
+                function_name="write_state_input",
+                name="Export SEISMIC input",
+                description="Write one thermoelastic state for SEISMIC.",
+            ),
         ),
         input_type_name="Input",
         options_type_name="Options",
@@ -499,6 +735,7 @@ def __dir__() -> list[str]:
 __all__ = [
     "Capability",
     "ModuleDescriptor",
+    "OperationDescriptor",
     "get",
     "iter_modules",
     "list_modules",

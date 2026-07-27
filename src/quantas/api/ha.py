@@ -7,6 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from quantas.core.events import Observer
+from quantas.io.path import ensure_suffix
 from quantas.modules.ha.api import (
     build_ha_plots as _build_plots,
     describe_ha_plot_inventory as _describe_plots,
@@ -23,13 +24,16 @@ from quantas.modules.ha.models import (
     HAOptions as Options,
     HAResult as Result,
 )
+from quantas.modules.ha.io.export import HATableExport
 from quantas.modules.ha.plot import HACurveAxis as CurveAxis
 from quantas.modules.ha.plot import HAPlotOptions as PlotOptions
 
 from .common import (
+    PhononInterface,
     PhononInputData,
     ReportTable,
     ResultData,
+    StructureVolumeSeries,
     _public_dir,
     get_result_payload,
 )
@@ -40,7 +44,7 @@ def create_input(
     source: str | Path,
     destination: str | Path,
     *,
-    interface: str = "crystal",
+    interface: PhononInterface = "crystal",
     is_list: bool = False,
     reference: int = 0,
     jobname: str = "Quantas HA input",
@@ -232,6 +236,47 @@ def write_result(
     return _write_result(result, destination, report_text=report_text)
 
 
+def write_table(
+    result: ResultData,
+    destination: str | Path,
+    *,
+    property_name: str = "F",
+    unit: str | None = None,
+) -> Path:
+    """Write one HA thermodynamic property as a neutral text table.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete harmonic result envelope.
+    destination : str or Path
+        Destination path. The ``.dat`` suffix is applied when absent.
+    property_name : str, optional
+        Historical property key or :class:`Result` attribute name.
+    unit : str or None, optional
+        Requested output unit for energy-like, entropy, or heat-capacity data.
+
+    Returns
+    -------
+    Path
+        Written table path.
+
+    Raises
+    ------
+    ValueError
+        If the result or requested property is invalid.
+    """
+    get_result(result)
+    output = ensure_suffix(destination, ".dat")
+    HATableExport().export(
+        result,
+        output,
+        property_name=property_name,
+        unit=unit,
+    )
+    return output
+
+
 def build_report(result: ResultData) -> list[ReportTable]:
     """Build frontend-neutral HA report tables.
 
@@ -322,7 +367,9 @@ __all__ = [
     "Input",
     "Options",
     "PlotOptions",
+    "PhononInterface",
     "Result",
+    "StructureVolumeSeries",
     "build_plots",
     "build_report",
     "describe_plots",
@@ -333,4 +380,5 @@ __all__ = [
     "read_result",
     "run",
     "write_result",
+    "write_table",
 ]

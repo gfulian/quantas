@@ -62,10 +62,38 @@ Use the module-specific ``get_result`` function whenever one is available.  It
 checks that the envelope belongs to the expected module and that the payload
 has the correct type.
 
-Reading and normalizing input
------------------------------
+Creating, reading, and normalizing input
+----------------------------------------
 
-Public modules commonly expose two related operations:
+A workflow may expose ``create_input`` when Quantas supports converting an
+external-code output to its normalized input contract.  This operation belongs
+to the public scientific namespace; the CLI is only one caller.
+
+.. code-block:: python
+
+   from quantas.api import elasticity, qha
+
+   elasticity_path = elasticity.create_input(
+       "calcite-elastcon.out",
+       "calcite.dat",
+       interface="crystal",
+       jobname="Calcite",
+   )
+   qha_path = qha.create_input(
+       "phonon-list.txt",
+       "calcite-qha.yaml",
+       interface="crystal-qha",
+       is_list=True,
+   )
+
+HA and QHA intentionally share one normalized phonon generator, but each
+namespace exposes its own lifecycle entry point.  Thermoelasticity similarly
+converts supported elastic-volume output series through
+``thermoelasticity.create_input``.  SEISMIC and EOS accept already normalized
+public data contracts or their documented text formats and therefore do not
+claim the same generator operation.
+
+Public modules commonly expose two related parsing operations:
 
 ``read_input(path)``
    Parse one supported file format and return a validated passive input object.
@@ -117,6 +145,28 @@ artifacts:
 The calculator does not import Rich, Matplotlib, or a GUI toolkit.  This
 separation is what allows CLI, notebooks, services, and graphical frontends to
 use the same numerical result.
+
+Public table and CSV exports
+----------------------------
+
+Derived tables remain non-canonical exports, but their scientific selection,
+units, and data organization are public operations.  Frontends choose where
+the resulting file is offered or downloaded.
+
+.. code-block:: python
+
+   elasticity.write_table(result, "calcite-directions.dat")
+   ha.write_table(ha_result, "free-energy.dat", property_name="F")
+   qha.write_table(
+       qha_result,
+       "equilibrium-volume.csv",
+       property_name="VT",
+       file_format="csv",
+   )
+
+SEISMIC, Thermoelasticity, and EOS expose their corresponding public CSV,
+tensor, grid, profile, or post-fit writers in their own namespaces.  HDF5
+remains the persisted scientific source of truth.
 
 Native result persistence
 -------------------------
@@ -263,6 +313,11 @@ private classes or hard-coding a single inheritance hierarchy:
        describe = elasticity.operation(Capability.PLOT_INVENTORY)
        inventory = describe(registry.open_result("calcite.hdf5"))
        print([item.key for item in inventory.properties])
+
+   for operation in registry.get("thermoelasticity").list_operations(
+       Capability.EXPORT
+   ):
+       print(operation.key, operation.name)
 
 EOS declares ``FIT``, ``BATCH``, and ``ARCHIVE`` capabilities instead of
 pretending to be a single-shot ``RUN`` module.  Native HDF5 files can also be

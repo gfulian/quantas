@@ -13,7 +13,7 @@ import numpy as np
 
 from quantas.cli.contracts import SCIENTIFIC_GROUP
 from quantas.cli.grouped_options import grouped_option
-from quantas.core.geometry import TensorRotation
+from quantas.api.common import TensorRotation
 
 
 F = TypeVar("F", bound=Callable[..., Any])

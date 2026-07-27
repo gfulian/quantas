@@ -52,10 +52,10 @@ from quantas.api.ha import (
     read_result as read_ha_hdf5,
     run as run_ha,
     write_result as write_ha_hdf5,
+    write_table as write_ha_table,
 )
 from quantas.cli.ha_observer import HATextObserver
 from quantas.cli.phonon_input import phonon_inpgen
-from quantas.modules.ha.io.export import HATableExport
 from quantas.references import (
     module_citation_keys,
     render_citation_notice,
@@ -321,7 +321,7 @@ def export(
                 default=unit or _stored_property_unit(ha_result, property_name),
                 show_default=True,
             )
-        HATableExport().export(
+        outfile = write_ha_table(
             result,
             outfile,
             property_name=property_name,

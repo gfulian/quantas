@@ -46,6 +46,14 @@ public contract; they must still be documented and validated.
 - Added public EOS archive-history and inspection types required by notebooks,
   CLI adapters, Quantas GUI, and other advanced library clients to consume the
   persistent workflow without importing implementation modules.
+- Added public Elasticity input generation and principal-plane table export,
+  public HA/QHA table writers, and a QHA-owned entry point to the shared phonon
+  input generator.
+- Added public rotation, structure, symmetry, seismic selector, thermoelastic
+  fitting/coupling, and EOS model types needed to construct annotated public
+  inputs, options, and requests without implementation imports.
+- Added named registry operation descriptors so one capability can expose
+  several stable input, template, export, or interoperability operations.
 
 ### Changed
 
@@ -66,6 +74,11 @@ public contract; they must still be documented and validated.
   removed the CLI-owned plot-description catalogue.  Ambiguous archives now
   list result slots and plottable record identifiers instead of guessing which
   accepted fit should be used.
+- Routed Elasticity, HA, and QHA input/export commands through their public
+  facade operations instead of instantiating module-internal creators or table
+  exporters.
+- Expanded the scoped beta API stabilization from plotting alone to the full
+  supported lifecycle required by CLI, GUI, notebooks, and library clients.
 - Reopened the pre-RC public-API freeze for the narrowly scoped plotting-contract
   stabilization required by CLI, GUI, notebooks, and scientific-library users.
 
@@ -79,8 +92,9 @@ public contract; they must still be documented and validated.
 
 ### Scientific compatibility
 
-The public-plotting increments completed so far alias the existing authoritative
-plot specifications, add passive discovery metadata, and add opt-in exact-grid
+The public-lifecycle increments completed so far alias existing authoritative
+contracts, wrap established input/export implementations, add passive plotting
+discovery metadata, and add opt-in exact-grid
 sections over already stored HA/QHA arrays.  Alternative volume or pressure
 sections are exposed only when at least two native coordinates are present.
 Thermoelasticity discovery inspects archived fit, tensor, uncertainty, profile,
@@ -91,9 +105,10 @@ nor replaces the persistent session lifecycle.  Existing default construction
 for profile and two-dimensional P--T archives is unchanged; the
 point/one-dimensional fallback corrects a previously invalid automatic contour
 request.  No numerical algorithm, thermodynamic calculation, stored array,
-tensor convention, or HDF5 schema is modified.  The ``2.0.0b7`` development
-cycle remains open until serialization, frontend equivalence, and full release
-validation are complete.
+tensor convention, or HDF5 schema is modified.  Input and table wrappers call
+the same established implementations used by the CLI.  The ``2.0.0b7``
+development cycle remains open until serialization, frontend equivalence, and
+full release validation are complete.
 
 ## [2.0.0b6] - 2026-07-24
 

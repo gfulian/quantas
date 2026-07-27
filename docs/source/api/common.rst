@@ -41,6 +41,35 @@ Input and result contracts
    :members:
    :show-inheritance:
 
+.. autoclass:: quantas.api.common.ResultMetadata
+   :members:
+   :show-inheritance:
+
+Reusable scientific input structures
+------------------------------------
+
+.. autodata:: quantas.api.common.PhononInterface
+
+.. autoclass:: quantas.api.common.StructureVolumeSeries
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.common.CrystalStructure
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.common.SymmetryMetadata
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.common.TensorRotation
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.common.TensorRotationKind
+   :members:
+   :show-inheritance:
+
 .. autofunction:: quantas.api.common.get_result_payload
 
 Neutral reporting and plotting

@@ -16,6 +16,14 @@ Input
 Capabilities and request validation
 -----------------------------------
 
+.. autofunction:: quantas.api.eos.available_eos_models
+
+.. autofunction:: quantas.api.eos.available_eos_tags
+
+.. autofunction:: quantas.api.eos.available_pvt_couplings
+
+.. autofunction:: quantas.api.eos.available_temperature_eos_models
+
 .. autofunction:: quantas.api.eos.domain_capability
 
 .. autofunction:: quantas.api.eos.default_solver_options

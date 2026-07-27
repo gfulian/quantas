@@ -27,6 +27,45 @@ Dataset and domain capabilities
 
 .. autodata:: quantas.api.eos.DOMAIN_CAPABILITIES
 
+Public model selectors
+----------------------
+
+These enums and model protocols are re-exported because they occur directly in
+public fit requests and options.  Applications must not import their private
+implementation modules.
+
+.. autoclass:: quantas.api.eos.EOSFamily
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.EOSModel
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.MGDVolumeBasis
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.PVTCouplingFamily
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.TemperatureEOSFamily
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.TemperatureEOSModel
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.ThermalPressureFamily
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.ThermalPressureModel
+   :members:
+   :show-inheritance:
+
 Model and parameter contracts
 -----------------------------
 

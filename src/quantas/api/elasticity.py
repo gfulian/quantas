@@ -8,7 +8,9 @@ from pathlib import Path
 from typing import Literal
 
 from quantas.core.events import Observer
+from quantas.core.geometry import TensorRotation, TensorRotationKind
 from quantas.core.physics.elasticity import ElasticSurfaceProperty as SurfaceProperty
+from quantas.io.path import ensure_suffix
 from quantas.modules.elasticity.api import (
     build_elasticity_2d_plots as _build_2d_plots,
     describe_elasticity_plot_inventory as _describe_plots,
@@ -26,6 +28,7 @@ from quantas.modules.elasticity.models import (
     ElasticityResult as Result,
     ElasticitySurfaceOptions as SurfaceOptions,
 )
+from quantas.modules.elasticity.io import ElasticityInputCreator, ElasticityTableExport
 from quantas.modules.elasticity.plot import (
     ElasticityPlotProperty as PlotProperty,
     ElasticitySurfaceGeometry as SurfaceGeometry,
@@ -33,6 +36,54 @@ from quantas.modules.elasticity.plot import (
 
 from .common import ReportTable, ResultData, _public_dir, get_result_payload
 from .plotting import PlotCollection, PlotInventory
+
+
+InputInterface = Literal["crystal", "vasp"]
+
+
+def create_input(
+    source: str | Path,
+    destination: str | Path,
+    *,
+    interface: InputInterface = "crystal",
+    jobname: str = "Unknown",
+) -> Path:
+    """Create a Quantas elasticity input from an external-code output.
+
+    Parameters
+    ----------
+    source : str or Path
+        CRYSTAL or VASP output containing an elastic stiffness tensor and,
+        when available, density metadata.
+    destination : str or Path
+        Destination text path. The ``.dat`` suffix is applied when absent.
+    interface : {"crystal", "vasp"}, optional
+        External-code reader used to interpret ``source``.
+    jobname : str, optional
+        Human-readable title written to the generated input.
+
+    Returns
+    -------
+    Path
+        Written Quantas elasticity input path.
+
+    Raises
+    ------
+    ValueError
+        If the interface is unsupported or the source cannot be parsed.
+    OSError
+        If the destination cannot be written.
+    """
+    output = ensure_suffix(destination, ".dat")
+    try:
+        creator = ElasticityInputCreator(interface)
+    except KeyError as exc:
+        raise ValueError(f"Unsupported elasticity interface: {interface}") from exc
+    completed, error = creator.read(source)
+    if not completed:
+        raise ValueError(error or "Unable to create elasticity input")
+    creator.write(output, jobname=jobname)
+    return output
 
 
 def read_input(source: str | Path) -> Input:
@@ -192,6 +243,32 @@ def write_result(
     return _write_result(result, destination, report_text=report_text)
 
 
+def write_table(result: ResultData, destination: str | Path) -> Path:
+    """Write principal-plane elasticity data as a neutral text table.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete elasticity result envelope.
+    destination : str or Path
+        Destination path. The ``.dat`` suffix is applied when absent.
+
+    Returns
+    -------
+    Path
+        Written table path.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` is not a valid elasticity result.
+    """
+    get_result(result)
+    output = ensure_suffix(destination, ".dat")
+    ElasticityTableExport().export(result, output)
+    return output
+
+
 def build_report(result: ResultData) -> list[ReportTable]:
     """Build frontend-neutral elasticity report tables.
 
@@ -349,16 +426,20 @@ def __dir__() -> list[str]:
 
 __all__ = [
     "Input",
+    "InputInterface",
     "Options",
     "PlotProperty",
     "Result",
     "SurfaceGeometry",
     "SurfaceOptions",
     "SurfaceProperty",
+    "TensorRotation",
+    "TensorRotationKind",
     "build_2d_plots",
     "build_3d_plots",
     "build_plots",
     "build_report",
+    "create_input",
     "describe_plots",
     "get_result",
     "normalize_input",
@@ -366,4 +447,5 @@ __all__ = [
     "read_result",
     "run",
     "write_result",
+    "write_table",
 ]

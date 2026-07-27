@@ -59,6 +59,14 @@ The public selectors accept the following literal values:
 
 .. autodata:: quantas.api.qha.CurveAxis
 
+.. autodata:: quantas.api.qha.PhononInterface
+
+.. autodata:: quantas.api.qha.TableFileFormat
+
+.. autoclass:: quantas.api.qha.TableFormat
+   :members:
+   :show-inheritance:
+
 Passive contracts
 -----------------
 
@@ -82,8 +90,16 @@ Passive contracts
    :members:
    :show-inheritance:
 
+.. autoclass:: quantas.api.qha.StructureVolumeSeries
+   :members:
+   :show-inheritance:
+
 Input, inspection, and calculation
 ----------------------------------
+
+.. autofunction:: quantas.api.qha.create_input
+
+.. autofunction:: quantas.api.qha.available_energy_eos
 
 .. autofunction:: quantas.api.qha.read_input
 
@@ -154,6 +170,8 @@ public implementation does not interpolate or snap nearby values.
 .. autofunction:: quantas.api.qha.write_result
 
 .. autofunction:: quantas.api.qha.read_result
+
+.. autofunction:: quantas.api.qha.write_table
 
 See also
 --------

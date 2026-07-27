@@ -13,7 +13,7 @@ recorded separately in the Quantas/Quantas GUI architectural decisions.
 | Current development version | `2.0.0b7` |
 | Baseline | `2.0.0b6`, `dev-refactor` line |
 | Working branch target | `dev/public-plot-api` |
-| Development status | Public plotting API stabilization — incomplete |
+| Development status | Public lifecycle API stabilization — validation pending |
 | Numerical baseline | Unchanged from `2.0.0b6` |
 | Persistence schemas | Unchanged |
 
@@ -31,10 +31,11 @@ Legacy code is not an architectural model for Quantas 2.
 
 ## Active objective
 
-Consolidate the public `quantas.api` plotting contract so the CLI, Quantas GUI,
-notebooks, and advanced library clients can use the same frontend-neutral
-scientific builders without importing implementation packages or maintaining a
-second scientific property catalog.
+Consolidate the complete public `quantas.api` lifecycle so CLI, Quantas GUI,
+notebooks, and advanced library clients can create supported inputs, execute
+workflows, persist and reopen native results, build reports and plots, and
+produce derived exports without importing implementation packages or
+maintaining duplicate scientific catalogs.
 
 EOS remains session-oriented and is not forced into the one-shot workflow used
 by the other scientific modules.
@@ -86,8 +87,8 @@ by the other scientific modules.
 - corrected automatic Thermoelasticity plotting for point and one-dimensional
   analyses so it falls back to archived fit diagnostics instead of attempting
   an invalid P--T contour;
-- added a focused/full Windows PowerShell validation script for the public plot
-  API stabilization branch.
+- added a focused/full Windows PowerShell validation script for the public
+  lifecycle API stabilization branch.
 - added a separate public EOS archive plot inventory covering embedded
   datasets, persistent result slots, immutable record history, acceptance state,
   and representation availability without forcing EOS into the one-shot module
@@ -98,7 +99,19 @@ by the other scientific modules.
   removed its duplicate manual representation-description catalogue;
 - exposed the archive history and inspection contracts returned by the public
   EOS lifecycle so Python clients and Quantas GUI do not need implementation
-  imports.
+  imports;
+- added public Elasticity input generation and principal-plane table export,
+  then routed the corresponding CLI commands through those facade operations;
+- exposed the shared phonon input generator from both HA and QHA namespaces so
+  each workflow has a complete discoverable input lifecycle;
+- added public HA and QHA table writers and routed their CLI export commands
+  through the same functions used by notebooks and future GUI downloads;
+- closed public ``Input`` and ``Options`` annotations by re-exporting the
+  required rotation, structure, symmetry, seismic selector, thermoelastic
+  fitting, QHA coupling, and EOS model contracts;
+- extended the registry with named operation descriptors and multiple-operation
+  discovery for input generation, templates, tabular exports, tensor exports,
+  profile exports, interoperability exports, and EOS post-fit CSV products.
 
 Existing default plot-builder behavior for complete profile and two-dimensional
 grid results, numerical arrays, unit conversion, HDF5 schemas, and scientific
@@ -111,31 +124,24 @@ results.
 
 ## Verified evidence
 
-- focused public API, registry, module-contract, documentation,
-  source-hygiene, and cross-module plotting/CLI selection, including the EOS
-  archive inventory: `164 passed`, with the pre-existing sparse-grid EOS
-  ``RankWarning``;
-- complete infrastructure plus Thermoelasticity selection: `253 passed`; the
-  four remaining failures require ``spglib``, which is unavailable in the
-  current environment and is exercised by the CRYSTAL input generator rather
-  than the plotting contract;
-- complete Elasticity and SEISMIC module selections: `100 passed`;
-- complete HA and QHA module selections: `261 passed`;
-- EOS inventory and plotting selection: `17 passed`, covering P--V, V--T,
-  P--V--T, dataset-only archives, ambiguous accepted slots, canonical CLI keys,
-  and builder compatibility, with the pre-existing sparse-grid ``RankWarning``;
-- complete EOS module selection: `246 passed`; the remaining `25` failures all
-  require the unavailable real ``odrpack`` backend and are not inventory or
-  plotting-contract failures;
-- fail-fast full-suite run: `479 passed` before the known real-ODRPACK backend
+- complete infrastructure, public-surface, type-closure, documentation, source
+  hygiene, registry, and lifecycle selection: `215 passed`;
+- complete Elasticity, HA, QHA, and SEISMIC module selections: `361 passed`;
+- focused CLI/API lifecycle tests verify byte-identical Elasticity input text and
+  HA/QHA table exports produced through the public functions and CLI commands;
+- complete Thermoelasticity selection: `49 passed`; the remaining `4` failures
+  require ``spglib``, unavailable in the current environment, and belong to the
+  CRYSTAL structural input generator;
+- complete EOS selection: `248 passed`; the remaining `25` failures require the
+  unavailable real ``odrpack`` backend;
+- fail-fast full-suite run: `488 passed` before the known real-ODRPACK backend
   test failed because the runtime backend is unavailable in this environment;
+- public callable type hints resolve successfully and require no unexported
+  Quantas type identities; public ``Input``, ``Options``, requests, and contexts
+  are closed against implementation-only imports;
 - architecture audit: no failures, `74` complexity warnings and `24`
   information items;
-- source and test trees compile successfully with ``compileall``;
-- the intermediate `2.0.0b7` wheel builds successfully through the declared
-  setuptools backend, contains the HA/QHA/Thermoelasticity inventory modules
-  and ``py.typed``, and passes an installed-package public API smoke test.  This
-  wheel is a development artifact, not a completed release.
+- source and test trees compile successfully with ``compileall``.
 
 ## Environment limitations
 
@@ -156,18 +162,21 @@ real ODRPACK backend test; it is not a plotting-contract failure.
 
 ## Immediate next operation
 
-Review and validate the HA/QHA exact-grid sections, cumulative
-Thermoelasticity inventory, and separate EOS session/archive inventory in the
-real Windows project environment.  Then complete PlotSpec serialization and
-CLI/API/GUI equivalence work.  A universal generic build request remains
-explicitly out of scope.
+Run the complete Windows validation against the consolidated public lifecycle,
+including real input generators, table exports, CLI/API equivalence, Ruff,
+mypy, Sphinx, packaging, ``odrpack``, and ``spglib``.  Then migrate Quantas GUI
+to require the validated backend and consume registry, inventory, report, and
+plot contracts without payload inspection or duplicate catalogs.
 
 ## Open work for `2.0.0b7`
 
-- final review of the common inventory contract and terminology;
-- Windows validation of the EOS session-oriented archive plot inventory;
+- Windows validation of public input generation and every derived export;
+- full CLI/API scientific-equivalence tests for representative lifecycle paths;
 - frontend-neutral symbol and unit metadata consolidation;
-- PlotSpec serialization contract and round-trip tests;
-- incremental CLI migration and CLI/API scientific-equivalence tests;
-- Quantas GUI migration from class-name and manual-family dispatch to public
-  typed contracts.
+- PlotSpec and descriptor serialization contract with round-trip tests;
+- review of remaining CLI-only incremental report helpers, which may stay
+  frontend-specific only when a complete public report equivalent exists;
+- Quantas GUI migration from class-name, payload inspection, and manual-family
+  dispatch to public typed contracts;
+- final cross-platform Ruff, mypy, Sphinx, packaging, ``odrpack``, and
+  ``spglib`` validation before declaring ``2.0.0b7`` complete.

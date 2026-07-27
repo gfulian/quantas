@@ -41,6 +41,16 @@ Passive contracts and selectors
    :members:
    :show-inheritance:
 
+.. autodata:: quantas.api.elasticity.InputInterface
+
+.. autoclass:: quantas.api.elasticity.TensorRotation
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.elasticity.TensorRotationKind
+   :members:
+   :show-inheritance:
+
 ``PlotProperty`` and ``SurfaceProperty`` accept ``young``, ``compressibility``,
 ``shear``, and ``poisson``.  ``SurfaceGeometry`` accepts ``physical`` or
 ``unit_sphere``.
@@ -53,6 +63,8 @@ Passive contracts and selectors
 
 Input and calculation
 ---------------------
+
+.. autofunction:: quantas.api.elasticity.create_input
 
 .. autofunction:: quantas.api.elasticity.read_input
 
@@ -81,6 +93,8 @@ Persistence
 .. autofunction:: quantas.api.elasticity.write_result
 
 .. autofunction:: quantas.api.elasticity.read_result
+
+.. autofunction:: quantas.api.elasticity.write_table
 
 See also
 --------

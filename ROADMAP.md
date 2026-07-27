@@ -5,12 +5,12 @@
 The scientific source tree, CLI contracts, persistence layer, curated examples,
 and staged test runner remain frozen for the Quantas 2.0 release-candidate
 line.  The public Python API is temporarily reopened for the ``2.0.0b7``
-plotting-contract stabilization required to make the already accepted
+public-lifecycle stabilization required to make the already accepted
 frontend-neutral architecture usable by the CLI, Quantas GUI, notebooks, and
-advanced library clients.  This exception is limited to public discovery,
-plot specifications, scientifically necessary plot builders, and their tests
-and documentation; it must not change approved numerical baselines or HDF5
-schemas.
+advanced library clients.  This exception is limited to public input
+generation, passive type closure, operation discovery, derived exports, plot
+specifications and builders, and their tests and documentation; it must not
+change approved numerical baselines or HDF5 schemas.
 
 Other changes before the first release candidate are limited to:
 
@@ -25,7 +25,7 @@ Other changes before the first release candidate are limited to:
 - Finish the manual-style documentation, CLI reference, API guide, and tutorials.
 - Exercise CI on all supported operating systems and Python versions.
 - Verify documentation hosting and the complete TestPyPI installation workflow.
-- Complete and validate the ``2.0.0b7`` public plotting-contract pass.
+- Complete and validate the ``2.0.0b7`` public lifecycle-contract pass.
 - Validate exact-grid HA V--T and QHA P--T section construction through API,
   CLI, and Quantas GUI adapters without changing stored scientific arrays;
   alternative axes require at least two unique native coordinates.
@@ -34,6 +34,10 @@ Other changes before the first release candidate are limited to:
   API used by CLI and Quantas GUI.
 - Validate the separate EOS session/archive plotting inventory through Python,
   CLI, and Quantas GUI without forcing EOS into the one-shot module contract.
+- Validate public Elasticity, HA, QHA, and Thermoelasticity input generation and
+  every public table/CSV/tensor export against the historical CLI behavior.
+- Verify that public ``Input``, ``Options``, requests, and contexts require no
+  imports from implementation namespaces.
 - Review the resulting public API inventory and HDF5 schema compatibility one final time.
 
 ## After Quantas 2.0
