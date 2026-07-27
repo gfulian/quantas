@@ -41,6 +41,35 @@ Input and result contracts
    :members:
    :show-inheritance:
 
+.. autoclass:: quantas.api.common.ResultMetadata
+   :members:
+   :show-inheritance:
+
+Reusable scientific input structures
+------------------------------------
+
+.. autodata:: quantas.api.common.PhononInterface
+
+.. autoclass:: quantas.api.common.StructureVolumeSeries
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.common.CrystalStructure
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.common.SymmetryMetadata
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.common.TensorRotation
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.common.TensorRotationKind
+   :members:
+   :show-inheritance:
+
 .. autofunction:: quantas.api.common.get_result_payload
 
 Neutral reporting and plotting
@@ -48,14 +77,16 @@ Neutral reporting and plotting
 
 ``ReportTable`` stores raw values, labels, units, alignment, and display
 metadata without embedding Rich or terminal behavior.  ``PlotCollection``
-stores frontend-neutral plot specifications; concrete rendering is delegated
-to :mod:`quantas.api.rendering`.
+stores frontend-neutral plot specifications.  Their concrete public types
+are documented in :mod:`quantas.api.plotting`; rendering is delegated to
+:mod:`quantas.api.rendering`.
 
 .. autoclass:: quantas.api.common.ReportTable
    :members:
    :show-inheritance:
 
 .. autoclass:: quantas.api.common.PlotCollection
+   :no-index:
    :members:
    :show-inheritance:
 
@@ -110,5 +141,6 @@ See also
 
 - :doc:`../getting_started/results`
 - :doc:`../workflows/concepts/reporting_and_events`
+- :doc:`plotting`
 - :doc:`rendering`
 - :doc:`../formats/hdf5`

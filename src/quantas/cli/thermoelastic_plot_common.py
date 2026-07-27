@@ -15,7 +15,8 @@ from quantas.cli.grouped_options import grouped_option
 from quantas.cli.messages import quantas_finish, quantas_title
 from quantas.cli.output import CLIOutput
 from quantas.core.events import EventLevel
-from quantas.models import PlotCollection, ReportTable, ResultData
+from quantas.api.common import ReportTable, ResultData
+from quantas.api.plotting import PlotCollection
 from quantas.api.thermoelasticity import (
     PlotPreset as ThermoelasticPlotPreset,
     PlotStyleOptions as ThermoelasticPlotStyleOptions,

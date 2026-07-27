@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import Literal, TypeVar
 
 from quantas.core.events import (
     CallbackObserver,
@@ -15,10 +15,22 @@ from quantas.core.events import (
     NullObserver,
     Observer,
 )
-from quantas.models import InputData, PlotCollection, ReportTable, ResultData
+from quantas.core.geometry import TensorRotation, TensorRotationKind
+from quantas.models import (
+    CrystalStructure,
+    InputData,
+    ReportTable,
+    ResultData,
+    ResultMetadata,
+    StructureVolumeSeries,
+    SymmetryMetadata,
+)
 from quantas.models.phonons import PhononInputData
 
+from .plotting import PlotCollection
+
 PayloadT = TypeVar("PayloadT")
+PhononInterface = Literal["crystal", "crystal-qha", "phonopy"]
 
 
 def get_result_payload(
@@ -79,6 +91,7 @@ def __dir__() -> list[str]:
 
 __all__ = [
     "CallbackObserver",
+    "CrystalStructure",
     "Event",
     "EventLevel",
     "EventRecord",
@@ -87,8 +100,14 @@ __all__ = [
     "NullObserver",
     "Observer",
     "PhononInputData",
+    "PhononInterface",
     "PlotCollection",
     "ReportTable",
     "ResultData",
+    "ResultMetadata",
+    "StructureVolumeSeries",
+    "SymmetryMetadata",
+    "TensorRotation",
+    "TensorRotationKind",
     "get_result_payload",
 ]

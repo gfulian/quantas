@@ -757,7 +757,7 @@ It does **not** write :math:`C_{IJ}(P,T)` arrays.  This is intentional:
 - the archive remains compact;
 - alternative grids and profiles reuse the same calibration;
 - calibration quality is not confused with an arbitrary presentation grid;
-- a future GUI can evaluate only the states currently requested.
+- Quantas GUI can evaluate only the states currently requested.
 
 Use:
 

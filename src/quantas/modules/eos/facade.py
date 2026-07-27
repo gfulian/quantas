@@ -28,7 +28,7 @@ from .diagnostics import EOSDiagnosticResult, EOSDiagnostics
 from .history import EOSResultSlot
 from .io import read_eos_input
 from .models import EOSDataset, EOSFitRequest, EOSFitResult
-from .plot import EOSPlotOptions, EOSPlotter
+from .plot import EOSPlotOptions, EOSPlotter, describe_eos_plots
 
 
 def fit_eos(
@@ -168,6 +168,7 @@ MODULE_CONTRACT = EOSModuleContract(
     open_archive=open_eos_archive,
     calculate=calculate_eos,
     diagnose=diagnose_eos,
+    describe_plots=describe_eos_plots,
     build_plots=build_eos_plots,
 )
 
@@ -176,6 +177,7 @@ __all__ = [
     "MODULE_CONTRACT",
     "build_eos_plots",
     "calculate_eos",
+    "describe_eos_plots",
     "diagnose_eos",
     "fit_eos",
     "open_eos_archive",

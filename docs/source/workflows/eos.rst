@@ -78,7 +78,7 @@ Post-fit commands select a record
 No long interactive Click prompt tree is provided
    Reproducible advanced CLI use is expressed by the declarative specification
    format.  A frontend-neutral persistent :class:`quantas.api.eos.Session`
-   remains available for a future GUI, where interactive acceptance, rejection,
+   remains available for Quantas GUI, where interactive acceptance, rejection,
    comparison, and reuse of previous guesses are more natural.
 
 The purpose of this design is not to make EOS artificially complicated.  It is
@@ -540,7 +540,7 @@ The archive therefore distinguishes:
 ``candidate record``
    Bookmarked alternative that does not change acceptance.
 
-This distinction is central to future GUI operation and to reproducible
+This distinction is central to Quantas GUI operation and to reproducible
 scientific review.
 
 The persistent Session API

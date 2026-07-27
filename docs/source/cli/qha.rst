@@ -17,6 +17,8 @@ Recommended sequence
    quantas qha run material.yaml --scheme freq --minimization poly \
       --temperature 0 1000 25 --pressure 0 10 1
    quantas qha plot material_QHA.hdf5 --property VT --property alphaV --2d
+   quantas qha plot material_QHA.hdf5 --property VT --axis pressure \
+      --temperature 300 --temperature 1000
    quantas qha export material_QHA.hdf5 --property VT --format csv
 
 Use ``inspect`` before a production run.  It compares the sampled static
@@ -41,6 +43,10 @@ Choosing options
 * ``--failure-policy`` determines whether failed local states terminate,
   accumulate, or raise immediately; it does not convert an unsupported state
   into a valid one.
+* ``plot --axis temperature`` selects exact native pressures with
+  ``--pressure``; ``plot --axis pressure`` selects exact native temperatures
+  with ``--temperature``.  Plot construction never interpolates or snaps the
+  requested coordinate.
 
 See :doc:`../workflows/qha` for the decision guide,
 :doc:`../tutorials/qha` for reproducible calculations and method comparisons,

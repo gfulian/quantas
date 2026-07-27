@@ -10,7 +10,7 @@ work to the library layer.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import cast
+from typing import Literal, cast
 
 import click
 
@@ -45,9 +45,9 @@ from quantas.cli.messages import (
     quantas_finish,
     quantas_title,
 )
-from quantas.core.events import EventLevel
-from quantas.core.physics.eos import available_eos_tags
+from quantas.api.common import EventLevel
 from quantas.api.qha import (
+    CurveAxis as QHACurveAxis,
     FitFailurePolicy as QHAFitFailurePolicy,
     Minimization as QHAMinimization,
     ModeContinuity as QHAModeContinuity,
@@ -56,6 +56,7 @@ from quantas.api.qha import (
     PolynomialDerivativeMethod as QHAPolynomialDerivativeMethod,
     Scheme as QHAScheme,
     ThermalExpansionMethod as QHAThermalExpansionMethod,
+    available_energy_eos,
     build_plots as build_qha_plots,
     inspect as inspect_qha_input,
     list_plot_properties as list_available_plot_properties,
@@ -63,19 +64,16 @@ from quantas.api.qha import (
     read_result as read_qha_hdf5,
     run as run_qha,
     write_result as write_qha_hdf5,
+    write_table as write_qha_table,
 )
 from quantas.cli.output import CLIOutput
 from quantas.cli.qha_observer import QHATextObserver
 from quantas.cli.phonon_input import phonon_inpgen
 from quantas.cli.qha_render import preview_report_tables
-from quantas.modules.qha.io.export import QHATableExport
 from quantas.renderers.plots import MatplotlibOptions, render_plot_collection
 from quantas.references import module_citation_keys, render_citation_notice
 
-_QHA_ENERGY_EOS_CHOICES = available_eos_tags(
-    require_energy=True,
-    include_default_aliases=True,
-)
+_QHA_ENERGY_EOS_CHOICES = available_energy_eos()
 
 
 @click.group(name="qha")
@@ -533,11 +531,42 @@ def run(
     ),
 )
 @click.option(
+    "--axis",
+    "curve_axis",
+    type=click.Choice(["temperature", "pressure"], case_sensitive=False),
+    default="temperature",
+    show_default=True,
+    help="Independent variable used for one-dimensional line sections.",
+)
+@click.option(
+    "--pressure",
+    "selected_pressures",
+    type=float,
+    multiple=True,
+    help=(
+        "Exact native pressure included in temperature sections. May be "
+        "repeated; default: all pressures."
+    ),
+)
+@click.option(
+    "--temperature",
+    "selected_temperatures",
+    type=float,
+    multiple=True,
+    help=(
+        "Exact native temperature included in pressure sections. May be "
+        "repeated; default: all temperatures."
+    ),
+)
+@click.option(
     "--2d",
     "include_2d",
     is_flag=True,
     default=False,
-    help="Generate filled pressure-temperature contour maps when enough data are available.",
+    help=(
+        "Generate filled pressure-temperature contour maps when enough "
+        "data are available."
+    ),
 )
 @click.option(
     "--cmap",
@@ -595,13 +624,19 @@ def run(
     "--energy-unit",
     type=click.Choice(["J/mol", "kJ/mol", "Ha", "eV", "Ry"], case_sensitive=False),
     default=None,
-    help="Display energy unit used only for plotting energy, entropy and heat-capacity quantities.",
+    help=(
+        "Display energy unit used only for plotting energy, entropy and "
+        "heat-capacity quantities."
+    ),
 )
 @click.option(
     "--dulong-petit/--no-dulong-petit",
     default=True,
     show_default=True,
-    help="Draw the Dulong-Petit limit on Cv and combined heat-capacity plots when atom-count metadata are available.",
+    help=(
+        "Draw the Dulong-Petit limit on Cv and combined heat-capacity "
+        "plots when atom-count metadata are available."
+    ),
 )
 @click.option(
     "-o",
@@ -641,6 +676,9 @@ def run(
 def plot(
     filename: Path,
     property_names: tuple[str, ...],
+    curve_axis: str,
+    selected_pressures: tuple[float, ...],
+    selected_temperatures: tuple[float, ...],
     include_2d: bool,
     cmap: str,
     contour_mode: str,
@@ -684,6 +722,9 @@ def plot(
         pressure_unit=pressure_unit,
         energy_unit=energy_unit,
         include_dulong_petit=dulong_petit,
+        curve_axis=cast(QHACurveAxis, curve_axis.lower()),
+        selected_pressures=selected_pressures or None,
+        selected_temperatures=selected_temperatures or None,
     )
     render_options = MatplotlibOptions.from_preset(
         figure_preset,
@@ -761,19 +802,18 @@ def export(
         tag = property_name if property_name is not None else "table"
         outfile = stem.with_name(f"{stem.name}_{tag}").with_suffix(suffix)
 
-    delimiter = "," if table_format.lower() == "csv" else None
     try:
         result = read_qha_hdf5(filename)
-        QHATableExport().export(
+        outfile = write_qha_table(
             result,
             outfile,
             property_name=property_name,
             include_uncertainty=not no_uncertainty,
-            delimiter=delimiter,
+            file_format=cast(Literal["txt", "csv"], table_format.lower()),
         )
     except Exception as exc:
         raise click.ClickException(str(exc)) from exc
 
     echo(f"Written {outfile}")
 
-apply_reference_help(qha, ('qha',))
+apply_reference_help(qha, ("qha",))

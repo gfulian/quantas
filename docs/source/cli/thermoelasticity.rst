@@ -48,7 +48,10 @@ Command families
 
 ``plot fit/pt/profile/domain/compare``
    Separate calibration diagnostics from P--T fields, geological paths,
-   validity domains, and isothermal/adiabatic comparisons.
+   validity domains, and isothermal/adiabatic comparisons.  Use
+   ``quantas thermoelasticity plot --list-plots --archive RESULT.hdf5`` to query
+   the public result-aware inventory and list only families buildable from that
+   archive.
 
 Scientific cautions
 -------------------

@@ -2,8 +2,8 @@ Developer setup
 ===============
 
 Quantas is a scientific library first. Numerical behaviour, units, shapes, and
-native HDF5 contracts must remain independent from the command line and from a
-future graphical frontend.
+native HDF5 contracts must remain independent from the command line, Quantas GUI,
+and other graphical frontends.
 
 Development environment
 -----------------------

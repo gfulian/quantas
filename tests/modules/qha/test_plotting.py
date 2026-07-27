@@ -7,6 +7,7 @@ import matplotlib
 matplotlib.use("Agg", force=True)
 
 import numpy as np
+import pytest
 
 from quantas.models import PlotCollection, ResultData, ResultMetadata
 from quantas.modules.qha.models import QHAResult
@@ -246,3 +247,119 @@ def test_dulong_petit_and_native_cv_use_formula_unit_normalization(tmp_path) -> 
 
     np.testing.assert_allclose(curve, expected)
     np.testing.assert_allclose(limit_line.get_ydata(), expected)
+
+
+def test_pressure_axis_sections_select_exact_native_temperatures() -> None:
+    collection = build_qha_plot_collection(
+        _result_data(),
+        property_names=["VT"],
+        options=QHAPlotOptions(
+            curve_axis="pressure",
+            selected_temperatures=(100.0,),
+        ),
+    )
+    spec = collection.plots[0]
+
+    assert spec.x_axis.key == "pressure"
+    assert spec.filename_stem == "VT_P"
+    assert len(spec.series) == 1
+    np.testing.assert_allclose(spec.series[0].x, [0.0, 5.0])
+    np.testing.assert_allclose(spec.series[0].y, [18.1, 17.8])
+    assert spec.series[0].metadata["temperature_native"] == 100.0
+    assert spec.metadata["curve_axis"] == "pressure"
+
+
+def test_temperature_axis_sections_can_select_native_pressures() -> None:
+    collection = build_qha_plot_collection(
+        _result_data(),
+        property_names=["KT"],
+        options=QHAPlotOptions(
+            curve_axis="temperature",
+            selected_pressures=(5.0,),
+        ),
+    )
+    spec = collection.plots[0]
+
+    assert spec.x_axis.key == "temperature"
+    assert len(spec.series) == 1
+    np.testing.assert_allclose(spec.series[0].y, [180.0, 178.0, 174.0])
+    assert spec.series[0].metadata["pressure_native"] == 5.0
+
+
+def test_qha_sections_reject_coordinates_absent_from_native_grid() -> None:
+    with pytest.raises(ValueError, match="not present in the native grid"):
+        build_qha_plot_collection(
+            _result_data(),
+            property_names=["VT"],
+            options=QHAPlotOptions(
+                curve_axis="pressure",
+                selected_temperatures=(150.0,),
+            ),
+        )
+
+
+def test_pressure_axis_heat_capacity_comparison_uses_selected_temperatures() -> None:
+    collection = build_qha_plot_collection(
+        _result_data(),
+        property_names=["heat_capacities"],
+        options=QHAPlotOptions(
+            curve_axis="pressure",
+            selected_temperatures=(200.0,),
+        ),
+    )
+    spec = collection.plots[0]
+
+    assert spec.x_axis.key == "pressure"
+    assert spec.filename_stem == "heat_capacities_P"
+    assert len(spec.series) == 2
+    np.testing.assert_allclose(spec.series[0].y, [12.2, 12.5])
+    np.testing.assert_allclose(spec.series[1].y, [12.0, 12.3])
+
+
+def test_qha_slice_builders_do_not_mutate_result_arrays() -> None:
+    data = _result_data()
+    payload = data.results["qha"]
+    before = np.array(payload.equilibrium_volume, copy=True)
+
+    build_qha_plot_collection(
+        data,
+        property_names=["VT"],
+        options=QHAPlotOptions(
+            curve_axis="pressure",
+            selected_temperatures=(0.0, 200.0),
+            include_contours=True,
+        ),
+    )
+
+    np.testing.assert_array_equal(payload.equilibrium_volume, before)
+
+
+def test_pressure_sections_require_multiple_stored_pressures() -> None:
+    data = _result_data()
+    qha = data.results["qha"]
+    qha.pressure = np.asarray(qha.pressure)[:1]
+    for attribute in (
+        "equilibrium_volume",
+        "isothermal_bulk_modulus",
+        "isochoric_heat_capacity",
+        "isobaric_heat_capacity",
+        "thermal_expansion",
+    ):
+        values = getattr(qha, attribute, None)
+        if values is not None and np.asarray(values).ndim == 2:
+            setattr(qha, attribute, np.asarray(values)[:, :1])
+
+    with pytest.raises(ValueError, match="at least two stored pressures"):
+        build_qha_plot_collection(
+            data,
+            property_names=["VT"],
+            options=QHAPlotOptions(curve_axis="pressure"),
+        )
+
+
+def test_qha_sections_reject_duplicate_native_pressures() -> None:
+    data = _result_data()
+    data.results["qha"].pressure = np.array([0.0, 0.0], dtype=np.float64)
+
+    with pytest.raises(ValueError, match="duplicate coordinates"):
+        build_qha_plot_collection(data, property_names=["VT"])

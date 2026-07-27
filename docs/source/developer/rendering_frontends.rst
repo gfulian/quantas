@@ -3,7 +3,7 @@ Rendering and frontend integration
 
 Quantas separates scientific preparation from concrete presentation. Reports
 and plots are first represented by passive frontend-neutral contracts, then
-rendered by Rich, plain text, Matplotlib, or a future GUI.
+rendered by Rich, plain text, Matplotlib, Quantas GUI, or another frontend.
 
 Report pipeline
 ---------------
@@ -22,7 +22,7 @@ Report pipeline
        +--> Rich renderer
        +--> CSV/custom frontend
 
-A :class:`quantas.models.ReportTable` stores:
+A :class:`quantas.api.common.ReportTable` stores:
 
 * title;
 * ordered columns;
@@ -84,12 +84,69 @@ Plot pipeline
    PlotCollection
        |
        +--> Matplotlib renderer
-       +--> future GUI renderer
+       +--> Quantas GUI / other renderer
 
 Neutral plot contracts describe axes, series, bands, contours, spherical maps,
 3D surfaces, vector overlays, scalar backgrounds, and panel layouts. They
 contain prepared scientific data and portable style hints, not concrete artist
 objects.
+
+Plot discovery pipeline
+-----------------------
+
+Before constructing a plot, a frontend may request a result-aware
+:class:`quantas.api.plotting.PlotInventory` from a migrated public module:
+
+.. code-block:: text
+
+   typed Result
+       |
+       v
+   module describe_plots
+       |
+       v
+   PlotInventory
+       |
+       +--> property selector
+       +--> representation selector
+       +--> scientific context controls
+
+The inventory is the backend authority for scientific names, symbols, units,
+branches, compatible representation families, exact sampled coordinates, and
+result-conditioned limitations.  A GUI must not maintain a second scientific
+property catalogue.
+
+Inventory discovery does not replace module-specific build options.  A
+universal mapping-based request would discard useful type checking and would
+incorrectly flatten workflows such as Thermoelasticity and EOS.  The common
+contract therefore standardizes discovery while each public module retains the
+smallest scientifically appropriate builder signature.
+
+For grid thermodynamics, the inventory exposes the stored coordinates and the
+builder performs exact slicing before display-unit conversion:
+
+* HA: temperature sections at selected sampled volumes, volume sections at
+  selected temperatures when at least two volumes exist, and optional native
+  V--T contour maps;
+* QHA: temperature sections at selected pressures, pressure sections at
+  selected temperatures when at least two pressures exist, and optional native
+  P--T contour maps.
+
+No frontend should implement these sections by slicing result arrays directly.
+The public builder records native and displayed coordinates in the resulting
+plot metadata and rejects values that are absent from the stored grid.
+
+Thermoelasticity uses the same discovery contract without flattening its staged
+workflow.  Its inventory is cumulative and result-aware: calibration fits,
+P--T maps, depth profiles, isothermal--adiabatic comparisons, and the analysis
+domain are advertised independently according to stored tensors, grid shape,
+profile records, uncertainty fields, and adiabatic validity.  Point and
+one-dimensional results are therefore not misrepresented as contour maps.
+
+Mathematical symbols are renderer-neutral source strings without MathText or
+MathJax delimiters.  Plain symbols are supplied separately for terminals,
+tables, accessibility text, and renderers that do not parse mathematical
+markup.
 
 Module plot builders
 --------------------
@@ -147,6 +204,7 @@ A GUI should:
 * use public observer callbacks for progress;
 * consume typed results, ``ReportTable``, and ``PlotCollection``;
 * inspect module capabilities through the registry;
+* obtain scientific plot choices from public plot inventories when available;
 * keep GUI state and widgets outside Quantas core and modules;
 * never reproduce a scientific formula merely to update a display.
 

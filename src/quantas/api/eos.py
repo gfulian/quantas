@@ -25,11 +25,28 @@ from quantas.core.math.fitting import (
     WLSOptions,
     default_solver_options,
 )
-from quantas.core.physics.eos import MGDNormalization, PVTModel
-from quantas.models import PlotCollection
+from quantas.core.physics.eos import (
+    EOSFamily,
+    EOSModel,
+    MGDNormalization,
+    MGDVolumeBasis,
+    PVTCouplingFamily,
+    PVTModel,
+    TemperatureEOSFamily,
+    TemperatureEOSModel,
+    ThermalPressureFamily,
+    ThermalPressureModel,
+    available_eos_models,
+    available_eos_tags,
+    available_pvt_couplings,
+    available_temperature_eos_models,
+)
 
 from quantas.modules.eos import (
     EOSArchive as Archive,
+    EOSArchiveInspection as ArchiveInspection,
+    EOSArchivePlotInventory as ArchivePlotInventory,
+    EOSArchiveSizeInfo as ArchiveSizeInfo,
     EOSBatchFailurePolicy as BatchFailurePolicy,
     EOSBatchJob as BatchJob,
     EOSBatchPlan as BatchPlan,
@@ -37,17 +54,32 @@ from quantas.modules.eos import (
     EOSCalculationResult as CalculationResult,
     EOSCapabilityStatus as CapabilityStatus,
     EOSDataset as Dataset,
+    EOSDatasetPlotDescriptor as DatasetPlotDescriptor,
     EOSDiagnosticResult as DiagnosticResult,
     EOSDomainCapability as DomainCapability,
     EOSFitDomain as FitDomain,
+    EOSFitRecord as FitRecord,
     EOSFitOptions as FitOptions,
     EOSFitRequest as FitRequest,
     EOSFitResult as FitResult,
     EOSPlotOptions as PlotOptions,
+    EOSRecordDisposition as RecordDisposition,
+    EOSRecordInspection as RecordInspection,
+    EOSRecordPlotDescriptor as RecordPlotDescriptor,
     EOSReportDetail as ReportDetail,
     EOSReportOptions as ReportOptions,
+    EOSResolvedSpec as ResolvedSpec,
     EOSResultSlot as ResultSlot,
+    EOSSlotInspection as SlotInspection,
+    EOSSlotPlotDescriptor as SlotPlotDescriptor,
+    EOSSlotState as SlotState,
+    EOSSlotStatus as SlotStatus,
+    EOSStateEvent as StateEvent,
+    EOSStateEventType as StateEventType,
     EOSSession as Session,
+    EOSSpecDocument as SpecDocument,
+    EOSSpecError as SpecError,
+    EOSSpecInputOptions as SpecInputOptions,
     EOS_SPEC_TEMPLATE_FILENAME as SPEC_TEMPLATE_FILENAME,
     ParameterConstraint,
     build_eos_batch_preamble as build_batch_preamble,
@@ -56,6 +88,7 @@ from quantas.modules.eos import (
     eos_calculation_table as calculation_table,
     eos_diagnostic_summary_table as diagnostic_summary_table,
     eos_diagnostic_table as diagnostic_table,
+    describe_eos_plots as _describe_plots,
     eos_domain_capability as domain_capability,
     read_eos_spec as read_spec,
     resolve_eos_spec as resolve_spec,
@@ -78,6 +111,7 @@ from quantas.modules.eos.io import read_eos_input as _read_input
 from quantas.modules.eos.contracts import EOS_DOMAIN_CAPABILITIES as DOMAIN_CAPABILITIES
 
 from .common import _public_dir
+from .plotting import PlotCollection
 
 
 def read_input(
@@ -267,6 +301,40 @@ def validate_request(input_data: Dataset | str | Path, request: FitRequest) -> N
     """
     dataset = normalize_input(input_data)
     EOSFitter().validate_request(dataset, request)
+
+
+def describe_plots(
+    archive: str | Path,
+    *,
+    slot: str | ResultSlot | None = None,
+    record_id: int | None = None,
+) -> ArchivePlotInventory:
+    """Describe EOS archive contents and buildable plots.
+
+    Parameters
+    ----------
+    archive : str or Path
+        Native EOS HDF5 archive.
+    slot : str, ResultSlot, or None, optional
+        Accepted ``domain/target`` slot selected for detailed discovery.
+    record_id : int or None, optional
+        Explicit immutable record selected for detailed discovery.
+
+    Returns
+    -------
+    ArchivePlotInventory
+        Lightweight dataset, slot, and record inventory plus a common
+        :class:`~quantas.api.plotting.PlotInventory` for the selected
+        successful record.  With no explicit selection, a unique accepted
+        record is selected automatically; otherwise the archive overview is
+        returned with a non-fatal warning.
+
+    Notes
+    -----
+    EOS remains session-oriented.  This operation does not open a persistent
+    session, mutate archive state, accept or reject records, or build figures.
+    """
+    return _describe_plots(archive, slot=slot, record_id=record_id)
 
 
 def available_plot_types(
@@ -494,6 +562,9 @@ def __dir__() -> list[str]:
 
 __all__ = [
     "Archive",
+    "ArchiveInspection",
+    "ArchivePlotInventory",
+    "ArchiveSizeInfo",
     "BatchFailurePolicy",
     "BatchJob",
     "BatchPlan",
@@ -503,32 +574,60 @@ __all__ = [
     "CapabilityStatus",
     "DOMAIN_CAPABILITIES",
     "Dataset",
+    "DatasetPlotDescriptor",
     "DiagnosticResult",
     "DomainCapability",
+    "EOSFamily",
+    "EOSModel",
     "EffectiveVarianceOptions",
     "FitDomain",
+    "FitRecord",
     "FitMethod",
     "FitOptions",
     "FitRequest",
     "FitResult",
     "MGDNormalization",
+    "MGDVolumeBasis",
     "ODRDifferenceScheme",
     "ODROptions",
     "OLSOptions",
     "ParameterConstraint",
     "PVTModel",
+    "PVTCouplingFamily",
     "PlotOptions",
+    "RecordDisposition",
+    "RecordInspection",
+    "RecordPlotDescriptor",
     "ReportDetail",
     "ReportOptions",
+    "ResolvedSpec",
     "ResultSlot",
+    "SlotInspection",
+    "SlotPlotDescriptor",
+    "SlotState",
+    "SlotStatus",
+    "StateEvent",
+    "StateEventType",
+    "TemperatureEOSFamily",
+    "TemperatureEOSModel",
+    "ThermalPressureFamily",
+    "ThermalPressureModel",
     "SPEC_TEMPLATE_FILENAME",
     "Session",
+    "SpecDocument",
+    "SpecError",
+    "SpecInputOptions",
     "SolverOptions",
     "available_plot_types",
+    "available_eos_models",
+    "available_eos_tags",
+    "available_pvt_couplings",
+    "available_temperature_eos_models",
     "build_batch_preamble",
     "build_batch_report",
     "build_plots",
     "calculate",
+    "describe_plots",
     "diagnose",
     "domain_capability",
     "calculation_summary_table",

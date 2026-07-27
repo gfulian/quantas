@@ -7,10 +7,12 @@ matplotlib.use("Agg", force=True)
 import numpy as np
 import pytest
 
-from quantas.models import LinePlotSpec, PlotCollection
+from quantas.models import ContourPlotSpec, LinePlotSpec, PlotCollection
 from quantas.modules.ha.models import HAResult
 from quantas.modules.ha.plot import (
+    HAPlotOptions,
     build_ha_plot_collection,
+    build_thermodynamic_contour_spec,
     build_thermodynamic_plot_spec,
 )
 from quantas.renderers.plots import (
@@ -135,3 +137,106 @@ def test_zero_point_plot_broadcasts_temperature_independent_volume_series(ha_res
     assert len(spec.series) == 2
     np.testing.assert_allclose(spec.series[0].y, [0.10, 0.10, 0.10])
     np.testing.assert_allclose(spec.series[1].y, [0.20, 0.20, 0.20])
+
+
+def test_temperature_sections_select_exact_native_volumes(ha_result: HAResult) -> None:
+    spec = build_thermodynamic_plot_spec(
+        ha_result,
+        "F",
+        options=HAPlotOptions(
+            curve_axis="temperature",
+            selected_volumes=(19.0,),
+        ),
+    )
+
+    assert spec.x_axis.key == "temperature"
+    assert len(spec.series) == 1
+    np.testing.assert_allclose(spec.series[0].x, [0.0, 100.0, 200.0])
+    np.testing.assert_allclose(spec.series[0].y, [-9.8, -9.3, -8.8])
+    assert spec.series[0].metadata["volume"] == 19.0
+
+
+def test_volume_sections_select_exact_native_temperatures(ha_result: HAResult) -> None:
+    spec = build_thermodynamic_plot_spec(
+        ha_result,
+        "F",
+        options=HAPlotOptions(
+            curve_axis="volume",
+            selected_temperatures=(100.0,),
+        ),
+    )
+
+    assert spec.x_axis.key == "volume"
+    assert spec.filename_stem == "free_energy_vs_volume"
+    assert len(spec.series) == 1
+    np.testing.assert_allclose(spec.series[0].x, [18.0, 19.0])
+    np.testing.assert_allclose(spec.series[0].y, [-9.5, -9.3])
+    assert spec.series[0].metadata["temperature_native"] == 100.0
+
+
+def test_volume_temperature_contour_preserves_native_grid(ha_result: HAResult) -> None:
+    spec = build_thermodynamic_contour_spec(ha_result, "F")
+
+    assert isinstance(spec, ContourPlotSpec)
+    assert spec.x_axis.key == "temperature"
+    assert spec.y_axis.key == "volume"
+    np.testing.assert_allclose(spec.x, [0.0, 100.0, 200.0])
+    np.testing.assert_allclose(spec.y, [18.0, 19.0])
+    np.testing.assert_allclose(
+        spec.z,
+        [[-10.0, -9.5, -9.0], [-9.8, -9.3, -8.8]],
+    )
+
+
+def test_ha_sections_reject_coordinates_absent_from_native_grid(
+    ha_result: HAResult,
+) -> None:
+    with pytest.raises(ValueError, match="not present in the native grid"):
+        build_thermodynamic_plot_spec(
+            ha_result,
+            "F",
+            options=HAPlotOptions(
+                curve_axis="volume",
+                selected_temperatures=(150.0,),
+            ),
+        )
+
+
+def test_ha_collection_can_build_line_and_contour_without_mutation(
+    ha_result: HAResult,
+) -> None:
+    original = np.array(ha_result.free_energy, copy=True)
+    collection = build_ha_plot_collection(
+        ha_result,
+        properties=("F",),
+        options=HAPlotOptions(include_contours=True),
+    )
+
+    assert [type(item).__name__ for item in collection.plots] == [
+        "LinePlotSpec",
+        "ContourPlotSpec",
+    ]
+    np.testing.assert_array_equal(ha_result.free_energy, original)
+
+
+def test_volume_sections_require_multiple_sampled_volumes(
+    ha_result: HAResult,
+) -> None:
+    ha_result.volume = np.array([18.0], dtype=np.float64)
+    ha_result.free_energy = np.asarray(ha_result.free_energy)[:, :1]
+
+    with pytest.raises(ValueError, match="at least two sampled volumes"):
+        build_thermodynamic_plot_spec(
+            ha_result,
+            "F",
+            options=HAPlotOptions(curve_axis="volume"),
+        )
+
+
+def test_ha_sections_reject_duplicate_native_temperatures(
+    ha_result: HAResult,
+) -> None:
+    ha_result.temperature = np.array([0.0, 100.0, 100.0], dtype=np.float64)
+
+    with pytest.raises(ValueError, match="duplicate coordinates"):
+        build_thermodynamic_plot_spec(ha_result, "F")

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
+from typing import cast
 
 import click
 
@@ -16,6 +17,7 @@ from quantas.cli.output import CLIOutput
 from quantas.cli.thermoelastic_common import require_output_replacement
 from quantas.models import ReportTable
 from quantas.api.thermoelasticity import (
+    InputInterface,
     create_input as create_thermoelastic_input,
     read_input as read_thermoelastic_input,
     write_profile_template as write_thermoelastic_profile_template,
@@ -148,7 +150,7 @@ def inpgen(
         destination = create_thermoelastic_input(
             source_value,
             outfile,
-            interface=interface,
+            interface=cast(InputInterface, interface),
             is_list=is_list,
             jobname=jobname,
             reference=reference,

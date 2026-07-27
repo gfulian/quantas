@@ -5,7 +5,7 @@ The central architectural rule is simple:
 
    **Scientific results must not depend on the frontend that requested them.**
 
-The Python API, Click CLI, and a future GUI must call the same normalized
+The Python API, Click CLI, and Quantas GUI must call the same normalized
 workflows and obtain the same ``float64`` arrays.
 
 Layered package model
@@ -36,7 +36,7 @@ Layered package model
           +--------+--------+
           |                 |
           v                 v
-      quantas.cli      future GUI/notebook
+      quantas.cli      Quantas GUI/notebook
 
 ``quantas.core``
    Reusable scientific algorithms and policies. Core code does not know which
@@ -173,5 +173,5 @@ The scientific workflow owns:
 * result fields and masks;
 * report and plot data.
 
-A future GUI may choose a different visual layout, but it must not reimplement
+Quantas GUI may choose a different visual layout, but it must not reimplement
 or bypass the scientific decisions in the workflow.

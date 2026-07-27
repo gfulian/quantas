@@ -10,6 +10,7 @@ They do not implement numerical logic directly.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import click
 
@@ -43,16 +44,18 @@ from quantas.cli.messages import (
     quantas_title,
 )
 from quantas.api.ha import (
+    CurveAxis as HACurveAxis,
     Options as HAOptions,
+    PlotOptions as HAPlotOptions,
     Result as HAResult,
     build_plots as build_ha_plots,
     read_result as read_ha_hdf5,
     run as run_ha,
     write_result as write_ha_hdf5,
+    write_table as write_ha_table,
 )
 from quantas.cli.ha_observer import HATextObserver
 from quantas.cli.phonon_input import phonon_inpgen
-from quantas.modules.ha.io.export import HATableExport
 from quantas.references import (
     module_citation_keys,
     render_citation_notice,
@@ -146,7 +149,10 @@ ha.add_command(phonon_inpgen)
     "--plot-unit",
     group=PLOTTING_GROUP,
     default=None,
-    help="Energy unit used for plotted energy-like values. Defaults to stored result units.",
+    help=(
+        "Energy unit used for plotted energy-like values. "
+        "Defaults to stored result units."
+    ),
 )
 @figure_preset_option(
     option_name="--plot-preset",
@@ -315,7 +321,7 @@ def export(
                 default=unit or _stored_property_unit(ha_result, property_name),
                 show_default=True,
             )
-        HATableExport().export(
+        outfile = write_ha_table(
             result,
             outfile,
             property_name=property_name,
@@ -349,6 +355,77 @@ def export(
         "Default: standard compact set."
     ),
 )
+@click.option(
+    "--axis",
+    "curve_axis",
+    type=click.Choice(["temperature", "volume"], case_sensitive=False),
+    default="temperature",
+    show_default=True,
+    help="Independent variable used for line sections.",
+)
+@click.option(
+    "--volume",
+    "selected_volumes",
+    type=float,
+    multiple=True,
+    help=(
+        "Exact native sampled volume included in temperature sections. "
+        "May be repeated; default: all volumes."
+    ),
+)
+@click.option(
+    "--temperature",
+    "selected_temperatures",
+    type=float,
+    multiple=True,
+    help=(
+        "Exact native temperature included in volume sections. May be "
+        "repeated; default: all temperatures."
+    ),
+)
+@click.option(
+    "--2d",
+    "include_2d",
+    is_flag=True,
+    default=False,
+    help="Generate native-grid volume-temperature contour maps when possible.",
+)
+@click.option(
+    "--cmap",
+    type=click.Choice(
+        ["viridis", "plasma", "inferno", "magma", "cividis", "turbo"],
+        case_sensitive=False,
+    ),
+    default="viridis",
+    show_default=True,
+    help="Colormap used for two-dimensional contour maps.",
+)
+@click.option(
+    "--contour-mode",
+    type=click.Choice(["discrete", "smooth"], case_sensitive=False),
+    default="smooth",
+    show_default=True,
+    help="Filled contour rendering mode.",
+)
+@click.option(
+    "--levels",
+    type=click.IntRange(min=2),
+    default=12,
+    show_default=True,
+    help="Number of contour levels or isolines.",
+)
+@click.option(
+    "--isolines/--no-isolines",
+    default=True,
+    show_default=True,
+    help="Draw contour lines on volume-temperature maps.",
+)
+@click.option(
+    "--isoline-labels/--no-isoline-labels",
+    default=True,
+    show_default=True,
+    help="Label contour lines with isovalues.",
+)
 @figure_preset_option()
 @click.option(
     "--format",
@@ -373,12 +450,24 @@ def export(
 @click.option(
     "--unit",
     default=None,
-    help="Energy unit used for plotted energy-like values. Defaults to stored HDF5 units.",
+    help=(
+        "Energy unit used for plotted energy-like values. "
+        "Defaults to stored HDF5 units."
+    ),
 )
 def plot(
     filename: Path,
     outbase: Path | None,
     property_name: str | None,
+    curve_axis: str,
+    selected_volumes: tuple[float, ...],
+    selected_temperatures: tuple[float, ...],
+    include_2d: bool,
+    cmap: str,
+    contour_mode: str,
+    levels: int,
+    isolines: bool,
+    isoline_labels: bool,
     figure_preset: str,
     image_format: str,
     dpi: int | None,
@@ -397,6 +486,17 @@ def plot(
             result,
             properties=property_name,
             unit=unit,
+            options=HAPlotOptions(
+                curve_axis=cast(HACurveAxis, curve_axis.lower()),
+                selected_volumes=selected_volumes or None,
+                selected_temperatures=selected_temperatures or None,
+                include_contours=include_2d,
+                cmap=cmap.lower(),
+                contour_mode=contour_mode.lower(),
+                levels=levels,
+                isolines=isolines,
+                isoline_labels=isoline_labels,
+            ),
         )
         rendered = render_plot_collection(
             collection,

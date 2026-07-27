@@ -1,28 +1,150 @@
 # -*- coding: utf-8 -*-
 
-"""
-Axis-label utilities for harmonic-approximation plots.
+"""Scientific property metadata and label helpers for HA plots.
 
-This module centralizes scientific symbols and unit formatting used by neutral
-plot specifications. It does not perform plotting or unit conversion. The
-returned labels use portable mathematical text understood by the supported
-static renderer and reusable by future frontend adapters.
+This module is the single authoritative catalogue for harmonic plot property
+keys, names, renderer-neutral symbols, established MathText labels, and
+scientific categories.  It also formats the legacy Matplotlib-compatible axis
+labels used by the current static renderer.
 """
 
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
+
+from quantas.modules.ha.report import THERMODYNAMIC_LABELS
+
+
+@dataclass(frozen=True, slots=True)
+class HAPlotProperty:
+    """Describe one standard harmonic plot property.
+
+    Parameters
+    ----------
+    attribute : str
+        Name of the :class:`~quantas.modules.ha.models.HAResult` attribute.
+    key : str
+        Stable short key accepted by the public HA builder.
+    symbol : str
+        Established MathText symbol used by the static renderer.
+    symbol_math : str
+        Renderer-neutral mathematical symbol without delimiters.
+    symbol_plain : str
+        Unicode or plain-text symbol.
+    name : str
+        Extended human-readable property name.
+    description : str
+        Short scientific description.
+    category : str
+        Stable scientific grouping key.
+    """
+
+    attribute: str
+    key: str
+    symbol: str
+    symbol_math: str
+    symbol_plain: str
+    name: str
+    description: str
+    category: str
+
+
+_PROPERTY_DETAILS: dict[str, tuple[str, str, str, str, str]] = {
+    "static_energy": (
+        r"$U_0$",
+        "U_0",
+        "U₀",
+        "Electronic static energy at each sampled volume.",
+        "energy",
+    ),
+    "zero_point_energy": (
+        r"$U_\mathrm{ZP}$",
+        r"U_{\mathrm{ZP}}",
+        "U_ZP",
+        "Temperature-independent vibrational zero-point energy.",
+        "energy",
+    ),
+    "thermal_energy": (
+        r"$U_\mathrm{th}$",
+        r"U_{\mathrm{th}}",
+        "U_th",
+        "Thermal vibrational contribution to the internal energy.",
+        "energy",
+    ),
+    "internal_energy": (
+        r"$U$",
+        "U",
+        "U",
+        "Total static, zero-point, and thermal internal energy.",
+        "energy",
+    ),
+    "entropy": (
+        r"$S$",
+        "S",
+        "S",
+        "Harmonic vibrational entropy.",
+        "entropy",
+    ),
+    "vibrational_free_energy": (
+        r"$F_\mathrm{vib}$",
+        r"F_{\mathrm{vib}}",
+        "F_vib",
+        "Vibrational contribution to the Helmholtz free energy.",
+        "energy",
+    ),
+    "free_energy": (
+        r"$F$",
+        "F",
+        "F",
+        "Total harmonic Helmholtz free energy.",
+        "energy",
+    ),
+    "isochoric_heat_capacity": (
+        r"$C_V$",
+        "C_V",
+        "Cᵥ",
+        "Heat capacity at constant volume.",
+        "heat_capacity",
+    ),
+}
+
+
+def available_plot_properties() -> dict[str, HAPlotProperty]:
+    """Return the authoritative standard HA plot-property catalogue."""
+    labels = {"static_energy": ("U0", "Static energy"), **THERMODYNAMIC_LABELS}
+    properties: dict[str, HAPlotProperty] = {}
+    for attribute, (key, name) in labels.items():
+        symbol, symbol_math, symbol_plain, description, category = (
+            _PROPERTY_DETAILS[attribute]
+        )
+        properties[attribute] = HAPlotProperty(
+            attribute=attribute,
+            key=key,
+            symbol=symbol,
+            symbol_math=symbol_math,
+            symbol_plain=symbol_plain,
+            name=name,
+            description=description,
+            category=category,
+        )
+    return properties
+
+
+def resolve_plot_property(name: str) -> HAPlotProperty:
+    """Resolve one HA result attribute or stable short plotting key."""
+    properties = available_plot_properties()
+    if name in properties:
+        return properties[name]
+    for property_info in properties.values():
+        if name == property_info.key:
+            return property_info
+    raise KeyError(f"unknown HA plot property: {name}")
 
 
 THERMODYNAMIC_SYMBOLS = {
-    "static_energy": r"$U_0$",
-    "zero_point_energy": r"$U_\mathrm{ZP}$",
-    "thermal_energy": r"$U_\mathrm{th}$",
-    "internal_energy": r"$U$",
-    "entropy": r"$S$",
-    "vibrational_free_energy": r"$F_\mathrm{vib}$",
-    "free_energy": r"$F$",
-    "isochoric_heat_capacity": r"$C_V$",
+    attribute: property_info.symbol
+    for attribute, property_info in available_plot_properties().items()
 }
 
 

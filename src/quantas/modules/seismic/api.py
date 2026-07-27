@@ -15,6 +15,7 @@ from quantas.io.path import ensure_suffix
 from quantas.models import (
     ModuleContract,
     PlotCollection,
+    PlotInventory,
     ReportTable,
     ResultData,
     SphericalSummarySpec,
@@ -31,6 +32,7 @@ from quantas.modules.seismic.plot import (
     SeismicPlotOptions,
     SeismicSurfaceOptions,
     build_seismic_plot_collection,
+    describe_seismic_plots,
     build_seismic_summary_spec,
     build_seismic_surface_collection,
 )
@@ -270,6 +272,14 @@ def build_seismic_report(
                 ),
             )
     return tables
+
+
+def describe_seismic_plot_inventory(result: ResultData) -> PlotInventory:
+    """Describe plots that can be built from a complete seismic result."""
+    payload = result.results.get("seismic")
+    if result.metadata.module != "seismic" or not isinstance(payload, SeismicResult):
+        raise ValueError("ResultData does not contain a valid seismic result.")
+    return describe_seismic_plots(payload)
 
 
 def build_seismic_plots(

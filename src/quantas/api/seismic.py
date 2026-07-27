@@ -8,10 +8,11 @@ from pathlib import Path
 from typing import Literal
 
 from quantas.core.events import Observer
-from quantas.core.physics.seismic import ElasticMedium
-from quantas.models import PlotCollection, ReportTable, ResultData, SphericalSummarySpec
+from quantas.core.geometry import Hemisphere, TensorRotation, TensorRotationKind
+from quantas.core.physics.seismic import ElasticMedium, SamplingLevel, WaveMode
 from quantas.modules.seismic.api import (
     build_seismic_plots as _build_plots,
+    describe_seismic_plot_inventory as _describe_plots,
     build_seismic_report as _build_report,
     build_seismic_summary as _build_summary,
     build_seismic_surfaces as _build_surfaces,
@@ -36,7 +37,8 @@ from quantas.modules.seismic.plot.spec import (
     SurfaceType,
 )
 
-from .common import _public_dir, get_result_payload
+from .common import ReportTable, ResultData, _public_dir, get_result_payload
+from .plotting import PlotCollection, PlotInventory, SphericalSummarySpec
 
 
 def read_input(source: str | Path) -> Input:
@@ -242,6 +244,24 @@ def build_report(
     return _build_report(result, level=level)
 
 
+def describe_plots(result: ResultData) -> PlotInventory:
+    """Return result-aware seismic plot properties and representations.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete seismic result envelope.
+
+    Returns
+    -------
+    PlotInventory
+        Available scalar fields, acoustic surface families, modes, projections,
+        geometries, and result-conditioned overlay contexts.
+    """
+    get_result(result)
+    return _describe_plots(result)
+
+
 def build_plots(
     result: ResultData,
     options: PlotOptions | None = None,
@@ -330,15 +350,21 @@ def __dir__() -> list[str]:
 
 __all__ = [
     "ElasticMedium",
+    "Hemisphere",
     "Input",
     "Options",
     "PlotOptions",
     "Result",
+    "SamplingLevel",
     "SurfaceGeometry",
     "SurfaceOptions",
     "SurfaceType",
+    "TensorRotation",
+    "TensorRotationKind",
+    "WaveMode",
     "build_plots",
     "build_report",
+    "describe_plots",
     "build_summary",
     "build_surfaces",
     "get_result",

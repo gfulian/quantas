@@ -11,13 +11,18 @@ or YAML logic is duplicated in the command-line layer.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import click
 
 from quantas.cli.grouped_options import GroupedCommand
 from quantas.cli.messages import confirm, echo, echo_error, echo_warning
 from quantas.io.phonons import PhononInputFileReader
-from quantas.api.ha import create_input as create_ha_input
+from quantas.api.ha import (
+    PhononInterface,
+    create_input as create_ha_input,
+)
+from quantas.api.qha import create_input as create_qha_input
 
 
 @click.command(
@@ -136,10 +141,11 @@ def phonon_inpgen(
             return
 
     try:
-        output = create_ha_input(
+        create_input = create_qha_input if workflow == "qha" else create_ha_input
+        output = create_input(
             filename,
             destination,
-            interface=interface.lower(),
+            interface=cast(PhononInterface, interface.lower()),
             is_list=is_list,
             reference=reference,
             jobname=jobname,

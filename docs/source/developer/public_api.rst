@@ -111,6 +111,20 @@ Then update, in the same change:
 #. the CLI if the operation is command-line accessible;
 #. migration or deprecation documentation when replacing an existing name.
 
+Closed public annotations
+-------------------------
+
+A public dataclass is not a closed contract when one of its fields requires an
+enum, protocol, or passive structure that can only be imported from
+``quantas.core``, ``quantas.models``, or ``quantas.modules``.  Re-export the
+minimum stable type through the relevant public namespace or
+:mod:`quantas.api.common`; do not re-export the calculator or implementation
+package that owns it.
+
+Tests resolve type hints for public ``Input``, ``Options``, request, and context
+contracts and require every Quantas-defined referenced type to have a public
+identity.
+
 Capability registry
 -------------------
 
@@ -121,11 +135,15 @@ all modules eagerly. A :class:`quantas.api.registry.ModuleDescriptor` records:
 * public namespace import path;
 * result payload key, when applicable;
 * supported capabilities;
-* public operation names;
+* canonical public operation names;
+* named operation descriptors for capabilities with several supported actions;
 * public input, options, and result type aliases.
 
 Add a capability only when the corresponding operation is part of the
 supported API. Modules are not required to advertise identical lifecycles.
+When one capability has several operations, add stable
+:class:`quantas.api.registry.OperationDescriptor` entries instead of inventing
+one generic callable with an untyped context mapping.
 
 Result accessors
 ----------------

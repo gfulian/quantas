@@ -7,10 +7,10 @@ from __future__ import annotations
 from pathlib import Path
 
 from quantas.core.events import Observer
-from quantas.models import PlotCollection, ReportTable, ResultData
-from quantas.models.phonons import PhononInputData
+from quantas.io.path import ensure_suffix
 from quantas.modules.ha.api import (
     build_ha_plots as _build_plots,
+    describe_ha_plot_inventory as _describe_plots,
     build_ha_report as _build_report,
     create_ha_input as _create_input,
     normalize_ha_input as _normalize_input,
@@ -24,15 +24,27 @@ from quantas.modules.ha.models import (
     HAOptions as Options,
     HAResult as Result,
 )
+from quantas.modules.ha.io.export import HATableExport
+from quantas.modules.ha.plot import HACurveAxis as CurveAxis
+from quantas.modules.ha.plot import HAPlotOptions as PlotOptions
 
-from .common import _public_dir, get_result_payload
+from .common import (
+    PhononInterface,
+    PhononInputData,
+    ReportTable,
+    ResultData,
+    StructureVolumeSeries,
+    _public_dir,
+    get_result_payload,
+)
+from .plotting import PlotCollection, PlotInventory
 
 
 def create_input(
     source: str | Path,
     destination: str | Path,
     *,
-    interface: str = "crystal",
+    interface: PhononInterface = "crystal",
     is_list: bool = False,
     reference: int = 0,
     jobname: str = "Quantas HA input",
@@ -224,6 +236,47 @@ def write_result(
     return _write_result(result, destination, report_text=report_text)
 
 
+def write_table(
+    result: ResultData,
+    destination: str | Path,
+    *,
+    property_name: str = "F",
+    unit: str | None = None,
+) -> Path:
+    """Write one HA thermodynamic property as a neutral text table.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete harmonic result envelope.
+    destination : str or Path
+        Destination path. The ``.dat`` suffix is applied when absent.
+    property_name : str, optional
+        Historical property key or :class:`Result` attribute name.
+    unit : str or None, optional
+        Requested output unit for energy-like, entropy, or heat-capacity data.
+
+    Returns
+    -------
+    Path
+        Written table path.
+
+    Raises
+    ------
+    ValueError
+        If the result or requested property is invalid.
+    """
+    get_result(result)
+    output = ensure_suffix(destination, ".dat")
+    HATableExport().export(
+        result,
+        output,
+        property_name=property_name,
+        unit=unit,
+    )
+    return output
+
+
 def build_report(result: ResultData) -> list[ReportTable]:
     """Build frontend-neutral HA report tables.
 
@@ -246,11 +299,30 @@ def build_report(result: ResultData) -> list[ReportTable]:
     return _build_report(result)
 
 
+def describe_plots(result: ResultData) -> PlotInventory:
+    """Return result-aware HA plot properties and sampled grids.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete harmonic result envelope.
+
+    Returns
+    -------
+    PlotInventory
+        Available thermodynamic properties, their symbols and units, and the
+        exact temperature and volume context represented by the builder.
+    """
+    get_result(result)
+    return _describe_plots(result)
+
+
 def build_plots(
     result: ResultData,
     properties: str | list[str] | tuple[str, ...] | None = None,
     *,
     unit: str | None = None,
+    options: PlotOptions | None = None,
 ) -> PlotCollection:
     """Build frontend-neutral HA plots.
 
@@ -258,6 +330,13 @@ def build_plots(
     ----------
     result : ResultData
         Complete harmonic result envelope.
+    properties : str, list of str, tuple of str, or None, optional
+        Requested harmonic property identifiers.
+    unit : str or None, optional
+        Backwards-compatible energy-unit override. When ``options`` also
+        defines ``energy_unit``, both values must agree.
+    options : PlotOptions or None, optional
+        Exact-grid section and contour-preparation options.
 
     Returns
     -------
@@ -270,7 +349,12 @@ def build_plots(
         If the result envelope is invalid.
     """
     get_result(result)
-    return _build_plots(result, properties=properties, unit=unit)
+    return _build_plots(
+        result,
+        properties=properties,
+        unit=unit,
+        options=options,
+    )
 
 
 def __dir__() -> list[str]:
@@ -279,11 +363,16 @@ def __dir__() -> list[str]:
 
 
 __all__ = [
+    "CurveAxis",
     "Input",
     "Options",
+    "PlotOptions",
+    "PhononInterface",
     "Result",
+    "StructureVolumeSeries",
     "build_plots",
     "build_report",
+    "describe_plots",
     "create_input",
     "get_result",
     "normalize_input",
@@ -291,4 +380,5 @@ __all__ = [
     "read_result",
     "run",
     "write_result",
+    "write_table",
 ]

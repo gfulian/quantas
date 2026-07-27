@@ -57,6 +57,16 @@ The public selectors accept the following literal values:
 
 .. autodata:: quantas.api.qha.FitFailurePolicy
 
+.. autodata:: quantas.api.qha.CurveAxis
+
+.. autodata:: quantas.api.qha.PhononInterface
+
+.. autodata:: quantas.api.qha.TableFileFormat
+
+.. autoclass:: quantas.api.qha.TableFormat
+   :members:
+   :show-inheritance:
+
 Passive contracts
 -----------------
 
@@ -80,8 +90,17 @@ Passive contracts
    :members:
    :show-inheritance:
 
+.. autoclass:: quantas.api.qha.StructureVolumeSeries
+   :no-index:
+   :members:
+   :show-inheritance:
+
 Input, inspection, and calculation
 ----------------------------------
+
+.. autofunction:: quantas.api.qha.create_input
+
+.. autofunction:: quantas.api.qha.available_energy_eos
 
 .. autofunction:: quantas.api.qha.read_input
 
@@ -116,7 +135,34 @@ polynomial versus EOS minimization.
 Reporting, plotting, and persistence
 ------------------------------------
 
+Scalar QHA properties are stored on a native temperature-pressure grid.  The
+default line representation shows each property as a function of temperature
+at every selected pressure.  ``PlotOptions(curve_axis="pressure")`` produces
+the complementary pressure sections at exact stored temperatures when at
+least two pressure coordinates exist.  Filled P--T maps continue to use the
+complete native grid.
+
+Selections are expressed in the native units reported by
+:func:`describe_plots`.  They must match stored coordinates exactly; the first
+public implementation does not interpolate or snap nearby values.
+
+.. code-block:: python
+
+   inventory = qha.describe_plots(result_data)
+   temperatures = inventory.context_by_key("temperature_grid").values
+
+   pressure_sections = qha.build_plots(
+       result_data,
+       properties=("equilibrium_volume", "isothermal_bulk_modulus"),
+       options=qha.PlotOptions(
+           curve_axis="pressure",
+           selected_temperatures=(temperatures[0], temperatures[-1]),
+       ),
+   )
+
 .. autofunction:: quantas.api.qha.list_plot_properties
+
+.. autofunction:: quantas.api.qha.describe_plots
 
 .. autofunction:: quantas.api.qha.build_report
 
@@ -125,6 +171,8 @@ Reporting, plotting, and persistence
 .. autofunction:: quantas.api.qha.write_result
 
 .. autofunction:: quantas.api.qha.read_result
+
+.. autofunction:: quantas.api.qha.write_table
 
 See also
 --------

@@ -37,14 +37,14 @@ from quantas.cli.thermoelastic_common import (
 )
 from quantas.cli.thermoelastic_observer import ThermoelasticTextObserver
 from quantas.cli.thermoelastic_plot_common import render_collection
-from quantas.core.events import EventLevel
-from quantas.core.math.fitting import FitMethod
+from quantas.api.common import EventLevel
 from quantas.api.qha import (
     Minimization as QHAMinimization,
     Options as QHAOptions,
     Scheme as QHAScheme,
 )
 from quantas.api.thermoelasticity import (
+    FitMethod,
     FitPlotOptions as ThermoelasticFitPlotOptions,
     Options as ThermoelasticOptions,
     PlotStyleOptions as ThermoelasticPlotStyleOptions,

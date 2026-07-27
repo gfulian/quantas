@@ -2,7 +2,7 @@ Python API
 ==========
 
 The supported Python contract begins at :mod:`quantas.api`.  Applications,
-notebooks, services, the command-line interface, and a future GUI should import
+notebooks, services, the command-line interface, and Quantas GUI should import
 from this namespace rather than from implementation packages under
 :mod:`quantas.core`, :mod:`quantas.modules`, or :mod:`quantas.renderers`.
 
@@ -16,6 +16,7 @@ Public namespaces are organized by scientific domain:
        ha,
        interop,
        profiles,
+       plotting,
        qha,
        registry,
        rendering,
@@ -61,10 +62,37 @@ Use the module-specific ``get_result`` function whenever one is available.  It
 checks that the envelope belongs to the expected module and that the payload
 has the correct type.
 
-Reading and normalizing input
------------------------------
+Creating, reading, and normalizing input
+----------------------------------------
 
-Public modules commonly expose two related operations:
+A workflow exposes ``create_input`` when Quantas can convert output from a
+supported external code into its standard input format.  The same function is
+available to the CLI, notebooks, scripts, and graphical frontends.
+
+.. code-block:: python
+
+   from quantas.api import elasticity, qha
+
+   elasticity_path = elasticity.create_input(
+       "calcite-elastcon.out",
+       "calcite.dat",
+       interface="crystal",
+       jobname="Calcite",
+   )
+   qha_path = qha.create_input(
+       "phonon-list.txt",
+       "calcite-qha.yaml",
+       interface="crystal-qha",
+       is_list=True,
+   )
+
+HA and QHA use the same phonon input format, but both namespaces expose
+``create_input`` so users can remain within the workflow they are running.
+Thermoelasticity provides the corresponding conversion for supported
+elastic-volume output series.  SEISMIC and EOS instead read their documented
+input formats or accept public Python data objects directly.
+
+Public modules commonly expose two related parsing operations:
 
 ``read_input(path)``
    Parse one supported file format and return a validated passive input object.
@@ -95,7 +123,7 @@ artifacts:
 .. code-block:: python
 
    from pathlib import Path
-   from quantas.api import elasticity, rendering
+   from quantas.api import elasticity, plotting, rendering
 
    options = elasticity.Options(calculate_2d=True)
    result = elasticity.run("calcite.dat", options=options)
@@ -105,6 +133,7 @@ artifacts:
    Path("calcite.log").write_text(report_text, encoding="utf-8")
 
    plots = elasticity.build_plots(result)
+   assert all(isinstance(item, plotting.PlotSpec) for item in plots.plots)
    rendered = rendering.render_plots(
        plots,
        output_dir="figures",
@@ -115,6 +144,28 @@ artifacts:
 The calculator does not import Rich, Matplotlib, or a GUI toolkit.  This
 separation is what allows CLI, notebooks, services, and graphical frontends to
 use the same numerical result.
+
+Public table and CSV exports
+----------------------------
+
+HDF5 remains the complete scientific record.  Text and CSV tables are
+convenient derived exports, built by public functions so the CLI, notebooks,
+and GUI use the same property selection, units, and data layout.
+
+.. code-block:: python
+
+   elasticity.write_table(result, "calcite-directions.dat")
+   ha.write_table(ha_result, "free-energy.dat", property_name="F")
+   qha.write_table(
+       qha_result,
+       "equilibrium-volume.csv",
+       property_name="VT",
+       file_format="csv",
+   )
+
+SEISMIC, Thermoelasticity, and EOS expose their corresponding public CSV,
+tensor, grid, profile, or post-fit writers in their own namespaces.  HDF5
+remains the persisted scientific source of truth.
 
 Native result persistence
 -------------------------
@@ -255,6 +306,17 @@ private classes or hard-coding a single inheritance hierarchy:
    qha = registry.get("qha")
    run_qha = qha.operation(Capability.RUN)
    options_type = qha.options_type
+
+   elasticity = registry.get("elasticity")
+   if elasticity.has(Capability.PLOT_INVENTORY):
+       describe = elasticity.operation(Capability.PLOT_INVENTORY)
+       inventory = describe(registry.open_result("calcite.hdf5"))
+       print([item.key for item in inventory.properties])
+
+   for operation in registry.get("thermoelasticity").list_operations(
+       Capability.EXPORT
+   ):
+       print(operation.key, operation.name)
 
 EOS declares ``FIT``, ``BATCH``, and ``ARCHIVE`` capabilities instead of
 pretending to be a single-shot ``RUN`` module.  Native HDF5 files can also be

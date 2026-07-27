@@ -27,6 +27,7 @@ from quantas.models import (
     VectorFieldStyle,
 )
 from quantas.modules.seismic.models import SeismicResult
+from quantas.modules.seismic.plot.inventory import available_seismic_plot_properties
 from quantas.modules.seismic.report import sampled_variation
 
 
@@ -296,37 +297,11 @@ def build_seismic_surface_collection(
 
 
 def _available_properties(result: SeismicResult) -> dict[str, tuple[str, str]]:
-    """Return property identifiers with publication-style labels and units."""
-    properties: dict[str, tuple[str, str]] = {}
-    for mode in (WaveMode.V_P, WaveMode.V_S1, WaveMode.V_S2):
-        properties[f"phase_{mode.value}"] = (
-            _mode_math(mode),
-            "km s^-1",
-        )
-    properties["shear_anisotropy"] = (r"$A_S$", "%")
-    properties["shear_splitting"] = (
-        r"$\Delta V_S$",
-        "km s^-1",
-    )
-    properties["phase_v_p_over_v_s1"] = (r"$V_P/V_{S1}$", "")
-    properties["phase_v_p_over_v_s2"] = (r"$V_P/V_{S2}$", "")
-    if result.field.group is not None:
-        for mode in (WaveMode.V_P, WaveMode.V_S1, WaveMode.V_S2):
-            properties[f"group_{mode.value}"] = (
-                _group_math(mode),
-                "km s^-1",
-            )
-            properties[f"power_flow_{mode.value}"] = (
-                _power_flow_math(mode),
-                "degree",
-            )
-    if result.field.enhancement is not None:
-        for mode in (WaveMode.V_P, WaveMode.V_S1, WaveMode.V_S2):
-            properties[f"log10_enhancement_{mode.value}"] = (
-                _enhancement_math(mode),
-                "",
-            )
-    return properties
+    """Return renderer labels derived from the shared scientific inventory."""
+    return {
+        descriptor.key: (f"${descriptor.symbol_math}$", descriptor.unit or "")
+        for descriptor in available_seismic_plot_properties(result)
+    }
 
 
 def _mode_math(mode: WaveMode) -> str:

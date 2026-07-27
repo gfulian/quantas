@@ -78,6 +78,7 @@ Compared with the historical Quantas 0.9 series, Quantas 2.0 introduces:
 - explicit interoperability between modules;
 - a stronger documentation architecture oriented around theory, workflows,
   tutorials, and reference sections;
-- a codebase prepared for a future GUI without changing the scientific core.
+- a public backend contract used by the independent Quantas GUI without
+  changing the scientific core.
 
 For a concise historical comparison, see :doc:`changes_from_0_9`.

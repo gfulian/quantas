@@ -10,6 +10,8 @@ matplotlib.use("Agg", force=True)
 
 import numpy as np
 
+from quantas.api import thermoelasticity as thermoelasticity_api
+
 from quantas.core.physics.elasticity import (
     cold_finite_strain_component,
     reconstruct_stiffness_from_components,
@@ -52,7 +54,7 @@ from quantas.modules.thermoelasticity.plot import (
 from quantas.renderers.plots import MatplotlibOptions, render_plot_collection
 
 
-def _plot_result() -> ResultData:
+def _plot_result(*, adiabatic: bool = False) -> ResultData:
     volumes = np.linspace(90.0, 110.0, 9)
     v0 = 100.0
     k0_gpa = 120.0
@@ -126,6 +128,29 @@ def _plot_result() -> ResultData:
         ],
         dtype=np.float64,
     )
+    qha_uncertainties = {"sigma_VT": np.full_like(equilibrium_volume, 0.02)}
+    thermal_expansion_tensor = None
+    isochoric_heat_capacity = None
+    if adiabatic:
+        isochoric_heat_capacity = np.full_like(equilibrium_volume, 1.0e-4)
+        thermal_expansion_tensor = np.zeros(
+            equilibrium_volume.shape + (3, 3),
+            dtype=np.float64,
+        )
+        diagonal = np.asarray([1.2e-5, 1.0e-5, 0.8e-5], dtype=np.float64)
+        thermal_expansion_tensor[..., 0, 0] = diagonal[0]
+        thermal_expansion_tensor[..., 1, 1] = diagonal[1]
+        thermal_expansion_tensor[..., 2, 2] = diagonal[2]
+        qha_uncertainties.update(
+            {
+                "sigma_Cv": np.full_like(equilibrium_volume, 1.0e-6),
+                "sigma_alpha_tensor": np.full(
+                    equilibrium_volume.shape + (3, 3),
+                    1.0e-7,
+                    dtype=np.float64,
+                ),
+            }
+        )
     qha = QHAResult(
         jobname="synthetic",
         temperature=temperature,
@@ -133,7 +158,9 @@ def _plot_result() -> ResultData:
         volume=volumes,
         static_energy=energies,
         equilibrium_volume=equilibrium_volume,
-        uncertainties={"sigma_VT": np.full_like(equilibrium_volume, 0.02)},
+        isochoric_heat_capacity=isochoric_heat_capacity,
+        thermal_expansion_tensor=thermal_expansion_tensor,
+        uncertainties=qha_uncertainties,
     )
     qha_result = ResultData(
         metadata=ResultMetadata(module="qha", method="quasi-harmonic"),
@@ -165,7 +192,9 @@ def _plot_result() -> ResultData:
     )
     calibrated = run_thermoelastic_context(
         context,
-        options=ThermoelasticOptions(),
+        options=ThermoelasticOptions(
+            adiabatic_mode="require" if adiabatic else "auto",
+        ),
     )
     return analyze_thermoelastic_result(calibrated, profiles=[profile])
 
@@ -375,3 +404,192 @@ def test_generic_renderer_handles_masks_spans_and_secondary_axes(
 
     assert first.artifacts[0].path is not None
     assert second.artifacts[0].path is not None
+
+
+
+def test_inventory_matches_available_families() -> None:
+    """Every advertised thermoelastic family is buildable through the public API."""
+    result = _plot_result()
+    payload = thermoelasticity_api.get_result(result)
+    temperature_before = payload.temperature.copy()
+    pressure_before = payload.pressure.copy()
+    stiffness_before = payload.stiffness_isothermal.copy()
+    profile_names_before = tuple(payload.profiles)
+
+    inventory = thermoelasticity_api.describe_plots(result)
+
+    assert inventory.module == "thermoelasticity"
+    assert {item.key for item in inventory.representations} == {
+        "fit",
+        "pt",
+        "profile",
+        "domain",
+    }
+    assert inventory.context_by_key("workflow_stage").values == (
+        "calibration",
+        "grid",
+        "profile",
+    )
+    assert inventory.context_by_key("temperature_grid").values == (
+        300.0,
+        500.0,
+        700.0,
+    )
+    assert inventory.context_by_key("pressure_grid").values == (0.0, 5.0, 10.0)
+    assert inventory.context_by_key("profile_name").values == ("lithosphere",)
+    assert inventory.context_by_key("pt_tensor_condition").values == (
+        "isothermal",
+    )
+    assert inventory.context_by_key("pt_quantity").values == (
+        "value",
+        "uncertainty",
+        "relative-uncertainty",
+    )
+    assert inventory.property_by_key("elastic_stiffness").unit == "GPa"
+    assert inventory.property_by_key("equilibrium_volume").representations == (
+        "domain",
+    )
+
+    fit_component = inventory.context_by_key("fit_component").values[0]
+    tensor_component = inventory.context_by_key("stiffness_component").values[0]
+    fit = thermoelasticity_api.build_fit_plots(
+        result,
+        components=(str(fit_component),),
+    )
+    pt = thermoelasticity_api.build_pt_plots(
+        result,
+        components=(str(tensor_component),),
+    )
+    profile = thermoelasticity_api.build_profile_plots(
+        result,
+        profile_name="lithosphere",
+        components=(str(tensor_component),),
+    )
+    domain = thermoelasticity_api.build_domain_plot(result)
+
+    assert fit.plots and fit.plots[0].metadata["plot_family"] == "fit"
+    assert pt.plots and pt.plots[0].metadata["plot_family"] == "pt"
+    assert profile.plots and profile.plots[0].metadata["plot_family"] == "profile"
+    assert domain.plots and domain.plots[0].metadata["plot_family"] == "domain"
+
+    np.testing.assert_array_equal(payload.temperature, temperature_before)
+    np.testing.assert_array_equal(payload.pressure, pressure_before)
+    np.testing.assert_array_equal(payload.stiffness_isothermal, stiffness_before)
+    assert tuple(payload.profiles) == profile_names_before
+
+
+def test_inventory_exposes_buildable_adiabatic_comparison() -> None:
+    """Comparison discovery follows stored adiabatic validity and public builders."""
+    result = _plot_result(adiabatic=True)
+    inventory = thermoelasticity_api.describe_plots(result)
+
+    assert {item.key for item in inventory.representations} == {
+        "fit",
+        "pt",
+        "profile",
+        "compare",
+        "domain",
+    }
+    assert inventory.context_by_key("pt_tensor_condition").values == (
+        "isothermal",
+        "adiabatic",
+    )
+    assert inventory.context_by_key("profile_tensor_condition").values == (
+        "isothermal",
+        "adiabatic",
+    )
+    assert inventory.context_by_key("compare_axis").values == (
+        "temperature",
+        "pressure",
+    )
+    pressure = float(inventory.context_by_key("compare_fixed_pressure").values[0])
+    component = str(inventory.context_by_key("stiffness_component").values[0])
+
+    comparison = thermoelasticity_api.build_compare_plots(
+        result,
+        components=(component,),
+        options=thermoelasticity_api.ComparePlotOptions(fixed_pressure=pressure),
+    )
+    adiabatic_map = thermoelasticity_api.build_pt_plots(
+        result,
+        components=(component,),
+        options=thermoelasticity_api.PTPlotOptions(
+            tensor_condition="adiabatic",
+            quantity="uncertainty",
+        ),
+    )
+    adiabatic_profile = thermoelasticity_api.build_profile_plots(
+        result,
+        profile_name="lithosphere",
+        components=(component,),
+        options=thermoelasticity_api.ProfilePlotOptions(
+            tensor_condition="adiabatic",
+            color_by="component",
+        ),
+    )
+
+    assert comparison.plots[0].metadata["plot_family"] == "compare"
+    assert adiabatic_map.plots[0].metadata["tensor_condition"] == "adiabatic"
+    assert adiabatic_profile.plots[0].metadata["tensor_condition"] == "adiabatic"
+
+
+def test_default_plot_builder_preserves_existing_stage_priority() -> None:
+    """Default plotting remains profile, P-T, then fit according to available data."""
+    source = _plot_result()
+
+    profile_default = thermoelasticity_api.build_plots(source)
+    assert profile_default.plots[0].metadata["plot_family"] == "profile"
+
+    grid = thermoelasticity_api.analyze_grid(
+        source,
+        temperature=(300.0, 500.0),
+        pressure=(0.0, 5.0),
+    )
+    grid_inventory = thermoelasticity_api.describe_plots(grid)
+    assert {item.key for item in grid_inventory.representations} == {
+        "fit",
+        "pt",
+        "domain",
+    }
+    grid_default = thermoelasticity_api.build_plots(grid)
+    assert grid_default.plots[0].metadata["plot_family"] == "pt"
+
+    point = thermoelasticity_api.analyze_grid(
+        source,
+        temperature=(300.0,),
+        pressure=(0.0,),
+    )
+    point_inventory = thermoelasticity_api.describe_plots(point)
+    assert {item.key for item in point_inventory.representations} == {"fit"}
+    assert point_inventory.context_by_key("workflow_stage").values == (
+        "calibration",
+        "point",
+    )
+    point_default = thermoelasticity_api.build_plots(point)
+    assert point_default.plots[0].metadata["plot_family"] == "fit"
+
+    section = thermoelasticity_api.analyze_grid(
+        source,
+        temperature=(300.0, 500.0),
+        pressure=(0.0,),
+    )
+    section_inventory = thermoelasticity_api.describe_plots(section)
+    assert {item.key for item in section_inventory.representations} == {"fit"}
+    assert any("one-dimensional section" in warning for warning in section_inventory.warnings)
+    section_default = thermoelasticity_api.build_plots(section)
+    assert section_default.plots[0].metadata["plot_family"] == "fit"
+
+
+def test_inventory_hides_invalid_adiabatic_comparison_sections() -> None:
+    """Comparison is absent when no complete valid P or T section survives."""
+    result = _plot_result(adiabatic=True)
+    payload = thermoelasticity_api.get_result(result)
+    payload.adiabatic_valid_mask = np.zeros(
+        (payload.temperature.size, payload.pressure.size),
+        dtype=np.bool_,
+    )
+
+    inventory = thermoelasticity_api.describe_plots(result)
+
+    assert "compare" not in {item.key for item in inventory.representations}
+    assert any("No complete valid stored" in warning for warning in inventory.warnings)

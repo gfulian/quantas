@@ -21,7 +21,7 @@ ThermoelasticExtrapolationPolicy = Literal["fail", "warn", "allow"]
 ThermoelasticFitFailurePolicy = Literal["stop", "continue", "raise"]
 
 
-class _QHAThermoelasticPayload(Protocol):
+class QHAThermoelasticPayload(Protocol):
     """Structural protocol for QHA fields consumed by thermoelasticity."""
 
     temperature: FloatArray | None
@@ -40,6 +40,11 @@ class _QHAThermoelasticPayload(Protocol):
     uncertainties: dict[str, FloatArray]
 
 
+# Internal compatibility alias retained while the public protocol name is
+# adopted throughout the refactored codebase.
+_QHAThermoelasticPayload = QHAThermoelasticPayload
+
+
 __all__ = [
     "FloatArray",
     "ThermoelasticAdiabaticMode",
@@ -51,5 +56,6 @@ __all__ = [
     "ThermoelasticReportLevel",
     "ThermoelasticStabilityPolicy",
     "ThermoelasticTensorCondition",
+    "QHAThermoelasticPayload",
     "_QHAThermoelasticPayload",
 ]

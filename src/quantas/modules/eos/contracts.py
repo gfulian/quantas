@@ -156,7 +156,8 @@ class EOSModuleContract:
         Archive schemas accepted by current readers.
     capabilities : tuple of EOSDomainCapability
         Explicit scientific-domain support matrix.
-    read_input, fit, run_batch, open_archive, calculate, diagnose, build_plots : callable
+    read_input, fit, run_batch, open_archive, calculate, diagnose,
+    describe_plots, build_plots : callable
         Frontend-neutral public operations.  Their concrete technical
         signatures are documented by the referenced functions.
     """
@@ -171,6 +172,7 @@ class EOSModuleContract:
     open_archive: Callable[..., Any]
     calculate: Callable[..., Any]
     diagnose: Callable[..., Any]
+    describe_plots: Callable[..., Any]
     build_plots: Callable[..., Any]
 
     def capability(self, domain: EOSFitDomain | str) -> EOSDomainCapability:

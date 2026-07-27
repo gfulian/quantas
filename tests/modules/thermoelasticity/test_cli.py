@@ -324,6 +324,29 @@ def test_plot_cli_exposes_compact_help_and_compare_family(tmp_path: Path) -> Non
         ],
     )
     assert analyzed.exit_code == 0, analyzed.output
+    available = runner.invoke(
+        main,
+        [
+            "thermoelasticity",
+            "plot",
+            "--list-plots",
+            "--archive",
+            str(grid),
+        ],
+    )
+    assert available.exit_code == 0, available.output
+    assert "Available thermoelastic plot families" in available.output
+    for name in ("fit", "pt", "compare", "domain"):
+        assert name in available.output
+    assert "profile" not in available.output
+
+    invalid_archive_option = runner.invoke(
+        main,
+        ["thermoelasticity", "plot", "--archive", str(grid)],
+    )
+    assert invalid_archive_option.exit_code == 2
+    assert "valid only with --list-plots" in invalid_archive_option.output
+
     output = tmp_path / "compare"
     compare = runner.invoke(
         main,

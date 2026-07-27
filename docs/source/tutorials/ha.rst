@@ -281,6 +281,29 @@ Vibrational Helmholtz free energy
    contribution.  This changing volume dependence is the physical ingredient
    used by the quasi-harmonic approximation.
 
+Volume sections and V--T maps
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When at least two sampled volumes are available, the same stored HA arrays can
+be viewed along the complementary natural variable without recomputing the
+harmonic sums.  The selected temperatures must be exact points of the stored
+grid:
+
+.. code-block:: console
+
+   quantas ha plot mgo_ha.hdf5 \
+       --property F \
+       --axis volume \
+       --temperature 0 \
+       --temperature 300 \
+       --temperature 1000 \
+       --2d \
+       --output figures/mgo_ha_free_energy_sections
+
+The line plot reports :math:`F(V)` at the selected temperatures.  The optional
+contour plot reports :math:`F(T,V)` on the complete native grid.  Quantas does
+not interpolate missing volumes or temperatures during plot construction.
+
 Running the same calculation from Python
 ----------------------------------------
 

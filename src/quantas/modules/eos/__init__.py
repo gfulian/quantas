@@ -54,7 +54,16 @@ from .report import (
     eos_data_table,
     eos_uncertainty_table,
 )
-from .plot import EOS_PLOT_TYPES, EOSPlotOptions, EOSPlotter
+from .plot import (
+    EOS_PLOT_TYPES,
+    EOSArchivePlotInventory,
+    EOSDatasetPlotDescriptor,
+    EOSPlotOptions,
+    EOSPlotter,
+    EOSRecordPlotDescriptor,
+    EOSSlotPlotDescriptor,
+    describe_eos_plots,
+)
 from .postfit import (
     eos_calculation_summary_table,
     eos_calculation_table,
@@ -138,6 +147,7 @@ __all__ = [
     "EOSBatchWorkflow",
     "EOSArchive",
     "EOSArchiveInspection",
+    "EOSArchivePlotInventory",
     "EOSArchiveSizeInfo",
     "EOSCalculationResult",
     "EOSCalculator",
@@ -145,6 +155,7 @@ __all__ = [
     "EOSCoordinateVariation",
     "EOSCrystalSystem",
     "EOSDataset",
+    "EOSDatasetPlotDescriptor",
     "EOSDatasetClassification",
     "EOSDiagnosticResult",
     "EOSDiagnostics",
@@ -161,6 +172,7 @@ __all__ = [
     "EOSReportDetail",
     "EOSReportOptions",
     "EOSRecordDisposition",
+    "EOSRecordPlotDescriptor",
     "EOSRecordInspection",
     "EOSResolvedSpec",
     "EOSSpecDocument",
@@ -173,6 +185,7 @@ __all__ = [
     "EOSSeries",
     "EOSSession",
     "EOSSlotInspection",
+    "EOSSlotPlotDescriptor",
     "EOSSlotState",
     "EOSSlotStatus",
     "EOSStateEvent",
@@ -219,6 +232,7 @@ __all__ = [
     "write_eos_spec_template",
     "build_eos_plots",
     "calculate_eos",
+    "describe_eos_plots",
     "diagnose_eos",
     "eos_domain_capability",
     "fit_eos",

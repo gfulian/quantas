@@ -2,6 +2,7 @@
 
 """Neutral plot builders for elasticity results and directional surfaces."""
 
+from .inventory import describe_elasticity_plots
 from .spec import (
     ElasticityPlotProperty,
     ElasticitySurfaceGeometry,
@@ -12,6 +13,7 @@ from .spec import (
 )
 
 __all__ = [
+    "describe_elasticity_plots",
     "ElasticityPlotProperty",
     "ElasticitySurfaceGeometry",
     "build_elasticity_2d_plot_collection",

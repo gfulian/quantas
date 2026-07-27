@@ -40,6 +40,19 @@ Passive contracts
    :members:
    :show-inheritance:
 
+.. autoclass:: quantas.api.ha.PlotOptions
+   :members:
+   :show-inheritance:
+
+.. autodata:: quantas.api.ha.CurveAxis
+
+.. autodata:: quantas.api.ha.PhononInterface
+
+.. autoclass:: quantas.api.ha.StructureVolumeSeries
+   :no-index:
+   :members:
+   :show-inheritance:
+
 .. autoclass:: quantas.api.ha.Result
    :members:
    :show-inheritance:
@@ -68,13 +81,44 @@ Calculation and typed results
 Reports, plots, and persistence
 -------------------------------
 
+HA properties are stored on a native temperature-volume grid.  The default
+line representation uses temperature as the independent variable and one
+curve per sampled volume.  ``PlotOptions(curve_axis="volume")`` produces the
+complementary exact-grid sections at selected stored temperatures.  Setting
+The volume-axis representation is available only when at least two matching
+sampled volumes exist.  ``include_contours=True`` adds a native-grid
+volume-temperature map when at least two temperatures and two matching sampled
+volumes are available.
+
+``selected_volumes`` and ``selected_temperatures`` must contain values returned
+by :func:`describe_plots`; Quantas does not interpolate missing coordinates.
+
+.. code-block:: python
+
+   inventory = ha.describe_plots(result_data)
+   temperatures = inventory.context_by_key("temperature_grid").values
+
+   volume_sections = ha.build_plots(
+       result_data,
+       properties=("free_energy",),
+       options=ha.PlotOptions(
+           curve_axis="volume",
+           selected_temperatures=(temperatures[0], temperatures[-1]),
+           include_contours=True,
+       ),
+   )
+
 .. autofunction:: quantas.api.ha.build_report
+
+.. autofunction:: quantas.api.ha.describe_plots
 
 .. autofunction:: quantas.api.ha.build_plots
 
 .. autofunction:: quantas.api.ha.write_result
 
 .. autofunction:: quantas.api.ha.read_result
+
+.. autofunction:: quantas.api.ha.write_table
 
 See also
 --------

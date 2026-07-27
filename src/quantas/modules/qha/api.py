@@ -15,6 +15,7 @@ from quantas.core.events import Observer
 from quantas.models import (
     ModuleContract,
     PlotCollection,
+    PlotInventory,
     ReportTable,
     ResultData,
     input_data_table,
@@ -30,6 +31,7 @@ from quantas.modules.qha.models import QHAInput, QHAOptions, QHAResult
 from quantas.modules.qha.plot import (
     QHAPlotOptions,
     build_qha_plot_collection,
+    describe_qha_plots,
 )
 from quantas.modules.qha.report import (
     failed_points_table,
@@ -237,6 +239,14 @@ def build_qha_plots(
         property_names=property_names,
         options=options,
     )
+
+
+def describe_qha_plot_inventory(result: ResultData) -> PlotInventory:
+    """Describe exact-grid QHA plot properties and representations."""
+    payload = result.results.get("qha")
+    if result.metadata.module != "qha" or not isinstance(payload, QHAResult):
+        raise ValueError("ResultData does not contain a valid QHA result.")
+    return describe_qha_plots(payload)
 
 
 MODULE_CONTRACT = ModuleContract(

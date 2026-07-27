@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from quantas.core.physics.elasticity import validate_stiffness_matrix
 from quantas.models import ResultData
 from quantas.models.structures import CrystalStructure, SymmetryMetadata
-from .types import FloatArray, ThermoelasticMethod, _QHAThermoelasticPayload
+from .types import FloatArray, QHAThermoelasticPayload, ThermoelasticMethod
 
 
 @dataclass(slots=True)
@@ -266,7 +266,7 @@ class ThermoelasticContext:
 
     input_data: ThermoelasticInput
     qha_result_data: ResultData
-    qha: _QHAThermoelasticPayload
+    qha: QHAThermoelasticPayload
     extrapolation_mask: NDArray[np.bool_]
     missing_qha_fields: tuple[str, ...] = ()
     metadata: dict[str, Any] = field(default_factory=dict)

@@ -12,8 +12,8 @@ thermoelastic properties.
 
 Quantas 2.0 exposes the same scientific workflows through a reusable Python API
 and a Click/Rich command-line interface. Frontend-neutral results, reports, and
-plot descriptions are designed to support a future graphical interface without
-changing the numerical core.
+plot descriptions are designed to support Quantas GUI and other graphical
+frontends without changing the numerical core.
 
 Start here
 ----------
@@ -127,6 +127,7 @@ Start here
 
    api/index
    api/common
+   api/plotting
    api/ha
    api/qha
    api/elasticity

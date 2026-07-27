@@ -44,18 +44,20 @@ from quantas.cli.messages import (
 )
 from quantas.api.elasticity import (
     Input as ElasticityInput,
+    InputInterface as ElasticityInputInterface,
     Options as ElasticityOptions,
     PlotProperty as ElasticityPlotProperty,
     SurfaceGeometry as ElasticitySurfaceGeometry,
     SurfaceOptions as ElasticitySurfaceOptions,
     build_2d_plots as build_elasticity_2d_plots,
     build_3d_plots as build_elasticity_3d_plots,
+    create_input as create_elasticity_input,
     read_result as read_elasticity_hdf5,
     run as run_elasticity,
     write_result as write_elasticity_hdf5,
+    write_table as write_elasticity_table,
 )
-from quantas.modules.elasticity.io import ElasticityInputCreator, ElasticityTableExport
-from quantas.models import PlotCollection
+from quantas.api.plotting import PlotCollection
 from quantas.renderers.plots import (
     MatplotlibOptions,
     render_plot_collection,
@@ -354,12 +356,13 @@ def export(filename: Path, outfile: Path | None) -> None:
     """Export 2D elasticity data from a Quantas HDF5 result file."""
     outfile = filename.with_suffix(".dat") if outfile is None else outfile
     try:
-        ElasticityTableExport().export_from_hdf5(filename, outfile)
+        result = read_elasticity_hdf5(filename)
+        outfile = write_elasticity_table(result, outfile)
     except Exception as exc:
         echo_error(quantas_error(), bold=True)
         echo_error(str(exc))
         raise click.Abort() from exc
-    echo(f"Elasticity 2D data exported to: {outfile.with_suffix('.dat')}")
+    echo(f"Elasticity 2D data exported to: {outfile}")
 
 
 @elasticity.command(name="inpgen", cls=GroupedCommand)
@@ -390,27 +393,22 @@ def inpgen(filename: Path, outfile: Path | None, interface: str) -> None:
     else:
         outfile = outfile.with_suffix(".dat")
     echo_highlight(quantas_title())
-    generator = ElasticityInputCreator(interface)
     try:
-        completed, error = generator.read(filename)
-    except KeyError:
+        jobname = prompt(
+            "\nPlease enter a short description for the input file",
+            default="Unknown",
+            show_default=False,
+        )
+        outfile = create_elasticity_input(
+            filename,
+            outfile,
+            interface=cast(ElasticityInputInterface, interface),
+            jobname=jobname,
+        )
+    except Exception as exc:
         echo_error(quantas_error(), bold=True)
-        echo_error(f"Unsupported interface: {interface}")
-        raise click.Abort() from None
-    except UnicodeDecodeError:
-        echo_error(quantas_error(), bold=True)
-        echo_error(f"File '{filename}' is in binary format.")
-        raise click.Abort() from None
-    if not completed:
-        echo_error(quantas_error(), bold=True)
-        echo_error(error or "Unable to read elasticity input.")
-        raise click.Abort()
-    jobname = prompt(
-        "\nPlease enter a short description for the input file",
-        default="Unknown",
-        show_default=False,
-    )
-    generator.write(outfile, jobname)
+        echo_error(str(exc))
+        raise click.Abort() from exc
     echo(f"Elasticity input file written to: {outfile}")
     echo_highlight(render_citation_notice(module_citation_keys("elasticity")))
     echo_highlight(quantas_finish())

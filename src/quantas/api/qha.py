@@ -5,13 +5,16 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Literal
 
 from quantas.core.events import Observer
-from quantas.models import PlotCollection, ReportTable, ResultData
-from quantas.models.phonons import PhononInputData
+from quantas.core.physics.eos import available_eos_tags
+from quantas.modules.qha.formatting import QHATableFormat as TableFormat
+from quantas.modules.qha.io.export import QHATableExport
 from quantas.modules.qha.api import (
     build_qha_plots as _build_plots,
     build_qha_report as _build_report,
+    describe_qha_plot_inventory as _describe_plots,
     inspect_qha_input as _inspect,
     normalize_qha_input as _normalize_input,
     read_qha_hdf5 as _read_result,
@@ -32,6 +35,7 @@ from quantas.modules.qha.models import (
     QHAThermalExpansionMethod as ThermalExpansionMethod,
 )
 from quantas.modules.qha.plot import (
+    QHACurveAxis as CurveAxis,
     QHAPlotOptions as PlotOptions,
     list_available_plot_properties,
 )
@@ -42,7 +46,64 @@ from quantas.modules.qha.validation import (
     validate_qha_result as validate_result,
 )
 
-from .common import _public_dir, get_result_payload
+from .common import (
+    PhononInterface,
+    PhononInputData,
+    ReportTable,
+    ResultData,
+    StructureVolumeSeries,
+    _public_dir,
+    get_result_payload,
+)
+from .plotting import PlotCollection, PlotInventory
+from .ha import create_input as _create_phonon_input
+
+
+TableFileFormat = Literal["txt", "csv"]
+
+
+def available_energy_eos() -> tuple[str, ...]:
+    """Return EOS tags accepted by QHA energy minimization options."""
+    return available_eos_tags(require_energy=True, include_default_aliases=True)
+
+
+def create_input(
+    source: str | Path,
+    destination: str | Path,
+    *,
+    interface: PhononInterface = "crystal",
+    is_list: bool = False,
+    reference: int = 0,
+    jobname: str = "Quantas QHA input",
+    formula_units: int = 1,
+) -> Path:
+    """Create a normalized QHA YAML input from phonon output data.
+
+    QHA and HA intentionally share the same frontend-neutral phonon input
+    generator. This public wrapper keeps the QHA lifecycle discoverable from
+    :mod:`quantas.api.qha` without duplicating parsing or YAML logic.
+
+    Parameters
+    ----------
+    source, destination, interface, is_list, reference, formula_units
+        See :func:`quantas.api.ha.create_input`.
+    jobname : str, optional
+        Human-readable QHA workflow title.
+
+    Returns
+    -------
+    Path
+        Written YAML input path.
+    """
+    return _create_phonon_input(
+        source,
+        destination,
+        interface=interface,
+        is_list=is_list,
+        reference=reference,
+        jobname=jobname,
+        formula_units=formula_units,
+    )
 
 
 def read_input(source: str | Path) -> Input:
@@ -241,6 +302,58 @@ def write_result(
     return _write_result(result, destination, report_text=report_text)
 
 
+def write_table(
+    result: ResultData,
+    destination: str | Path,
+    *,
+    property_name: str | None = None,
+    include_uncertainty: bool = True,
+    file_format: TableFileFormat | None = None,
+    table_format: TableFormat | None = None,
+) -> Path:
+    """Write QHA pressure-temperature or structural data to a table.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete QHA result envelope.
+    destination : str or Path
+        Destination table path.
+    property_name : str or None, optional
+        Property key, ``"structure"``, or ``None``/``"all"`` for all
+        available pressure-temperature and structural properties.
+    include_uncertainty : bool, optional
+        Include matching one-standard-deviation columns when present.
+    file_format : {"txt", "csv"} or None, optional
+        Output container. When omitted, ``.csv`` selects CSV and every other
+        destination selects the human-readable text format.
+    table_format : TableFormat or None, optional
+        Numerical formatting rules for the table writer.
+
+    Returns
+    -------
+    Path
+        Written table path.
+    """
+    get_result(result)
+    output = Path(destination)
+    resolved_format: TableFileFormat = (
+        "csv"
+        if file_format is None and output.suffix.lower() == ".csv"
+        else (file_format or "txt")
+    )
+    output = output.with_suffix(".csv" if resolved_format == "csv" else ".dat")
+    QHATableExport().export(
+        result,
+        output,
+        property_name=property_name,
+        include_uncertainty=include_uncertainty,
+        delimiter="," if resolved_format == "csv" else None,
+        table_format=table_format,
+    )
+    return output
+
+
 def build_report(result: ResultData) -> list[ReportTable]:
     """Build frontend-neutral QHA report tables.
 
@@ -293,6 +406,24 @@ def build_plots(
     return _build_plots(result, property_names=properties, options=options)
 
 
+def describe_plots(result: ResultData) -> PlotInventory:
+    """Return exact-grid QHA properties, sections, maps, and coordinates.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete quasi-harmonic result envelope.
+
+    Returns
+    -------
+    PlotInventory
+        Result-aware property metadata, temperature and pressure grids, and
+        supported line-section and contour representations.
+    """
+    get_result(result)
+    return _describe_plots(result)
+
+
 def list_plot_properties(
     result: ResultData | Result,
 ) -> list[tuple[str, str, str]]:
@@ -317,23 +448,31 @@ def __dir__() -> list[str]:
 
 
 __all__ = [
+    "CurveAxis",
     "FitFailurePolicy",
     "Input",
     "Minimization",
     "ModeContinuity",
     "Options",
+    "PhononInterface",
     "PlotOptions",
     "PolynomialDerivativeMethod",
     "Preview",
     "PropertyDifference",
     "Result",
     "Scheme",
+    "StructureVolumeSeries",
+    "TableFileFormat",
+    "TableFormat",
     "ThermalExpansionMethod",
     "ValidationSummary",
+    "available_energy_eos",
     "list_plot_properties",
     "build_plots",
     "build_report",
     "compare_results",
+    "create_input",
+    "describe_plots",
     "get_result",
     "inspect",
     "normalize_input",
@@ -342,4 +481,5 @@ __all__ = [
     "run",
     "validate_result",
     "write_result",
+    "write_table",
 ]

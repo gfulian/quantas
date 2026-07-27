@@ -54,6 +54,7 @@ from quantas.modules.thermoelasticity.plot import (
     build_thermoelastic_compare_plots,
     build_thermoelastic_domain_plot,
     build_thermoelastic_fit_plots,
+    describe_thermoelastic_plots,
     build_thermoelastic_profile_plots,
     build_thermoelastic_pt_plots,
 )
@@ -237,9 +238,19 @@ def build_thermoelastic_plots(
         raise ValueError("result does not contain a thermoelasticity payload")
     if payload.profiles:
         return build_thermoelastic_profile_plots(payload)
-    if payload.stiffness_isothermal is not None:
+    if (
+        payload.stiffness_isothermal is not None
+        and payload.temperature.size >= 2
+        and payload.pressure.size >= 2
+    ):
         return build_thermoelastic_pt_plots(payload)
-    return build_thermoelastic_fit_plots(payload)
+    if payload.component_fits:
+        return build_thermoelastic_fit_plots(payload)
+    if payload.temperature.size >= 2 and payload.pressure.size >= 2:
+        return build_thermoelastic_domain_plot(payload)
+    raise ValueError(
+        "thermoelastic result does not contain a default plottable family"
+    )
 
 
 MODULE_CONTRACT = ModuleContract(
@@ -269,6 +280,7 @@ __all__ = [
     "build_thermoelastic_plots",
     "build_thermoelastic_domain_plot",
     "build_thermoelastic_fit_plots",
+    "describe_thermoelastic_plots",
     "build_thermoelastic_profile_plots",
     "build_thermoelastic_pt_plots",
     "build_thermoelastic_analysis_report",

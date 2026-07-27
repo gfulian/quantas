@@ -27,6 +27,45 @@ Dataset and domain capabilities
 
 .. autodata:: quantas.api.eos.DOMAIN_CAPABILITIES
 
+Public model selectors
+----------------------
+
+These enums and model protocols are re-exported because they occur directly in
+public fit requests and options.  Applications must not import their private
+implementation modules.
+
+.. autoclass:: quantas.api.eos.EOSFamily
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.EOSModel
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.MGDVolumeBasis
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.PVTCouplingFamily
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.TemperatureEOSFamily
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.TemperatureEOSModel
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.ThermalPressureFamily
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.ThermalPressureModel
+   :members:
+   :show-inheritance:
+
 Model and parameter contracts
 -----------------------------
 
@@ -110,5 +149,29 @@ Archive slot, report, and plot contracts
    :show-inheritance:
 
 .. autoclass:: quantas.api.eos.PlotOptions
+   :members:
+   :show-inheritance:
+
+Session-aware plot discovery contracts
+--------------------------------------
+
+These lightweight immutable descriptors expose EOS archive, dataset, result-slot,
+and record availability without retaining HDF5 handles or numerical fit arrays.
+A detailed :class:`~quantas.api.plotting.PlotInventory` is attached only after
+an explicit record, accepted slot, or unique accepted record has been selected.
+
+.. autoclass:: quantas.api.eos.DatasetPlotDescriptor
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.RecordPlotDescriptor
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.SlotPlotDescriptor
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.ArchivePlotInventory
    :members:
    :show-inheritance:

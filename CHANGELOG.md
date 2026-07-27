@@ -5,7 +5,115 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
-## [2.0.0b6] - Unreleased
+## [2.0.0b7] - Unreleased
+
+### Added
+
+- Added the public ``quantas.api.plotting`` namespace for the existing
+  frontend-neutral plot specifications, axes, series, masks, overlays, surface
+  layers, directional fields, composite panels, and plot collections.
+- Added frozen frontend-neutral descriptors for plot properties,
+  representations, scientific contexts, and complete result-aware inventories.
+- Added public ``describe_plots(result)`` discovery for Elasticity, SEISMIC,
+  HA, QHA, and Thermoelasticity, together with the incremental registry capability
+  ``PLOT_INVENTORY``.
+- Added frozen API-surface, renderer-independence, and typed-dispatch tests for
+  the public plotting contracts.
+- Added inventory consistency and builder-compatibility tests covering
+  Elasticity branches and geometries, result-conditioned SEISMIC fields, HA
+  temperature-volume grids, and QHA pressure-temperature grids.
+- Added exact native-grid HA sections along temperature or sampled volume,
+  optional V--T contour specifications, and public ``HAPlotOptions``.
+- Added exact native-grid QHA sections along temperature or pressure, including
+  selected pressure/temperature conditions and result-aware P--T inventory
+  metadata.
+- Added cumulative Thermoelasticity discovery for elastic-volume fits, P--T
+  stiffness maps, depth profiles, isothermal--adiabatic comparisons, and
+  calibration-domain diagnostics.  The inventory reports only families,
+  components, tensor conditions, profiles, and coordinates that are buildable
+  from the supplied archive stage.
+- Added result-aware CLI discovery through
+  ``quantas thermoelasticity plot --list-plots --archive RESULT.hdf5`` while
+  retaining the existing static family overview when no archive is supplied.
+- Added a Windows PowerShell validation entry point for the public lifecycle
+  API, with focused checks by default and complete static, scientific,
+  documentation, and distribution checks under ``-Full``.
+- Added a separate session-aware EOS archive plotting inventory exposing
+  lightweight dataset, result-slot, immutable-record, acceptance-state, and
+  representation descriptors.  Detailed common plot metadata is returned only
+  for an explicit record, accepted slot, or unique accepted result; ambiguous
+  archives remain browseable without an arbitrary selection.
+- Added public EOS archive-history and inspection types required by notebooks,
+  CLI adapters, Quantas GUI, and other advanced library clients to consume the
+  persistent workflow without importing implementation modules.
+- Added public Elasticity input generation and principal-plane table export,
+  public HA/QHA table writers, and a QHA-owned entry point to the shared phonon
+  input generator.
+- Added public rotation, structure, symmetry, seismic selector, thermoelastic
+  fitting/coupling, and EOS model types needed to construct annotated public
+  inputs, options, and requests without implementation imports.
+- Added named registry operation descriptors so one capability can expose
+  several stable input, template, export, or interoperability operations.
+
+### Changed
+
+- Public workflow facades and the immediately affected CLI plotting adapters now
+  reference plot contracts through ``quantas.api.plotting`` instead of relying
+  on the implementation namespace.
+- Centralized SEISMIC scalar-property discovery so the public inventory and the
+  existing plot builders derive labels and availability from one authoritative
+  result-aware catalogue.
+- Centralized HA plot keys, names, mathematical symbols, plain symbols, and
+  scientific categories so inventory discovery and existing builders use one
+  authoritative backend catalogue.
+- Extended the HA and QHA CLI plot commands with the same public scientific
+  axis and exact-coordinate selections used by the library API.
+- Routed result-aware Thermoelasticity family listing through the same public
+  ``describe_plots`` contract used by Python clients and Quantas GUI.
+- Routed EOS ``--list-plots`` through the public session-aware inventory and
+  removed the CLI-owned plot-description catalogue.  Ambiguous archives now
+  list result slots and plottable record identifiers instead of guessing which
+  accepted fit should be used.
+- Routed Elasticity, HA, and QHA input/export commands through their public
+  facade operations instead of instantiating module-internal creators or table
+  exporters.
+- Expanded the scoped beta API stabilization from plotting alone to the full
+  supported lifecycle required by CLI, GUI, notebooks, and library clients.
+- Reopened the pre-RC public-API freeze only for the scoped lifecycle
+  stabilization required by CLI, GUI, notebooks, and library users.
+
+### Fixed
+
+- Prevented the default Thermoelasticity plot builder from attempting an
+  invalid P--T contour for point or one-dimensional analysis archives.  The
+  pre-existing priority remains profile, two-dimensional P--T grid, then
+  calibration fit; point and one-dimensional archives now fall back to their
+  archived calibration plots.
+
+### Validation
+
+- Completed the full Windows lifecycle validation with Python 3.10.11,
+  NumPy 2.2.6, spglib 2.7.0, and odrpack 0.6.1.
+- Ruff, mypy, all staged scientific and CLI test suites, the Sphinx
+  warning-as-error build, wheel/source-distribution builds, ``twine check``,
+  and clean-wheel installation all passed.
+- The remaining EOS ``RankWarning`` messages occur only in deliberately sparse
+  P--V--T test fits and do not represent test failures.
+
+### Scientific compatibility
+
+The public-lifecycle work reuses the established scientific implementations for
+input generation, calculation, persistence, plotting, and export.  New HA/QHA
+sections use exact stored grid coordinates; Thermoelasticity and EOS discovery
+inspect archived data without recalculating or changing it.  No numerical
+algorithm, thermodynamic calculation, stored array, tensor convention, or HDF5
+schema was changed.
+
+The Quantas backend lifecycle for ``2.0.0b7`` has completed full Windows
+validation.  Adoption of these contracts by Quantas GUI is tracked separately
+in the GUI project.
+
+## [2.0.0b6] - 2026-07-24
 
 ### Added
 
@@ -212,6 +320,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b7]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b7
 [2.0.0b6]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b6
 [2.0.0b5]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b5
 [2.0.0b4]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b4

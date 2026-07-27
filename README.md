@@ -16,7 +16,7 @@ inspect, reproduce, and reuse.
 This is a complete refactoring of the original program (version 0.9.1) into a
 modern Python library with a command-line interface and frontend-neutral
 scientific workflows. The same numerical calculation can be used from Python,
-from the terminal, or by future graphical applications.
+from the terminal, or by graphical applications such as Quantas GUI.
 
 > **Quantas 2 is currently in beta.**
 >

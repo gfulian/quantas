@@ -45,21 +45,22 @@ from quantas.cli.tensor_rotation import (
     resolve_tensor_rotation,
     tensor_rotation_options,
 )
-from quantas.core.geometry import Hemisphere
-from quantas.core.physics.seismic import SamplingLevel, WaveMode
-from quantas.models import (
+from quantas.api.plotting import (
     PlotCollection,
-    SphericalProjection,
     SphericalMapSpec,
+    SphericalProjection,
     SphericalSummarySpec,
     SurfacePlotSpec,
 )
 from quantas.api.seismic import (
+    Hemisphere,
     Options as SeismicOptions,
     PlotOptions as SeismicPlotOptions,
     SurfaceGeometry,
     SurfaceOptions as SeismicSurfaceOptions,
     SurfaceType,
+    SamplingLevel,
+    WaveMode,
     build_plots as build_seismic_plots,
     build_report as build_seismic_report,
     build_summary as build_seismic_summary,
