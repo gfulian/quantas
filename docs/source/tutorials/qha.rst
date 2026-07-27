@@ -307,6 +307,28 @@ Equilibrium volume
    is pressure-induced compression.  The curvature shows that expansion is not
    constant over the full temperature range.
 
+Pressure sections at fixed temperature
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+When at least two pressure coordinates are stored, the complementary
+exact-grid view places pressure on the independent axis and selects stored
+temperatures:
+
+.. code-block:: console
+
+   quantas qha plot mgo_qha.hdf5 \
+       --property VT \
+       --property KT \
+       --axis pressure \
+       --temperature 300 \
+       --temperature 1000 \
+       --output qha_pressure_sections \
+       --preset publication
+
+These curves report :math:`V(P)` and :math:`K_T(P)` at fixed temperature.  The
+temperature values must occur in the HDF5 grid exactly; no hidden interpolation
+or nearest-point selection is applied.
+
 Heat capacities
 ^^^^^^^^^^^^^^^
 

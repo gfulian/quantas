@@ -37,6 +37,10 @@ def test_ha_plot_help_is_available():
 
     assert result.exit_code == 0
     assert "--dpi" in result.output
+    assert "--axis" in result.output
+    assert "--volume" in result.output
+    assert "--temperature" in result.output
+    assert "--2d" in result.output
 
 
 def test_ha_inpgen_help_exposes_formula_units_option():
@@ -87,3 +91,50 @@ def test_generated_structure_summary_does_not_require_new_reader_property(
     )
 
     assert _read_generated_structure_summary(filename) == (2, 1, "Fm-3m")
+
+
+def test_ha_plot_forwards_exact_grid_sections_to_public_api(
+    tmp_path, monkeypatch
+) -> None:
+    from types import SimpleNamespace
+
+    filename = tmp_path / "ha.h5"
+    filename.write_bytes(b"test")
+    captured = {}
+
+    monkeypatch.setattr("quantas.cli.ha.read_ha_hdf5", lambda path: object())
+
+    def fake_build(result, *, properties, unit, options):
+        captured["properties"] = properties
+        captured["unit"] = unit
+        captured["options"] = options
+        return object()
+
+    monkeypatch.setattr("quantas.cli.ha.build_ha_plots", fake_build)
+    monkeypatch.setattr(
+        "quantas.cli.ha.render_plot_collection",
+        lambda collection, options: SimpleNamespace(artifacts=[]),
+    )
+
+    result = CliRunner().invoke(
+        ha,
+        [
+            "plot",
+            str(filename),
+            "--property",
+            "F",
+            "--axis",
+            "volume",
+            "--temperature",
+            "100",
+            "--temperature",
+            "200",
+            "--2d",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["properties"] == "F"
+    assert captured["options"].curve_axis == "volume"
+    assert captured["options"].selected_temperatures == (100.0, 200.0)
+    assert captured["options"].include_contours is True

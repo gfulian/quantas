@@ -31,7 +31,11 @@ from quantas.modules.ha.io.reader import (
 from quantas.modules.ha.io.inpgen import create_ha_input as create_ha_input_file
 from quantas.modules.ha.io.export import HAHDF5Export
 from quantas.modules.ha.models import HAInput, HAOptions, HAResult
-from quantas.modules.ha.plot import build_ha_plot_collection, describe_ha_plots
+from quantas.modules.ha.plot import (
+    HAPlotOptions,
+    build_ha_plot_collection,
+    describe_ha_plots,
+)
 from quantas.modules.ha.report import (
     static_data_table,
     thermodynamic_property_tables,
@@ -276,6 +280,7 @@ def build_ha_plots(
     properties: str | list[str] | tuple[str, ...] | None = None,
     *,
     unit: str | None = None,
+    options: HAPlotOptions | None = None,
 ) -> PlotCollection:
     """Build neutral HA plot specifications from a complete result.
 
@@ -287,6 +292,8 @@ def build_ha_plots(
         Requested thermodynamic properties.
     unit : str or None, optional
         Requested display energy unit.
+    options : HAPlotOptions or None, optional
+        Scientific section selection and contour-preparation options.
 
     Returns
     -------
@@ -296,7 +303,12 @@ def build_ha_plots(
     payload = result.results.get("ha")
     if result.metadata.module != "ha" or not isinstance(payload, HAResult):
         raise ValueError("ResultData does not contain a valid HA result.")
-    return build_ha_plot_collection(payload, properties=properties, unit=unit)
+    return build_ha_plot_collection(
+        payload,
+        properties=properties,
+        unit=unit,
+        options=options,
+    )
 
 
 MODULE_CONTRACT = ModuleContract(

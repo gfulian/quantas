@@ -295,9 +295,14 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             {
                 *(capability for capability, _ in _STANDARD_RESULT_OPERATIONS),
                 Capability.INSPECT,
+                Capability.PLOT_INVENTORY,
             }
         ),
-        operations=(*_STANDARD_RESULT_OPERATIONS, (Capability.INSPECT, "inspect")),
+        operations=(
+            *_STANDARD_RESULT_OPERATIONS,
+            _PLOT_INVENTORY_OPERATION,
+            (Capability.INSPECT, "inspect"),
+        ),
         input_type_name="Input",
         options_type_name="Options",
         result_type_name="Result",

@@ -4,8 +4,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-
 import numpy as np
 
 from quantas.models import (
@@ -16,96 +14,22 @@ from quantas.models import (
 )
 from quantas.modules.ha.io.export import convert_property_values
 from quantas.modules.ha.models import HAResult
+from quantas.modules.ha.plot.labels import (
+    HAPlotProperty,
+    available_plot_properties,
+)
 from quantas.modules.ha.plot.spec import _property_array, _temperature_array
 
 
-@dataclass(frozen=True, slots=True)
-class _HAPropertyDefinition:
-    """Static scientific metadata for one harmonic property."""
-
-    key: str
-    name: str
-    symbol_math: str
-    symbol_plain: str
-    description: str
-    category: str
-
-
-_PROPERTY_DEFINITIONS = (
-    _HAPropertyDefinition(
-        "static_energy",
-        "Static energy",
-        "U_0",
-        "U₀",
-        "Electronic static energy at each sampled volume.",
-        "energy",
-    ),
-    _HAPropertyDefinition(
-        "zero_point_energy",
-        "Zero-point energy",
-        r"U_{\mathrm{ZP}}",
-        "U_ZP",
-        "Temperature-independent vibrational zero-point energy.",
-        "energy",
-    ),
-    _HAPropertyDefinition(
-        "thermal_energy",
-        "Thermal energy",
-        r"U_{\mathrm{th}}",
-        "U_th",
-        "Thermal vibrational contribution to the internal energy.",
-        "energy",
-    ),
-    _HAPropertyDefinition(
-        "internal_energy",
-        "Internal energy",
-        "U",
-        "U",
-        "Total static, zero-point, and thermal internal energy.",
-        "energy",
-    ),
-    _HAPropertyDefinition(
-        "entropy",
-        "Entropy",
-        "S",
-        "S",
-        "Harmonic vibrational entropy.",
-        "entropy",
-    ),
-    _HAPropertyDefinition(
-        "vibrational_free_energy",
-        "Vibrational Helmholtz free energy",
-        r"F_{\mathrm{vib}}",
-        "F_vib",
-        "Vibrational contribution to the Helmholtz free energy.",
-        "energy",
-    ),
-    _HAPropertyDefinition(
-        "free_energy",
-        "Helmholtz free energy",
-        "F",
-        "F",
-        "Total harmonic Helmholtz free energy.",
-        "energy",
-    ),
-    _HAPropertyDefinition(
-        "isochoric_heat_capacity",
-        "Isochoric heat capacity",
-        "C_V",
-        "Cᵥ",
-        "Heat capacity at constant volume.",
-        "heat_capacity",
-    ),
-)
-
-
 def describe_ha_plots(result: HAResult) -> PlotInventory:
-    """Describe harmonic plots buildable from one result.
+    """Describe exact-grid HA sections and maps buildable from one result.
 
-    The current HA builder emits temperature curves and includes every sampled
-    volume as a separate series. Temperature and volume grids are therefore
-    exposed as informative, exact result context rather than independent
-    selections in this increment.
+    HA properties are naturally defined on a temperature-volume grid.  The
+    standard representation keeps temperature on the independent axis and one
+    curve per sampled volume.  When physical volume coordinates match a
+    property grid, the same stored data also support volume sections at exact
+    stored temperatures and a volume-temperature contour map.  Discovery never
+    implies interpolation.
     """
     warnings: list[str] = []
     try:
@@ -118,23 +42,44 @@ def describe_ha_plots(result: HAResult) -> PlotInventory:
             warnings=(str(exc),),
         )
 
-    available: list[tuple[_HAPropertyDefinition, str | None]] = []
-    for definition in _PROPERTY_DEFINITIONS:
+    available: list[tuple[HAPlotProperty, str | None, tuple[str, ...]]] = []
+    volume_capable_keys: list[str] = []
+    contour_capable_keys: list[str] = []
+    physical_volume: np.ndarray | None = None
+
+    for property_info in available_plot_properties().values():
         try:
-            values = _property_array(result, definition.key, temperature.size)
+            values = _property_array(
+                result,
+                property_info.attribute,
+                temperature.size,
+            )
             _, unit = convert_property_values(
                 value=values,
-                attr=definition.key,
+                attr=property_info.attribute,
                 units=result.metadata.get("units", {}),
                 normalization=result.metadata.get("normalization"),
             )
         except (ValueError, KeyError) as exc:
-            if getattr(result, definition.key) is not None:
-                warnings.append(f"{definition.key}: {exc}")
+            if getattr(result, property_info.attribute) is not None:
+                warnings.append(f"{property_info.attribute}: {exc}")
             continue
-        available.append((definition, _normalize_unit(unit)))
 
-    property_keys = tuple(definition.key for definition, _ in available)
+        representations = ["temperature_curves"]
+        volume = _matched_volume(result, values.shape[1])
+        if volume is not None:
+            physical_volume = volume
+            if volume.size >= 2:
+                representations.append("volume_curves")
+                volume_capable_keys.append(property_info.attribute)
+            if temperature.size >= 2 and volume.size >= 2:
+                representations.append("volume_temperature_contour")
+                contour_capable_keys.append(property_info.attribute)
+        available.append(
+            (property_info, _normalize_unit(unit), tuple(representations))
+        )
+
+    property_keys = tuple(item[0].attribute for item in available)
     if not property_keys:
         return PlotInventory(
             module="ha",
@@ -143,63 +88,132 @@ def describe_ha_plots(result: HAResult) -> PlotInventory:
             warnings=tuple(warnings or ["No harmonic plot properties are available."]),
         )
 
-    contexts = [
+    contexts: list[PlotContextDescriptor] = [
+        PlotContextDescriptor(
+            key="curve_axis",
+            name="Curve axis",
+            description=(
+                "Natural variable used as the independent axis of line sections."
+            ),
+            values=("temperature", "volume")
+            if volume_capable_keys
+            else ("temperature",),
+            default="temperature",
+        ),
         PlotContextDescriptor(
             key="temperature_grid",
             name="Temperature grid",
-            description="Exact temperature coordinates stored in the HA result.",
+            description=(
+                "Exact native temperature coordinates. They may be selected "
+                "for volume sections without interpolation."
+            ),
             values=tuple(float(value) for value in temperature),
             unit=_metadata_unit(result, "temperature", default="K"),
-            selectable=False,
-        )
+            selectable=True,
+        ),
     ]
-    volume_values, volume_unit = _volume_context(result, property_keys)
+
+    if physical_volume is not None:
+        volume_values: tuple[float | int, ...] = tuple(
+            float(value) for value in physical_volume
+        )
+        volume_unit = _metadata_unit(result, "volume", default="unknown")
+        volume_selectable = True
+    else:
+        volume_values, volume_unit = _volume_context(result, property_keys)
+        volume_selectable = False
+        if volume_values:
+            warnings.append(
+                "Physical sampled-volume coordinates are unavailable or do not "
+                "match every property grid; only temperature curves are exposed "
+                "for incompatible properties."
+            )
+
     contexts.append(
         PlotContextDescriptor(
             key="sampled_volume",
             name="Sampled volume",
             description=(
-                "Volumes represented as separate series by the current HA "
-                "temperature-curve builder."
+                "Exact native volume coordinates used for volume sections and "
+                "maps when available; otherwise stable curve indices."
             ),
             values=volume_values,
             unit=volume_unit,
-            selectable=False,
+            selectable=volume_selectable,
         )
     )
 
-    representation = PlotRepresentationDescriptor(
-        key="temperature_curves",
-        name="Thermodynamic temperature curves",
-        plot_kind="line",
-        description=(
-            "One curve for each sampled volume, with temperature on the "
-            "independent axis."
-        ),
-        property_keys=property_keys,
-        supported_contexts=("temperature_grid", "sampled_volume"),
-        constraints=(
-            "The current public builder emits all sampled volumes.",
-            "Temperature-independent energies are broadcast across the temperature grid.",
-        ),
-    )
+    representations: list[PlotRepresentationDescriptor] = [
+        PlotRepresentationDescriptor(
+            key="temperature_curves",
+            name="Temperature sections",
+            plot_kind="line",
+            description=(
+                "Property as a function of temperature, with one curve for each "
+                "selected sampled volume."
+            ),
+            property_keys=property_keys,
+            supported_contexts=("curve_axis", "sampled_volume"),
+            constraints=(
+                "Selected volumes must be exact values from the native grid.",
+                "Temperature-independent energies are broadcast across the "
+                "temperature grid.",
+            ),
+        )
+    ]
+    if volume_capable_keys:
+        representations.append(
+            PlotRepresentationDescriptor(
+                key="volume_curves",
+                name="Volume sections",
+                plot_kind="line",
+                description=(
+                    "Property as a function of sampled volume, with one curve "
+                    "for each selected stored temperature."
+                ),
+                property_keys=tuple(volume_capable_keys),
+                supported_contexts=("curve_axis", "temperature_grid"),
+                constraints=(
+                    "Selected temperatures must be exact values from the native grid.",
+                    "No interpolation or volume resampling is performed.",
+                ),
+            )
+        )
+    if contour_capable_keys:
+        representations.append(
+            PlotRepresentationDescriptor(
+                key="volume_temperature_contour",
+                name="Volume-temperature map",
+                plot_kind="contour",
+                description=(
+                    "Property on the complete native temperature-volume grid."
+                ),
+                property_keys=tuple(contour_capable_keys),
+                supported_contexts=("temperature_grid", "sampled_volume"),
+                constraints=(
+                    "At least two temperatures and two sampled volumes are required.",
+                    "No interpolation or resampling is performed by Quantas.",
+                ),
+            )
+        )
+
     properties = tuple(
         PlotPropertyDescriptor(
-            key=definition.key,
-            name=definition.name,
-            symbol_math=definition.symbol_math,
-            symbol_plain=definition.symbol_plain,
+            key=property_info.attribute,
+            name=property_info.name,
+            symbol_math=property_info.symbol_math,
+            symbol_plain=property_info.symbol_plain,
             unit=unit,
-            description=definition.description,
-            category=definition.category,
-            representations=("temperature_curves",),
+            description=property_info.description,
+            category=property_info.category,
+            representations=representations,
         )
-        for definition, unit in available
+        for property_info, unit, representations in available
     )
     return PlotInventory(
         module="ha",
         properties=properties,
-        representations=(representation,),
+        representations=tuple(representations),
         contexts=tuple(contexts),
         warnings=tuple(warnings),
     )
@@ -219,6 +233,18 @@ def _normalize_unit(unit: str | None) -> str | None:
     if not value or value.lower() in {"unknown", "dimensionless", "none"}:
         return None
     return value
+
+
+def _matched_volume(result: HAResult, nseries: int) -> np.ndarray | None:
+    """Return physical volumes when they match one property grid."""
+    if result.volume is None:
+        return None
+    volume = np.asarray(result.volume, dtype=np.float64)
+    if volume.ndim != 1 or volume.size != nseries:
+        return None
+    if np.unique(volume).size != volume.size:
+        return None
+    return volume
 
 
 def _volume_context(

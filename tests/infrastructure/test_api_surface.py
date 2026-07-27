@@ -107,8 +107,10 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "write_spec_template",
     },
     "ha": {
+        "CurveAxis",
         "Input",
         "Options",
+        "PlotOptions",
         "Result",
         "build_plots",
         "build_report",
@@ -177,6 +179,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "VectorFieldStyle",
     },
     "qha": {
+        "CurveAxis",
         "FitFailurePolicy",
         "Input",
         "Minimization",
@@ -193,6 +196,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "build_plots",
         "build_report",
         "compare_results",
+        "describe_plots",
         "get_result",
         "inspect",
         "list_plot_properties",

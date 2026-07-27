@@ -23,6 +23,8 @@ from quantas.modules.ha.models import (
     HAOptions as Options,
     HAResult as Result,
 )
+from quantas.modules.ha.plot import HACurveAxis as CurveAxis
+from quantas.modules.ha.plot import HAPlotOptions as PlotOptions
 
 from .common import (
     PhononInputData,
@@ -275,6 +277,7 @@ def build_plots(
     properties: str | list[str] | tuple[str, ...] | None = None,
     *,
     unit: str | None = None,
+    options: PlotOptions | None = None,
 ) -> PlotCollection:
     """Build frontend-neutral HA plots.
 
@@ -282,6 +285,13 @@ def build_plots(
     ----------
     result : ResultData
         Complete harmonic result envelope.
+    properties : str, list of str, tuple of str, or None, optional
+        Requested harmonic property identifiers.
+    unit : str or None, optional
+        Backwards-compatible energy-unit override. When ``options`` also
+        defines ``energy_unit``, both values must agree.
+    options : PlotOptions or None, optional
+        Exact-grid section and contour-preparation options.
 
     Returns
     -------
@@ -294,7 +304,12 @@ def build_plots(
         If the result envelope is invalid.
     """
     get_result(result)
-    return _build_plots(result, properties=properties, unit=unit)
+    return _build_plots(
+        result,
+        properties=properties,
+        unit=unit,
+        options=options,
+    )
 
 
 def __dir__() -> list[str]:
@@ -303,8 +318,10 @@ def __dir__() -> list[str]:
 
 
 __all__ = [
+    "CurveAxis",
     "Input",
     "Options",
+    "PlotOptions",
     "Result",
     "build_plots",
     "build_report",

@@ -10,6 +10,7 @@ from quantas.core.events import Observer
 from quantas.modules.qha.api import (
     build_qha_plots as _build_plots,
     build_qha_report as _build_report,
+    describe_qha_plot_inventory as _describe_plots,
     inspect_qha_input as _inspect,
     normalize_qha_input as _normalize_input,
     read_qha_hdf5 as _read_result,
@@ -30,6 +31,7 @@ from quantas.modules.qha.models import (
     QHAThermalExpansionMethod as ThermalExpansionMethod,
 )
 from quantas.modules.qha.plot import (
+    QHACurveAxis as CurveAxis,
     QHAPlotOptions as PlotOptions,
     list_available_plot_properties,
 )
@@ -47,7 +49,7 @@ from .common import (
     _public_dir,
     get_result_payload,
 )
-from .plotting import PlotCollection
+from .plotting import PlotCollection, PlotInventory
 
 
 def read_input(source: str | Path) -> Input:
@@ -298,6 +300,24 @@ def build_plots(
     return _build_plots(result, property_names=properties, options=options)
 
 
+def describe_plots(result: ResultData) -> PlotInventory:
+    """Return exact-grid QHA properties, sections, maps, and coordinates.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete quasi-harmonic result envelope.
+
+    Returns
+    -------
+    PlotInventory
+        Result-aware property metadata, temperature and pressure grids, and
+        supported line-section and contour representations.
+    """
+    get_result(result)
+    return _describe_plots(result)
+
+
 def list_plot_properties(
     result: ResultData | Result,
 ) -> list[tuple[str, str, str]]:
@@ -322,6 +342,7 @@ def __dir__() -> list[str]:
 
 
 __all__ = [
+    "CurveAxis",
     "FitFailurePolicy",
     "Input",
     "Minimization",
@@ -339,6 +360,7 @@ __all__ = [
     "build_plots",
     "build_report",
     "compare_results",
+    "describe_plots",
     "get_result",
     "inspect",
     "normalize_input",

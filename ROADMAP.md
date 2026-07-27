@@ -26,6 +26,9 @@ Other changes before the first release candidate are limited to:
 - Exercise CI on all supported operating systems and Python versions.
 - Verify documentation hosting and the complete TestPyPI installation workflow.
 - Complete and validate the ``2.0.0b7`` public plotting-contract pass.
+- Validate exact-grid HA V--T and QHA P--T section construction through API,
+  CLI, and Quantas GUI adapters without changing stored scientific arrays;
+  alternative axes require at least two unique native coordinates.
 - Review the resulting public API inventory and HDF5 schema compatibility one final time.
 
 ## After Quantas 2.0

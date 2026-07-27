@@ -45,7 +45,7 @@ keys, mathematical and plain-text symbols, units, representation families,
 selection contexts, and result-conditioned limitations without defining a
 generic build request.
 
-In the current incremental implementation, Elasticity, SEISMIC, and HA expose
+In the current incremental implementation, Elasticity, SEISMIC, HA, and QHA expose
 ``describe_plots(result)`` and advertise the registry capability
 ``PLOT_INVENTORY``.  Their existing module-specific builders remain the
 authoritative typed construction API.
@@ -53,7 +53,9 @@ authoritative typed construction API.
 ``symbol_math`` contains mathematical source without renderer delimiters such
 as ``$``.  ``symbol_plain`` provides a Unicode or plain-text alternative.  A
 context with ``selectable=False`` records exact information already fixed by
-the result, such as an HA temperature grid or the SEISMIC sampling level.
+the result, such as the SEISMIC sampling level.  HA and QHA coordinate contexts
+are selectable because their public builders now support exact native-grid
+sections along either natural independent variable.
 
 .. code-block:: python
 

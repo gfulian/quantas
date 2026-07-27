@@ -122,6 +122,20 @@ incorrectly flatten workflows such as Thermoelasticity and EOS.  The common
 contract therefore standardizes discovery while each public module retains the
 smallest scientifically appropriate builder signature.
 
+For grid thermodynamics, the inventory exposes the stored coordinates and the
+builder performs exact slicing before display-unit conversion:
+
+* HA: temperature sections at selected sampled volumes, volume sections at
+  selected temperatures when at least two volumes exist, and optional native
+  V--T contour maps;
+* QHA: temperature sections at selected pressures, pressure sections at
+  selected temperatures when at least two pressures exist, and optional native
+  P--T contour maps.
+
+No frontend should implement these sections by slicing result arrays directly.
+The public builder records native and displayed coordinates in the resulting
+plot metadata and rejects values that are absent from the stored grid.
+
 Mathematical symbols are renderer-neutral source strings without MathText or
 MathJax delimiters.  Plain symbols are supplied separately for terminals,
 tables, accessibility text, and renderers that do not parse mathematical

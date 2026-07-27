@@ -15,13 +15,18 @@ public contract; they must still be documented and validated.
 - Added frozen frontend-neutral descriptors for plot properties,
   representations, scientific contexts, and complete result-aware inventories.
 - Added public ``describe_plots(result)`` discovery for Elasticity, SEISMIC,
-  and HA, together with the incremental registry capability
+  HA, and QHA, together with the incremental registry capability
   ``PLOT_INVENTORY``.
 - Added frozen API-surface, renderer-independence, and typed-dispatch tests for
   the public plotting contracts.
 - Added inventory consistency and builder-compatibility tests covering
-  Elasticity branches and geometries, result-conditioned SEISMIC fields, and HA
-  sampled temperature and volume grids.
+  Elasticity branches and geometries, result-conditioned SEISMIC fields, HA
+  temperature-volume grids, and QHA pressure-temperature grids.
+- Added exact native-grid HA sections along temperature or sampled volume,
+  optional V--T contour specifications, and public ``HAPlotOptions``.
+- Added exact native-grid QHA sections along temperature or pressure, including
+  selected pressure/temperature conditions and result-aware P--T inventory
+  metadata.
 
 ### Changed
 
@@ -31,18 +36,25 @@ public contract; they must still be documented and validated.
 - Centralized SEISMIC scalar-property discovery so the public inventory and the
   existing plot builders derive labels and availability from one authoritative
   result-aware catalogue.
+- Centralized HA plot keys, names, mathematical symbols, plain symbols, and
+  scientific categories so inventory discovery and existing builders use one
+  authoritative backend catalogue.
+- Extended the HA and QHA CLI plot commands with the same public scientific
+  axis and exact-coordinate selections used by the library API.
 - Reopened the pre-RC public-API freeze for the narrowly scoped plotting-contract
   stabilization required by CLI, GUI, notebooks, and scientific-library users.
 
 ### Scientific compatibility
 
 The public-plotting increments completed so far alias the existing authoritative
-plot specifications and add passive discovery metadata. They do not change
-numerical algorithms, scientific selection, array values or shapes, tensor
-conventions, HDF5 schemas, or rendered plot data. The ``2.0.0b7`` development
-cycle remains open until the remaining module inventories, QHA pressure-axis
-sections, serialization, frontend equivalence, and full release validation are
-complete.
+plot specifications, add passive discovery metadata, and add opt-in exact-grid
+sections over already stored HA/QHA arrays.  Alternative volume or pressure
+sections are exposed only when at least two native coordinates are present.
+Default plot construction remains unchanged.  No numerical algorithm,
+thermodynamic calculation, stored array, tensor convention, or HDF5 schema is
+modified.  The ``2.0.0b7`` development
+cycle remains open until the remaining module inventories, serialization,
+frontend equivalence, and full release validation are complete.
 
 ## [2.0.0b6] - 2026-07-24
 

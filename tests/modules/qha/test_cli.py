@@ -282,3 +282,59 @@ def test_qha_inpgen_help_exposes_shared_generator_options() -> None:
     assert "--list" in result.output
     assert "--reference" in result.output
     assert "--formula-units" in result.output
+
+
+def test_qha_plot_help_exposes_exact_grid_sections() -> None:
+    result = CliRunner().invoke(qha, ["plot", "--help"])
+
+    assert result.exit_code == 0
+    assert "--axis" in result.output
+    assert "--pressure" in result.output
+    assert "--temperature" in result.output
+    assert "Exact native" in result.output
+
+
+def test_qha_plot_forwards_exact_grid_sections_to_public_api(
+    tmp_path, monkeypatch
+) -> None:
+    from types import SimpleNamespace
+
+    filename = tmp_path / "qha.h5"
+    filename.write_bytes(b"test")
+    captured = {}
+
+    monkeypatch.setattr("quantas.cli.qha.read_qha_hdf5", lambda path: object())
+
+    def fake_build(result, *, properties, options):
+        captured["properties"] = properties
+        captured["options"] = options
+        return object()
+
+    monkeypatch.setattr("quantas.cli.qha.build_qha_plots", fake_build)
+    monkeypatch.setattr(
+        "quantas.cli.qha.render_plot_collection",
+        lambda collection, options: SimpleNamespace(warnings=[], artifacts=[]),
+    )
+
+    result = CliRunner().invoke(
+        qha,
+        [
+            "plot",
+            str(filename),
+            "--property",
+            "KT",
+            "--axis",
+            "pressure",
+            "--temperature",
+            "300",
+            "--temperature",
+            "600",
+            "--2d",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert captured["properties"] == ("KT",)
+    assert captured["options"].curve_axis == "pressure"
+    assert captured["options"].selected_temperatures == (300.0, 600.0)
+    assert captured["options"].include_contours is True

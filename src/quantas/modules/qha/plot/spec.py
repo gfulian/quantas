@@ -40,6 +40,8 @@ from quantas.modules.qha.plot.labels import (
 _ALLOWED_CMAPS = ("viridis", "plasma", "inferno", "magma", "cividis", "turbo")
 _ALLOWED_CONTOUR_MODES = ("discrete", "smooth")
 
+QHACurveAxis = Literal["temperature", "pressure"]
+
 
 @dataclass(slots=True)
 class QHAPlotOptions:
@@ -69,6 +71,20 @@ class QHAPlotOptions:
     include_dulong_petit : bool, optional
         Whether the Dulong-Petit reference should be included when reliable
         atom-count metadata are available.
+    curve_axis : {"temperature", "pressure"}, optional
+        Natural variable placed on the independent axis of line plots.
+    selected_pressures : tuple of float or None, optional
+        Exact native pressure-grid values included in temperature sections.
+        ``None`` selects all stored pressures.
+    selected_temperatures : tuple of float or None, optional
+        Exact native temperature-grid values included in pressure sections.
+        ``None`` selects all stored temperatures.
+
+    Notes
+    -----
+    Slice selection is performed on the native stored grid before unit
+    conversion. Quantas does not interpolate missing pressure or temperature
+    coordinates implicitly.
     """
 
     include_contours: bool = False
@@ -81,6 +97,9 @@ class QHAPlotOptions:
     pressure_unit: str | None = None
     energy_unit: str | None = None
     include_dulong_petit: bool = True
+    curve_axis: QHACurveAxis = "temperature"
+    selected_pressures: tuple[float, ...] | None = None
+    selected_temperatures: tuple[float, ...] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -185,44 +204,90 @@ def build_property_curve_spec(
     property_info: QHAPlotProperty,
     options: QHAPlotOptions | None = None,
 ) -> LinePlotSpec:
-    """Build a neutral QHA property-versus-temperature specification.
+    """Build one exact-grid QHA line-section specification.
 
-    Parameters
-    ----------
-    result : QHAResult
-        QHA result object.
-    property_info : QHAPlotProperty
-        Resolved property metadata.
-    options : QHAPlotOptions or None, optional
-        Plot-preparation options.
-
-    Returns
-    -------
-    LinePlotSpec
-        Neutral line-plot specification.
-
-    Raises
-    ------
-    ValueError
-        If the property or pressure-temperature grid is unavailable.
+    The default representation places temperature on the independent axis and
+    emits one series per selected pressure.  ``curve_axis="pressure"`` places
+    pressure on the independent axis and emits one series per selected stored
+    temperature. Selection is exact on the native result grid and never
+    interpolates missing coordinates.
     """
     opts = _validated_options(options or QHAPlotOptions())
     context = _unit_context(result, opts)
+    native_temperature = _required_grid(result.temperature, "temperature")
+    native_pressure = _required_grid(result.pressure, "pressure")
     temperature, pressure, values = _property_grid(result, property_info, context)
     values = values * property_info.scale
-    series = [
-        PlotSeries(
-            key=f"pressure_{index}",
-            label=_pressure_label(pvalue, context.display_units),
-            x=temperature.copy(),
-            y=values[:, index].copy(),
-            metadata={"pressure": float(pvalue)},
+
+    if opts.curve_axis == "temperature":
+        indices = _selected_grid_indices(
+            native_pressure,
+            opts.selected_pressures,
+            name="pressure",
         )
-        for index, pvalue in enumerate(pressure)
-    ]
+        series = [
+            PlotSeries(
+                key=f"pressure_{index}",
+                label=_pressure_label(pressure[index], context.display_units),
+                x=temperature.copy(),
+                y=values[:, index].copy(),
+                metadata={
+                    "pressure": float(pressure[index]),
+                    "pressure_native": float(native_pressure[index]),
+                    "pressure_index": int(index),
+                    "curve_axis": "temperature",
+                },
+            )
+            for index in indices
+        ]
+        x_axis = PlotAxis(
+            key="temperature",
+            label=_temperature_label(context.display_units),
+            unit=str(context.display_units.get("temperature", "K")),
+        )
+        legend_title = _pressure_axis_label(context.display_units)
+        filename_stem = f"{property_info.key}_1D"
+    else:
+        if native_pressure.size < 2:
+            raise ValueError(
+                "QHA pressure sections require at least two stored pressures"
+            )
+        indices = _selected_grid_indices(
+            native_temperature,
+            opts.selected_temperatures,
+            name="temperature",
+        )
+        series = [
+            PlotSeries(
+                key=f"temperature_{index}",
+                label=_temperature_value_label(
+                    temperature[index], context.display_units
+                ),
+                x=pressure.copy(),
+                y=values[index, :].copy(),
+                metadata={
+                    "temperature": float(temperature[index]),
+                    "temperature_native": float(native_temperature[index]),
+                    "temperature_index": int(index),
+                    "curve_axis": "pressure",
+                },
+            )
+            for index in indices
+        ]
+        x_axis = PlotAxis(
+            key="pressure",
+            label=_pressure_axis_label(context.display_units),
+            unit=str(context.display_units.get("pressure", "GPa")),
+        )
+        legend_title = _temperature_label(context.display_units)
+        filename_stem = f"{property_info.key}_P"
 
     y_limits = None
-    if property_info.key == "Cv" and opts.include_dulong_petit:
+    if (
+        property_info.key == "Cv"
+        and opts.include_dulong_petit
+        and opts.curve_axis == "temperature"
+    ):
         reference = _dulong_petit_series(result, context, temperature)
         if reference is not None:
             series.append(reference)
@@ -231,12 +296,8 @@ def build_property_curve_spec(
     return LinePlotSpec(
         key=property_info.key,
         title=property_info.description,
-        filename_stem=f"{property_info.key}_1D",
-        x_axis=PlotAxis(
-            key="temperature",
-            label=_temperature_label(context.display_units),
-            unit=str(context.display_units.get("temperature", "K")),
-        ),
+        filename_stem=filename_stem,
+        x_axis=x_axis,
         y_axis=PlotAxis(
             key=property_info.attribute,
             label=ylabel_for_property(property_info, context.display_units),
@@ -244,8 +305,12 @@ def build_property_curve_spec(
             limits=y_limits,
         ),
         series=series,
-        legend_title=_pressure_axis_label(context.display_units),
-        metadata={"module": "qha", "property": property_info.attribute},
+        legend_title=legend_title,
+        metadata={
+            "module": "qha",
+            "property": property_info.attribute,
+            "curve_axis": opts.curve_axis,
+        },
     )
 
 
@@ -253,33 +318,13 @@ def build_heat_capacity_spec(
     result: QHAResult,
     options: QHAPlotOptions | None = None,
 ) -> LinePlotSpec:
-    """Build a combined neutral ``C_P`` and ``C_V`` line specification.
-
-    Parameters
-    ----------
-    result : QHAResult
-        QHA result containing ``Cp`` and/or ``Cv`` arrays.
-    options : QHAPlotOptions or None, optional
-        Plot-preparation options.
-
-    Returns
-    -------
-    LinePlotSpec
-        Combined heat-capacity specification.
-
-    Raises
-    ------
-    ValueError
-        If neither heat-capacity array is available.
-    """
+    """Build combined exact-grid ``C_P`` and ``C_V`` line sections."""
     opts = _validated_options(options or QHAPlotOptions())
     context = _unit_context(result, opts)
-    temperature = _convert_temperature_grid(
-        _required_grid(result.temperature, "temperature"), context
-    )
-    pressure = _convert_pressure_grid(
-        _required_grid(result.pressure, "pressure"), context
-    )
+    native_temperature = _required_grid(result.temperature, "temperature")
+    native_pressure = _required_grid(result.pressure, "pressure")
+    temperature = _convert_temperature_grid(native_temperature, context)
+    pressure = _convert_pressure_grid(native_pressure, context)
     cp = _optional_property_grid(
         result, "isobaric_heat_capacity", context, "heat_capacity"
     )
@@ -290,32 +335,103 @@ def build_heat_capacity_spec(
         raise ValueError("neither Cp nor Cv is available")
 
     series: list[PlotSeries] = []
-    for index, pvalue in enumerate(pressure):
-        suffix = _pressure_label(pvalue, context.display_units)
-        if cp is not None:
-            series.append(
-                PlotSeries(
-                    key=f"Cp_pressure_{index}",
-                    label=rf"$C_P$, {suffix}",
-                    x=temperature.copy(),
-                    y=cp[:, index].copy(),
-                    metadata={"pressure": float(pvalue), "property": "Cp"},
+    if opts.curve_axis == "temperature":
+        indices = _selected_grid_indices(
+            native_pressure,
+            opts.selected_pressures,
+            name="pressure",
+        )
+        for index in indices:
+            suffix = _pressure_label(pressure[index], context.display_units)
+            common_metadata = {
+                "pressure": float(pressure[index]),
+                "pressure_native": float(native_pressure[index]),
+                "pressure_index": int(index),
+                "curve_axis": "temperature",
+            }
+            if cp is not None:
+                series.append(
+                    PlotSeries(
+                        key=f"Cp_pressure_{index}",
+                        label=rf"$C_P$, {suffix}",
+                        x=temperature.copy(),
+                        y=cp[:, index].copy(),
+                        metadata={**common_metadata, "property": "Cp"},
+                    )
                 )
-            )
-        if cv is not None:
-            series.append(
-                PlotSeries(
-                    key=f"Cv_pressure_{index}",
-                    label=rf"$C_V$, {suffix}",
-                    x=temperature.copy(),
-                    y=cv[:, index].copy(),
-                    style=PlotSeriesStyle(line_style="dashed"),
-                    metadata={"pressure": float(pvalue), "property": "Cv"},
+            if cv is not None:
+                series.append(
+                    PlotSeries(
+                        key=f"Cv_pressure_{index}",
+                        label=rf"$C_V$, {suffix}",
+                        x=temperature.copy(),
+                        y=cv[:, index].copy(),
+                        style=PlotSeriesStyle(line_style="dashed"),
+                        metadata={**common_metadata, "property": "Cv"},
+                    )
                 )
+        x_axis = PlotAxis(
+            key="temperature",
+            label=_temperature_label(context.display_units),
+            unit=str(context.display_units.get("temperature", "K")),
+        )
+        legend_title = _pressure_axis_label(context.display_units)
+        filename_stem = "heat_capacities_1D"
+    else:
+        if native_pressure.size < 2:
+            raise ValueError(
+                "QHA pressure sections require at least two stored pressures"
             )
+        indices = _selected_grid_indices(
+            native_temperature,
+            opts.selected_temperatures,
+            name="temperature",
+        )
+        for index in indices:
+            suffix = _temperature_value_label(
+                temperature[index], context.display_units
+            )
+            common_metadata = {
+                "temperature": float(temperature[index]),
+                "temperature_native": float(native_temperature[index]),
+                "temperature_index": int(index),
+                "curve_axis": "pressure",
+            }
+            if cp is not None:
+                series.append(
+                    PlotSeries(
+                        key=f"Cp_temperature_{index}",
+                        label=rf"$C_P$, {suffix}",
+                        x=pressure.copy(),
+                        y=cp[index, :].copy(),
+                        metadata={**common_metadata, "property": "Cp"},
+                    )
+                )
+            if cv is not None:
+                series.append(
+                    PlotSeries(
+                        key=f"Cv_temperature_{index}",
+                        label=rf"$C_V$, {suffix}",
+                        x=pressure.copy(),
+                        y=cv[index, :].copy(),
+                        style=PlotSeriesStyle(line_style="dashed"),
+                        metadata={**common_metadata, "property": "Cv"},
+                    )
+                )
+        x_axis = PlotAxis(
+            key="pressure",
+            label=_pressure_axis_label(context.display_units),
+            unit=str(context.display_units.get("pressure", "GPa")),
+        )
+        legend_title = _temperature_label(context.display_units)
+        filename_stem = "heat_capacities_P"
 
     y_limits = None
-    if cv is not None and opts.include_dulong_petit:
+    if (
+        cv is not None
+        and opts.include_dulong_petit
+        and opts.curve_axis == "temperature"
+    ):
         reference = _dulong_petit_series(result, context, temperature)
         if reference is not None:
             series.append(reference)
@@ -330,12 +446,8 @@ def build_heat_capacity_spec(
     return LinePlotSpec(
         key="heat_capacities",
         title="Heat capacities",
-        filename_stem="heat_capacities_1D",
-        x_axis=PlotAxis(
-            key="temperature",
-            label=_temperature_label(context.display_units),
-            unit=str(context.display_units.get("temperature", "K")),
-        ),
+        filename_stem=filename_stem,
+        x_axis=x_axis,
         y_axis=PlotAxis(
             key="heat_capacity",
             label=rf"$C$ ({heat_unit})",
@@ -343,8 +455,13 @@ def build_heat_capacity_spec(
             limits=y_limits,
         ),
         series=series,
-        legend_columns=2 if pressure.size > 1 else 1,
-        metadata={"module": "qha", "property": "heat_capacities"},
+        legend_title=legend_title,
+        legend_columns=2 if len(series) > 2 else 1,
+        metadata={
+            "module": "qha",
+            "property": "heat_capacities",
+            "curve_axis": opts.curve_axis,
+        },
     )
 
 
@@ -594,7 +711,56 @@ def _required_grid(values: np.ndarray | None, name: str) -> np.ndarray:
     array = np.asarray(values, dtype=np.float64)
     if array.ndim != 1 or array.size == 0:
         raise ValueError(f"QHA {name} grid must be a non-empty one-dimensional array")
+    if np.unique(array).size != array.size:
+        raise ValueError(f"QHA {name} grid contains duplicate coordinates")
     return array
+
+
+def _selected_grid_indices(
+    grid: np.ndarray,
+    selected: tuple[float, ...] | None,
+    *,
+    name: str,
+) -> tuple[int, ...]:
+    """Resolve exact native-grid selections without interpolation.
+
+    Parameters
+    ----------
+    grid : ndarray
+        Native one-dimensional pressure or temperature grid.
+    selected : tuple of float or None
+        Requested exact grid values. ``None`` selects all points.
+    name : str
+        Grid name used in validation messages.
+
+    Returns
+    -------
+    tuple of int
+        Grid indices in the requested order.
+
+    Raises
+    ------
+    ValueError
+        If the selection is empty, duplicated, or absent from the native grid.
+    """
+    if selected is None:
+        return tuple(range(grid.size))
+    if not selected:
+        raise ValueError(f"selected {name} values cannot be empty")
+    if len(set(selected)) != len(selected):
+        raise ValueError(f"selected {name} values must be unique")
+
+    indices: list[int] = []
+    for requested in selected:
+        matches = np.flatnonzero(grid == float(requested))
+        if matches.size == 0:
+            available = ", ".join(f"{value:.12g}" for value in grid)
+            raise ValueError(
+                f"QHA {name} {requested!r} is not present in the native grid; "
+                f"available values: {available}"
+            )
+        indices.append(int(matches[0]))
+    return tuple(indices)
 
 
 def _as_pressure_temperature_array(
@@ -653,6 +819,16 @@ def _validated_options(options: QHAPlotOptions) -> QHAPlotOptions:
     ValueError
         If the colormap, contour mode, or level count is unsupported.
     """
+    if options.curve_axis not in {"temperature", "pressure"}:
+        raise ValueError("QHA curve_axis must be 'temperature' or 'pressure'")
+    if options.curve_axis == "temperature" and options.selected_temperatures:
+        raise ValueError(
+            "selected_temperatures is valid only when curve_axis='pressure'"
+        )
+    if options.curve_axis == "pressure" and options.selected_pressures:
+        raise ValueError(
+            "selected_pressures is valid only when curve_axis='temperature'"
+        )
     if options.cmap not in _ALLOWED_CMAPS:
         raise ValueError(f"unsupported colormap '{options.cmap}'")
     if options.contour_mode not in _ALLOWED_CONTOUR_MODES:
@@ -1310,3 +1486,8 @@ def _pressure_label(value: float, units: Mapping[str, object]) -> str:
         Pressure legend label.
     """
     return f"P = {value:g} {units.get('pressure', 'GPa')}"
+
+
+def _temperature_value_label(value: float, units: Mapping[str, object]) -> str:
+    """Return a compact temperature legend label."""
+    return f"T = {value:g} {units.get('temperature', 'K')}"

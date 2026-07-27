@@ -27,6 +27,8 @@ class QHAPlotProperty:
         Historical short key used in filenames and CLI options.
     symbol : str
         Matplotlib mathtext symbol used in axis labels and titles.
+    symbol_plain : str
+        Unicode or plain-text symbol independent of a concrete renderer.
     description : str
         Human-readable description of the property.
     unit_key : str
@@ -40,36 +42,56 @@ class QHAPlotProperty:
     attribute: str
     key: str
     symbol: str
+    symbol_plain: str
     description: str
     unit_key: str
     scale: float = 1.0
     scale_label: str = ""
 
 
-_PROPERTY_OVERRIDES: dict[str, tuple[str, str, float, str]] = {
-    "equilibrium_volume": (r"$V$", "volume", 1.0, ""),
-    "zero_point_energy": (r"$U_{zp}$", "energy", 1.0, ""),
-    "thermal_energy": (r"$U_{th}$", "energy", 1.0, ""),
-    "internal_energy": (r"$U_{tot}$", "energy", 1.0, ""),
-    "entropy": (r"$S$", "entropy", 1.0, ""),
-    "vibrational_free_energy": (r"$F_{vib}$", "energy", 1.0, ""),
-    "free_energy": (r"$F$", "energy", 1.0, ""),
-    "isochoric_heat_capacity": (r"$C_V$", "heat_capacity", 1.0, ""),
-    "isobaric_heat_capacity": (r"$C_P$", "heat_capacity", 1.0, ""),
-    "heat_capacity_difference": (r"$C_P-C_V$", "heat_capacity", 1.0, ""),
-    "isothermal_bulk_modulus": (r"$K_T$", "pressure", 1.0, ""),
-    "adiabatic_bulk_modulus": (r"$K_S$", "pressure", 1.0, ""),
-    "bulk_modulus_derivative": (r"$K^{\prime}$", "dimensionless", 1.0, ""),
+_PROPERTY_OVERRIDES: dict[str, tuple[str, str, str, float, str]] = {
+    "equilibrium_volume": (r"$V$", "V", "volume", 1.0, ""),
+    "zero_point_energy": (r"$U_{zp}$", "U_ZP", "energy", 1.0, ""),
+    "thermal_energy": (r"$U_{th}$", "U_th", "energy", 1.0, ""),
+    "internal_energy": (r"$U_{tot}$", "U", "energy", 1.0, ""),
+    "entropy": (r"$S$", "S", "entropy", 1.0, ""),
+    "vibrational_free_energy": (r"$F_{vib}$", "F_vib", "energy", 1.0, ""),
+    "free_energy": (r"$F$", "F", "energy", 1.0, ""),
+    "isochoric_heat_capacity": (r"$C_V$", "Cᵥ", "heat_capacity", 1.0, ""),
+    "isobaric_heat_capacity": (r"$C_P$", "Cₚ", "heat_capacity", 1.0, ""),
+    "heat_capacity_difference": (
+        r"$C_P-C_V$",
+        "Cₚ−Cᵥ",
+        "heat_capacity",
+        1.0,
+        "",
+    ),
+    "isothermal_bulk_modulus": (r"$K_T$", "Kₜ", "pressure", 1.0, ""),
+    "adiabatic_bulk_modulus": (r"$K_S$", "Kₛ", "pressure", 1.0, ""),
+    "bulk_modulus_derivative": (
+        r"$K^{\prime}$",
+        "K′",
+        "dimensionless",
+        1.0,
+        "",
+    ),
     "thermal_expansion": (
         r"$\alpha_V$",
+        "αᵥ",
         "temperature_inverse",
         1.0e5,
         r"$\times 10^5$",
     ),
-    "enthalpy": (r"$H$", "energy", 1.0, ""),
-    "gibbs_free_energy": (r"$G$", "energy", 1.0, ""),
-    "gruneisen": (r"$\gamma_{th}$", "dimensionless", 1.0, ""),
-    "mode_weighted_gruneisen": (r"$\gamma_{mode}$", "dimensionless", 1.0, ""),
+    "enthalpy": (r"$H$", "H", "energy", 1.0, ""),
+    "gibbs_free_energy": (r"$G$", "G", "energy", 1.0, ""),
+    "gruneisen": (r"$\gamma_{th}$", "γ_th", "dimensionless", 1.0, ""),
+    "mode_weighted_gruneisen": (
+        r"$\gamma_{mode}$",
+        "γ_mode",
+        "dimensionless",
+        1.0,
+        "",
+    ),
 }
 
 
@@ -85,11 +107,14 @@ def available_plot_properties() -> dict[str, QHAPlotProperty]:
     for attribute, (key, description) in QHA_PROPERTY_LABELS.items():
         if attribute not in _PROPERTY_OVERRIDES:
             continue
-        symbol, unit_key, scale, scale_label = _PROPERTY_OVERRIDES[attribute]
+        symbol, symbol_plain, unit_key, scale, scale_label = _PROPERTY_OVERRIDES[
+            attribute
+        ]
         properties[attribute] = QHAPlotProperty(
             attribute=attribute,
             key=key,
             symbol=symbol,
+            symbol_plain=symbol_plain,
             description=description,
             unit_key=unit_key,
             scale=scale,

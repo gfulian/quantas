@@ -55,7 +55,7 @@ by the other scientific modules.
 - added frozen descriptors for plot properties, representations, contexts, and
   complete result-aware inventories;
 - added public ``describe_plots(result)`` discovery for Elasticity, SEISMIC,
-  and HA without introducing a generic mapping-based build request;
+  HA, and QHA without introducing a generic mapping-based build request;
 - added the incremental registry capability ``PLOT_INVENTORY`` only for modules
   whose inventories are currently implemented and tested;
 - exposed Elasticity branches, principal planes, and physical/unit-sphere
@@ -64,31 +64,40 @@ by the other scientific modules.
   in the result, including group, power-flow, enhancement, surface, and
   polarization availability;
 - exposed HA properties, resolved units, and exact stored temperature and
-  sampled-volume context;
+  sampled-volume context from one authoritative HA plot-property catalogue;
+- added exact-grid HA temperature and volume sections plus optional native
+  V--T contour specifications while preserving temperature curves as default;
+- added QHA result-aware property, representation, pressure, and temperature
+  inventory;
+- added exact-grid QHA pressure-axis sections at selected stored temperatures,
+  plus pressure selection for the existing temperature-axis sections;
+- exposed the same HA/QHA scientific section controls through the CLI without
+  moving renderer-specific output handling into the public API;
 - centralized the SEISMIC scalar-property catalogue used by inventory discovery
   and existing plot construction.
 
-No plot builder signature, numerical array, scientific selection, unit
-conversion, HDF5 schema, or rendering result was intentionally changed in
-these increments.
+Existing default plot-builder behavior, numerical arrays, unit conversion,
+HDF5 schemas, and scientific calculations were not intentionally changed.
+New section directions and coordinate selections are opt-in and operate only
+on exact, unique native grid points.  Alternative volume or pressure sections
+are advertised only when at least two coordinates exist.
 
 ## Verified evidence
 
-- infrastructure, public API, documentation, source hygiene, contracts,
-  registry, and packaging selection: `201 passed`;
-- complete Elasticity, SEISMIC, and HA module selections: `166 passed`;
-- unchanged QHA, Thermoelasticity, and EOS plotting selections: `29 passed`,
-  with one pre-existing EOS `RankWarning` for a deliberately sparse polynomial
-  fit;
-- broader QHA, Thermoelasticity, and EOS selection in the available environment:
-  `461 passed` and `29 failed`; every failure requires the unavailable real
-  `odrpack` or `spglib` runtime dependency;
-- architecture audit: no failures, `66` complexity warnings and `23`
+- infrastructure, public API, registry, documentation contracts, source hygiene,
+  and complete HA/QHA module selections: `466 passed`;
+- complete Elasticity and SEISMIC module selections: `100 passed`;
+- Thermoelasticity and EOS plotting regression selection: `19 passed`, with one
+  pre-existing EOS `RankWarning` for a deliberately sparse polynomial fit;
+- fail-fast full-suite run: `478 passed` before the known real-ODRPACK backend
+  test failed because the runtime backend is unavailable in this environment;
+- architecture audit: no failures, `70` complexity warnings and `24`
   information items;
 - source and test trees compile successfully with ``compileall``;
-- an intermediate `2.0.0b7` wheel builds successfully, contains the new
-  inventory modules and `py.typed`, and passes an installed-package public API
-  smoke test.  This wheel is a development artifact, not a completed release.
+- the intermediate `2.0.0b7` wheel builds successfully through the declared
+  setuptools backend, contains the HA/QHA inventory modules and `py.typed`, and
+  passes an installed-package public API smoke test.  This wheel is a
+  development artifact, not a completed release.
 
 ## Environment limitations
 
@@ -109,17 +118,13 @@ real ODRPACK backend test; it is not a plotting-contract failure.
 
 ## Immediate next operation
 
-Review and validate this first common inventory contract in the real project
-environment.  Then extend the same discovery principles to QHA, including
-exact-grid pressure-axis sections, before implementing Thermoelasticity family
-and stage discovery.  A universal generic build request remains explicitly out
-of scope.
+Review and validate the HA/QHA exact-grid section contract in the real project
+environment.  Then implement Thermoelasticity family and stage discovery.  A
+universal generic build request remains explicitly out of scope.
 
 ## Open work for `2.0.0b7`
 
 - final review of the common inventory contract and terminology;
-- QHA pressure-axis sections on exact native grid points;
-- QHA property, representation, pressure, and temperature inventory;
 - Thermoelasticity public family/stage discovery;
 - EOS session-oriented archive plot inventory;
 - frontend-neutral symbol and unit metadata consolidation;

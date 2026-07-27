@@ -13,6 +13,8 @@ Recommended sequence
    quantas ha inpgen phonon-output.out --output material.yaml
    quantas ha run material.yaml --temperature 0 1000 10
    quantas ha plot material_HA.hdf5 --property Cv --property Fvib
+   quantas ha plot material_HA.hdf5 --property F --axis volume \
+      --temperature 300 --temperature 1000 --2d
    quantas ha export material_HA.hdf5 --property Cv --unit J/mol
 
 ``inpgen`` is optional when a valid Quantas phonon YAML already exists.  ``run``
@@ -27,6 +29,11 @@ Important distinctions
   ``export`` convert an existing result for presentation.
 * plotting during ``run`` is a convenience.  The standalone ``plot`` command is
   preferable when several figure variants are required.
+* ``plot --axis temperature`` produces one curve per selected sampled volume;
+  ``plot --axis volume`` produces one curve per selected stored temperature.
+  ``--volume`` and ``--temperature`` accept only exact native-grid values.
+* ``plot --2d`` adds a V--T map when both coordinate axes contain at least two
+  points.  It does not interpolate the result grid.
 * q-point weights are taken from the input and normalized; the CLI does not
   derive missing symmetry multiplicities.
 
