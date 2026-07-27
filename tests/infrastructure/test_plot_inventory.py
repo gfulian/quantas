@@ -161,14 +161,19 @@ def test_inventory_descriptors_are_frozen_and_cross_validated() -> None:
 
 def test_registry_exposes_inventory_capability_incrementally() -> None:
     """Migrated one-shot modules advertise the common discovery operation."""
-    for module in ("elasticity", "seismic", "ha", "qha", "thermoelasticity"):
+    for module in (
+        "elasticity",
+        "seismic",
+        "ha",
+        "qha",
+        "eos",
+        "thermoelasticity",
+    ):
         descriptor = registry.get(module)
         assert descriptor.has(Capability.PLOT_INVENTORY)
         operation = descriptor.operation(Capability.PLOT_INVENTORY)
         assert operation.__name__ == "describe_plots"
 
-    for module in ("eos",):
-        assert not registry.get(module).has(Capability.PLOT_INVENTORY)
 
 
 @pytest.mark.elasticity

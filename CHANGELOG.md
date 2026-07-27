@@ -38,6 +38,14 @@ public contract; they must still be documented and validated.
 - Added a Windows PowerShell validation entry point for the in-development
   public plotting API, with focused checks by default and the complete static,
   scientific, documentation, and distribution checks under ``-Full``.
+- Added a separate session-aware EOS archive plotting inventory exposing
+  lightweight dataset, result-slot, immutable-record, acceptance-state, and
+  representation descriptors.  Detailed common plot metadata is returned only
+  for an explicit record, accepted slot, or unique accepted result; ambiguous
+  archives remain browseable without an arbitrary selection.
+- Added public EOS archive-history and inspection types required by notebooks,
+  CLI adapters, Quantas GUI, and other advanced library clients to consume the
+  persistent workflow without importing implementation modules.
 
 ### Changed
 
@@ -54,6 +62,10 @@ public contract; they must still be documented and validated.
   axis and exact-coordinate selections used by the library API.
 - Routed result-aware Thermoelasticity family listing through the same public
   ``describe_plots`` contract used by Python clients and Quantas GUI.
+- Routed EOS ``--list-plots`` through the public session-aware inventory and
+  removed the CLI-owned plot-description catalogue.  Ambiguous archives now
+  list result slots and plottable record identifiers instead of guessing which
+  accepted fit should be used.
 - Reopened the pre-RC public-API freeze for the narrowly scoped plotting-contract
   stabilization required by CLI, GUI, notebooks, and scientific-library users.
 
@@ -73,12 +85,15 @@ sections over already stored HA/QHA arrays.  Alternative volume or pressure
 sections are exposed only when at least two native coordinates are present.
 Thermoelasticity discovery inspects archived fit, tensor, uncertainty, profile,
 mask, and grid availability without recalculating or mutating scientific data.
-Existing default construction for profile and two-dimensional P--T archives is
-unchanged; the point/one-dimensional fallback corrects a previously invalid
-automatic contour request.  No numerical algorithm, thermodynamic calculation,
-stored array, tensor convention, or HDF5 schema is modified.  The ``2.0.0b7``
-development cycle remains open until the EOS archive inventory, serialization,
-frontend equivalence, and full release validation are complete.
+EOS discovery opens archives read-only and exposes only lightweight dataset,
+slot, history, and representation metadata; it neither changes acceptance state
+nor replaces the persistent session lifecycle.  Existing default construction
+for profile and two-dimensional P--T archives is unchanged; the
+point/one-dimensional fallback corrects a previously invalid automatic contour
+request.  No numerical algorithm, thermodynamic calculation, stored array,
+tensor convention, or HDF5 schema is modified.  The ``2.0.0b7`` development
+cycle remains open until serialization, frontend equivalence, and full release
+validation are complete.
 
 ## [2.0.0b6] - 2026-07-24
 

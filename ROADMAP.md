@@ -32,8 +32,8 @@ Other changes before the first release candidate are limited to:
 - Validate cumulative Thermoelasticity plot discovery for calibration, P--T,
   point/grid, profile, comparison, and domain archives through the same public
   API used by CLI and Quantas GUI.
-- Complete the separate EOS session/archive plotting inventory without forcing
-  EOS into the one-shot module contract.
+- Validate the separate EOS session/archive plotting inventory through Python,
+  CLI, and Quantas GUI without forcing EOS into the one-shot module contract.
 - Review the resulting public API inventory and HDF5 schema compatibility one final time.
 
 ## After Quantas 2.0

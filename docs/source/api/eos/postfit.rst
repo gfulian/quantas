@@ -48,6 +48,8 @@ Batch reporting
 Plot preparation
 ----------------
 
+.. autofunction:: quantas.api.eos.describe_plots
+
 .. autofunction:: quantas.api.eos.available_plot_types
 
 .. autofunction:: quantas.api.eos.build_plots

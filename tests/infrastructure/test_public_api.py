@@ -92,6 +92,8 @@ def test_registry_declares_all_scientific_modules_and_types() -> None:
 
     assert registry.get("qha").has(Capability.INSPECT)
     assert registry.get("eos").has(Capability.FIT)
+    assert registry.get("eos").has(Capability.PLOT_INVENTORY)
+    assert registry.get("eos").operation(Capability.PLOT_INVENTORY) is eos.describe_plots
     assert not registry.get("eos").has(Capability.RUN)
     assert registry.get("thermoelasticity").has(Capability.INTEROP)
     operation = registry.get("elasticity").operation(Capability.RUN)

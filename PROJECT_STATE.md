@@ -88,6 +88,17 @@ by the other scientific modules.
   an invalid P--T contour;
 - added a focused/full Windows PowerShell validation script for the public plot
   API stabilization branch.
+- added a separate public EOS archive plot inventory covering embedded
+  datasets, persistent result slots, immutable record history, acceptance state,
+  and representation availability without forcing EOS into the one-shot module
+  contract;
+- exposed detailed common ``PlotInventory`` metadata only after an explicit
+  record, accepted slot, or unique accepted result is selected;
+- routed EOS CLI plot discovery through ``quantas.api.eos.describe_plots`` and
+  removed its duplicate manual representation-description catalogue;
+- exposed the archive history and inspection contracts returned by the public
+  EOS lifecycle so Python clients and Quantas GUI do not need implementation
+  imports.
 
 Existing default plot-builder behavior for complete profile and two-dimensional
 grid results, numerical arrays, unit conversion, HDF5 schemas, and scientific
@@ -101,19 +112,24 @@ results.
 ## Verified evidence
 
 - focused public API, registry, module-contract, documentation,
-  source-hygiene, and cross-module plotting/CLI selection: `151 passed`, with
-  the pre-existing sparse-grid EOS ``RankWarning``;
+  source-hygiene, and cross-module plotting/CLI selection, including the EOS
+  archive inventory: `164 passed`, with the pre-existing sparse-grid EOS
+  ``RankWarning``;
 - complete infrastructure plus Thermoelasticity selection: `253 passed`; the
   four remaining failures require ``spglib``, which is unavailable in the
   current environment and is exercised by the CRYSTAL input generator rather
   than the plotting contract;
 - complete Elasticity and SEISMIC module selections: `100 passed`;
 - complete HA and QHA module selections: `261 passed`;
-- EOS plotting regression selection: `8 passed`, with one pre-existing EOS
-  `RankWarning` for a deliberately sparse polynomial fit;
+- EOS inventory and plotting selection: `17 passed`, covering P--V, V--T,
+  P--V--T, dataset-only archives, ambiguous accepted slots, canonical CLI keys,
+  and builder compatibility, with the pre-existing sparse-grid ``RankWarning``;
+- complete EOS module selection: `246 passed`; the remaining `25` failures all
+  require the unavailable real ``odrpack`` backend and are not inventory or
+  plotting-contract failures;
 - fail-fast full-suite run: `479 passed` before the known real-ODRPACK backend
   test failed because the runtime backend is unavailable in this environment;
-- architecture audit: no failures, `71` complexity warnings and `24`
+- architecture audit: no failures, `74` complexity warnings and `24`
   information items;
 - source and test trees compile successfully with ``compileall``;
 - the intermediate `2.0.0b7` wheel builds successfully through the declared
@@ -140,15 +156,16 @@ real ODRPACK backend test; it is not a plotting-contract failure.
 
 ## Immediate next operation
 
-Review and validate the HA/QHA exact-grid section contract and the cumulative
-Thermoelasticity inventory in the real project environment.  Then implement the
-separate EOS session/archive inventory.  A universal generic build request
-remains explicitly out of scope.
+Review and validate the HA/QHA exact-grid sections, cumulative
+Thermoelasticity inventory, and separate EOS session/archive inventory in the
+real Windows project environment.  Then complete PlotSpec serialization and
+CLI/API/GUI equivalence work.  A universal generic build request remains
+explicitly out of scope.
 
 ## Open work for `2.0.0b7`
 
 - final review of the common inventory contract and terminology;
-- EOS session-oriented archive plot inventory;
+- Windows validation of the EOS session-oriented archive plot inventory;
 - frontend-neutral symbol and unit metadata consolidation;
 - PlotSpec serialization contract and round-trip tests;
 - incremental CLI migration and CLI/API scientific-equivalence tests;

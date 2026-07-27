@@ -45,10 +45,14 @@ keys, mathematical and plain-text symbols, units, representation families,
 selection contexts, and result-conditioned limitations without defining a
 generic build request.
 
-In the current incremental implementation, Elasticity, SEISMIC, HA, and QHA expose
+Elasticity, SEISMIC, HA, QHA, and Thermoelasticity expose
 ``describe_plots(result)`` and advertise the registry capability
 ``PLOT_INVENTORY``.  Their existing module-specific builders remain the
-authoritative typed construction API.
+authoritative typed construction API.  EOS advertises the same capability but
+retains a separate session-aware signature, ``describe_plots(archive, ...)``.
+It first exposes lightweight dataset, slot, and immutable-record history; the
+common detailed ``PlotInventory`` is attached only after an explicit record,
+accepted slot, or unique accepted result has been selected.
 
 ``symbol_math`` contains mathematical source without renderer delimiters such
 as ``$``.  ``symbol_plain`` provides a Unicode or plain-text alternative.  A

@@ -63,6 +63,7 @@ Invoke-Checked "Module plotting contracts" {
         tests/modules/qha/test_plotting.py `
         tests/modules/thermoelasticity/test_plotting.py `
         tests/modules/thermoelasticity/test_cli.py `
+        tests/modules/eos/test_plot_inventory.py `
         tests/modules/eos/test_plotting.py
 }
 

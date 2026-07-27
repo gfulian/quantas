@@ -112,3 +112,27 @@ Archive slot, report, and plot contracts
 .. autoclass:: quantas.api.eos.PlotOptions
    :members:
    :show-inheritance:
+
+Session-aware plot discovery contracts
+--------------------------------------
+
+These lightweight immutable descriptors expose EOS archive, dataset, result-slot,
+and record availability without retaining HDF5 handles or numerical fit arrays.
+A detailed :class:`~quantas.api.plotting.PlotInventory` is attached only after
+an explicit record, accepted slot, or unique accepted record has been selected.
+
+.. autoclass:: quantas.api.eos.DatasetPlotDescriptor
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.RecordPlotDescriptor
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.SlotPlotDescriptor
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.ArchivePlotInventory
+   :members:
+   :show-inheritance:

@@ -322,6 +322,7 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
                 Capability.CALCULATE,
                 Capability.DIAGNOSE,
                 Capability.PLOT,
+                Capability.PLOT_INVENTORY,
             }
         ),
         operations=(
@@ -333,6 +334,7 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             (Capability.CALCULATE, "calculate"),
             (Capability.DIAGNOSE, "diagnose"),
             (Capability.PLOT, "build_plots"),
+            (Capability.PLOT_INVENTORY, "describe_plots"),
         ),
         input_type_name="Dataset",
         options_type_name="FitOptions",

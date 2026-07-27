@@ -18,8 +18,8 @@ from quantas.core.events import EventLevel
 from quantas.cli.output import CLIOutput
 from quantas.api.eos import (
     PlotOptions as EOSPlotOptions,
-    available_plot_types,
     build_plots as build_eos_plots,
+    describe_plots as describe_eos_plots,
     calculate as calculate_eos,
     diagnose as diagnose_eos,
     calculation_summary_table,
@@ -113,15 +113,6 @@ def diagnose(
         terminal.close()
 
 
-_EOS_PLOT_DESCRIPTIONS = {
-    "fit": "Observed data and fitted P-V or V-T curve.",
-    "residuals": "Physical residuals against pressure or temperature.",
-    "standardized-residuals": "Dimensionless standardized residuals.",
-    "normalized-pressure": "Finite-strain normalized-pressure diagnostic.",
-    "coverage": "Pressure-temperature coverage of a P-V-T dataset.",
-    "isotherms": "Calculated P-V isotherms with P-V-T observations.",
-    "isobars": "Calculated V-T isobars with P-V-T observations.",
-}
 
 
 @click.command(name="plot", cls=GroupedCommand)
@@ -150,7 +141,9 @@ _EOS_PLOT_DESCRIPTIONS = {
             "fit",
             "residuals",
             "standardized-residuals",
+            "standardized_residuals",
             "normalized-pressure",
+            "normalized_pressure",
             "coverage",
             "isotherms",
             "isobars",
@@ -409,12 +402,32 @@ def plot(
         else (figure_width, figure_height)
     )
     try:
-        available = available_plot_types(
-            archive, slot=slot, record_id=record_id
-        )
         if list_plots:
-            for kind in available:
-                click.echo(f"{kind:28s} {_EOS_PLOT_DESCRIPTIONS[kind]}")
+            inventory = describe_eos_plots(
+                archive,
+                slot=slot,
+                record_id=record_id,
+            )
+            if inventory.selected_plots is None:
+                for warning in inventory.warnings:
+                    click.echo(f"Warning: {warning}")
+                click.echo("Available EOS result slots and plottable records:")
+                for item in inventory.slots:
+                    records = ", ".join(
+                        str(value) for value in item.plottable_record_ids
+                    ) or "none"
+                    accepted = (
+                        "none"
+                        if item.accepted_record_id is None
+                        else str(item.accepted_record_id)
+                    )
+                    click.echo(
+                        f"{item.key:20s} status={item.status.value}; "
+                        f"accepted={accepted}; plottable={records}"
+                    )
+                return
+            for item in inventory.selected_plots.representations:
+                click.echo(f"{item.key:28s} {item.description}")
             return
         if output_dir is None:
             stem = archive.with_suffix("")

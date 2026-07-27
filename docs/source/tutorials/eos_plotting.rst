@@ -28,6 +28,12 @@ can be selected by repeating ``--plot``:
        --format png --dpi 200
 
 Use ``--list-plots`` to inspect the plots available for a particular record.
+The command uses the same public session-aware inventory consumed by Python
+clients and Quantas GUI.  When an archive contains no accepted result, or more
+than one accepted result slot, the command lists the available slots and
+plottable immutable records instead of choosing one silently.  Add ``--slot``
+or ``--record-id`` to request the detailed representation inventory.
+
 The list depends on the scientific domain and on the information actually
 stored by the solver. Standardized residuals, for example, are offered only
 when they exist.
@@ -74,7 +80,30 @@ the sampled pressure or temperature range.
 Python API
 ----------
 
-The API first prepares frontend-neutral
+The public inventory keeps the persistent EOS lifecycle explicit.  Archive
+datasets, result slots, immutable records, acceptance state, and representation
+keys can be inspected without opening a writable session or building figures:
+
+.. code-block:: python
+
+   from quantas.api import eos
+
+   inventory = eos.describe_plots(
+       "quartz_EOS.hdf5",
+       slot="pv/volume",
+   )
+   for dataset in inventory.datasets:
+       print(dataset.dataset_id, dataset.jobname, dataset.slot_keys)
+   for record in inventory.records:
+       print(record.record_id, record.disposition.value, record.representation_keys)
+
+   plots = inventory.selected_plots
+   if plots is not None:
+       for representation in plots.representations:
+           print(representation.key, representation.description)
+
+The selected representation keys are accepted directly by
+:func:`quantas.api.eos.build_plots`.  The API first prepares frontend-neutral
 :class:`~quantas.api.plotting.PlotCollection` objects. Matplotlib is invoked only
 through the public rendering bridge:
 

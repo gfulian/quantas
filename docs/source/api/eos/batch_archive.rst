@@ -50,6 +50,49 @@ Native archive
 
 .. autofunction:: quantas.api.eos.open_archive
 
+Immutable history and inspection contracts
+------------------------------------------
+
+.. autoclass:: quantas.api.eos.FitRecord
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.SlotState
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.SlotStatus
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.StateEvent
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.StateEventType
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.RecordDisposition
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.RecordInspection
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.SlotInspection
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.ArchiveInspection
+   :members:
+   :show-inheritance:
+
+.. autoclass:: quantas.api.eos.ArchiveSizeInfo
+   :members:
+   :show-inheritance:
+
 Persistent session
 ------------------
 
