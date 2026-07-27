@@ -2,6 +2,10 @@
 
 """Neutral plot specifications for seismic-wave results."""
 
+from .inventory import (
+    available_seismic_plot_properties,
+    describe_seismic_plots,
+)
 from .spec import (
     SeismicPlotOptions,
     SeismicSurfaceOptions,
@@ -13,6 +17,8 @@ from .spec import (
 )
 
 __all__ = [
+    "available_seismic_plot_properties",
+    "describe_seismic_plots",
     "SeismicPlotOptions",
     "SeismicSurfaceOptions",
     "SurfaceGeometry",

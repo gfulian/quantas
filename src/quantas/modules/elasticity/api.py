@@ -14,6 +14,7 @@ from quantas.core.events import Observer
 from quantas.models import (
     ModuleContract,
     PlotCollection,
+    PlotInventory,
     ReportTable,
     ResultData,
     mapping_table,
@@ -33,6 +34,7 @@ from quantas.modules.elasticity.models import (
 )
 from quantas.modules.elasticity.plot import (
     ElasticityPlotProperty,
+    describe_elasticity_plots,
     ElasticitySurfaceGeometry,
     build_elasticity_2d_plot_collection,
     build_elasticity_plot_collection,
@@ -193,6 +195,16 @@ def build_elasticity_report(result: ResultData) -> list[ReportTable]:
     if payload.variations:
         tables.append(variations_table(payload))
     return tables
+
+
+def describe_elasticity_plot_inventory(result: ResultData) -> PlotInventory:
+    """Describe plots that can be built from a complete elasticity result."""
+    payload = result.results.get("elasticity")
+    if result.metadata.module != "elasticity" or not isinstance(
+        payload, ElasticityResult
+    ):
+        raise ValueError("ResultData does not contain a valid elasticity result.")
+    return describe_elasticity_plots(payload)
 
 
 def build_elasticity_plots(result: ResultData) -> PlotCollection:

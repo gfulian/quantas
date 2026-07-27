@@ -12,23 +12,37 @@ public contract; they must still be documented and validated.
 - Added the public ``quantas.api.plotting`` namespace for the existing
   frontend-neutral plot specifications, axes, series, masks, overlays, surface
   layers, directional fields, composite panels, and plot collections.
+- Added frozen frontend-neutral descriptors for plot properties,
+  representations, scientific contexts, and complete result-aware inventories.
+- Added public ``describe_plots(result)`` discovery for Elasticity, SEISMIC,
+  and HA, together with the incremental registry capability
+  ``PLOT_INVENTORY``.
 - Added frozen API-surface, renderer-independence, and typed-dispatch tests for
   the public plotting contracts.
+- Added inventory consistency and builder-compatibility tests covering
+  Elasticity branches and geometries, result-conditioned SEISMIC fields, and HA
+  sampled temperature and volume grids.
 
 ### Changed
 
 - Public workflow facades and the immediately affected CLI plotting adapters now
   reference plot contracts through ``quantas.api.plotting`` instead of relying
   on the implementation namespace.
+- Centralized SEISMIC scalar-property discovery so the public inventory and the
+  existing plot builders derive labels and availability from one authoritative
+  result-aware catalogue.
 - Reopened the pre-RC public-API freeze for the narrowly scoped plotting-contract
   stabilization required by CLI, GUI, notebooks, and scientific-library users.
 
 ### Scientific compatibility
 
-This first public-plotting increment aliases the existing authoritative
-contracts. It does not change numerical algorithms, scientific selection,
-array values or shapes, units, tensor conventions, HDF5 schemas, or rendered
-plot data.
+The public-plotting increments completed so far alias the existing authoritative
+plot specifications and add passive discovery metadata. They do not change
+numerical algorithms, scientific selection, array values or shapes, tensor
+conventions, HDF5 schemas, or rendered plot data. The ``2.0.0b7`` development
+cycle remains open until the remaining module inventories, QHA pressure-axis
+sections, serialization, frontend equivalence, and full release validation are
+complete.
 
 ## [2.0.0b6] - 2026-07-24
 

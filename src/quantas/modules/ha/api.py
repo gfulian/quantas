@@ -16,6 +16,7 @@ from quantas.models import (
     ModuleContract,
     PhononInputData,
     PlotCollection,
+    PlotInventory,
     ReportTable,
     ResultData,
     input_data_table,
@@ -30,7 +31,7 @@ from quantas.modules.ha.io.reader import (
 from quantas.modules.ha.io.inpgen import create_ha_input as create_ha_input_file
 from quantas.modules.ha.io.export import HAHDF5Export
 from quantas.modules.ha.models import HAInput, HAOptions, HAResult
-from quantas.modules.ha.plot import build_ha_plot_collection
+from quantas.modules.ha.plot import build_ha_plot_collection, describe_ha_plots
 from quantas.modules.ha.report import (
     static_data_table,
     thermodynamic_property_tables,
@@ -260,6 +261,14 @@ def build_ha_report(result: ResultData) -> list[ReportTable]:
         )
     )
     return tables
+
+
+def describe_ha_plot_inventory(result: ResultData) -> PlotInventory:
+    """Describe plots that can be built from a complete HA result."""
+    payload = result.results.get("ha")
+    if result.metadata.module != "ha" or not isinstance(payload, HAResult):
+        raise ValueError("ResultData does not contain a valid HA result.")
+    return describe_ha_plots(payload)
 
 
 def build_ha_plots(

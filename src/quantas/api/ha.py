@@ -9,6 +9,7 @@ from pathlib import Path
 from quantas.core.events import Observer
 from quantas.modules.ha.api import (
     build_ha_plots as _build_plots,
+    describe_ha_plot_inventory as _describe_plots,
     build_ha_report as _build_report,
     create_ha_input as _create_input,
     normalize_ha_input as _normalize_input,
@@ -30,7 +31,7 @@ from .common import (
     _public_dir,
     get_result_payload,
 )
-from .plotting import PlotCollection
+from .plotting import PlotCollection, PlotInventory
 
 
 def create_input(
@@ -251,6 +252,24 @@ def build_report(result: ResultData) -> list[ReportTable]:
     return _build_report(result)
 
 
+def describe_plots(result: ResultData) -> PlotInventory:
+    """Return result-aware HA plot properties and sampled grids.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete harmonic result envelope.
+
+    Returns
+    -------
+    PlotInventory
+        Available thermodynamic properties, their symbols and units, and the
+        exact temperature and volume context represented by the builder.
+    """
+    get_result(result)
+    return _describe_plots(result)
+
+
 def build_plots(
     result: ResultData,
     properties: str | list[str] | tuple[str, ...] | None = None,
@@ -289,6 +308,7 @@ __all__ = [
     "Result",
     "build_plots",
     "build_report",
+    "describe_plots",
     "create_input",
     "get_result",
     "normalize_input",

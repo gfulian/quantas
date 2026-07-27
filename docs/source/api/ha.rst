@@ -70,6 +70,8 @@ Reports, plots, and persistence
 
 .. autofunction:: quantas.api.ha.build_report
 
+.. autofunction:: quantas.api.ha.describe_plots
+
 .. autofunction:: quantas.api.ha.build_plots
 
 .. autofunction:: quantas.api.ha.write_result

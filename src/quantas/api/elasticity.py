@@ -11,6 +11,7 @@ from quantas.core.events import Observer
 from quantas.core.physics.elasticity import ElasticSurfaceProperty as SurfaceProperty
 from quantas.modules.elasticity.api import (
     build_elasticity_2d_plots as _build_2d_plots,
+    describe_elasticity_plot_inventory as _describe_plots,
     build_elasticity_3d_plots as _build_3d_plots,
     build_elasticity_plots as _build_plots,
     build_elasticity_report as _build_report,
@@ -31,7 +32,7 @@ from quantas.modules.elasticity.plot import (
 )
 
 from .common import ReportTable, ResultData, _public_dir, get_result_payload
-from .plotting import PlotCollection
+from .plotting import PlotCollection, PlotInventory
 
 
 def read_input(source: str | Path) -> Input:
@@ -214,6 +215,24 @@ def build_report(result: ResultData) -> list[ReportTable]:
     return _build_report(result)
 
 
+def describe_plots(result: ResultData) -> PlotInventory:
+    """Return result-aware elasticity plot properties and representations.
+
+    Parameters
+    ----------
+    result : ResultData
+        Complete elasticity result envelope.
+
+    Returns
+    -------
+    PlotInventory
+        Available directional properties, branch metadata, principal-plane
+        context, and three-dimensional geometries.
+    """
+    get_result(result)
+    return _describe_plots(result)
+
+
 def build_plots(result: ResultData) -> PlotCollection:
     """Build the default frontend-neutral elasticity plots.
 
@@ -340,6 +359,7 @@ __all__ = [
     "build_3d_plots",
     "build_plots",
     "build_report",
+    "describe_plots",
     "get_result",
     "normalize_input",
     "read_input",

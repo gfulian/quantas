@@ -67,6 +67,8 @@ Reporting and plotting
 
 .. autofunction:: quantas.api.elasticity.build_report
 
+.. autofunction:: quantas.api.elasticity.describe_plots
+
 .. autofunction:: quantas.api.elasticity.build_plots
 
 .. autofunction:: quantas.api.elasticity.build_2d_plots

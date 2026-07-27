@@ -19,6 +19,7 @@ def test_public_plotting_aliases_authoritative_contracts() -> None:
         ContourPlotSpec as InternalContourPlotSpec,
         LinePlotSpec as InternalLinePlotSpec,
         PlotCollection as InternalPlotCollection,
+        PlotInventory as InternalPlotInventory,
         PolarPlotSpec as InternalPolarPlotSpec,
         SurfacePlotSpec as InternalSurfacePlotSpec,
     )
@@ -29,6 +30,7 @@ def test_public_plotting_aliases_authoritative_contracts() -> None:
     assert plotting.SurfacePlotSpec is InternalSurfacePlotSpec
     assert plotting.PlotCollection is InternalPlotCollection
     assert common.PlotCollection is plotting.PlotCollection
+    assert plotting.PlotInventory is InternalPlotInventory
 
 
 def test_public_plotting_supports_typed_renderer_dispatch() -> None:

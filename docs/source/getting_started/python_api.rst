@@ -258,6 +258,12 @@ private classes or hard-coding a single inheritance hierarchy:
    run_qha = qha.operation(Capability.RUN)
    options_type = qha.options_type
 
+   elasticity = registry.get("elasticity")
+   if elasticity.has(Capability.PLOT_INVENTORY):
+       describe = elasticity.operation(Capability.PLOT_INVENTORY)
+       inventory = describe(registry.open_result("calcite.hdf5"))
+       print([item.key for item in inventory.properties])
+
 EOS declares ``FIT``, ``BATCH``, and ``ARCHIVE`` capabilities instead of
 pretending to be a single-shot ``RUN`` module.  Native HDF5 files can also be
 dispatched from their metadata:

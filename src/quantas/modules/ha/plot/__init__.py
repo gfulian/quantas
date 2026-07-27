@@ -2,6 +2,7 @@
 
 """Neutral plot builders for harmonic-approximation results."""
 
+from .inventory import describe_ha_plots
 from .spec import (
     DEFAULT_PLOT_PROPERTIES,
     PLOT_PROPERTIES,
@@ -11,6 +12,7 @@ from .spec import (
 )
 
 __all__ = [
+    "describe_ha_plots",
     "DEFAULT_PLOT_PROPERTIES",
     "PLOT_PROPERTIES",
     "build_ha_plot_collection",

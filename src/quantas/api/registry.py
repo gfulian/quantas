@@ -45,6 +45,7 @@ class Capability(str, Enum):
     WRITE_RESULT = "write_result"
     REPORT = "report"
     PLOT = "plot"
+    PLOT_INVENTORY = "plot_inventory"
     EXPORT = "export"
     ARCHIVE = "archive"
     CALCULATE = "calculate"
@@ -223,14 +224,22 @@ _STANDARD_RESULT_OPERATIONS = (
     (Capability.PLOT, "build_plots"),
 )
 
+_PLOT_INVENTORY_OPERATION = (Capability.PLOT_INVENTORY, "describe_plots")
+
+
 _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
     ModuleDescriptor(
         name="elasticity",
         title="Second-order elasticity",
         api_module="quantas.api.elasticity",
         result_key="elasticity",
-        capabilities=frozenset(capability for capability, _ in _STANDARD_RESULT_OPERATIONS),
-        operations=_STANDARD_RESULT_OPERATIONS,
+        capabilities=frozenset(
+            {
+                *(capability for capability, _ in _STANDARD_RESULT_OPERATIONS),
+                Capability.PLOT_INVENTORY,
+            }
+        ),
+        operations=(*_STANDARD_RESULT_OPERATIONS, _PLOT_INVENTORY_OPERATION),
         input_type_name="Input",
         options_type_name="Options",
         result_type_name="Result",
@@ -244,9 +253,14 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             {
                 *(capability for capability, _ in _STANDARD_RESULT_OPERATIONS),
                 Capability.EXPORT,
+                Capability.PLOT_INVENTORY,
             }
         ),
-        operations=(*_STANDARD_RESULT_OPERATIONS, (Capability.EXPORT, "write_csv")),
+        operations=(
+            *_STANDARD_RESULT_OPERATIONS,
+            _PLOT_INVENTORY_OPERATION,
+            (Capability.EXPORT, "write_csv"),
+        ),
         input_type_name="Input",
         options_type_name="Options",
         result_type_name="Result",
@@ -260,9 +274,14 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             {
                 *(capability for capability, _ in _STANDARD_RESULT_OPERATIONS),
                 Capability.CREATE_INPUT,
+                Capability.PLOT_INVENTORY,
             }
         ),
-        operations=(*_STANDARD_RESULT_OPERATIONS, (Capability.CREATE_INPUT, "create_input")),
+        operations=(
+            *_STANDARD_RESULT_OPERATIONS,
+            _PLOT_INVENTORY_OPERATION,
+            (Capability.CREATE_INPUT, "create_input"),
+        ),
         input_type_name="Input",
         options_type_name="Options",
         result_type_name="Result",

@@ -50,6 +50,14 @@ from quantas.models.plot import (
     VectorFieldLayer,
     VectorFieldStyle,
 )
+from quantas.models.plot_inventory import (
+    PlotContextDescriptor,
+    PlotContextValue,
+    PlotInventory,
+    PlotKind,
+    PlotPropertyDescriptor,
+    PlotRepresentationDescriptor,
+)
 
 
 def __dir__() -> list[str]:
@@ -72,6 +80,12 @@ __all__ = [
     "PlotBand",
     "PlotBandStyle",
     "PlotCollection",
+    "PlotContextDescriptor",
+    "PlotContextValue",
+    "PlotInventory",
+    "PlotKind",
+    "PlotPropertyDescriptor",
+    "PlotRepresentationDescriptor",
     "PlotMask",
     "PlotSeries",
     "PlotSeriesStyle",

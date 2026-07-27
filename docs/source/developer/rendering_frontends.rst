@@ -91,6 +91,42 @@ Neutral plot contracts describe axes, series, bands, contours, spherical maps,
 contain prepared scientific data and portable style hints, not concrete artist
 objects.
 
+Plot discovery pipeline
+-----------------------
+
+Before constructing a plot, a frontend may request a result-aware
+:class:`quantas.api.plotting.PlotInventory` from a migrated public module:
+
+.. code-block:: text
+
+   typed Result
+       |
+       v
+   module describe_plots
+       |
+       v
+   PlotInventory
+       |
+       +--> property selector
+       +--> representation selector
+       +--> scientific context controls
+
+The inventory is the backend authority for scientific names, symbols, units,
+branches, compatible representation families, exact sampled coordinates, and
+result-conditioned limitations.  A GUI must not maintain a second scientific
+property catalogue.
+
+Inventory discovery does not replace module-specific build options.  A
+universal mapping-based request would discard useful type checking and would
+incorrectly flatten workflows such as Thermoelasticity and EOS.  The common
+contract therefore standardizes discovery while each public module retains the
+smallest scientifically appropriate builder signature.
+
+Mathematical symbols are renderer-neutral source strings without MathText or
+MathJax delimiters.  Plain symbols are supplied separately for terminals,
+tables, accessibility text, and renderers that do not parse mathematical
+markup.
+
 Module plot builders
 --------------------
 
@@ -147,6 +183,7 @@ A GUI should:
 * use public observer callbacks for progress;
 * consume typed results, ``ReportTable``, and ``PlotCollection``;
 * inspect module capabilities through the registry;
+* obtain scientific plot choices from public plot inventories when available;
 * keep GUI state and widgets outside Quantas core and modules;
 * never reproduce a scientific formula merely to update a display.
 

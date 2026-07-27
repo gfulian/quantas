@@ -42,6 +42,14 @@ from .plot import (
     VectorFieldLayer,
     VectorFieldStyle,
 )
+from .plot_inventory import (
+    PlotContextDescriptor,
+    PlotContextValue,
+    PlotInventory,
+    PlotKind,
+    PlotPropertyDescriptor,
+    PlotRepresentationDescriptor,
+)
 from .reader import BasicReader
 from .structures import (
     CellNormalization,
@@ -91,6 +99,12 @@ __all__ = [
     "ScalarBackground",
     "SecondaryAxis",
     "PlotSpec",
+    "PlotContextDescriptor",
+    "PlotContextValue",
+    "PlotInventory",
+    "PlotKind",
+    "PlotPropertyDescriptor",
+    "PlotRepresentationDescriptor",
     "PolarPlotPanel",
     "PolarPlotSpec",
     "SurfaceLayer",

@@ -16,6 +16,16 @@ classes or forcing every workflow into one inheritance hierarchy.
    qha = registry.get("qha")
    run_qha = qha.operation(Capability.RUN)
 
+   elasticity = registry.get("elasticity")
+   if elasticity.has(Capability.PLOT_INVENTORY):
+       describe = elasticity.operation(Capability.PLOT_INVENTORY)
+
+``PLOT_INVENTORY`` is introduced incrementally.  In the current development
+snapshot it is declared by Elasticity, SEISMIC, and HA.  A module must not
+advertise it until its result-aware inventory is public and covered by builder
+compatibility tests.  EOS will use a separate session-oriented inventory rather
+than pretending to be a one-shot result workflow.
+
 Capability and descriptor contracts
 -----------------------------------
 

@@ -13,7 +13,7 @@ recorded separately in the Quantas/Quantas GUI architectural decisions.
 | Current development version | `2.0.0b7` |
 | Baseline | `2.0.0b6`, `dev-refactor` line |
 | Working branch target | `dev/public-plot-api` |
-| Development status | Public plotting API stabilization |
+| Development status | Public plotting API stabilization — incomplete |
 | Numerical baseline | Unchanged from `2.0.0b6` |
 | Persistence schemas | Unchanged |
 
@@ -39,7 +39,7 @@ second scientific property catalog.
 EOS remains session-oriented and is not forced into the one-shot workflow used
 by the other scientific modules.
 
-## Completed in the current increment
+## Completed in the current development cycle
 
 - added the public `quantas.api.plotting` namespace;
 - exported the existing authoritative plot specifications and primitives without
@@ -52,28 +52,49 @@ by the other scientific modules.
 - reopened the roadmap freeze only for the scoped `2.0.0b7` public plotting pass;
 - bumped package, citation, minimum-baseline comment, and version tests to
   `2.0.0b7`.
+- added frozen descriptors for plot properties, representations, contexts, and
+  complete result-aware inventories;
+- added public ``describe_plots(result)`` discovery for Elasticity, SEISMIC,
+  and HA without introducing a generic mapping-based build request;
+- added the incremental registry capability ``PLOT_INVENTORY`` only for modules
+  whose inventories are currently implemented and tested;
+- exposed Elasticity branches, principal planes, and physical/unit-sphere
+  geometry compatibility;
+- exposed SEISMIC properties according to the calculation level actually stored
+  in the result, including group, power-flow, enhancement, surface, and
+  polarization availability;
+- exposed HA properties, resolved units, and exact stored temperature and
+  sampled-volume context;
+- centralized the SEISMIC scalar-property catalogue used by inventory discovery
+  and existing plot construction.
 
-No plot builder, numerical array, scientific selection, unit conversion, HDF5
-schema, or rendering result was intentionally changed in this increment.
+No plot builder signature, numerical array, scientific selection, unit
+conversion, HDF5 schema, or rendering result was intentionally changed in
+these increments.
 
 ## Verified evidence
 
-- final infrastructure, API, documentation, model, contract, packaging, and
-  repository selection: `118 passed`;
-- affected Elasticity and SEISMIC plotting/CLI selection: `50 passed`;
-- affected HA, QHA, Thermoelasticity, and EOS plotting/CLI selection:
-  `50 passed`, with one pre-existing EOS `RankWarning` for a deliberately sparse
-  polynomial fit;
-- full suite in the available environment: `468 passed` before the first failure,
-  caused by the unavailable real `odrpack` backend;
-- architecture audit: no failures, `64` complexity warnings and `23` information
-  items.
+- infrastructure, public API, documentation, source hygiene, contracts,
+  registry, and packaging selection: `201 passed`;
+- complete Elasticity, SEISMIC, and HA module selections: `166 passed`;
+- unchanged QHA, Thermoelasticity, and EOS plotting selections: `29 passed`,
+  with one pre-existing EOS `RankWarning` for a deliberately sparse polynomial
+  fit;
+- broader QHA, Thermoelasticity, and EOS selection in the available environment:
+  `461 passed` and `29 failed`; every failure requires the unavailable real
+  `odrpack` or `spglib` runtime dependency;
+- architecture audit: no failures, `66` complexity warnings and `23`
+  information items;
+- source and test trees compile successfully with ``compileall``;
+- an intermediate `2.0.0b7` wheel builds successfully, contains the new
+  inventory modules and `py.typed`, and passes an installed-package public API
+  smoke test.  This wheel is a development artifact, not a completed release.
 
 ## Environment limitations
 
-The current execution environment does not provide Ruff, mypy, Sphinx, the
-`wheel` build package, or a working `odrpack` backend.  Therefore the following
-checks remain mandatory in the project development environment before merge:
+The current execution environment does not provide Ruff, mypy, Sphinx, a
+working `odrpack` backend, or `spglib`.  Therefore the following checks remain
+mandatory in the project development environment before merge:
 
 ```powershell
 ruff check src tests tools docs/tools
@@ -88,19 +109,17 @@ real ODRPACK backend test; it is not a plotting-contract failure.
 
 ## Immediate next operation
 
-Define and characterize the smallest shared plot-inventory descriptors, then
-apply them first to Elasticity, SEISMIC, and HA.  The next increment must not yet
-introduce a universal generic build request.  QHA pressure-axis sections and
-Thermoelasticity family discovery follow only after the inventory contract has
-been validated on those three representative modules.
+Review and validate this first common inventory contract in the real project
+environment.  Then extend the same discovery principles to QHA, including
+exact-grid pressure-axis sections, before implementing Thermoelasticity family
+and stage discovery.  A universal generic build request remains explicitly out
+of scope.
 
 ## Open work for `2.0.0b7`
 
-- public property, representation, and context inventory contracts;
-- Elasticity inventory including branch, plane, and geometry compatibility;
-- SEISMIC inventory conditioned on result calculation level;
-- HA property and sampled-volume inventory;
+- final review of the common inventory contract and terminology;
 - QHA pressure-axis sections on exact native grid points;
+- QHA property, representation, pressure, and temperature inventory;
 - Thermoelasticity public family/stage discovery;
 - EOS session-oriented archive plot inventory;
 - frontend-neutral symbol and unit metadata consolidation;

@@ -77,6 +77,8 @@ Reports, summaries, and surfaces
 
 .. autofunction:: quantas.api.seismic.build_report
 
+.. autofunction:: quantas.api.seismic.describe_plots
+
 .. autofunction:: quantas.api.seismic.build_summary
 
 .. autofunction:: quantas.api.seismic.build_plots
