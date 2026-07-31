@@ -109,6 +109,67 @@ def test_public_api_accepts_an_elastic_medium() -> None:
 
 @pytest.mark.module
 @pytest.mark.seismic
+@pytest.mark.parametrize("density", [0.0, -1.0, np.nan, np.inf])
+def test_workflow_rejects_invalid_density(density: float) -> None:
+    invalid = _input()
+    invalid.density = density
+
+    with pytest.raises(ValueError, match="finite and positive"):
+        run_seismic(invalid, options=_options())
+
+
+@pytest.mark.module
+@pytest.mark.seismic
+@pytest.mark.parametrize("hemisphere", list(Hemisphere))
+def test_workflow_supports_each_hemisphere(hemisphere: Hemisphere) -> None:
+    options = SeismicOptions(
+        ntheta=4,
+        nphi=7,
+        hemisphere=hemisphere,
+        level=SamplingLevel.PHASE,
+        batch_size=8,
+        track_polarization_axes=False,
+    )
+
+    result = run_seismic(_input(), options=options)
+    payload = result.results["seismic"]
+
+    assert isinstance(payload, SeismicResult)
+    assert payload.grid.hemisphere is hemisphere
+    assert payload.field.n_points == 28
+
+
+@pytest.mark.module
+@pytest.mark.seismic
+def test_large_grid_progress_is_monotonic_and_not_persisted() -> None:
+    observer = ListObserver()
+    options = SeismicOptions(
+        ntheta=20,
+        nphi=30,
+        hemisphere=Hemisphere.FULL,
+        level=SamplingLevel.PHASE,
+        batch_size=64,
+        track_polarization_axes=False,
+    )
+
+    result = run_seismic(_input(), options=options, observer=observer)
+    progress = [
+        event for event in observer.events if event.level is EventLevel.PROGRESS
+    ]
+
+    values = [event.progress for event in progress]
+    assert values == sorted(values)
+    assert values[-1] == pytest.approx(1.0)
+    assert progress[-1].data == {
+        "kind": "sampling_progress",
+        "current": 600,
+        "total": 600,
+    }
+    assert all(event.level != EventLevel.PROGRESS.value for event in result.events)
+
+
+@pytest.mark.module
+@pytest.mark.seismic
 def test_workflow_rejects_non_positive_definite_stiffness() -> None:
     unstable = SeismicInput(
         jobname="Unstable",

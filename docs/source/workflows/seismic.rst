@@ -48,6 +48,15 @@ Phase results are always calculated.  ``group`` includes the phase stage, and
 Input and physical preconditions
 --------------------------------
 
+A shared Quantas elastic input can be generated directly from supported external
+outputs with either the public API or the CLI::
+
+   quantas seismic inpgen OUTPUT --interface crystal --output material.dat
+   quantas seismic inpgen OUTCAR --interface vasp --output material.dat
+
+Both entry points use ``quantas.api.seismic.create_input`` and require density
+metadata in addition to the stiffness tensor.
+
 The stiffness matrix must be finite, symmetric, and expressed in GPa.  SEISMIC
 uses the historical element-wise symmetry criterion
 
@@ -632,6 +641,19 @@ Non-fatal diagnostics are preserved in arrays and metadata:
 A warning count should be interpreted together with its mask and location.  For
 example, unresolved shear polarizations on a symmetry axis are expected and do
 not invalidate the phase speeds there.
+
+During sampling, the calculator emits one operational ``PROGRESS`` event after
+each completed batch.  Its ``current`` and ``total`` fields are monotonic and
+the final progress value is one.  Progress events are transport state for a live
+frontend and are intentionally not duplicated in the persisted event history.
+Settings, input, isotropic references, field completion, warnings, final
+completion, and errors use the same frontend-neutral event model; non-progress
+events are retained in the result envelope and native HDF5 file.
+
+Native HDF5 writing and reopening recheck finite positive density, stiffness
+symmetry, positive definiteness, and consistency of the stored stability
+eigenvalues.  A non-propagating medium therefore cannot be published or reopened
+as an apparently valid native SEISMIC result.
 
 Reports, export, and plots
 --------------------------

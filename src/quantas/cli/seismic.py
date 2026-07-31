@@ -38,6 +38,7 @@ from quantas.cli.messages import (
     quantas_error,
     quantas_finish,
     quantas_title,
+    prompt,
 )
 from quantas.cli.output import CLIOutput
 from quantas.cli.seismic_observer import SeismicProgressObserver
@@ -54,6 +55,7 @@ from quantas.api.plotting import (
 )
 from quantas.api.seismic import (
     Hemisphere,
+    InputInterface as SeismicInputInterface,
     Options as SeismicOptions,
     PlotOptions as SeismicPlotOptions,
     SurfaceGeometry,
@@ -65,6 +67,7 @@ from quantas.api.seismic import (
     build_report as build_seismic_report,
     build_summary as build_seismic_summary,
     build_surfaces as build_seismic_surfaces,
+    create_input as create_seismic_input,
     read_result as read_seismic_hdf5,
     run as run_seismic,
     write_csv as write_seismic_csv,
@@ -317,6 +320,55 @@ def run(
 
     if not quiet:
         echo_highlight(quantas_finish())
+
+
+@seismic.command(name="inpgen", cls=GroupedCommand)
+@click.argument(
+    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
+@click.option(
+    "-o",
+    "--output",
+    "outfile",
+    type=click.Path(dir_okay=False, path_type=Path),
+    default=None,
+    help="Output input file. Default: input base name + '_seismic_input.dat'.",
+)
+@click.option(
+    "-i",
+    "--interface",
+    type=click.Choice(["crystal", "vasp"], case_sensitive=True),
+    default="crystal",
+    show_default=True,
+    help="Interface used to read the external output file.",
+)
+def inpgen(filename: Path, outfile: Path | None, interface: str) -> None:
+    """Generate a Quantas SEISMIC input from CRYSTAL or VASP output."""
+    if outfile is None:
+        stem = filename.with_suffix("")
+        outfile = stem.with_name(stem.name + "_seismic_input").with_suffix(".dat")
+    else:
+        outfile = outfile.with_suffix(".dat")
+    echo_highlight(quantas_title())
+    try:
+        jobname = prompt(
+            "\nPlease enter a short description for the input file",
+            default="Unknown",
+            show_default=False,
+        )
+        outfile = create_seismic_input(
+            filename,
+            outfile,
+            interface=cast(SeismicInputInterface, interface),
+            jobname=jobname,
+        )
+    except Exception as exc:
+        echo_error(quantas_error(), bold=True)
+        echo_error(str(exc))
+        raise click.Abort() from exc
+    echo(f"SEISMIC input file written to: {outfile}")
+    echo_highlight(render_citation_notice(module_citation_keys("seismic")))
+    echo_highlight(quantas_finish())
 
 
 @seismic.command(name="plot", cls=GroupedCommand)

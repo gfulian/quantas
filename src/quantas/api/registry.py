@@ -369,6 +369,7 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
         capabilities=frozenset(
             {
                 *(capability for capability, _ in _STANDARD_RESULT_OPERATIONS),
+                Capability.CREATE_INPUT,
                 Capability.EXPORT,
                 Capability.PLOT_INVENTORY,
             }
@@ -376,9 +377,20 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
         operations=(
             *_STANDARD_RESULT_OPERATIONS,
             _PLOT_INVENTORY_OPERATION,
+            (Capability.CREATE_INPUT, "create_input"),
             (Capability.EXPORT, "write_csv"),
         ),
         operation_catalog=(
+            OperationDescriptor(
+                key="create_input",
+                capability=Capability.CREATE_INPUT,
+                function_name="create_input",
+                name="Create SEISMIC input",
+                description=(
+                    "Convert CRYSTAL or VASP elastic output with density to "
+                    "Quantas input."
+                ),
+            ),
             OperationDescriptor(
                 key="export_csv",
                 capability=Capability.EXPORT,

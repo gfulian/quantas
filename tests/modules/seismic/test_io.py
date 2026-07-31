@@ -265,6 +265,31 @@ def test_hdf5_reader_rejects_another_module(tmp_path: Path) -> None:
 
 @pytest.mark.module
 @pytest.mark.seismic
+def test_hdf5_writer_rejects_unstable_stiffness(tmp_path: Path) -> None:
+    result = run_seismic(DATA, options=_options(SamplingLevel.PHASE, tracking=False))
+    payload = result.results["seismic"]
+    assert isinstance(payload, SeismicResult)
+    payload.stiffness[3, 3] = -1.0
+
+    with pytest.raises(ValueError, match="positive-definite"):
+        write_seismic_hdf5(result, tmp_path / "unstable")
+    assert not (tmp_path / "unstable.hdf5").exists()
+
+
+@pytest.mark.module
+@pytest.mark.seismic
+def test_hdf5_reader_rejects_unstable_stiffness(tmp_path: Path) -> None:
+    result = run_seismic(DATA, options=_options(SamplingLevel.PHASE, tracking=False))
+    output = write_seismic_hdf5(result, tmp_path / "tampered")
+    with h5py.File(output, "r+") as h5:
+        h5["results/stiffness"][3, 3] = -1.0
+
+    with pytest.raises(ValueError, match="positive-definite"):
+        read_seismic_hdf5(output)
+
+
+@pytest.mark.module
+@pytest.mark.seismic
 def test_hdf5_writer_rejects_a_non_seismic_result(tmp_path: Path) -> None:
     result = ResultData(metadata=ResultMetadata(module="elasticity"))
     with pytest.raises(ValueError, match="valid seismic result"):

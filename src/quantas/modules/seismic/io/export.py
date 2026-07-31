@@ -11,6 +11,7 @@ from typing import Any
 import h5py
 import numpy as np
 
+from quantas.core.physics.seismic import MODE_INDEX, MODE_ORDER, MODE_SYMBOLS
 from quantas.io.hdf5 import (
     write_diagnostics,
     write_events,
@@ -21,8 +22,8 @@ from quantas.io.hdf5 import (
 )
 from quantas.io.path import ensure_suffix
 from quantas.models import BasicExport, BasicHDF5Export, ResultData
-from quantas.core.physics.seismic import MODE_INDEX, MODE_ORDER, MODE_SYMBOLS
 from quantas.modules.seismic.io.hdf5_payload import (
+    validate_seismic_payload_for_persistence,
     write_seismic_diagnostics,
     write_seismic_payload,
 )
@@ -60,6 +61,7 @@ class SeismicHDF5Export(BasicHDF5Export):
         ):
             raise ValueError("ResultData does not contain a valid seismic result.")
 
+        validate_seismic_payload_for_persistence(payload)
         output = ensure_suffix(filename, ".hdf5")
         with h5py.File(output, "w") as h5:
             write_result_metadata(h5, result)

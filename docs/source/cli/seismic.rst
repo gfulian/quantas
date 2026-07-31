@@ -11,12 +11,18 @@ Recommended sequence
 
 .. code-block:: console
 
+   quantas seismic inpgen OUTCAR --interface vasp --output material.dat
    quantas seismic run material.dat --level phase --ntheta 61 --nphi 121
    quantas seismic run material.dat --level enhancement --output material_final.hdf5
    quantas seismic plot material_final.hdf5 --summary
    quantas seismic plot material_final.hdf5 --2d --property phase_v_s1 \
       --polarizations
    quantas seismic export material_final.hdf5 --output material_fields.csv
+
+``inpgen`` exposes the same CRYSTAL/VASP generator as
+``quantas.api.seismic.create_input``.  Unlike Elasticity generation, SEISMIC
+requires finite positive density metadata and refuses to create a runnable input
+when the external output contains only a stiffness tensor.
 
 A staged resolution study is normally faster than beginning with the densest
 ``enhancement`` calculation.  Converge phase velocities and splitting first,

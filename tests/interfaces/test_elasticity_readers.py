@@ -69,6 +69,9 @@ def test_vasp_reader_prefers_relaxed_moduli(
     filename.write_text(
         "\n".join(
             [
+                "POMASS = 24.305; ZVAL = 2.000",
+                "ions per type = 2",
+                "volume of cell : 80.000000",
                 *block("SYMMETRIZED ELASTIC MODULI (kBar)", clamped),
                 *block("TOTAL ELASTIC MODULI (kBar)", relaxed),
             ]
@@ -85,6 +88,8 @@ def test_vasp_reader_prefers_relaxed_moduli(
     expected[[3, 5]] = expected[[5, 3]]
     expected[:, [3, 5]] = expected[:, [5, 3]]
     np.testing.assert_allclose(reader.stiffness, expected)
+    expected_density = 2.0 * 24.305 / 80.0 * 1660.53906660
+    assert reader.density == pytest.approx(expected_density)
 
 
 @pytest.mark.interfaces
