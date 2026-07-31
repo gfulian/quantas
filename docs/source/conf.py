@@ -10,7 +10,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from quantas import __version__
+from quantas import __version__  # noqa: E402
 
 project = "Quantas"
 author = "Gianfranco Ulian and Giovanni Valdrè"

@@ -129,8 +129,9 @@ SEISMIC requires one additional line after the six matrix rows:
    3174.0
 
 Only the first token is read.  The value must be finite and strictly positive.
-Elasticity ignores no trailing density line by design; use the same shared file
-when possible, but treat the density as part of the SEISMIC contract.
+Elasticity accepts the same trailing density line but does not use it in its
+scientific calculation.  Use the shared file when possible, while treating the
+density as mandatory only for the SEISMIC contract.
 
 Comments and blank lines
 ------------------------
@@ -143,12 +144,31 @@ line.
 Generating inputs from external codes
 --------------------------------------
 
-Supported interfaces can generate the normalized text form:
+Supported interfaces can generate the normalized text form through either
+workflow-owned public API.  The SEISMIC entry point additionally requires the
+source output to provide enough metadata for finite positive density.
 
-.. code-block:: console
+.. code-block:: python
 
-   quantas elasticity inpgen calculation.out --interface crystal
-   quantas elasticity inpgen OUTCAR --interface vasp
+   from quantas.api import elasticity, seismic
+
+   elasticity.create_input(
+       "calculation.out",
+       "elasticity.dat",
+       interface="crystal",
+       jobname="Crystal",
+   )
+   seismic.create_input(
+       "OUTCAR",
+       "seismic.dat",
+       interface="vasp",
+       jobname="Crystal",
+   )
+
+For VASP, density is derived from the species ``POMASS`` values, ``ions per
+type`` populations, and the final reported cell volume.  If these metadata are
+missing or inconsistent, Elasticity can still generate a stiffness-only input,
+whereas SEISMIC input generation fails explicitly.
 
 The parser preserves the Cartesian frame reported by the source code.  User
 rotations belong to the scientific workflow and are recorded in the result;

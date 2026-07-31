@@ -54,6 +54,8 @@ Passive contracts and selectors
    :members:
    :show-inheritance:
 
+.. autodata:: quantas.api.seismic.InputInterface
+
 The public enums below are the same types used by :class:`Options` and
 :class:`SurfaceOptions`; CLI and GUI clients do not need imports from
 implementation packages.
@@ -89,6 +91,8 @@ implementation packages.
 
 Input and calculation
 ---------------------
+
+.. autofunction:: quantas.api.seismic.create_input
 
 .. autofunction:: quantas.api.seismic.read_input
 

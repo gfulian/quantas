@@ -4,12 +4,15 @@
 
 from __future__ import annotations
 
+from math import isfinite
 from pathlib import Path
 from typing import Literal
 
 from quantas.core.events import Observer
 from quantas.core.geometry import Hemisphere, TensorRotation, TensorRotationKind
 from quantas.core.physics.seismic import ElasticMedium, SamplingLevel, WaveMode
+from quantas.io.path import ensure_suffix
+from quantas.modules.elasticity.io import ElasticityInputCreator
 from quantas.modules.seismic.api import (
     build_seismic_plots as _build_plots,
     describe_seismic_plot_inventory as _describe_plots,
@@ -39,6 +42,62 @@ from quantas.modules.seismic.plot.spec import (
 
 from .common import ReportTable, ResultData, _public_dir, get_result_payload
 from .plotting import PlotCollection, PlotInventory, SphericalSummarySpec
+
+
+InputInterface = Literal["crystal", "vasp"]
+
+
+def create_input(
+    source: str | Path,
+    destination: str | Path,
+    *,
+    interface: InputInterface = "crystal",
+    jobname: str = "Unknown",
+) -> Path:
+    """Create a Quantas seismic input from an external-code output.
+
+    Parameters
+    ----------
+    source : str or Path
+        CRYSTAL or VASP output containing an elastic stiffness tensor and
+        enough structural metadata to determine a finite positive density.
+    destination : str or Path
+        Destination text path. The ``.dat`` suffix is applied when absent.
+    interface : {"crystal", "vasp"}, optional
+        External-code reader used to interpret ``source``.
+    jobname : str, optional
+        Human-readable title written to the generated input.
+
+    Returns
+    -------
+    Path
+        Written Quantas seismic input path.
+
+    Raises
+    ------
+    ValueError
+        If the interface is unsupported, the source cannot be parsed, or
+        finite positive density metadata are unavailable.
+    OSError
+        If the destination cannot be written.
+    """
+    output = ensure_suffix(destination, ".dat")
+    try:
+        creator = ElasticityInputCreator(interface)
+    except KeyError as exc:
+        raise ValueError(f"Unsupported seismic input interface: {interface}") from exc
+    completed, error = creator.read(source)
+    if not completed:
+        raise ValueError(error or "Unable to create seismic input")
+    if creator.reader is None:
+        raise ValueError("Unable to create seismic input")
+    density = float(creator.reader.density)
+    if not isfinite(density) or density <= 0.0:
+        raise ValueError(
+            "SEISMIC input generation requires finite positive density metadata."
+        )
+    creator.write(output, jobname=jobname)
+    return output
 
 
 def read_input(source: str | Path) -> Input:
@@ -352,6 +411,7 @@ __all__ = [
     "ElasticMedium",
     "Hemisphere",
     "Input",
+    "InputInterface",
     "Options",
     "PlotOptions",
     "Result",
@@ -367,6 +427,7 @@ __all__ = [
     "describe_plots",
     "build_summary",
     "build_surfaces",
+    "create_input",
     "get_result",
     "normalize_input",
     "read_input",

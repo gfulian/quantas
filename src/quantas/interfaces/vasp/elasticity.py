@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import TypedDict
 
@@ -13,6 +14,20 @@ from quantas.models.reader import BasicReader
 
 _CLAMPED_ELASTIC_MODULI = "SYMMETRIZED ELASTIC MODULI (kBar)"
 _RELAXED_ELASTIC_MODULI = "TOTAL ELASTIC MODULI (kBar)"
+_ATOMIC_MASS_UNIT_PER_ANGSTROM_CUBED = 1660.53906660
+
+_POMASS_RE = re.compile(
+    r"POMASS\s*=\s*([-+0-9.EeDd]+)\s*;\s*ZVAL",
+    flags=re.IGNORECASE,
+)
+_IONS_PER_TYPE_RE = re.compile(
+    r"ions\s+per\s+type\s*=\s*([0-9 \t]+)",
+    flags=re.IGNORECASE,
+)
+_VOLUME_RE = re.compile(
+    r"volume\s+of\s+cell\s*:\s*([-+0-9.EeDd]+)",
+    flags=re.IGNORECASE,
+)
 
 
 class _ElasticityData(TypedDict):
@@ -67,7 +82,8 @@ class VASPElasticityReader(BasicReader[None]):
             )
             return
 
-        lines = path.read_text(encoding="utf-8").splitlines()
+        text = path.read_text(encoding="utf-8")
+        lines = text.splitlines()
         start = self.elasticity_start_line(path)
         for row in range(6):
             values = lines[start + row].split()
@@ -86,7 +102,55 @@ class VASPElasticityReader(BasicReader[None]):
         stiffness = self._data["stiffness"]
         stiffness[[3, 5]] = stiffness[[5, 3]]
         stiffness[:, [3, 5]] = stiffness[:, [5, 3]]
+        self._data["density"] = self._read_density(text)
         self.completed = True
+
+    @staticmethod
+    def _read_density(text: str) -> float:
+        """Return the final VASP cell density in kg m^-3 when available.
+
+        VASP reports species masses through ``POMASS``, species populations
+        through ``ions per type``, and one or more cell volumes during a run.
+        The final reported volume is paired with the species-resolved mass.
+        Missing or incomplete metadata leave density unavailable rather than
+        invalidating an otherwise usable Elasticity input.
+        """
+        mass_matches = _POMASS_RE.findall(text)
+        count_matches = _IONS_PER_TYPE_RE.findall(text)
+        volume_matches = _VOLUME_RE.findall(text)
+        if not mass_matches or not count_matches or not volume_matches:
+            return 0.0
+
+        try:
+            masses = np.asarray(
+                [
+                    float(value.replace("D", "E").replace("d", "e"))
+                    for value in mass_matches
+                ],
+                dtype=float,
+            )
+            counts = np.asarray(
+                [int(value) for value in count_matches[0].split()],
+                dtype=int,
+            )
+            volume = float(volume_matches[-1].replace("D", "E").replace("d", "e"))
+        except ValueError:
+            return 0.0
+
+        if (
+            masses.shape != counts.shape
+            or masses.size == 0
+            or np.any(~np.isfinite(masses))
+            or np.any(masses <= 0.0)
+            or np.any(counts <= 0)
+            or not np.isfinite(volume)
+            or volume <= 0.0
+        ):
+            return 0.0
+
+        total_mass = float(np.dot(masses, counts))
+        density = total_mass / volume * _ATOMIC_MASS_UNIT_PER_ANGSTROM_CUBED
+        return float(density) if np.isfinite(density) and density > 0.0 else 0.0
 
     def is_elasticity_output(self, filename: str | Path) -> bool:
         """Return whether a VASP OUTCAR contains an elastic-moduli section."""

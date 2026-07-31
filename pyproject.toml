@@ -7,7 +7,7 @@ name = "quantas"
 dynamic = ["version"]
 description = "Quantitative analysis of solid-state thermodynamics, elasticity, seismic waves, and equations of state"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 license = "BSD-3-Clause"
 license-files = ["LICENSE"]
 authors = [

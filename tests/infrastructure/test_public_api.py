@@ -93,6 +93,7 @@ def test_registry_declares_all_scientific_modules_and_types() -> None:
     assert registry.get("qha").has(Capability.INSPECT)
     assert registry.get("qha").has(Capability.CREATE_INPUT)
     assert registry.get("qha").has(Capability.EXPORT)
+    assert registry.get("seismic").has(Capability.CREATE_INPUT)
     assert registry.get("eos").has(Capability.FIT)
     assert registry.get("eos").has(Capability.PLOT_INVENTORY)
     assert registry.get("eos").operation(Capability.PLOT_INVENTORY) is eos.describe_plots
@@ -111,6 +112,7 @@ def test_registry_describes_multiple_named_operations() -> None:
         elasticity_descriptor.named_operation("export_2d_table")
         is elasticity.write_table
     )
+    assert registry.get("seismic").named_operation("create_input") is seismic.create_input
 
     eos_exports = registry.get("eos").operations_for(Capability.EXPORT)
     assert eos_exports == (eos.write_diagnostic_csv, eos.write_calculation_csv)

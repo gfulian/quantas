@@ -5,13 +5,15 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import pytest
 from click.testing import CliRunner
 
-from quantas.api import elasticity, ha, qha
+from quantas.api import elasticity, ha, qha, seismic
+from quantas.api.common import ResultData, ResultMetadata
 from quantas.cli.elasticity import elasticity as elasticity_cli
 from quantas.cli.ha import ha as ha_cli
 from quantas.cli.qha import qha as qha_cli
-from quantas.api.common import ResultData, ResultMetadata
+from quantas.cli.seismic import seismic as seismic_cli
 
 
 CRYSTAL_ELASTICITY_OUTPUT = (
@@ -20,6 +22,37 @@ CRYSTAL_ELASTICITY_OUTPUT = (
     / "data"
     / "calcite_crystal_elastcon_excerpt.out"
 )
+
+
+def _write_vasp_elasticity_output(
+    path: Path,
+    *,
+    include_density: bool = True,
+) -> Path:
+    """Write a compact VASP elasticity output accepted by the public reader."""
+    matrix = np.diag([2000.0, 2100.0, 2200.0, 700.0, 800.0, 900.0])
+    lines: list[str] = []
+    if include_density:
+        lines.extend(
+            [
+                "POMASS = 24.305; ZVAL = 2.000",
+                "ions per type = 2",
+                "volume of cell : 80.000000",
+            ]
+        )
+    lines.extend(
+        [
+            "SYMMETRIZED ELASTIC MODULI (kBar)",
+            "separator",
+            "separator",
+        ]
+    )
+    lines.extend(
+        f"{row + 1} " + " ".join(str(value) for value in matrix[row])
+        for row in range(6)
+    )
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
 
 
 def test_elasticity_public_input_generator_is_runnable(tmp_path: Path) -> None:
@@ -61,6 +94,123 @@ def test_elasticity_cli_input_matches_public_api(tmp_path: Path) -> None:
     )
     assert response.exit_code == 0, response.output
     assert cli_path.read_bytes() == api_path.read_bytes()
+
+
+def test_seismic_cli_input_matches_public_api(tmp_path: Path) -> None:
+    """SEISMIC CLI and API generate identical normalized input text."""
+    api_path = seismic.create_input(
+        CRYSTAL_ELASTICITY_OUTPUT,
+        tmp_path / "api-seismic",
+        interface="crystal",
+        jobname="SEISMIC lifecycle",
+    )
+    cli_path = tmp_path / "cli-seismic.dat"
+    response = CliRunner().invoke(
+        seismic_cli,
+        [
+            "inpgen",
+            str(CRYSTAL_ELASTICITY_OUTPUT),
+            "--output",
+            str(cli_path),
+            "--interface",
+            "crystal",
+        ],
+        input="SEISMIC lifecycle\n",
+    )
+
+    assert response.exit_code == 0, response.output
+    assert cli_path.read_bytes() == api_path.read_bytes()
+
+
+def test_seismic_crystal_input_generator_preserves_density(tmp_path: Path) -> None:
+    """SEISMIC owns a public generator for the shared elastic input format."""
+    output = seismic.create_input(
+        CRYSTAL_ELASTICITY_OUTPUT,
+        tmp_path / "calcite-seismic",
+        interface="crystal",
+        jobname="Calcite seismic API",
+    )
+
+    parsed = seismic.read_input(output)
+    assert parsed.jobname == "Calcite seismic API"
+    assert parsed.stiffness is not None
+    assert parsed.stiffness[0, 4] == 20.67
+    assert parsed.density == 2680.0
+
+
+def test_seismic_and_elasticity_generators_share_input_text(tmp_path: Path) -> None:
+    """Both public namespaces expose byte-identical shared input generation."""
+    elastic_path = elasticity.create_input(
+        CRYSTAL_ELASTICITY_OUTPUT,
+        tmp_path / "elasticity-input",
+        interface="crystal",
+        jobname="Shared input",
+    )
+    seismic_path = seismic.create_input(
+        CRYSTAL_ELASTICITY_OUTPUT,
+        tmp_path / "seismic-input",
+        interface="crystal",
+        jobname="Shared input",
+    )
+
+    assert seismic_path.read_bytes() == elastic_path.read_bytes()
+
+
+def test_seismic_vasp_generator_preserves_density(
+    tmp_path: Path,
+) -> None:
+    """VASP mass, population, and final volume metadata produce kg m^-3."""
+    source = _write_vasp_elasticity_output(tmp_path / "OUTCAR")
+
+    output = seismic.create_input(
+        source,
+        tmp_path / "vasp-seismic",
+        interface="vasp",
+        jobname="VASP seismic API",
+    )
+    parsed = seismic.read_input(output)
+
+    expected_density = 2.0 * 24.305 / 80.0 * 1660.53906660
+    assert parsed.density == pytest.approx(expected_density, rel=5.0e-7)
+    assert parsed.stiffness is not None
+    assert parsed.stiffness[0, 0] == 200.0
+
+
+def test_seismic_cli_vasp_input(tmp_path: Path) -> None:
+    """The CLI exposes the public VASP generator with density preservation."""
+    source = _write_vasp_elasticity_output(tmp_path / "OUTCAR")
+    output = tmp_path / "cli-vasp.dat"
+    response = CliRunner().invoke(
+        seismic_cli,
+        [
+            "inpgen",
+            str(source),
+            "--output",
+            str(output),
+            "--interface",
+            "vasp",
+        ],
+        input="VASP SEISMIC CLI\n",
+    )
+
+    assert response.exit_code == 0, response.output
+    parsed = seismic.read_input(output)
+    expected_density = 2.0 * 24.305 / 80.0 * 1660.53906660
+    assert parsed.jobname == "VASP SEISMIC CLI"
+    assert parsed.density == pytest.approx(expected_density, rel=5.0e-7)
+
+
+def test_seismic_vasp_input_generator_rejects_missing_density(
+    tmp_path: Path,
+) -> None:
+    """A stiffness-only VASP OUTCAR cannot become a runnable SEISMIC input."""
+    source = _write_vasp_elasticity_output(
+        tmp_path / "OUTCAR-no-density",
+        include_density=False,
+    )
+
+    with pytest.raises(ValueError, match="finite positive density"):
+        seismic.create_input(source, tmp_path / "invalid", interface="vasp")
 
 
 def test_qha_input_generator_uses_shared_phonon_contract(

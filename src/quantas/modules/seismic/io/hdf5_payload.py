@@ -18,8 +18,12 @@ from numpy.typing import NDArray
 from quantas.core.geometry import Hemisphere, SphericalGrid, spherical_direction
 from quantas.core.physics.elasticity import (
     ElasticAverages,
+    ElasticTensor,
     IsotropicElasticProperties,
     StabilityResult,
+    StiffnessSymmetryCriterion,
+    check_positive_definiteness,
+    validate_stiffness_matrix,
 )
 from quantas.core.physics.seismic import IsotropicSeismicVelocities
 from quantas.core.physics.seismic import (
@@ -48,6 +52,58 @@ from quantas.modules.seismic.models import SeismicResult
 _MODE_ORDER = "v_s2,v_s1,v_p"
 _PAIR_ORDER = "v_s2-v_s1,v_s1-v_p"
 _BRANCH_ORDER = "shear_a,shear_b,p"
+
+
+def validate_seismic_payload_for_persistence(result: SeismicResult) -> None:
+    """Validate invariants required by a native SEISMIC result.
+
+    Native persistence accepts only results with finite positive density and a
+    finite, symmetric, positive-definite stiffness matrix.  Direction-local
+    invalid or degenerate acoustic modes remain representable through their
+    explicit masks and diagnostics.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Typed SEISMIC payload to validate.
+
+    Raises
+    ------
+    ValueError
+        If the payload cannot represent a physically propagating elastic
+        medium or its stored stability diagnostics are inconsistent.
+    """
+    if not np.isfinite(result.density) or result.density <= 0.0:
+        raise ValueError("Seismic HDF5 density must be finite and positive.")
+
+    matrix = validate_stiffness_matrix(
+        result.stiffness,
+        symmetry_tolerance=1.0e-8,
+        symmetry_criterion=StiffnessSymmetryCriterion.ELEMENTWISE,
+        copy=True,
+    )
+    stability = check_positive_definiteness(
+        ElasticTensor(matrix),
+        tolerance=result.stability.tolerance,
+    )
+    if not stability.is_stable:
+        raise ValueError(
+            "Seismic HDF5 results require a positive-definite stiffness matrix."
+        )
+    if not result.stability.is_stable:
+        raise ValueError(
+            "Stored seismic stability diagnostics are inconsistent with a "
+            "propagating result."
+        )
+    if not np.allclose(
+        result.stability.eigenvalues,
+        stability.eigenvalues,
+        rtol=1.0e-12,
+        atol=1.0e-12,
+    ):
+        raise ValueError(
+            "Stored seismic stability eigenvalues do not match the stiffness matrix."
+        )
 
 
 def write_seismic_payload(h5: h5py.File, result: SeismicResult) -> h5py.Group:
@@ -374,7 +430,7 @@ def read_seismic_payload(h5: h5py.File) -> SeismicResult:
     if diagnostics is not None and "seismic" in diagnostics:
         metadata = read_mapping(diagnostics["seismic"])
 
-    return SeismicResult(
+    result = SeismicResult(
         jobname=decode_text(group.attrs["jobname"]),
         density=density,
         stiffness=stiffness,
@@ -385,6 +441,8 @@ def read_seismic_payload(h5: h5py.File) -> SeismicResult:
         field=field,
         metadata=metadata,
     )
+    validate_seismic_payload_for_persistence(result)
+    return result
 
 
 def _read_stability(group: h5py.Group) -> StabilityResult:

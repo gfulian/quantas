@@ -64,6 +64,12 @@ _COMMAND_HELP: Final[Mapping[tuple[str, ...], str]] = {
         "resolution without modifying the archive.  All styling options affect rendering "
         "only."
     ),
+    ("seismic", "inpgen"): (
+        "Generate a Quantas SEISMIC input from an external electronic-structure output.\n\n"
+        "FILENAME is read through the selected CRYSTAL or VASP interface.  Generation "
+        "requires a stiffness tensor and finite positive density metadata; inspect the "
+        "resulting shared elastic input before passing it to 'quantas seismic run'."
+    ),
     ("ha",): (
         "Evaluate harmonic vibrational thermodynamics on one or more fixed volumes.\n\n"
         "The group converts supported phonon outputs to the Quantas YAML contract, runs "

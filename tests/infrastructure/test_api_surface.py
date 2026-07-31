@@ -281,6 +281,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "ElasticMedium",
         "Hemisphere",
         "Input",
+        "InputInterface",
         "Options",
         "PlotOptions",
         "Result",
@@ -296,6 +297,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "describe_plots",
         "build_summary",
         "build_surfaces",
+        "create_input",
         "get_result",
         "normalize_input",
         "read_input",
@@ -468,6 +470,7 @@ def test_cli_input_and_export_commands_use_public_facades() -> None:
         "elasticity.py",
         "ha.py",
         "qha.py",
+        "seismic.py",
         "phonon_input.py",
     )
     forbidden_fragments = (

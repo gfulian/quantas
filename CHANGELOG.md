@@ -49,6 +49,10 @@ public contract; they must still be documented and validated.
 - Added public Elasticity input generation and principal-plane table export,
   public HA/QHA table writers, and a QHA-owned entry point to the shared phonon
   input generator.
+- Added a workflow-owned ``quantas.api.seismic.create_input()`` entry point,
+  a matching ``quantas seismic inpgen`` command, and ``CREATE_INPUT`` registry
+  capability for the shared CRYSTAL/VASP elastic input format.  SEISMIC
+  generation requires finite positive density metadata.
 - Added public rotation, structure, symmetry, seismic selector, thermoelastic
   fitting/coupling, and EOS model types needed to construct annotated public
   inputs, options, and requests without implementation imports.
@@ -57,12 +61,17 @@ public contract; they must still be documented and validated.
 
 ### Changed
 
+- Constrained package metadata to Python 3.10--3.13 until the complete
+  scientific dependency stack and validation suite are certified on Python 3.14.
 - Public workflow facades and the immediately affected CLI plotting adapters now
   reference plot contracts through ``quantas.api.plotting`` instead of relying
   on the implementation namespace.
 - Centralized SEISMIC scalar-property discovery so the public inventory and the
   existing plot builders derive labels and availability from one authoritative
   result-aware catalogue.
+- Extended the VASP elasticity interface to derive cell density from ``POMASS``,
+  ``ions per type``, and the final reported cell volume when those metadata are
+  available.
 - Centralized HA plot keys, names, mathematical symbols, plain symbols, and
   scientific categories so inventory discovery and existing builders use one
   authoritative backend catalogue.
@@ -84,6 +93,9 @@ public contract; they must still be documented and validated.
 
 ### Fixed
 
+- Rejected native SEISMIC HDF5 writes and reads when the stored stiffness
+  matrix is not positive definite or its stability diagnostics are inconsistent,
+  preventing an apparently valid persisted result for a non-propagating medium.
 - Prevented the default Thermoelasticity plot builder from attempting an
   invalid P--T contour for point or one-dimensional analysis archives.  The
   pre-existing priority remains profile, two-dimensional P--T grid, then

@@ -6,6 +6,7 @@ from pathlib import Path
 
 import gc
 
+import h5py
 import matplotlib
 import numpy as np
 import pytest
@@ -259,6 +260,65 @@ def test_seismic_run_command_writes_report_and_hdf5_without_figures(
     assert "Sampled phase-velocity extrema" in report
 
 
+def test_cli_and_api_run_match_with_declared_units(tmp_path: Path) -> None:
+    options = SeismicOptions(
+        ntheta=4,
+        nphi=7,
+        hemisphere=Hemisphere.UPPER,
+        level=SamplingLevel.PHASE,
+        batch_size=5,
+        track_polarization_axes=False,
+    )
+    api_result = run_seismic(DATA, options=options)
+    output = tmp_path / "cli_result.hdf5"
+    response = CliRunner().invoke(
+        main,
+        [
+            "seismic",
+            "run",
+            str(DATA),
+            "--ntheta",
+            "4",
+            "--nphi",
+            "7",
+            "--hemisphere",
+            "upper",
+            "--level",
+            "phase",
+            "--batch-size",
+            "5",
+            "--no-track-polarizations",
+            "--quiet",
+            "--output",
+            str(output),
+            "--report",
+            str(tmp_path / "cli_result.log"),
+        ],
+    )
+
+    assert response.exit_code == 0, response.output
+    cli_result = read_seismic_hdf5(output)
+    api_payload = api_result.results["seismic"]
+    cli_payload = cli_result.results["seismic"]
+    np.testing.assert_allclose(
+        cli_payload.field.phase.phase_speeds,
+        api_payload.field.phase.phase_speeds,
+        rtol=0.0,
+        atol=0.0,
+    )
+    np.testing.assert_allclose(
+        cli_payload.grid.directions,
+        api_payload.grid.directions,
+        rtol=0.0,
+        atol=0.0,
+    )
+    assert cli_payload.density == pytest.approx(api_payload.density, rel=0.0, abs=0.0)
+    with h5py.File(output, "r") as h5:
+        assert h5["results"].attrs["density_unit"] == "kg m^-3"
+        assert h5["results/stiffness"].attrs["unit"] == "GPa"
+        assert h5["results/fields/phase/phase_speeds"].attrs["unit"] == "km s^-1"
+
+
 def test_plot_command_writes_requested_outputs(
     tmp_path: Path,
 ) -> None:
@@ -327,7 +387,7 @@ def test_seismic_plot_defaults_to_summary_and_export_writes_csv(tmp_path: Path) 
     assert "phase_speed_km_s" in csv_file.read_text(encoding="utf-8")
 
 
-def test_root_help_exposes_seismic_run_plot_and_export() -> None:
+def test_root_help_exposes_seismic_commands() -> None:
     root = CliRunner().invoke(main, ["--help"])
     assert root.exit_code == 0
     assert "seismic" in root.output
@@ -335,8 +395,14 @@ def test_root_help_exposes_seismic_run_plot_and_export() -> None:
     group = CliRunner().invoke(main, ["seismic", "--help"])
     assert group.exit_code == 0
     assert "run" in group.output
+    assert "inpgen" in group.output
     assert "plot" in group.output
     assert "export" in group.output
+
+    inpgen_help = CliRunner().invoke(main, ["seismic", "inpgen", "--help"])
+    assert inpgen_help.exit_code == 0
+    assert "--interface" in inpgen_help.output
+    assert "--output" in inpgen_help.output
 
     plot_help = CliRunner().invoke(main, ["seismic", "plot", "--help"])
     assert plot_help.exit_code == 0
