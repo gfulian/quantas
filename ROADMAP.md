@@ -2,47 +2,74 @@
 
 ## Source-freeze status
 
-The ``2.0.0b7`` public-lifecycle stabilization has completed full Windows
-validation.  The scientific source tree, CLI contracts, persistence layer,
-curated examples, and staged test runner now return to the release-candidate
-freeze while the feature branch is reviewed and merged.
+The `2.0.0b8` public lifecycle and SEISMIC input-generation work is merged into
+`dev/refactor`. The backend has returned to release-candidate freeze.
 
-The completed exception covered public input generation, public type closure,
-operation discovery, derived exports, plot specifications and builders, and
-their tests and documentation.  It did not change approved numerical baselines
-or HDF5 schemas.
+The completed stabilization covers:
 
-Other changes before the first release candidate are limited to:
+- public input, execution, persistence, report, plot, and export lifecycles;
+- typed public contracts and capability discovery;
+- result-aware plot inventories;
+- workflow-owned Elasticity and SEISMIC input generation;
+- CLI/API equivalence;
+- VASP density extraction for SEISMIC;
+- rejection of unstable native SEISMIC results.
 
-- corrections required by final validation;
-- manual-style documentation and tutorials;
-- release metadata and external publishing configuration;
-- narrowly scoped fixes that preserve the approved numerical baselines.
+It did not intentionally change approved numerical baselines, physical
+conventions, scientific array layouts, or HDF5 schemas.
+
+Before the first release candidate, changes are limited to:
+
+- corrections demonstrated by final validation;
+- validation and manual-style documentation;
+- release metadata and publishing configuration;
+- narrowly scoped compatibility fixes that preserve approved scientific
+  behavior.
 
 ## Before 2.0.0rc1
 
 - Complete the formal scientific validation matrix for every public workflow.
-- Finish the manual-style documentation, CLI reference, API guide, and tutorials.
-- Exercise CI on all supported operating systems and Python versions.
-- Verify documentation hosting and the complete TestPyPI installation workflow.
-- Merge the validated ``2.0.0b7`` public lifecycle-contract pass.
-- Integrate the validated HA V--T and QHA P--T section controls into Quantas
-  GUI without changing stored scientific arrays.
-- Integrate cumulative Thermoelasticity discovery for calibration, P--T,
-  point/grid, profile, comparison, and domain archives through the public API.
-- Integrate the separate EOS session/archive inventory into Quantas GUI without
-  forcing EOS into the one-shot module contract.
-- Review the resulting public API inventory and HDF5 schema compatibility one final time.
+- Publish the corresponding validation pages, datasets, methods, units,
+  tolerances, and limitations.
+- Finish the manual-style documentation, CLI reference, API guide, and
+  tutorials.
+- Exercise the complete CI matrix on every supported operating system and
+  Python version.
+- Review the frozen `quantas.api` inventory and native HDF5 schemas one final
+  time.
+- Run the complete validation from a fresh checkout and from built
+  distributions.
+- Verify documentation hosting.
+- Publish the candidate build to TestPyPI and reinstall it in clean Windows,
+  Linux, and macOS environments.
+- Resolve only release-blocking defects found by those checks.
+- Synchronize version, citation, changelog, tag, release notes, and checksums
+  for `2.0.0rc1`.
 
-Backend CLI/API validation is complete.  Quantas GUI adapter validation follows
-on the independent GUI roadmap and does not reopen the backend scientific
-implementation.
+Quantas GUI integration continues on its independent roadmap. It may reveal a
+real backend contract defect, but completion of GUI milestones is not a
+prerequisite for the Quantas backend release candidate.
+
+## Release-candidate policy
+
+After `2.0.0rc1`, the public API, scientific defaults, units, and HDF5 schemas
+are frozen. Further release candidates contain only:
+
+- correctness fixes;
+- portability and packaging fixes;
+- documentation corrections;
+- validation additions that do not silently redefine approved behavior.
+
+Any newly proposed scientific capability is deferred unless omission would make
+an existing public result incorrect or unusable.
 
 ## After Quantas 2.0
 
 - Add Kieffer acoustic thermodynamics to HA/QHA after a dedicated formula audit.
-- Extend the standalone EOS workflow, including coupled P-V-T diagnostics.
-- Develop additional code interfaces and scientific modules behind the same public
-  API and capability registry.
-- Continue Quantas GUI as an independent frontend over ``quantas.api`` without
-  duplicating numerical logic; backend and GUI release milestones remain separate.
+- Extend the standalone EOS workflow, including coupled P--V--T diagnostics.
+- Evaluate additional non-empirical Elasticity observables in a dedicated
+  change.
+- Develop additional code interfaces and scientific modules behind the same
+  public API and capability registry.
+- Continue Quantas GUI as an independent frontend over `quantas.api` without
+  duplicating numerical logic.

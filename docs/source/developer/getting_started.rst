@@ -8,8 +8,10 @@ and other graphical frontends.
 Development environment
 -----------------------
 
-Use Python 3.10 or newer in a fresh virtual environment. From the repository
-root:
+Use Python 3.10 through 3.13 in a fresh virtual environment. Python 3.14
+is not yet supported because the complete scientific dependency stack and
+validation suite have not been certified on that runtime. From the
+repository root:
 
 .. code-block:: console
 

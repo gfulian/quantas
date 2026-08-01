@@ -21,7 +21,7 @@ def _native_fixture(path: Path) -> None:
     with h5py.File(path, "w") as handle:
         metadata = handle.create_group("metadata")
         metadata.attrs["program"] = "quantas"
-        metadata.attrs["version"] = "2.0.0b7"
+        metadata.attrs["version"] = "2.0.0b8"
         metadata.attrs["module"] = "qha"
         metadata.attrs["schema_version"] = "2.0"
         results = handle.create_group("results")

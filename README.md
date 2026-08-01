@@ -5,7 +5,7 @@
 [![Quantas CI](https://github.com/gfulian/quantas/actions/workflows/ci.yml/badge.svg?branch=dev%2Frefactor)](https://github.com/gfulian/quantas/actions/workflows/ci.yml)
 [![Development Status: Beta](https://img.shields.io/badge/status-beta-orange)](https://quantas.readthedocs.io/en/2.0.0-beta/)
 [![Quantas 2.0 beta documentation](https://readthedocs.org/projects/quantas/badge/?version=2.0.0-beta)](https://quantas.readthedocs.io/en/2.0.0-beta/)
-[![Python 3.10+](https://img.shields.io/badge/Python-%3E%3D3.10-blue)](https://www.python.org/downloads/)
+[![Python 3.10-3.13](https://img.shields.io/badge/Python-3.10--3.13-blue)](https://www.python.org/downloads/)
 [![License: BSD 3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue)](LICENSE)
 
 Quantas is an open-source scientific toolkit for the quantitative analysis of
@@ -46,7 +46,7 @@ plotted, exported, and passed between compatible workflows.
 
 ## Requirements and installation
 
-Quantas requires Python 3.10 or newer.
+Quantas currently supports Python 3.10 through 3.13. Python 3.14 is not yet supported because the complete scientific dependency stack has not been validated on that runtime.
 
 Clone the repository and install the current beta with:
 

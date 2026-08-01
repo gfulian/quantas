@@ -5,7 +5,7 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
-## [2.0.0b7] - Unreleased
+## [2.0.0b8] - Unreleased
 
 ### Added
 
@@ -92,6 +92,10 @@ public contract; they must still be documented and validated.
   stabilization required by CLI, GUI, notebooks, and library users.
 
 ### Fixed
+- Synchronized package, citation, roadmap, project-state, supported-Python,
+  and Python-API documentation after merging the public lifecycle and
+  SEISMIC input-generation work into `dev/refactor`. This maintenance-only
+  correction does not change scientific calculations or persistence schemas.
 
 - Rejected native SEISMIC HDF5 writes and reads when the stored stiffness
   matrix is not positive definite or its stability diagnostics are inconsistent,
@@ -121,7 +125,7 @@ inspect archived data without recalculating or changing it.  No numerical
 algorithm, thermodynamic calculation, stored array, tensor convention, or HDF5
 schema was changed.
 
-The Quantas backend lifecycle for ``2.0.0b7`` has completed full Windows
+The Quantas backend lifecycle for ``2.0.0b8`` has completed full Windows
 validation.  Adoption of these contracts by Quantas GUI is tracked separately
 in the GUI project.
 
@@ -332,7 +336,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
-[2.0.0b7]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b7
+[2.0.0b8]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b8
 [2.0.0b6]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b6
 [2.0.0b5]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b5
 [2.0.0b4]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b4

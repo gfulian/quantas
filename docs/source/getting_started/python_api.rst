@@ -71,13 +71,19 @@ available to the CLI, notebooks, scripts, and graphical frontends.
 
 .. code-block:: python
 
-   from quantas.api import elasticity, qha
+   from quantas.api import elasticity, qha, seismic
 
    elasticity_path = elasticity.create_input(
        "calcite-elastcon.out",
        "calcite.dat",
        interface="crystal",
        jobname="Calcite",
+   )
+   seismic_path = seismic.create_input(
+       "OUTCAR",
+       "material-seismic.dat",
+       interface="vasp",
+       jobname="Material",
    )
    qha_path = qha.create_input(
        "phonon-list.txt",
@@ -88,9 +94,11 @@ available to the CLI, notebooks, scripts, and graphical frontends.
 
 HA and QHA use the same phonon input format, but both namespaces expose
 ``create_input`` so users can remain within the workflow they are running.
-Thermoelasticity provides the corresponding conversion for supported
-elastic-volume output series.  SEISMIC and EOS instead read their documented
-input formats or accept public Python data objects directly.
+Elasticity and SEISMIC likewise expose workflow-owned entry points to their
+shared elastic input format; SEISMIC generation additionally requires finite
+positive density metadata. Thermoelasticity provides the corresponding
+conversion for supported elastic-volume output series. EOS reads its
+documented input formats or accepts public Python data objects directly.
 
 Public modules commonly expose two related parsing operations:
 
