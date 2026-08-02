@@ -57,6 +57,7 @@ from quantas.api.qha import (
     Scheme as QHAScheme,
     ThermalExpansionMethod as QHAThermalExpansionMethod,
     available_energy_eos,
+    build_inspection_report,
     build_plots as build_qha_plots,
     inspect as inspect_qha_input,
     list_plot_properties as list_available_plot_properties,
@@ -69,7 +70,6 @@ from quantas.api.qha import (
 from quantas.cli.output import CLIOutput
 from quantas.cli.qha_observer import QHATextObserver
 from quantas.cli.phonon_input import phonon_inpgen
-from quantas.cli.qha_render import preview_report_tables
 from quantas.renderers.plots import MatplotlibOptions, render_plot_collection
 from quantas.references import module_citation_keys, render_citation_notice
 
@@ -196,7 +196,7 @@ def inspect(
         raise click.Abort() from exc
 
     output = CLIOutput(report_file=report, silent=silent)
-    output.tables(preview_report_tables(preview, include_diagnostics=True))
+    output.tables(build_inspection_report(preview))
     for warning in preview.warnings:
         output.message(warning, level=EventLevel.WARNING)
     output.save()
@@ -815,5 +815,6 @@ def export(
         raise click.ClickException(str(exc)) from exc
 
     echo(f"Written {outfile}")
+
 
 apply_reference_help(qha, ("qha",))

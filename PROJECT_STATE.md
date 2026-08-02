@@ -9,9 +9,9 @@ recorded separately in the Quantas/Quantas GUI architectural decisions.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-07-31 |
-| Current development version | `2.0.0b8` |
-| Baseline | `2.0.0b8`, `dev/refactor` |
+| Last updated | 2026-08-02 |
+| Current development version | `2.0.0b9` |
+| Baseline | `2.0.0b9`, `dev/refactor` |
 | Working branch target | `dev/refactor` release-candidate freeze |
 | Development status | Pre-RC scientific validation and release preparation |
 | Numerical baseline | Unchanged from `2.0.0b6` |
@@ -45,7 +45,7 @@ milestones are independent and are not backend RC blockers.
 
 ## Completed backend baseline
 
-The merged `2.0.0b8` baseline provides:
+The `2.0.0b9` baseline provides:
 
 - one supported public Python surface under `quantas.api`;
 - frontend-neutral typed inputs, options, results, reports, plot
@@ -54,6 +54,8 @@ The merged `2.0.0b8` baseline provides:
   plots, and derived exports for supported workflows;
 - result-aware plot inventories for Elasticity, SEISMIC, HA, QHA,
   Thermoelasticity, and the separate EOS archive lifecycle;
+- frontend-neutral QHA input-inspection reports and sampled energy-volume plot
+  specifications built from the same fit preview used by the CLI;
 - public CRYSTAL/VASP Elasticity and SEISMIC input generation, including VASP
   density extraction and finite-positive-density validation for SEISMIC;
 - native SEISMIC HDF5 rejection of unstable or inconsistent elastic media;
@@ -67,7 +69,7 @@ used by the other scientific modules.
 
 No approved numerical algorithm, thermodynamic formulation, unit convention,
 stored scientific array, or HDF5 schema was intentionally changed by the public
-lifecycle and SEISMIC API stabilization work.
+lifecycle, SEISMIC API stabilization, and QHA inspection-presentation work.
 
 ## Verified evidence
 

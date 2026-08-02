@@ -4,6 +4,8 @@
 
 from .api import (
     MODULE_CONTRACT,
+    build_qha_inspection_plots,
+    build_qha_inspection_report,
     build_qha_plots,
     build_qha_report,
     inspect_qha_input,
@@ -35,6 +37,8 @@ __all__ = [
     "QHAValidationSummary",
     "build_qha_plots",
     "build_qha_report",
+    "build_qha_inspection_plots",
+    "build_qha_inspection_report",
     "calculate_structural_thermal_expansion",
     "compare_qha_results",
     "inspect_qha_input",

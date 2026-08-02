@@ -30,15 +30,46 @@ from quantas.modules.qha.io.export import QHAHDF5Export
 from quantas.modules.qha.models import QHAInput, QHAOptions, QHAResult
 from quantas.modules.qha.plot import (
     QHAPlotOptions,
+    build_pressure_volume_preview_plots,
     build_qha_plot_collection,
     describe_qha_plots,
 )
 from quantas.modules.qha.report import (
     failed_points_table,
+    pressure_volume_preview_table,
+    preview_diagnostics_table,
+    preview_parameters_table,
     result_summary_table,
     thermal_expansion_provenance_table,
     structural_property_tables,
 )
+
+
+def build_qha_inspection_report(
+    preview: PressureVolumePreview,
+) -> list[ReportTable]:
+    """Build neutral report tables from a QHA input inspection."""
+    if not isinstance(preview, PressureVolumePreview):
+        raise TypeError("preview must be a PressureVolumePreview object")
+    return [
+        pressure_volume_preview_table(preview),
+        preview_diagnostics_table(preview),
+        preview_parameters_table(preview),
+    ]
+
+
+def build_qha_inspection_plots(
+    preview: PressureVolumePreview,
+    *,
+    sample_points: int = 201,
+) -> PlotCollection:
+    """Build a neutral energy-volume plot from a QHA input inspection."""
+    if not isinstance(preview, PressureVolumePreview):
+        raise TypeError("preview must be a PressureVolumePreview object")
+    return build_pressure_volume_preview_plots(
+        preview,
+        sample_points=sample_points,
+    )
 
 
 def run_qha(

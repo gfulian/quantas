@@ -190,9 +190,7 @@ class ModuleDescriptor:
             )
         operation = getattr(self.load(), operation_name)
         if not callable(operation):
-            raise AttributeError(
-                f"{self.api_module}.{operation_name} is not callable"
-            )
+            raise AttributeError(f"{self.api_module}.{operation_name} is not callable")
         return operation
 
     def list_operations(
@@ -465,6 +463,20 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
         ),
         operation_catalog=(
             OperationDescriptor(
+                key="build_inspection_report",
+                capability=Capability.INSPECT,
+                function_name="build_inspection_report",
+                name="Build QHA inspection report",
+                description="Build neutral tables from a QHA input inspection.",
+            ),
+            OperationDescriptor(
+                key="build_inspection_plots",
+                capability=Capability.INSPECT,
+                function_name="build_inspection_plots",
+                name="Build QHA inspection plots",
+                description="Build the sampled static energy-volume fit preview.",
+            ),
+            OperationDescriptor(
                 key="create_input",
                 capability=Capability.CREATE_INPUT,
                 function_name="create_input",
@@ -666,7 +678,9 @@ def get(name: str) -> ModuleDescriptor:
         return _BY_NAME[name]
     except KeyError as exc:
         available = ", ".join(sorted(_BY_NAME))
-        raise KeyError(f"unknown Quantas module {name!r}; available: {available}") from exc
+        raise KeyError(
+            f"unknown Quantas module {name!r}; available: {available}"
+        ) from exc
 
 
 def module_from_result(path: str | Path) -> ModuleDescriptor:

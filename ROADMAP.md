@@ -2,8 +2,9 @@
 
 ## Source-freeze status
 
-The `2.0.0b8` public lifecycle and SEISMIC input-generation work is merged into
-`dev/refactor`. The backend has returned to release-candidate freeze.
+The `2.0.0b9` public lifecycle baseline, SEISMIC input-generation work, and
+frontend-neutral QHA inspection presentation are merged into `dev/refactor`.
+The backend has returned to release-candidate freeze.
 
 The completed stabilization covers:
 
@@ -14,6 +15,8 @@ The completed stabilization covers:
 - CLI/API equivalence;
 - VASP density extraction for SEISMIC;
 - rejection of unstable native SEISMIC results.
+- public QHA inspection tables and sampled energy-volume plot specifications
+  derived from the existing inspection result without repeating the fit.
 
 It did not intentionally change approved numerical baselines, physical
 conventions, scientific array layouts, or HDF5 schemas.

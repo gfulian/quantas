@@ -25,6 +25,8 @@ Recommended lifecycle
        polynomial_degree=3,
        eos="BM3",
    )
+   inspection_tables = qha.build_inspection_report(preview)
+   inspection_plots = qha.build_inspection_plots(preview)
    result_data = qha.run("mgo_b3lyp.yaml", options=options)
    summary = qha.validate_result(result_data)
    result = qha.get_result(result_data)
@@ -107,6 +109,10 @@ Input, inspection, and calculation
 .. autofunction:: quantas.api.qha.normalize_input
 
 .. autofunction:: quantas.api.qha.inspect
+
+.. autofunction:: quantas.api.qha.build_inspection_report
+
+.. autofunction:: quantas.api.qha.build_inspection_plots
 
 .. autofunction:: quantas.api.qha.run
 

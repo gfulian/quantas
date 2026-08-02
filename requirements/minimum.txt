@@ -1,4 +1,4 @@
-# Minimum dependency set declared by Quantas 2.0.0b8.
+# Minimum dependency set declared by Quantas 2.0.0b9.
 numpy==1.24
 scipy==1.10.0
 h5py==3.8.0
