@@ -244,6 +244,8 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "ThermalExpansionMethod",
         "ValidationSummary",
         "available_energy_eos",
+        "build_inspection_plots",
+        "build_inspection_report",
         "build_plots",
         "build_report",
         "compare_results",
@@ -408,7 +410,9 @@ def test_registry_operations_are_declared_public_symbols() -> None:
         for capability, operation_name in descriptor.operations:
             assert capability in descriptor.capabilities
             assert operation_name in namespace.__all__
-            assert descriptor.operation(capability) is getattr(namespace, operation_name)
+            assert descriptor.operation(capability) is getattr(
+                namespace, operation_name
+            )
 
 
 def test_registry_dispatches_native_result_and_eos_archive(tmp_path: Path) -> None:

@@ -96,7 +96,9 @@ def test_registry_declares_all_scientific_modules_and_types() -> None:
     assert registry.get("seismic").has(Capability.CREATE_INPUT)
     assert registry.get("eos").has(Capability.FIT)
     assert registry.get("eos").has(Capability.PLOT_INVENTORY)
-    assert registry.get("eos").operation(Capability.PLOT_INVENTORY) is eos.describe_plots
+    assert (
+        registry.get("eos").operation(Capability.PLOT_INVENTORY) is eos.describe_plots
+    )
     assert not registry.get("eos").has(Capability.RUN)
     assert registry.get("thermoelasticity").has(Capability.INTEROP)
     assert registry.get("eos").has(Capability.TEMPLATE)
@@ -107,19 +109,29 @@ def test_registry_declares_all_scientific_modules_and_types() -> None:
 def test_registry_describes_multiple_named_operations() -> None:
     """Frontends can enumerate operation families without guessing CLI commands."""
     elasticity_descriptor = registry.get("elasticity")
-    assert elasticity_descriptor.named_operation("create_input") is elasticity.create_input
+    assert (
+        elasticity_descriptor.named_operation("create_input") is elasticity.create_input
+    )
     assert (
         elasticity_descriptor.named_operation("export_2d_table")
         is elasticity.write_table
     )
-    assert registry.get("seismic").named_operation("create_input") is seismic.create_input
+    assert (
+        registry.get("seismic").named_operation("create_input") is seismic.create_input
+    )
+    assert (
+        registry.get("qha").named_operation("build_inspection_report")
+        is qha.build_inspection_report
+    )
+    assert (
+        registry.get("qha").named_operation("build_inspection_plots")
+        is qha.build_inspection_plots
+    )
 
     eos_exports = registry.get("eos").operations_for(Capability.EXPORT)
     assert eos_exports == (eos.write_diagnostic_csv, eos.write_calculation_csv)
 
-    thermo_exports = registry.get("thermoelasticity").list_operations(
-        Capability.EXPORT
-    )
+    thermo_exports = registry.get("thermoelasticity").list_operations(Capability.EXPORT)
     assert tuple(item.key for item in thermo_exports) == (
         "export_tensor",
         "export_grid_table",

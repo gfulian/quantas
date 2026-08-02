@@ -5,7 +5,26 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
-## [2.0.0b8] - Unreleased
+## [2.0.0b9] - Unreleased
+
+### Added
+
+- Added public QHA input-inspection report and energy-volume plot builders.
+  They expose observed points, the selected polynomial and EOS fits, fitted
+  parameters, residual diagnostics, and warnings without requiring frontends
+  to reproduce equation-of-state formulas.
+
+### Changed
+
+- Routed ``quantas qha inspect`` report construction through the same public
+  inspection-report builder available to GUI and library clients.
+
+### Scientific compatibility
+
+No scientific formula, physical convention, HDF5 payload, or stored numerical
+result was changed.
+
+## [2.0.0b8] - 2026-07-31
 
 ### Added
 
@@ -336,6 +355,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b9]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b9
 [2.0.0b8]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b8
 [2.0.0b6]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b6
 [2.0.0b5]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b5

@@ -12,6 +12,8 @@ from quantas.core.physics.eos import available_eos_tags
 from quantas.modules.qha.formatting import QHATableFormat as TableFormat
 from quantas.modules.qha.io.export import QHATableExport
 from quantas.modules.qha.api import (
+    build_qha_inspection_plots as _build_inspection_plots,
+    build_qha_inspection_report as _build_inspection_report,
     build_qha_plots as _build_plots,
     build_qha_report as _build_report,
     describe_qha_plot_inventory as _describe_plots,
@@ -198,6 +200,49 @@ def inspect(
         eos=eos,
         maxfev=maxfev,
     )
+
+
+def build_inspection_report(preview: Preview) -> list[ReportTable]:
+    """Build frontend-neutral tables for a QHA input inspection.
+
+    Parameters
+    ----------
+    preview : Preview
+        Structured preview returned by :func:`inspect`.
+
+    Returns
+    -------
+    list of ReportTable
+        Input values, fit diagnostics, and fitted parameter tables.
+    """
+    return _build_inspection_report(preview)
+
+
+def build_inspection_plots(
+    preview: Preview,
+    *,
+    sample_points: int = 201,
+) -> PlotCollection:
+    """Build the frontend-neutral energy-volume inspection plot.
+
+    Successful polynomial and EOS fits are sampled only inside the observed
+    volume interval. The selected EOS and all fit diagnostics come from the
+    supplied :class:`Preview`; no fit is repeated by the frontend.
+
+    Parameters
+    ----------
+    preview : Preview
+        Structured preview returned by :func:`inspect`.
+    sample_points : int, optional
+        Number of points used to sample each successful fitted curve.
+
+    Returns
+    -------
+    PlotCollection
+        Collection containing the observed energy-volume data and every
+        successful fitted curve.
+    """
+    return _build_inspection_plots(preview, sample_points=sample_points)
 
 
 def run(
@@ -467,6 +512,8 @@ __all__ = [
     "ThermalExpansionMethod",
     "ValidationSummary",
     "available_energy_eos",
+    "build_inspection_plots",
+    "build_inspection_report",
     "list_plot_properties",
     "build_plots",
     "build_report",
