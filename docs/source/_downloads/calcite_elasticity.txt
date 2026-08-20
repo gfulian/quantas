@@ -65,12 +65,26 @@ Mechanical stability
   5          | 110.799441
   6          | 267.287664
 
-Directional elastic extrema
----------------------------
+Directional extrema — single-direction properties
+-------------------------------------------------
 
-         Property        |  Minimum  |           Minimum axis          |  Maximum   |            Maximum axis           | Anisotropy
-  -----------------------+-----------+---------------------------------+------------+-----------------------------------+-----------
-  young_modulus          | 57.603207 | [0.000000, 0.000000, 1.000000]  | 154.060777 | [-0.919816, -0.000045, -0.392350] | 2.674517
-  linear_compressibility | 2.255030  | [-0.500015, 0.866017, 0.000000] | 8.124595   | [0.000000, 0.000000, 1.000000]    | 3.602876
-  shear_modulus          | 21.471377 | [0.591634, 0.000145, 0.806207]  | 64.806867  | [0.403114, 0.698192, 0.591631]    | 3.018291
-  poisson_ratio          | 0.011386  | [-0.383321, 0.663922, 0.642085] | 0.765318   | [0.866010, 0.500026, 0.000008]    | 67.213255
+          Property / unit         | Extremum |   Value    |        a: primary direction       | Anisotropy
+  --------------------------------+----------+------------+-----------------------------------+-----------
+  Young's modulus / GPa           | Minimum  |  57.603207 | [0.000000, 0.000000, 1.000000]    |   2.674517
+  Young's modulus / GPa           | Maximum  | 154.060777 | [-0.919816, -0.000045, -0.392350] |   2.674517
+  Linear compressibility / TPa^-1 | Minimum  |   2.255030 | [-0.500015, 0.866017, 0.000000]   |   3.602876
+  Linear compressibility / TPa^-1 | Maximum  |   8.124595 | [0.000000, 0.000000, 1.000000]    |   3.602876
+
+  Note: a is the primary direction; its Cartesian components refer to the analysis frame.
+
+Directional extrema — paired-direction properties
+-------------------------------------------------
+
+    Property / unit   | Extremum |   Value   |       a: primary direction      |      b: transverse direction      | Anisotropy
+  --------------------+----------+-----------+---------------------------------+-----------------------------------+-----------
+  Shear modulus / GPa | Minimum  | 21.471377 | [0.591634, 0.000145, 0.806207]  | [0.000091, 1.000000, -0.000247]   |   3.018291
+  Shear modulus / GPa | Maximum  | 64.806867 | [0.403114, 0.698192, 0.591631]  | [-0.866030, 0.499993, 0.000030]   |   3.018291
+  Poisson's ratio     | Minimum  |  0.011386 | [-0.383321, 0.663922, 0.642085] | [-0.866034, -0.499985, -0.000028] |  67.213255
+  Poisson's ratio     | Maximum  |  0.765318 | [0.866010, 0.500026, 0.000008]  | [-0.317360, 0.549658, -0.772761]  |  67.213255
+
+  Note: a is the primary direction; b is the orthogonal transverse measurement direction (a · b = 0).

@@ -160,6 +160,11 @@ in the GUI project.
 
 ### Fixed
 
+- Restored separate directional-extrema tables for single-direction Young's
+  modulus and linear compressibility and paired-direction shear modulus and
+  Poisson's ratio. Reports now expose both the primary direction ``a`` and the
+  orthogonal transverse measurement direction ``b`` without changing the
+  extrema calculation or HDF5 payload.
 - Constrained V--T plotting grids to non-negative temperatures so curve
   padding cannot evaluate thermal-expansion models below zero kelvin.
 - Corrected HA reporting for native multi-volume calculations. Zero-point energy

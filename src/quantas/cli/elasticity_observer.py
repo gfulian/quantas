@@ -20,7 +20,7 @@ from quantas.modules.elasticity.report import (
     source_stiffness_table,
     stiffness_table,
     tensor_rotation_table,
-    variations_table,
+    variations_tables,
 )
 
 
@@ -99,4 +99,4 @@ class ElasticityTextObserver:
         elif kind == "stability":
             self.output.table(stability_table(event.data["result"]))
         elif kind == "variations":
-            self.output.table(variations_table(event.data["result"]))
+            self.output.tables(variations_tables(event.data["result"]))

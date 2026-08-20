@@ -48,7 +48,7 @@ from quantas.modules.elasticity.report import (
     source_stiffness_table,
     stiffness_table,
     tensor_rotation_metadata_table,
-    variations_table,
+    variations_tables,
 )
 
 
@@ -193,7 +193,7 @@ def build_elasticity_report(result: ResultData) -> list[ReportTable]:
         ]
     )
     if payload.variations:
-        tables.append(variations_table(payload))
+        tables.extend(variations_tables(payload))
     return tables
 
 

@@ -51,7 +51,7 @@ def _averages() -> ElasticAverages:
     )
 
 
-def _variation() -> DirectionalExtrema:
+def _variation(*, paired_directions: bool = False) -> DirectionalExtrema:
     """Build deterministic directional extrema."""
     return DirectionalExtrema(
         minimum=100.0,
@@ -59,8 +59,12 @@ def _variation() -> DirectionalExtrema:
         anisotropy=2.0,
         minimum_axis=[1.0, 0.0, 0.0],
         maximum_axis=[0.0, 1.0, 0.0],
-        minimum_measurement_axis=[0.0, 0.0, 1.0],
-        maximum_measurement_axis=[0.0, 0.0, -1.0],
+        minimum_measurement_axis=(
+            [0.0, 0.0, 1.0] if paired_directions else None
+        ),
+        maximum_measurement_axis=(
+            [0.0, 0.0, -1.0] if paired_directions else None
+        ),
     )
 
 
@@ -77,8 +81,8 @@ def _elasticity_result() -> ElasticityResult:
         variations={
             "young_modulus": _variation(),
             "linear_compressibility": _variation(),
-            "shear_modulus": _variation(),
-            "poisson_ratio": _variation(),
+            "shear_modulus": _variation(paired_directions=True),
+            "poisson_ratio": _variation(paired_directions=True),
         },
         properties_2d={
             "xy": {
@@ -136,7 +140,12 @@ def test_text_observer_renders_structured_result_events(tmp_path) -> None:
     assert "Voigt-Reuss-Hill average properties" in text
     assert "Mechanical stability" in text
     assert "Isotropic seismic velocities" not in text
-    assert "Directional elastic extrema" in text
+    assert "Directional extrema — single-direction properties" in text
+    assert "Directional extrema — paired-direction properties" in text
+    assert "a: primary direction" in text
+    assert "b: transverse direction" in text
+    assert "[0.000000, 0.000000, -1.000000]" in text
+    assert "a · b = 0" in text
     assert "WARNING: example warning" in text
     assert report_file.read_text(encoding="utf-8") == text
 

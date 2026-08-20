@@ -70,9 +70,10 @@ and Cartesian direction datasets:
 - optional transverse ``minimum_measurement_axis`` and
   ``maximum_measurement_axis``.
 
-Longitudinal axes have shape ``(3,)``.  Measurement axes are present for
-properties such as shear modulus and Poisson ratio that depend on a second
-orthogonal direction.
+Primary axes ``a`` have shape ``(3,)``. Transverse measurement axes ``b`` are
+present for shear modulus and Poisson ratio, which depend on an orthogonal
+direction pair ``(a, b)`` with ``a · b = 0``. Young's modulus and linear
+compressibility depend only on ``a``.
 
 Principal-plane fields
 ~~~~~~~~~~~~~~~~~~~~~~

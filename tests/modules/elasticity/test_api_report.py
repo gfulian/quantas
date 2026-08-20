@@ -23,7 +23,10 @@ from quantas.modules.elasticity.models import (
 from quantas.modules.elasticity.report import (
     build_elasticity_report,
     stability_table,
+    variations_table,
+    variations_tables,
 )
+from quantas.renderers.tables import render_table
 
 DATA = Path(__file__).parent / "data" / "hydroxylapatite.dat"
 
@@ -111,10 +114,75 @@ def test_neutral_report_contains_optional_sections() -> None:
 
     assert all(isinstance(table, ReportTable) for table in tables)
     assert [table.title for table in tables][-1:] == [
-        "Directional elastic extrema",
+        "Directional extrema — single-direction properties",
     ]
     assert all("seismic" not in table.title.lower() for table in tables)
     assert stability_table(result).metadata["positive_definite"] is True
+
+
+def test_directional_extrema_reports_separate_axis_contracts() -> None:
+    """One-direction and paired-direction extrema use distinct clear tables."""
+    young = DirectionalExtrema(
+        minimum=100.0,
+        maximum=200.0,
+        anisotropy=2.0,
+        minimum_axis=[1.0, 0.0, 0.0],
+        maximum_axis=[0.0, 1.0, 0.0],
+    )
+    shear = DirectionalExtrema(
+        minimum=40.0,
+        maximum=60.0,
+        anisotropy=1.5,
+        minimum_axis=[1.0, 0.0, 0.0],
+        maximum_axis=[0.0, 1.0, 0.0],
+        minimum_measurement_axis=[0.0, 0.0, 1.0],
+        maximum_measurement_axis=[0.0, 0.0, -1.0],
+    )
+    result = ElasticityResult(
+        variations={"young_modulus": young, "shear_modulus": shear}
+    )
+
+    single, paired = variations_tables(result)
+
+    assert single.columns == [
+        "Property / unit",
+        "Extremum",
+        "Value",
+        "a: primary direction",
+        "Anisotropy",
+    ]
+    assert paired.columns == [
+        "Property / unit",
+        "Extremum",
+        "Value",
+        "a: primary direction",
+        "b: transverse direction",
+        "Anisotropy",
+    ]
+    assert single.rows[0] == [
+        "Young's modulus / GPa",
+        "Minimum",
+        100.0,
+        "[1.000000, 0.000000, 0.000000]",
+        2.0,
+    ]
+    assert paired.rows[0] == [
+        "Shear modulus / GPa",
+        "Minimum",
+        40.0,
+        "[1.000000, 0.000000, 0.000000]",
+        "[0.000000, 0.000000, 1.000000]",
+        1.5,
+    ]
+    assert paired.rows[1][4] == "[0.000000, 0.000000, -1.000000]"
+    assert "a · b = 0" in paired.metadata["notes"][0]
+
+    combined = variations_table(result)
+    assert combined.rows[0][4] == ""
+    assert combined.rows[2][4] == "[0.000000, 0.000000, 1.000000]"
+    text = "\n".join(render_table(table) for table in (single, paired))
+    assert "b: transverse direction" in text
+    assert max(len(line) for line in text.splitlines()) < 170
 
 
 def test_stability_report_marks_instability() -> None:

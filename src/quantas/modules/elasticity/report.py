@@ -22,6 +22,12 @@ from quantas.modules.elasticity.models import (
 )
 
 
+_SINGLE_DIRECTION_PROPERTIES = frozenset(
+    {"young_modulus", "linear_compressibility"}
+)
+_PAIRED_DIRECTION_PROPERTIES = frozenset({"shear_modulus", "poisson_ratio"})
+
+
 def input_table(
     input_data: ElasticityInput,
     result: ElasticityResult | None = None,
@@ -227,32 +233,130 @@ def stability_table(result: ElasticityResult) -> ReportTable:
     )
 
 
-def variations_table(result: ElasticityResult) -> ReportTable:
-    """Build a table of directional elastic extrema."""
+def variations_table(
+    result: ElasticityResult,
+    *,
+    paired_directions: bool | None = None,
+) -> ReportTable:
+    """Build a normalized table of directional elastic extrema.
+
+    Parameters
+    ----------
+    result : ElasticityResult
+        Elasticity result containing directional extrema.
+    paired_directions : bool or None, optional
+        Select properties that require only the primary direction ``a``
+        (``False``) or the orthogonal pair ``(a, b)`` (``True``). If ``None``,
+        include all properties and expose the optional ``b`` direction.
+
+    Returns
+    -------
+    ReportTable
+        Frontend-neutral long-form extrema table. Each minimum and maximum is
+        represented by one self-contained row.
+    """
+    items = [
+        (name, variation)
+        for name, variation in result.variations.items()
+        if paired_directions is None
+        or _uses_paired_directions(name, variation) is paired_directions
+    ]
+    include_measurement_axis = paired_directions is not False
     rows: list[list[Any]] = []
-    for name, variation in result.variations.items():
-        rows.append(
-            [
-                name,
-                f"{variation.minimum:.6f}",
-                _format_axis(variation.minimum_axis),
-                f"{variation.maximum:.6f}",
-                _format_axis(variation.maximum_axis),
-                f"{variation.anisotropy:.6f}",
-            ]
+    for name, variation in items:
+        label = _directional_property_label(name)
+        extrema = (
+            (
+                "Minimum",
+                variation.minimum,
+                variation.minimum_axis,
+                variation.minimum_measurement_axis,
+            ),
+            (
+                "Maximum",
+                variation.maximum,
+                variation.maximum_axis,
+                variation.maximum_measurement_axis,
+            ),
         )
+        for extremum, value, primary_axis, measurement_axis in extrema:
+            row: list[Any] = [
+                label,
+                extremum,
+                value,
+                _format_axis(primary_axis),
+            ]
+            if include_measurement_axis:
+                row.append(_format_axis(measurement_axis, missing=""))
+            row.append(variation.anisotropy)
+            rows.append(row)
+
+    if paired_directions is False:
+        title = "Directional extrema — single-direction properties"
+        notes = [
+            "a is the primary direction; its Cartesian components refer to "
+            "the analysis frame."
+        ]
+    elif paired_directions is True:
+        title = "Directional extrema — paired-direction properties"
+        notes = [
+            "a is the primary direction; b is the orthogonal transverse "
+            "measurement direction (a · b = 0)."
+        ]
+    else:
+        title = "Directional elastic extrema"
+        notes = [
+            "a is the primary direction; where present, b is the orthogonal "
+            "transverse measurement direction (a · b = 0)."
+        ]
+
+    columns = ["Property / unit", "Extremum", "Value", "a: primary direction"]
+    column_formats: list[str | None] = [None, None, ".6f", None]
+    column_alignments = ["left", "left", "right", "left"]
+    if include_measurement_axis:
+        columns.append("b: transverse direction")
+        column_formats.append(None)
+        column_alignments.append("left")
+    columns.append("Anisotropy")
+    column_formats.append(".6f")
+    column_alignments.append("right")
+
+    direction_roles = {"a": "primary"}
+    if include_measurement_axis:
+        direction_roles["b"] = "orthogonal transverse measurement"
+
     return _ReportTable(
-        title="Directional elastic extrema",
-        columns=[
-            "Property",
-            "Minimum",
-            "Minimum axis",
-            "Maximum",
-            "Maximum axis",
-            "Anisotropy",
-        ],
+        title=title,
+        columns=columns,
         rows=rows,
+        metadata={
+            "column_formats": column_formats,
+            "column_alignments": column_alignments,
+            "notes": notes,
+            "direction_roles": direction_roles,
+        },
     )
+
+
+def variations_tables(result: ElasticityResult) -> list[ReportTable]:
+    """Build separate extrema tables for one- and two-direction properties.
+
+    Parameters
+    ----------
+    result : ElasticityResult
+        Elasticity result containing directional extrema.
+
+    Returns
+    -------
+    list of ReportTable
+        Ordered non-empty tables. Properties depending only on ``a`` precede
+        properties depending on the orthogonal pair ``(a, b)``.
+    """
+    tables = [
+        variations_table(result, paired_directions=False),
+        variations_table(result, paired_directions=True),
+    ]
+    return [table for table in tables if table.rows]
 
 
 def build_elasticity_report(
@@ -286,7 +390,7 @@ def build_elasticity_report(
         ]
     )
     if result.variations:
-        tables.append(variations_table(result))
+        tables.extend(variations_tables(result))
     return tables
 
 
@@ -304,8 +408,31 @@ def _matrix_table(
     return _ReportTable(title=title, columns=columns, rows=rows)
 
 
-def _format_axis(axis: list[float] | None) -> str:
+def _format_axis(axis: list[float] | None, *, missing: str = "None") -> str:
     """Format an optional Cartesian direction."""
     if axis is None:
-        return "None"
+        return missing
     return "[{:.6f}, {:.6f}, {:.6f}]".format(*axis)
+
+
+def _uses_paired_directions(name: str, variation: Any) -> bool:
+    """Return whether a property depends on an orthogonal direction pair."""
+    if name in _SINGLE_DIRECTION_PROPERTIES:
+        return False
+    if name in _PAIRED_DIRECTION_PROPERTIES:
+        return True
+    return (
+        variation.minimum_measurement_axis is not None
+        or variation.maximum_measurement_axis is not None
+    )
+
+
+def _directional_property_label(name: str) -> str:
+    """Return a readable directional-property label with its physical unit."""
+    labels = {
+        "young_modulus": "Young's modulus / GPa",
+        "linear_compressibility": "Linear compressibility / TPa^-1",
+        "shear_modulus": "Shear modulus / GPa",
+        "poisson_ratio": "Poisson's ratio",
+    }
+    return labels.get(name, name.replace("_", " ").strip().capitalize())

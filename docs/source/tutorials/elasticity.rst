@@ -361,6 +361,14 @@ The HDF5 envelope can be reopened and converted to the typed payload:
    print(payload.averages.hill.bulk_modulus)
    print(payload.variations["young_modulus"].minimum_axis)
    print(payload.variations["young_modulus"].maximum_axis)
+   print(payload.variations["shear_modulus"].minimum_axis)
+   print(payload.variations["shear_modulus"].minimum_measurement_axis)
+
+Young's modulus depends only on the primary direction ``a``. Shear modulus and
+Poisson's ratio additionally expose the orthogonal transverse measurement
+direction ``b`` through ``minimum_measurement_axis`` and
+``maximum_measurement_axis``. The text report presents these property families
+in separate tables so that the roles of ``a`` and ``b`` remain explicit.
 
 The raw numerical arrays remain available at full ``float64`` precision.  The
 number of displayed digits in a report or figure does not change the stored

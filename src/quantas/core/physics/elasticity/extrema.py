@@ -15,7 +15,22 @@ from .directional import direction_vector
 
 @dataclass(slots=True)
 class DirectionalExtrema:
-    """Minimum, maximum, anisotropy, and corresponding directions."""
+    """Minimum, maximum, anisotropy, and corresponding directions.
+
+    Parameters
+    ----------
+    minimum, maximum : float
+        Global extrema of the directional property.
+    anisotropy : float
+        Ratio of maximum to minimum when the minimum is positive, otherwise
+        positive infinity.
+    minimum_axis, maximum_axis : list of float
+        Cartesian components of the primary direction ``a`` at each extremum.
+    minimum_measurement_axis, maximum_measurement_axis : list of float or None
+        Cartesian components of the orthogonal transverse measurement
+        direction ``b``. These fields are present for properties such as shear
+        modulus and Poisson's ratio that depend on the pair ``(a, b)``.
+    """
 
     minimum: float
     maximum: float
