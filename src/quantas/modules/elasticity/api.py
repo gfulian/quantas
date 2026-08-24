@@ -180,7 +180,7 @@ def build_elasticity_report(result: ResultData) -> list[ReportTable]:
         tables.append(
             stiffness_table(
                 payload,
-                title="Stiffness matrix after rotation / GPa",
+                title="Stiffness matrix after rotation (GPa)",
             )
         )
     else:

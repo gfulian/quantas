@@ -141,9 +141,9 @@ def test_rotated_result_reports_and_hdf5_preserve_before_and_after(tmp_path) -> 
     rotation = TensorRotation.from_xyz(0.0, 0.0, 30.0)
     result = run_elasticity(filename, ElasticityOptions(rotation=rotation))
     titles = [table.title for table in build_elasticity_report(result)]
-    assert "Stiffness matrix before rotation / GPa" in titles
+    assert "Stiffness matrix before rotation (GPa)" in titles
     assert "Tensor component transformation" in titles
-    assert "Stiffness matrix after rotation / GPa" in titles
+    assert "Stiffness matrix after rotation (GPa)" in titles
 
     output = write_elasticity_hdf5(result, tmp_path / "calcite_rotated")
     restored = read_elasticity_hdf5(output)

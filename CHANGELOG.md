@@ -164,7 +164,12 @@ in the GUI project.
   modulus and linear compressibility and paired-direction shear modulus and
   Poisson's ratio. Reports now expose both the primary direction ``a`` and the
   orthogonal transverse measurement direction ``b`` without changing the
-  extrema calculation or HDF5 payload.
+  extrema calculation or HDF5 payload. Property units use the package-wide
+  parenthetical convention, while Cartesian vectors use aligned three-decimal
+  components suitable for direct copying. Extrema and their explicit
+  ``Ratio max/min`` are displayed with four decimal places. Matrix titles,
+  aggregate-property columns, and stability eigenvalues follow the same
+  ``quantity (unit)`` convention throughout the elasticity report.
 - Constrained V--T plotting grids to non-negative temperatures so curve
   padding cannot evaluate thermal-expansion models below zero kelvin.
 - Corrected HA reporting for native multi-volume calculations. Zero-point energy

@@ -129,7 +129,7 @@ For calcite, the report contains:
    Voigt-Reuss-Hill average properties
    -----------------------------------
 
-     Scheme | K / GPa | E / GPa  | G / GPa |    nu
+     Scheme | K (GPa) | E (GPa)  | G (GPa) |    nu
      -------+---------+----------+---------+---------
      Voigt  | 87.0512 | 104.0720 | 40.0047 | 0.300746
      Reuss  | 79.1474 | 81.0336  | 30.4784 | 0.329361
@@ -152,7 +152,7 @@ All six stiffness eigenvalues are positive:
    Mechanical stability
    --------------------
 
-     Eigenvalue | Value / GPa
+     Eigenvalue | Value (GPa)
      -----------+------------
      1          | 21.471377
      2          | 25.117559

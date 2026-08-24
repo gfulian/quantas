@@ -68,7 +68,7 @@ def options_table(options: ElasticityOptions) -> ReportTable:
 def stiffness_table(
     result: ElasticityResult,
     *,
-    title: str = "Stiffness matrix / GPa",
+    title: str = "Stiffness matrix (GPa)",
 ) -> ReportTable:
     """Build a neutral stiffness-matrix table.
 
@@ -100,7 +100,7 @@ def source_stiffness_table(matrix: np.ndarray) -> ReportTable:
     ReportTable
         Source-frame matrix table.
     """
-    return _matrix_table("Stiffness matrix before rotation / GPa", matrix, "C")
+    return _matrix_table("Stiffness matrix before rotation (GPa)", matrix, "C")
 
 
 def tensor_rotation_table(rotation: TensorRotation) -> ReportTable:
@@ -188,7 +188,7 @@ def tensor_rotation_metadata_table(
 
 def compliance_table(result: ElasticityResult) -> ReportTable:
     """Build a neutral compliance-matrix table."""
-    return _matrix_table("Compliance matrix / GPa^-1", result.compliance, "S")
+    return _matrix_table("Compliance matrix (GPa^-1)", result.compliance, "S")
 
 
 def averages_table(result: ElasticityResult) -> ReportTable:
@@ -211,7 +211,7 @@ def averages_table(result: ElasticityResult) -> ReportTable:
             )
     return _ReportTable(
         title="Voigt-Reuss-Hill average properties",
-        columns=["Scheme", "K / GPa", "E / GPa", "G / GPa", "nu"],
+        columns=["Scheme", "K (GPa)", "E (GPa)", "G (GPa)", "nu"],
         rows=rows,
     )
 
@@ -227,7 +227,7 @@ def stability_table(result: ElasticityResult) -> ReportTable:
             rows.append([index, f"{value:.6f}"])
     return _ReportTable(
         title="Mechanical stability",
-        columns=["Eigenvalue", "Value / GPa"],
+        columns=["Eigenvalue", "Value (GPa)"],
         rows=rows,
         metadata=metadata,
     )
@@ -310,15 +310,15 @@ def variations_table(
             "transverse measurement direction (a · b = 0)."
         ]
 
-    columns = ["Property / unit", "Extremum", "Value", "a: primary direction"]
-    column_formats: list[str | None] = [None, None, ".6f", None]
+    columns = ["Property", "Extremum", "Value", "a: primary direction"]
+    column_formats: list[str | None] = [None, None, ".4f", None]
     column_alignments = ["left", "left", "right", "left"]
     if include_measurement_axis:
         columns.append("b: transverse direction")
         column_formats.append(None)
         column_alignments.append("left")
-    columns.append("Anisotropy")
-    column_formats.append(".6f")
+    columns.append("Ratio max/min")
+    column_formats.append(".4f")
     column_alignments.append("right")
 
     direction_roles = {"a": "primary"}
@@ -376,7 +376,7 @@ def build_elasticity_report(
                 tensor_rotation_table(options.rotation),
                 stiffness_table(
                     result,
-                    title="Stiffness matrix after rotation / GPa",
+                    title="Stiffness matrix after rotation (GPa)",
                 ),
             ]
         )
@@ -409,10 +409,11 @@ def _matrix_table(
 
 
 def _format_axis(axis: list[float] | None, *, missing: str = "None") -> str:
-    """Format an optional Cartesian direction."""
+    """Format an optional Cartesian direction with aligned components."""
     if axis is None:
         return missing
-    return "[{:.6f}, {:.6f}, {:.6f}]".format(*axis)
+    values = [0.0 if abs(value) < 5.0e-4 else value for value in axis]
+    return "[{: >6.3f}, {: >6.3f}, {: >6.3f}]".format(*values)
 
 
 def _uses_paired_directions(name: str, variation: Any) -> bool:
@@ -430,9 +431,9 @@ def _uses_paired_directions(name: str, variation: Any) -> bool:
 def _directional_property_label(name: str) -> str:
     """Return a readable directional-property label with its physical unit."""
     labels = {
-        "young_modulus": "Young's modulus / GPa",
-        "linear_compressibility": "Linear compressibility / TPa^-1",
-        "shear_modulus": "Shear modulus / GPa",
+        "young_modulus": "Young's modulus (GPa)",
+        "linear_compressibility": "Linear compressibility (TPa^-1)",
+        "shear_modulus": "Shear modulus (GPa)",
         "poisson_ratio": "Poisson's ratio",
     }
     return labels.get(name, name.replace("_", " ").strip().capitalize())

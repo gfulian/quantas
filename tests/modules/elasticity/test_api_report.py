@@ -113,6 +113,20 @@ def test_neutral_report_contains_optional_sections() -> None:
     )
 
     assert all(isinstance(table, ReportTable) for table in tables)
+    by_title = {table.title: table for table in tables}
+    assert "Stiffness matrix (GPa)" in by_title
+    assert "Compliance matrix (GPa^-1)" in by_title
+    assert by_title["Voigt-Reuss-Hill average properties"].columns == [
+        "Scheme",
+        "K (GPa)",
+        "E (GPa)",
+        "G (GPa)",
+        "nu",
+    ]
+    assert by_title["Mechanical stability"].columns == [
+        "Eigenvalue",
+        "Value (GPa)",
+    ]
     assert [table.title for table in tables][-1:] == [
         "Directional extrema — single-direction properties",
     ]
@@ -127,7 +141,7 @@ def test_directional_extrema_reports_separate_axis_contracts() -> None:
         maximum=200.0,
         anisotropy=2.0,
         minimum_axis=[1.0, 0.0, 0.0],
-        maximum_axis=[0.0, 1.0, 0.0],
+        maximum_axis=[-1.0e-5, 1.0, 0.0],
     )
     shear = DirectionalExtrema(
         minimum=40.0,
@@ -145,43 +159,62 @@ def test_directional_extrema_reports_separate_axis_contracts() -> None:
     single, paired = variations_tables(result)
 
     assert single.columns == [
-        "Property / unit",
+        "Property",
         "Extremum",
         "Value",
         "a: primary direction",
-        "Anisotropy",
+        "Ratio max/min",
     ]
     assert paired.columns == [
-        "Property / unit",
+        "Property",
         "Extremum",
         "Value",
         "a: primary direction",
         "b: transverse direction",
-        "Anisotropy",
+        "Ratio max/min",
     ]
     assert single.rows[0] == [
-        "Young's modulus / GPa",
+        "Young's modulus (GPa)",
         "Minimum",
         100.0,
-        "[1.000000, 0.000000, 0.000000]",
+        "[ 1.000,  0.000,  0.000]",
         2.0,
     ]
     assert paired.rows[0] == [
-        "Shear modulus / GPa",
+        "Shear modulus (GPa)",
         "Minimum",
         40.0,
-        "[1.000000, 0.000000, 0.000000]",
-        "[0.000000, 0.000000, 1.000000]",
+        "[ 1.000,  0.000,  0.000]",
+        "[ 0.000,  0.000,  1.000]",
         1.5,
     ]
-    assert paired.rows[1][4] == "[0.000000, 0.000000, -1.000000]"
+    assert single.rows[1][3] == "[ 0.000,  1.000,  0.000]"
+    assert paired.rows[1][4] == "[ 0.000,  0.000, -1.000]"
+    assert single.metadata["column_formats"] == [
+        None,
+        None,
+        ".4f",
+        None,
+        ".4f",
+    ]
+    assert paired.metadata["column_formats"] == [
+        None,
+        None,
+        ".4f",
+        None,
+        None,
+        ".4f",
+    ]
     assert "a · b = 0" in paired.metadata["notes"][0]
 
     combined = variations_table(result)
     assert combined.rows[0][4] == ""
-    assert combined.rows[2][4] == "[0.000000, 0.000000, 1.000000]"
+    assert combined.rows[2][4] == "[ 0.000,  0.000,  1.000]"
     text = "\n".join(render_table(table) for table in (single, paired))
     assert "b: transverse direction" in text
+    assert "100.0000" in text
+    assert "1.5000" in text
+    assert "Anisotropy" not in text
     assert max(len(line) for line in text.splitlines()) < 170
 
 

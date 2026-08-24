@@ -144,7 +144,7 @@ def test_text_observer_renders_structured_result_events(tmp_path) -> None:
     assert "Directional extrema — paired-direction properties" in text
     assert "a: primary direction" in text
     assert "b: transverse direction" in text
-    assert "[0.000000, 0.000000, -1.000000]" in text
+    assert "[ 0.000,  0.000, -1.000]" in text
     assert "a · b = 0" in text
     assert "WARNING: example warning" in text
     assert report_file.read_text(encoding="utf-8") == text
