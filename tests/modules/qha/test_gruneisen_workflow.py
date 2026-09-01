@@ -181,6 +181,10 @@ def test_qha_reader_preserves_explicit_mode_continuity(tmp_path: Path) -> None:
     source = Path(__file__).parent / "data" / "mgo_b3lyp_qha.yaml"
     payload = yaml.safe_load(source.read_text(encoding="utf-8"))
     payload["mode_continuity"] = "verified"
+    payload["mode_continuity_metadata"] = {
+        "method": "eigenvector_overlap",
+        "minimum_overlap": 0.97,
+    }
     filename = tmp_path / "verified.yaml"
     filename.write_text(yaml.safe_dump(payload, sort_keys=False), encoding="utf-8")
 
@@ -188,6 +192,9 @@ def test_qha_reader_preserves_explicit_mode_continuity(tmp_path: Path) -> None:
 
     assert data.mode_continuity_status() == "verified"
     assert data.has_verified_mode_continuity()
+    assert data.metadata["mode_continuity_metadata"]["method"] == (
+        "eigenvector_overlap"
+    )
 
 
 def test_gruneisen_arrays_survive_hdf5_round_trip(tmp_path: Path) -> None:

@@ -121,3 +121,73 @@ def test_plot_models_are_frontend_neutral_data_containers():
     assert collection.plots == [spec]
     np.testing.assert_allclose(spec.series[0].y, [2.0, 3.0])
     assert "matplotlib" not in repr(spec).lower()
+
+
+def test_structure_energy_series_keeps_units_and_provenance():
+    from quantas.models.computation import (
+        EnergyKind,
+        EnergyRecord,
+        SourceProvenance,
+        StructureEnergyPoint,
+        StructureEnergySeries,
+    )
+    from quantas.models.structures import CrystalStructure
+
+    def structure(scale: float) -> CrystalStructure:
+        return CrystalStructure(
+            lattice=np.identity(3) * scale,
+            fractional_positions=np.array([[0.0, 0.0, 0.0]]),
+            atomic_numbers=np.array([8]),
+        )
+
+    points = tuple(
+        StructureEnergyPoint(
+            structure=structure(scale),
+            energy=EnergyRecord(value=energy, unit="Ha", kind=EnergyKind.TOTAL),
+            provenance=SourceProvenance(
+                interface="crystal",
+                source="eos.out",
+                record_index=index,
+            ),
+        )
+        for index, (scale, energy) in enumerate(((2.0, -10.0), (2.1, -10.2)))
+    )
+    series = StructureEnergySeries(points=points, reference_index=1)
+
+    assert series.npoints == 2
+    assert series.energy_unit == "Ha"
+    assert series.energy_kind is EnergyKind.TOTAL
+    assert series.volume_unit == "angstrom^3"
+    np.testing.assert_allclose(series.volumes, [8.0, 2.1**3])
+    np.testing.assert_allclose(series.energies, [-10.0, -10.2])
+    assert series.points[1].provenance is not None
+    assert series.points[1].provenance.record_index == 1
+
+
+def test_structure_energy_series_rejects_mixed_units():
+    from quantas.models.computation import (
+        EnergyKind,
+        EnergyRecord,
+        StructureEnergyPoint,
+        StructureEnergySeries,
+    )
+    from quantas.models.structures import CrystalStructure
+
+    structure = CrystalStructure(
+        lattice=np.identity(3),
+        fractional_positions=np.array([[0.0, 0.0, 0.0]]),
+        atomic_numbers=np.array([8]),
+    )
+    points = (
+        StructureEnergyPoint(
+            structure=structure,
+            energy=EnergyRecord(value=-1.0, unit="Ha", kind=EnergyKind.DFT),
+        ),
+        StructureEnergyPoint(
+            structure=structure,
+            energy=EnergyRecord(value=-27.2, unit="eV", kind=EnergyKind.DFT),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="inconsistent energy units"):
+        StructureEnergySeries(points=points)

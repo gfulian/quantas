@@ -10,7 +10,7 @@ from .calculator import BasicCalculator
 from .data import InputData, ResultData, ResultMetadata
 from .export import BasicExport, BasicHDF5Export
 from .module import ModuleContract
-from .phonons import PhononInputData
+from .phonons import PhononInputData, PhononModeData
 from .plot import (
     AxisFieldLayer,
     ColoredPathSeries,
@@ -81,6 +81,7 @@ __all__ = [
     "InputData",
     "ModuleContract",
     "PhononInputData",
+    "PhononModeData",
     "AxisFieldLayer",
     "ColoredPathSeries",
     "ColoredPathStyle",

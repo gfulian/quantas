@@ -81,6 +81,8 @@ class CrystalQHAReader(BasicReader):
             "shrinkf": np.ones(3, dtype=int),
             "q_position_source": "unavailable-crystal-qha-supercell-modes",
             "structure_series": None,
+            "mode_continuity": "unknown",
+            "mode_continuity_metadata": {},
         }
 
     def load(self, file):
@@ -134,6 +136,12 @@ class CrystalQHAReader(BasicReader):
         self._data["energy"] = self.set_energy(file)
 
         self.phonons = self.set_phonons(file)
+        if self.has_verified_mode_continuity(file):
+            self._data["mode_continuity"] = "verified"
+            self._data["mode_continuity_metadata"] = {
+                "method": "crystal-qha",
+                "source": "crystal",
+            }
 
         self.completed = True
         return
@@ -163,6 +171,32 @@ class CrystalQHAReader(BasicReader):
                     return True
             return False
         return
+
+    def has_verified_mode_continuity(self, file) -> bool:
+        """Return whether CRYSTAL reports completed QHA mode continuity.
+
+        Parameters
+        ----------
+        file : str or pathlib.Path
+            Native CRYSTAL QHA output.
+
+        Returns
+        -------
+        bool
+            ``True`` when the final CRYSTAL continuity table is present.
+        """
+        with open(file, "r") as stream:
+            return any(markers.QHA_CONTINUITY_FOUND in line for line in stream)
+
+    @property
+    def mode_continuity(self) -> str:
+        """Return the continuity status established by native CRYSTAL QHA."""
+        return str(self._data.get("mode_continuity", "unknown"))
+
+    @property
+    def mode_continuity_metadata(self) -> dict[str, object]:
+        """Return provenance for native CRYSTAL QHA mode continuity."""
+        return dict(self._data.get("mode_continuity_metadata", {}))
 
     def is_restarted(self, file):
         """
@@ -290,6 +324,22 @@ class CrystalQHAReader(BasicReader):
         Get the number of atoms in the unit cell.
         """
         return int(self._data["unitcell"][0]["natom"] / self.kpoints)
+
+    @property
+    def units(self) -> dict[str, str]:
+        """Return the physical units exposed by this CRYSTAL reader.
+
+        Returns
+        -------
+        dict
+            Energy, volume, frequency, and structural length units.
+        """
+        return {
+            "energy": "Ha",
+            "volume": "angstrom^3",
+            "frequency": "cm^-1",
+            "length": "angstrom",
+        }
 
     @property
     def kpoints(self):

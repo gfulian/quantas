@@ -67,3 +67,21 @@ MAX_DISPLACEMENT_RE = re.compile(
 RMS_DISPLACEMENT_RE = re.compile(
     rf"^\s*RMS\s+DISPLAC\.\s+(?P<value>{FLOAT})\b", re.IGNORECASE
 )
+
+PHONON_VECTOR_FREQUENCY_RE = re.compile(
+    r"^\s*FREQ\(CM\*\*-1\)\s+(?P<values>.+?)\s*$",
+    re.IGNORECASE,
+)
+PHONON_VECTOR_ATOM_RE = re.compile(
+    r"^\s*AT\.\s+(?P<atom>\d+)\s+(?P<symbol>[A-Za-z]{1,3})\s+"
+    r"(?P<axis>[XYZ])\s+(?P<values>.+?)\s*$",
+    re.IGNORECASE,
+)
+PHONON_VECTOR_CONTINUATION_RE = re.compile(
+    r"^\s*(?P<axis>[YZ])\s+(?P<values>.+?)\s*$",
+    re.IGNORECASE,
+)
+DISPERSION_QPOINT_INDEX_RE = re.compile(
+    r"DISPERSION\s+K\s+POINT\s+NUMBER\s+(?P<index>\d+)\b",
+    re.IGNORECASE,
+)

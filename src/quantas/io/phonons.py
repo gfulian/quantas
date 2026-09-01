@@ -16,7 +16,7 @@ import numpy as np
 import yaml
 
 from quantas.models.reader import BasicReader
-from quantas.models.phonons import PhononInputData
+from quantas.models.phonons import PhononInputData, default_phonon_input_units
 from quantas.models.structures import (
     CellNormalization,
     CrystalStructure,
@@ -24,6 +24,7 @@ from quantas.models.structures import (
     StructureVolumeSeries,
     SymmetryMetadata,
 )
+
 
 
 class PhononInputFileReader(BasicReader):
@@ -440,6 +441,57 @@ class PhononInputFileReader(BasicReader):
         return _structure_series_from_mapping(self._data["structure"])
 
     @property
+    def units(self) -> dict[str, str]:
+        """Return physical units stored by the phonon input dataset.
+
+        Historical Quantas YAML files without an explicit ``units`` mapping
+        retain the established HA/QHA convention of Hartree, cubic angstrom,
+        and wavenumbers.
+
+        Returns
+        -------
+        dict
+            Energy, volume, frequency, and structural length unit labels.
+
+        Raises
+        ------
+        ValueError
+            If an explicit unit mapping is incomplete or contains empty labels.
+        """
+        if self._data is None or "units" not in self._data:
+            return default_phonon_input_units()
+        raw = self._data["units"]
+        if not isinstance(raw, dict):
+            raise ValueError("units must be a YAML mapping")
+        units = {str(key): str(value).strip() for key, value in raw.items()}
+        missing = [key for key in default_phonon_input_units() if not units.get(key)]
+        if missing:
+            missing_text = ", ".join(missing)
+            raise ValueError(f"units mapping missing: {missing_text}")
+        return {key: units[key] for key in default_phonon_input_units()}
+
+    @property
+    def provenance(self) -> dict[str, Any]:
+        """Return optional source provenance stored in the YAML input.
+
+        Returns
+        -------
+        dict
+            Provenance mapping, or an empty mapping for historical inputs.
+
+        Raises
+        ------
+        ValueError
+            If the stored provenance value is not a mapping.
+        """
+        if self._data is None or "provenance" not in self._data:
+            return {}
+        raw = self._data["provenance"]
+        if not isinstance(raw, dict):
+            raise ValueError("provenance must be a YAML mapping")
+        return dict(raw)
+
+    @property
     def total_q_points(self) -> np.float64:
         """
         Return the sum of q-point weights.
@@ -494,9 +546,11 @@ class PhononInputFileReader(BasicReader):
                 else np.asarray(self.qcoords, dtype=np.float64)
             ),
             structure=self.structure,
+            units=self.units,
             source=source if source is not None else self._source,
             metadata={
                 "format": "quantas-phonon-yaml",
+                "provenance": self.provenance,
                 "formula_units_per_cell": int(self.formula_units),
                 "natoms_per_formula_unit": (
                     float(self.natoms) / float(self.formula_units)
@@ -508,6 +562,11 @@ class PhononInputFileReader(BasicReader):
                     None
                     if self._data is None
                     else self._data.get("q_position_convention")
+                ),
+                "mode_continuity_metadata": (
+                    {}
+                    if self._data is None
+                    else dict(self._data.get("mode_continuity_metadata", {}))
                 ),
             },
         )

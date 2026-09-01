@@ -54,6 +54,9 @@ class QHAInputFileReader(PhononInputFileReader):
         )
         metadata = dict(data.metadata)
         metadata["mode_continuity"] = continuity
+        metadata["mode_continuity_metadata"] = dict(
+            raw.get("mode_continuity_metadata", {})
+        )
         metadata["source_format"] = "quantas-phonon-yaml"
         return QHAInput(
             jobname=data.jobname,
@@ -67,6 +70,7 @@ class QHAInputFileReader(PhononInputFileReader):
             weights=data.weights,
             qcoords=data.qcoords,
             structure=data.structure,
+            units=dict(data.units),
             source=data.source,
             metadata=metadata,
             mode_continuity=continuity,
@@ -102,6 +106,7 @@ def phonon_to_qha_input(input_data: PhononInputData) -> QHAInput:
         weights=input_data.weights,
         qcoords=input_data.qcoords,
         structure=input_data.structure,
+        units=dict(input_data.units),
         source=input_data.source,
         metadata=metadata,
         mode_continuity=continuity,

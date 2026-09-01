@@ -18,6 +18,11 @@ from typing import Any, ClassVar
 import numpy as np
 import yaml
 
+from quantas.core.numerics.phonon_tracking import (
+    PhononModeTrackingResult,
+    track_phonon_modes,
+)
+from quantas.models.phonons import default_phonon_input_units
 from quantas.models.structures import StructureVolumeSeries
 
 _CrystalPhononReader: type[Any] | None
@@ -277,15 +282,25 @@ class HAInputCreator:
         if self.interface_flag == "crystal-qha":
             if self.phondata is None:
                 raise ValueError("no phonon data have been loaded")
-            return self._dict_from_single_reader(self.phondata, jobname, formula_units)
+            data = self._dict_from_single_reader(
+                self.phondata, jobname, formula_units
+            )
+            data["provenance"] = _provenance_dict(
+                self.interface_flag, self.files, reference_index=0
+            )
+            return data
 
         if not isinstance(self.phondata, list) or not self.phondata:
             raise ValueError("no phonon data have been loaded")
         if reference < 0 or reference >= len(self.phondata):
             raise ValueError("invalid reference provided")
-        return self._dict_from_multiple_readers(
+        data = self._dict_from_multiple_readers(
             self.phondata, jobname, reference, formula_units
         )
+        data["provenance"] = _provenance_dict(
+            self.interface_flag, self.files, reference_index=reference
+        )
+        return data
 
     def to_yaml_lines(
         self,
@@ -396,6 +411,7 @@ class HAInputCreator:
         nvol = len(phondata)
         ref = phondata[reference]
         _validate_multiple_reader_qmeshes(phondata, reference)
+        _validate_multiple_reader_units(phondata, reference)
         data = _header_dict(jobname, ref, formula_units)
         data.update(_q_position_metadata(ref))
         data["volume"] = [_as_float(getattr(item, "volume")) for item in phondata]
@@ -403,7 +419,24 @@ class HAInputCreator:
         structure = _combine_structure_series(phondata, reference)
         if structure is not None:
             data["structure"] = structure.as_dict(include_source=False)
-        data["phonon"] = _phonon_entries(ref, nvol, phondata=phondata)
+        tracking = _track_multiple_reader_modes(phondata, reference)
+        if tracking is None:
+            data["mode_continuity"] = "unknown"
+            data["mode_continuity_metadata"] = {
+                "method": "none",
+                "reason": "phonon_eigenvectors_unavailable",
+            }
+            tracked_frequencies = None
+        else:
+            data["mode_continuity"] = tracking.status
+            data["mode_continuity_metadata"] = _mode_tracking_metadata(tracking)
+            tracked_frequencies = tracking.frequencies
+        data["phonon"] = _phonon_entries(
+            ref,
+            nvol,
+            phondata=phondata,
+            tracked_frequencies=tracked_frequencies,
+        )
         return data
 
     @staticmethod
@@ -437,6 +470,11 @@ class HAInputCreator:
         structure = getattr(reader, "structure_series", None)
         if structure is not None:
             data["structure"] = structure.as_dict(include_source=False)
+        data["mode_continuity"] = str(
+            getattr(reader, "mode_continuity", "unknown")
+        )
+        continuity_metadata = getattr(reader, "mode_continuity_metadata", {})
+        data["mode_continuity_metadata"] = dict(continuity_metadata)
         data["phonon"] = _phonon_entries(reader, nvol, single_reader=reader)
         return data
 
@@ -460,8 +498,33 @@ def format_quantas_yaml(data: dict[str, Any]) -> str:
     lines.append(f"job: {data.get('job', 'Quantas HA input')}")
     lines.append(f"natom: {int(data['natom']):3d}")
     lines.append(f"formula_units: {int(data.get('formula_units', 1))}")
+    units_text = yaml.safe_dump(
+        {"units": _plain_data(data.get("units", default_phonon_input_units()))},
+        sort_keys=False,
+        default_flow_style=False,
+        width=120,
+    ).rstrip()
+    lines.extend(units_text.splitlines())
+    if "provenance" in data:
+        provenance_text = yaml.safe_dump(
+            {"provenance": _plain_data(data["provenance"])},
+            sort_keys=False,
+            default_flow_style=False,
+            width=120,
+        ).rstrip()
+        lines.extend(provenance_text.splitlines())
     if np.asarray(data.get("volume", [])).size > 1:
-        lines.append("mode_continuity: assumed")
+        continuity = str(data.get("mode_continuity", "unknown"))
+        lines.append(f"mode_continuity: {continuity}")
+        continuity_metadata = data.get("mode_continuity_metadata")
+        if continuity_metadata:
+            metadata_text = yaml.safe_dump(
+                {"mode_continuity_metadata": _plain_data(continuity_metadata)},
+                sort_keys=False,
+                default_flow_style=False,
+                width=120,
+            ).rstrip()
+            lines.extend(metadata_text.splitlines())
     lines.append("supercell:")
     for row in data["supercell"]:
         values = ", ".join(f"{int(value):7d}" for value in row)
@@ -754,6 +817,7 @@ def _header_dict(
         "job": jobname,
         "natom": int(getattr(reader, "natom")),
         "formula_units": int(formula_units),
+        "units": _reader_units(reader),
         "supercell": _as_int_matrix(getattr(reader, "dim")),
         "qpoints": int(getattr(reader, "qpoints")),
     }
@@ -765,6 +829,7 @@ def _phonon_entries(
     *,
     phondata: list[Any] | None = None,
     single_reader: Any | None = None,
+    tracked_frequencies: np.ndarray | None = None,
 ) -> list[dict[str, Any]]:
     """
     Generate the ``phonon`` section of the YAML input.
@@ -779,6 +844,8 @@ def _phonon_entries(
         Multiple single-volume readers.
     single_reader : object or None, optional
         Single CRYSTAL-QHA reader.
+    tracked_frequencies : ndarray or None, optional
+        Mode-continuous frequencies with shape ``(nvol, qpoints, nphonon)``.
 
     Returns
     -------
@@ -803,7 +870,12 @@ def _phonon_entries(
         q_position = None if qcoords is None else qcoords[i].astype(float).tolist()
         bands: list[dict[str, list[float]]] = []
         for j in range(nphonon):
-            if single_reader is not None:
+            if tracked_frequencies is not None:
+                frequencies = np.asarray(
+                    tracked_frequencies[:, i, j],
+                    dtype=np.float64,
+                )
+            elif single_reader is not None:
                 frequencies = _phonon_frequency_array(phonons, i, j)
             else:
                 if phondata is None:
@@ -824,6 +896,164 @@ def _phonon_entries(
             }
         )
     return entries
+
+
+def _track_multiple_reader_modes(
+    readers: list[Any],
+    reference_index: int,
+) -> PhononModeTrackingResult | None:
+    """Return mode-continuous frequencies when all readers expose eigenvectors.
+
+    Parameters
+    ----------
+    readers : list
+        Loaded single-volume phonon readers.
+    reference_index : int
+        Reader fixing phonon branch labels.
+
+    Returns
+    -------
+    PhononModeTrackingResult or None
+        Tracking result, or ``None`` when at least one interface reader does
+        not expose phonon eigenvectors.
+
+    Raises
+    ------
+    ValueError
+        If eigenvector dimensions, atoms, q points, or frequency arrays are
+        inconsistent across sampled volumes.
+    """
+    mode_data = [getattr(reader, "mode_data", None) for reader in readers]
+    if any(item is None for item in mode_data):
+        return None
+
+    available = [item for item in mode_data if item is not None]
+    reference = available[reference_index]
+    for item in available:
+        if item.atom_symbols != reference.atom_symbols:
+            raise ValueError(
+                "phonon eigenvector atom ordering changes between volume points"
+            )
+        if item.eigenvectors.shape != reference.eigenvectors.shape:
+            raise ValueError(
+                "phonon eigenvector dimensions change between volume points"
+            )
+
+    frequencies = np.asarray(
+        [reader.phonons_array() for reader in readers],
+        dtype=np.float64,
+    )
+    eigenvectors = np.asarray(
+        [item.eigenvectors for item in available],
+        dtype=np.complex128,
+    )
+    if frequencies.shape != eigenvectors.shape[:3]:
+        raise ValueError(
+            "phonon frequencies and eigenvectors use incompatible dimensions"
+        )
+    volumes = np.asarray(
+        [_as_float(getattr(reader, "volume")) for reader in readers],
+        dtype=np.float64,
+    )
+    return track_phonon_modes(
+        frequencies,
+        eigenvectors,
+        volumes,
+        reference_index=reference_index,
+    )
+
+
+def _mode_tracking_metadata(
+    result: PhononModeTrackingResult,
+) -> dict[str, Any]:
+    """Return compact YAML metadata for one phonon-mode tracking result."""
+    return {
+        "method": "eigenvector_overlap",
+        "reference_index": int(result.reference_index),
+        "traversal": [int(index) for index in result.traversal],
+        "minimum_overlap": _finite_or_none(result.minimum_overlap),
+        "minimum_subspace_singular_value": _finite_or_none(
+            result.minimum_subspace_singular_value
+        ),
+        "reordered_assignments": int(result.reordered_assignments),
+        "ambiguous_assignments": int(result.ambiguous_assignments),
+        "low_overlap_assignments": int(result.low_overlap_assignments),
+        "degenerate_subspaces": int(result.degenerate_subspaces),
+        "ambiguity_margin": 0.4,
+        "minimum_required_overlap": 0.5,
+        "degeneracy_atol_cm-1": 5.0e-2,
+        "degeneracy_rtol": 1.0e-6,
+        "minimum_subspace_overlap": 0.8,
+    }
+
+
+def _finite_or_none(value: float) -> float | None:
+    """Return one finite diagnostic value or ``None`` for YAML output."""
+    return float(value) if np.isfinite(value) else None
+
+
+def _reader_units(reader: Any) -> dict[str, str]:
+    """Return validated physical units exposed by one interface reader.
+
+    Readers predating explicit unit metadata retain the historical Quantas
+    HA/QHA convention of Hartree, cubic angstrom, and wavenumbers.
+
+    Parameters
+    ----------
+    reader : object
+        Loaded interface reader.
+
+    Returns
+    -------
+    dict
+        Energy, volume, frequency, and structural length unit labels.
+
+    Raises
+    ------
+    ValueError
+        If a reader exposes an incomplete or empty unit mapping.
+    """
+    raw = getattr(reader, "units", None)
+    if raw is None:
+        return default_phonon_input_units()
+    if not isinstance(raw, dict):
+        raise ValueError("interface reader units must be a mapping")
+
+    units = {str(key): str(value).strip() for key, value in raw.items()}
+    missing = [key for key in default_phonon_input_units() if not units.get(key)]
+    if missing:
+        missing_text = ", ".join(missing)
+        raise ValueError(f"interface reader units missing: {missing_text}")
+    return {key: units[key] for key in default_phonon_input_units()}
+
+
+def _provenance_dict(
+    interface: str,
+    files: list[Path],
+    *,
+    reference_index: int,
+) -> dict[str, Any]:
+    """Return compact source provenance for one generated HA/QHA input.
+
+    Parameters
+    ----------
+    interface : str
+        Interface name selected by the input generator.
+    files : list of pathlib.Path
+        Source files read by the interface.
+    reference_index : int
+        Source index used as the reference dataset.
+
+    Returns
+    -------
+    dict
+        Interface name, source identifiers, and reference index.
+    """
+    return {
+        "interface": str(interface),
+        "sources": [str(path) for path in files],
+        "reference_index": int(reference_index),
+    }
 
 
 def _q_position_metadata(reader: Any) -> dict[str, str]:
@@ -898,6 +1128,33 @@ def _fractional_qcoords(reader: Any, qpoints: int) -> np.ndarray | None:
     if shrinkf.shape != (3,) or np.any(shrinkf <= 0.0):
         raise ValueError("q-point shrinking factors must contain three positives")
     return raw / shrinkf[np.newaxis, :]
+
+
+def _validate_multiple_reader_units(
+    readers: list[Any],
+    reference: int,
+) -> None:
+    """Require one consistent physical-unit contract across a file series.
+
+    Parameters
+    ----------
+    readers : list
+        Loaded single-volume interface readers.
+    reference : int
+        Reference reader index.
+
+    Raises
+    ------
+    ValueError
+        If one source reports units different from the reference source.
+    """
+    expected = _reader_units(readers[reference])
+    for index, reader in enumerate(readers):
+        if _reader_units(reader) != expected:
+            raise ValueError(
+                f"input file {index} uses physical units inconsistent "
+                "with the reference source"
+            )
 
 
 def _validate_multiple_reader_qmeshes(

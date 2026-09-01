@@ -257,3 +257,231 @@ class OptimizationResult:
             Number of optimization steps.
         """
         return len(self.steps)
+
+
+@dataclass(slots=True)
+class SourceProvenance:
+    """Origin of one parsed observation supplied to Quantas.
+
+    Parameters
+    ----------
+    interface : str
+        Quantas interface that produced the observation, for example
+        ``"crystal"`` or ``"vasp"``.
+    source : str or None, optional
+        Human-readable source path or identifier.
+    record_index : int or None, optional
+        Zero-based index of the record within a multi-record source.
+    metadata : dict, optional
+        Additional interface-specific provenance.
+
+    Raises
+    ------
+    ValueError
+        If the interface label is empty or ``record_index`` is negative.
+    """
+
+    interface: str
+    source: str | None = None
+    record_index: int | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Normalize provenance labels and validate the optional record index."""
+        self.interface = str(self.interface).strip()
+        if not self.interface:
+            raise ValueError("provenance interface cannot be empty")
+        if self.source is not None:
+            self.source = str(self.source)
+        if self.record_index is not None:
+            self.record_index = int(self.record_index)
+            if self.record_index < 0:
+                raise ValueError("record_index cannot be negative")
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a recursively serializable provenance mapping.
+
+        Returns
+        -------
+        dict
+            Interface, source, record index, and metadata.
+        """
+        return {
+            "interface": self.interface,
+            "source": self.source,
+            "record_index": self.record_index,
+            "metadata": dict(self.metadata),
+        }
+
+
+@dataclass(slots=True)
+class StructureEnergyPoint:
+    """One structure-energy observation with optional source provenance.
+
+    Parameters
+    ----------
+    structure : CrystalStructure
+        Periodic structure expressed in the canonical Quantas structural
+        convention. Lattice vectors are therefore in angstrom.
+    energy : EnergyRecord
+        Static energy associated with ``structure``.
+    provenance : SourceProvenance or None, optional
+        Origin of the observation.
+    metadata : dict, optional
+        Additional backend-neutral information associated with the point.
+    """
+
+    structure: CrystalStructure
+    energy: EnergyRecord
+    provenance: SourceProvenance | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def volume(self) -> float:
+        """Return the structure volume in cubic angstrom.
+
+        Returns
+        -------
+        float
+            Positive cell volume in cubic angstrom.
+        """
+        return self.structure.volume
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a recursively serializable observation mapping.
+
+        Returns
+        -------
+        dict
+            Structure, energy, provenance, and metadata.
+        """
+        data: dict[str, Any] = {
+            "structure": self.structure.as_dict(),
+            "energy": {
+                "value": float(self.energy.value),
+                "unit": self.energy.unit,
+                "kind": self.energy.kind.value,
+                "metadata": dict(self.energy.metadata),
+            },
+            "metadata": dict(self.metadata),
+        }
+        if self.provenance is not None:
+            data["provenance"] = self.provenance.as_dict()
+        return data
+
+
+@dataclass(slots=True)
+class StructureEnergySeries:
+    """Analysis-ready sequence of compatible structure-energy observations.
+
+    The series is intentionally independent of how its points were produced.
+    A monolithic equation-of-state output and a set of independent
+    fixed-volume optimizations can therefore be normalized to the same
+    contract before entering an EOS, QHA, or workflow layer.
+
+    Parameters
+    ----------
+    points : tuple of StructureEnergyPoint
+        Ordered structure-energy observations.
+    reference_index : int, optional
+        Index of the reference observation within ``points``.
+    metadata : dict, optional
+        Dataset-level metadata and provenance.
+
+    Raises
+    ------
+    ValueError
+        If the series is empty, the reference index is invalid, or energies
+        use inconsistent units or semantic kinds.
+    """
+
+    points: tuple[StructureEnergyPoint, ...]
+    reference_index: int = 0
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Normalize point storage and validate series-level compatibility."""
+        self.points = tuple(self.points)
+        if not self.points:
+            raise ValueError("structure-energy series cannot be empty")
+        self.reference_index = int(self.reference_index)
+        if self.reference_index < 0 or self.reference_index >= len(self.points):
+            raise ValueError("reference_index is outside the structure-energy series")
+
+        unit = self.points[0].energy.unit.casefold()
+        kind = self.points[0].energy.kind
+        for point in self.points[1:]:
+            if point.energy.unit.casefold() != unit:
+                raise ValueError("structure-energy series uses inconsistent energy units")
+            if point.energy.kind is not kind:
+                raise ValueError("structure-energy series uses inconsistent energy kinds")
+
+    @property
+    def npoints(self) -> int:
+        """Return the number of observations in the series.
+
+        Returns
+        -------
+        int
+            Number of stored points.
+        """
+        return len(self.points)
+
+    @property
+    def volumes(self) -> FloatArray:
+        """Return point volumes in cubic angstrom.
+
+        Returns
+        -------
+        ndarray
+            One-dimensional float64 array of structure volumes.
+        """
+        return np.asarray([point.volume for point in self.points], dtype=np.float64)
+
+    @property
+    def energies(self) -> FloatArray:
+        """Return point energies in their shared source unit.
+
+        Returns
+        -------
+        ndarray
+            One-dimensional float64 array of static energies.
+        """
+        return np.asarray(
+            [point.energy.value for point in self.points],
+            dtype=np.float64,
+        )
+
+    @property
+    def energy_unit(self) -> str:
+        """Return the shared energy unit.
+
+        Returns
+        -------
+        str
+            Unit label stored by the point energy records.
+        """
+        return self.points[0].energy.unit
+
+    @property
+    def energy_kind(self) -> EnergyKind:
+        """Return the shared semantic energy kind.
+
+        Returns
+        -------
+        EnergyKind
+            Energy kind stored by every observation.
+        """
+        return self.points[0].energy.kind
+
+    @property
+    def volume_unit(self) -> str:
+        """Return the canonical Quantas volume unit.
+
+        Returns
+        -------
+        str
+            ``"angstrom^3"`` because :class:`CrystalStructure` stores lattice
+            vectors in angstrom.
+        """
+        return "angstrom^3"

@@ -16,6 +16,7 @@ from quantas.core.geometry import (
 )
 from quantas.interfaces.crystal import markers, patterns
 from quantas.interfaces.crystal.geometry import CrystalGeometryParser
+from quantas.interfaces.crystal.phonon_modes import CrystalPhononModeParser
 from quantas.models.reader import BasicReader
 from quantas.models.structures import (
     CellNormalization,
@@ -83,6 +84,8 @@ class CrystalPhononReader(BasicReader):
             "shrinkf": np.ones(3, dtype=int),
             "q_position_source": "unavailable",
             "structure_series": None,
+            "mode_data": None,
+            "source_path": None,
         }
 
     def load(self, file):
@@ -97,6 +100,7 @@ class CrystalPhononReader(BasicReader):
 
         """
         self._data = self._empty_data()
+        self._data["source_path"] = Path(file)
         geometry = CrystalGeometryParser(file)
 
         if not self.is_frequency_calculation(file):
@@ -416,6 +420,22 @@ class CrystalPhononReader(BasicReader):
         return
 
     @property
+    def units(self) -> dict[str, str]:
+        """Return the physical units exposed by this CRYSTAL reader.
+
+        Returns
+        -------
+        dict
+            Energy, volume, frequency, and structural length units.
+        """
+        return {
+            "energy": "Ha",
+            "volume": "angstrom^3",
+            "frequency": "cm^-1",
+            "length": "angstrom",
+        }
+
+    @property
     def kpoints(self):
         """
         Get the number of sampled *k*-points, determined from the expansion
@@ -574,6 +594,33 @@ class CrystalPhononReader(BasicReader):
             [self._data["phonons"][i] for i in range(self.qpoints)],
             dtype=np.float64,
         )
+
+    @property
+    def mode_data(self):
+        """Return parsed mass-weighted phonon eigenvectors when available.
+
+        Returns
+        -------
+        PhononModeData or None
+            Frequencies and unit-norm eigenvectors, or ``None`` when CRYSTAL
+            did not print eigenvectors in the source output. The data are
+            parsed lazily and cached because HA thermodynamics do not require
+            eigenvectors unless mode continuity is inspected.
+
+        Raises
+        ------
+        ValueError
+            If CRYSTAL prints an incomplete or inconsistent eigenvector block.
+        """
+        cached = self._data.get("mode_data")
+        if cached is not None:
+            return cached
+        source = self._data.get("source_path")
+        if source is None:
+            return None
+        parsed = CrystalPhononModeParser(source).parse(self.nphonon)
+        self._data["mode_data"] = parsed
+        return parsed
 
     @property
     def structure_series(self):
