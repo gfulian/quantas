@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-Validate the in-development Quantas 2.0.0b9 public lifecycle API on Windows.
+Validate the in-development Quantas 2.0.0b10 public lifecycle API on Windows.
 
 .DESCRIPTION
 Runs focused public input, execution, persistence, report, plot, export,

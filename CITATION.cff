@@ -4,7 +4,7 @@ message: >-
   the scientific references reported by the calculation.
 title: Quantas
 type: software
-version: 2.0.0b9
+version: 2.0.0b10
 repository-code: https://github.com/gfulian/quantas
 url: https://quantas.readthedocs.io/
 authors:

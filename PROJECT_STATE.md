@@ -9,10 +9,10 @@ recorded separately in the Quantas/Quantas GUI architectural decisions.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-08-02 |
-| Current development version | `2.0.0b9` |
+| Last updated | 2026-08-31 |
+| Current development version | `2.0.0b10` |
 | Baseline | `2.0.0b9`, `dev/refactor` |
-| Working branch target | `dev/refactor` release-candidate freeze |
+| Working branch target | `dev/crystal-parser` parser hardening |
 | Development status | Pre-RC scientific validation and release preparation |
 | Numerical baseline | Unchanged from `2.0.0b6` |
 | Persistence schemas | Unchanged |

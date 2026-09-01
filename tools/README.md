@@ -13,7 +13,7 @@ public Python API or the installed ``quantas`` command.
 - ``validate_public_lifecycle_api.ps1`` runs the focused public input, run,
   persistence, report, plot, export, registry, and CLI/API-equivalence checks
   on Windows. The ``-Full`` switch adds Ruff, mypy, the complete staged suite,
-  Sphinx, and distribution validation for a candidate ``2.0.0b9`` snapshot.
+  Sphinx, and distribution validation for a candidate ``2.0.0b10`` snapshot.
 - ``validate_public_plot_api.ps1`` is a compatibility entry point forwarding
   to the lifecycle validation script.
 - ``post_validation_cleanup.sh`` removes disposable validation environments,

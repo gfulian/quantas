@@ -48,6 +48,17 @@ def _is_int_token(token: str) -> bool:
     return True
 
 
+def _chemical_atomic_number(conventional: int) -> int:
+    """Return the chemical atomic number encoded by CRYSTAL convention.
+
+    CRYSTAL may add one or more hundreds to an atomic number to distinguish
+    basis-set definitions or pseudopotential atoms. The chemical identity is
+    therefore encoded by the last two decimal digits, while the original
+    conventional number is retained separately in structure metadata.
+    """
+    return int(conventional) % 100
+
+
 class CrystalGeometryParser:
     """Parse primitive, supercell, and optimized geometries from CRYSTAL output.
 
@@ -261,6 +272,7 @@ class CrystalGeometryParser:
             raise ValueError("CRYSTAL cell table does not contain an atom count")
 
         numbers: list[int] = []
+        conventional_numbers: list[int] = []
         positions: list[list[float]] = []
         last_atom_index = atom_line_index
         for cursor in range(atom_line_index + 1, len(self.lines)):
@@ -273,7 +285,9 @@ class CrystalGeometryParser:
             ):
                 values = _float_values(self.lines[cursor])
                 if len(values) >= 5:
-                    numbers.append(int(tokens[2]))
+                    conventional = int(tokens[2])
+                    conventional_numbers.append(conventional)
+                    numbers.append(_chemical_atomic_number(conventional))
                     positions.append([float(value) for value in values[-3:]])
                     last_atom_index = cursor
                     if len(numbers) == natoms:
@@ -293,6 +307,9 @@ class CrystalGeometryParser:
             "geometry_source": label,
             "cell_parameters": np.asarray(parameters, dtype=np.float64),
             "coorprt_present": self.has_coorprt,
+            "crystal_conventional_atomic_numbers": np.asarray(
+                conventional_numbers, dtype=np.int64
+            ),
         }
         return CrystalStructure(
             lattice=lattice,
@@ -320,6 +337,7 @@ class CrystalGeometryParser:
             return None
 
         numbers: list[int] = []
+        conventional_numbers: list[int] = []
         positions: list[list[float]] = []
         for line in self.lines[coordinate_marker + 1 : limit]:
             if "NUMBER OF SYMMETRY OPERATORS" in line:
@@ -328,7 +346,9 @@ class CrystalGeometryParser:
             if len(tokens) >= 8 and all(_is_int_token(token) for token in tokens[:4]):
                 values = _float_values(line)
                 if len(values) >= 7:
-                    numbers.append(int(tokens[3]))
+                    conventional = int(tokens[3])
+                    conventional_numbers.append(conventional)
+                    numbers.append(_chemical_atomic_number(conventional))
                     positions.append([float(value) for value in values[-3:]])
         if not numbers:
             return None
@@ -341,6 +361,9 @@ class CrystalGeometryParser:
                 "geometry_source": "equivalent atoms",
                 "cell_parameters": np.asarray(parameters, dtype=np.float64),
                 "coorprt_present": self.has_coorprt,
+                "crystal_conventional_atomic_numbers": np.asarray(
+                    conventional_numbers, dtype=np.int64
+                ),
             },
         )
 

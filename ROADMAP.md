@@ -4,7 +4,9 @@
 
 The `2.0.0b9` public lifecycle baseline, SEISMIC input-generation work, and
 frontend-neutral QHA inspection presentation are merged into `dev/refactor`.
-The backend has returned to release-candidate freeze.
+The backend has returned to release-candidate freeze. A temporary
+`dev/crystal-parser` branch carries the `2.0.0b10` CRYSTAL parser hardening
+work and will be merged only after focused scientific and regression validation.
 
 The completed stabilization covers:
 

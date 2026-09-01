@@ -5,6 +5,28 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
+## [2.0.0b10] - Unreleased
+
+### Added
+
+- Added backend-neutral computational records for external-code run
+  termination, energies, SCF convergence, and geometry-optimization history.
+- Added a shared CRYSTAL output document/parser foundation with centralized
+  regular expressions for termination, SCF, energy, and optimization markers.
+- Added characterization tests against distributed CRYSTAL phonon, native-QHA,
+  and elasticity outputs, including incomplete and failed synthetic cases.
+
+### Changed
+
+- CRYSTAL geometry parsing now preserves conventional atomic numbers as source
+  metadata while exposing chemical atomic numbers through ``CrystalStructure``.
+
+### Scientific compatibility
+
+Existing CRYSTAL phonon, QHA, and elasticity readers are not yet routed through
+the new generic parser in this tranche. Their public outputs and numerical
+behavior remain unchanged for the existing all-electron reference suite.
+
 ## [2.0.0b9] - Unreleased
 
 ### Added
@@ -365,6 +387,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b10]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b10
 [2.0.0b9]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b9
 [2.0.0b8]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b8
 [2.0.0b6]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b6
