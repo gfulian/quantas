@@ -8,6 +8,9 @@ import re
 
 
 FLOAT = r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[EeDd][-+]?\d+)?"
+FLOAT_RE = re.compile(FLOAT)
+ATOM_COUNT_RE = re.compile(r"ATOMS IN THE UNIT CELL:\s*(?P<count>\d+)")
+SPACE_GROUP_RE = re.compile(r"SPACE\s+GROUP\s+N\.\s*:\s*(?P<number>\d+)")
 
 NORMAL_TERMINATION_RE = re.compile(r"^\s*E{10}\s+TERMINATION\b", re.IGNORECASE)
 
@@ -16,7 +19,9 @@ SCF_CYCLE_RE = re.compile(
     rf"(?P<energy>{FLOAT})\s+DETOT\s*(?P<delta>{FLOAT})\b",
     re.IGNORECASE,
 )
-SCF_END_RE = re.compile(r"^\s*==\s*SCF\s+ENDED\s*-\s*(?P<reason>.+)$", re.IGNORECASE)
+SCF_END_RE = re.compile(
+    r"^\s*==\s*SCF\s+ENDED\s*-\s*(?P<reason>.+)$", re.IGNORECASE
+)
 SCF_END_ENERGY_RE = re.compile(
     rf"\bE\(AU\)\s+(?P<energy>{FLOAT})\s+CYCLES\s+(?P<cycles>\d+)\b",
     re.IGNORECASE,

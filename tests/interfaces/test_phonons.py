@@ -21,6 +21,13 @@ QPOINT_BLOCK = """
 """
 
 
+CENTRAL_POINT_BLOCK = """
+                 THE CENTRAL POINT
+ DE:             ENERGY DIFFERENCE WITH RESPECT TO THE CENTRAL POINT
+    CENTRAL POINT             -3.793746542432E+04    21     0.0000E+00     6
+"""
+
+
 def test_crystal_qpoint_table_preserves_order_weights_and_fractional_positions(
     tmp_path,
 ) -> None:
@@ -56,3 +63,13 @@ def test_crystal_qpoint_parser_rejects_table_dispersion_mismatch(tmp_path) -> No
 
     with pytest.raises(ValueError, match="different coordinates or ordering"):
         CrystalPhononReader().set_q_mesh(filename)
+
+
+def test_crystal_phonon_reads_central_point_energy(tmp_path) -> None:
+    """Descriptive central-point text must not shadow the energy record."""
+    filename = tmp_path / "central-point.out"
+    filename.write_text(CENTRAL_POINT_BLOCK, encoding="utf-8")
+
+    energy = CrystalPhononReader().set_energy(filename)
+
+    assert energy == pytest.approx(-3.793746542432e4)

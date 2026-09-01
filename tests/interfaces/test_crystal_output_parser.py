@@ -142,7 +142,7 @@ def test_crystal_parser_distinguishes_failed_optimization() -> None:
 
 
 @pytest.mark.interfaces
-def test_crystal_geometry_separates_conventional_and_chemical_atomic_numbers() -> None:
+def test_crystal_geometry_normalizes_conventional_atomic_numbers() -> None:
     """CRYSTAL conventional Z values must not leak into neutral structures."""
     parser = CrystalGeometryParser(
         [

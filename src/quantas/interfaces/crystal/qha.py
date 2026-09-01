@@ -9,36 +9,13 @@ from quantas.core.geometry import (
     reconstruct_primitive_structure,
     supercell_repetitions,
 )
+from quantas.interfaces.crystal import markers
 from quantas.interfaces.crystal.geometry import CrystalGeometryParser
 from quantas.models.reader import BasicReader
 from quantas.models.structures import (
     CellNormalization,
     StructureVolumeSeries,
 )
-
-# Geometry strings
-geometry_consistent = "GEOMETRY NOW FULLY CONSISTENT WITH THE GROUP"
-geometry_sym_changed = "SYMMETRY CHANGED DURING OLD RUN :"
-geometry_wf = "GEOMETRY FOR WAVE FUNCTION - "
-primitive_cell = "PRIMITIVE CELL - "
-supercell_option = " * SUPERCELL OPTION"
-supercell_expansion = "EXPANSION MATRIX OF PRIMITIVE CELL"
-lattice_vectors = "DIRECT LATTICE VECTORS CARTESIAN COMPONENTS"
-# FREQCALC-specific strings
-frequency_calculation = "EIGENVALUES (EIGV) OF THE MASS WEIGHTED HESSIAN"
-frequency_calculation += " MATRIX AND HARMONIC"
-scelphono_option = "PHONON FREQUENCIES AT A SET OF K POINTS BY USING "
-scelphono_option += "A SUPERCELL"
-hess_interpolation = "ACTIVATED INTERPOLATION OF THE HESSIAN UP TO"
-scelphono_qpoints = "THAT PERMITS THE CALCULATION OF MODES AT"
-central_energy = "    CENTRAL POINT"
-frequency_header = "MODES         EIGV          FREQUENCIES     IRREP"
-# QHA-specific strings
-qha_header = "QUASI-HARMONIC APPROXIMATION"
-qha_freq = "FREQUENCY #"
-qha_ev = "SORTING VOLUMES/ENERGIES"
-qha_opt = "FINAL OPTIMIZED GEOMETRY"
-qha_restart = "READING DATA FROM RESTART UNIT"
 
 
 class CrystalQHAReader(BasicReader):
@@ -182,7 +159,7 @@ class CrystalQHAReader(BasicReader):
         """
         with open(file, "r") as f:
             for line in f:
-                if qha_header in line:
+                if markers.QHA_HEADER in line:
                     return True
             return False
         return
@@ -208,7 +185,7 @@ class CrystalQHAReader(BasicReader):
         """
         with open(file, "r") as f:
             for line in f:
-                if qha_restart in line:
+                if markers.QHA_RESTART in line:
                     return True
             return False
         return
@@ -234,7 +211,7 @@ class CrystalQHAReader(BasicReader):
         """
         with open(file, "r") as f:
             for line in f:
-                if supercell_option in line:
+                if markers.SUPERCELL_OPTION in line:
                     return True
             return False
 
@@ -618,7 +595,7 @@ class CrystalQHAReader(BasicReader):
             Number of unit cell volumes considered.
 
         """
-        sline = self._get_start_line(file, qha_ev) + 4
+        sline = self._get_start_line(file, markers.QHA_VOLUME_ENERGY_TABLE) + 4
 
         with open(file, "r") as f:
             data = f.readlines()
@@ -655,7 +632,7 @@ class CrystalQHAReader(BasicReader):
             :math:`3 \\times 3` array of the expansion matrix.
 
         """
-        sline = self._get_start_line(file, supercell_expansion) + 1
+        sline = self._get_start_line(file, markers.SUPERCELL_EXPANSION) + 1
 
         with open(file, "r") as f:
             data = f.readlines()
@@ -687,7 +664,7 @@ class CrystalQHAReader(BasicReader):
             Unit cell energy values with `float` type.
 
         """
-        sline = self._get_start_line(file, qha_ev) + 4
+        sline = self._get_start_line(file, markers.QHA_VOLUME_ENERGY_TABLE) + 4
 
         with open(file, "r") as f:
             data = f.readlines()
@@ -717,7 +694,7 @@ class CrystalQHAReader(BasicReader):
             Unit cell volumes with `float` type.
 
         """
-        sline = self._get_start_line(file, qha_ev) + 4
+        sline = self._get_start_line(file, markers.QHA_VOLUME_ENERGY_TABLE) + 4
 
         with open(file, "r") as f:
             data = f.readlines()
@@ -826,7 +803,7 @@ class CrystalQHAReader(BasicReader):
 
         freq_idx = []
         for i in range(len(data)):
-            if qha_freq in data[i]:
+            if markers.QHA_FREQUENCY in data[i]:
                 if data[i].split()[0] == "FREQUENCY":
                     freq_idx.append(i + 3)
 

@@ -7,6 +7,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from quantas.interfaces.crystal import markers
 from quantas.interfaces.crystal.elasticity import CrystalElasticityReader
 from quantas.interfaces.vasp.elasticity import VASPElasticityReader
 
@@ -14,10 +15,16 @@ from quantas.interfaces.vasp.elasticity import VASPElasticityReader
 DATA = Path(__file__).parent / "data"
 
 
+@pytest.mark.parametrize(
+    "option_marker",
+    markers.ELASTICITY_OPTION_MARKERS,
+    ids=("elastcon", "elapiezo"),
+)
 def test_crystal_reader_collects_tensor_and_density(
     tmp_path,
+    option_marker: str,
 ) -> None:
-    """CRYSTAL ELASTCON output is normalized to a symmetric GPa matrix."""
+    """CRYSTAL elastic outputs are normalized to a symmetric GPa matrix."""
     rows = [
         "| 100 10 20 0 0 0 |",
         "| 110 30 0 0 0 |",
@@ -28,7 +35,7 @@ def test_crystal_reader_collects_tensor_and_density(
     ]
     text = "\n".join(
         [
-            "ELASTCON OPTION",
+            option_marker,
             "GEOMETRY NOW FULLY CONSISTENT WITH THE GROUP",
             "PRIMITIVE CELL - TEST 3.178 g/cm3",
             "FINAL RESULTS START",

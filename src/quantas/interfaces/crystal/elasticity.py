@@ -12,36 +12,19 @@ are included in the reported elastic coefficients.
 from __future__ import annotations
 
 from pathlib import Path
-import re
 from typing import TypeAlias, TypedDict
 
 import numpy as np
 from numpy.typing import NDArray
 
 from quantas.core.geometry import analyze_symmetry
+from quantas.interfaces.crystal import markers, patterns
 from quantas.interfaces.crystal.geometry import CrystalGeometryParser
 from quantas.models.reader import BasicReader
 from quantas.models.structures import CrystalStructure, SymmetryMetadata
 
 
 FloatArray: TypeAlias = NDArray[np.float64]
-
-_GEOMETRY_CONSISTENT = "GEOMETRY NOW FULLY CONSISTENT WITH THE GROUP"
-_PRIMITIVE_CELL = "PRIMITIVE CELL - "
-_ELASTICITY_OPTION = "ELASTCON OPTION"
-_ELASTICITY_COMPLETED = "FINAL RESULTS START"
-_ELASTICITY_CONSTANTS = "SYMMETRIZED ELASTIC CONSTANTS"
-_ELASTIC_PRESSURE = "ELASTIC PROPERTIES AT PRESSURE"
-_STRESS_PRESSURE = "PRESSURE IN GIGAPASCAL:"
-_CELL_VOLUME = "VOLUME OF THE CELL:"
-_CRYSTAL_DENSITY = "DENSITY OF THE CRYSTAL"
-
-_FLOAT_RE = re.compile(r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[EeDd][-+]?\d+)?")
-_ENERGY_RE = re.compile(
-    r"TOTAL ENERGY\(DFT\)\(AU\)\(\s*\d+\)\s*"
-    r"([-+]?\d+(?:\.\d*)?[EeDd][-+]?\d+)",
-    flags=re.IGNORECASE,
-)
 
 
 class _ElasticityData(TypedDict):
@@ -74,7 +57,7 @@ def _float_values(line: str) -> list[float]:
     """
     return [
         float(value.replace("D", "E").replace("d", "e"))
-        for value in _FLOAT_RE.findall(line)
+        for value in patterns.FLOAT_RE.findall(line)
     ]
 
 
@@ -212,12 +195,12 @@ class CrystalElasticityReader(BasicReader[None]):
                 self._data["prestress_applied"] = True
             self._data["stress_pressure"] = self._read_last_scalar_after_marker(
                 lines,
-                _STRESS_PRESSURE,
+                markers.STRESS_PRESSURE,
                 default=np.nan,
             )
             self._data["volume"] = self._read_last_scalar_after_marker(
                 lines,
-                _CELL_VOLUME,
+                markers.CELL_VOLUME,
                 default=np.nan,
             )
             self._data["density"] = 1000.0 * self._read_final_density(lines)
@@ -244,7 +227,7 @@ class CrystalElasticityReader(BasicReader[None]):
         self.completed = True
 
     def is_elasticity_output(self, filename: str | Path) -> bool:
-        """Return whether a CRYSTAL output contains an ELASTCON calculation.
+        """Return whether a CRYSTAL output contains elastic constants.
 
         Parameters
         ----------
@@ -254,10 +237,19 @@ class CrystalElasticityReader(BasicReader[None]):
         Returns
         -------
         bool
-            ``True`` when the ELASTCON section is present.
+            ``True`` when an elastic-producing operation or the standard
+            symmetrized stiffness block is present.
         """
         with Path(filename).open("r", encoding="utf-8") as stream:
-            return any(_ELASTICITY_OPTION in line for line in stream)
+            for line in stream:
+                if markers.ELASTICITY_CONSTANTS in line:
+                    return True
+                if any(
+                    marker in line
+                    for marker in markers.ELASTICITY_OPTION_MARKERS
+                ):
+                    return True
+        return False
 
     def is_output_completed(self, filename: str | Path) -> bool:
         """Return whether the CRYSTAL elastic calculation reached final results.
@@ -273,7 +265,7 @@ class CrystalElasticityReader(BasicReader[None]):
             ``True`` when the final-results marker is present.
         """
         with Path(filename).open("r", encoding="utf-8") as stream:
-            return any(_ELASTICITY_COMPLETED in line for line in stream)
+            return any(markers.ELASTICITY_RESULTS in line for line in stream)
 
     def elasticity_start_line(self, filename: str | Path) -> int:
         """Return the zero-based line containing the first final stiffness row.
@@ -295,7 +287,7 @@ class CrystalElasticityReader(BasicReader[None]):
         """
         lines = Path(filename).read_text(encoding="utf-8").splitlines()
         indexes = [
-            index for index, line in enumerate(lines) if _ELASTICITY_CONSTANTS in line
+            index for index, line in enumerate(lines) if markers.ELASTICITY_CONSTANTS in line
         ]
         if not indexes:
             raise ValueError("Elastic stiffness header not found in CRYSTAL output.")
@@ -317,9 +309,9 @@ class CrystalElasticityReader(BasicReader[None]):
         consistent = False
         with Path(filename).open("r", encoding="utf-8") as stream:
             for line in stream:
-                if _GEOMETRY_CONSISTENT in line:
+                if markers.GEOMETRY_CONSISTENT in line:
                     consistent = True
-                elif consistent and _PRIMITIVE_CELL in line:
+                elif consistent and markers.PRIMITIVE_CELL in line:
                     values = _float_values(line)
                     if "DENSITY" in line.upper():
                         tail = line.upper().split("DENSITY", maxsplit=1)[-1]
@@ -351,7 +343,7 @@ class CrystalElasticityReader(BasicReader[None]):
             If the stiffness section is absent or malformed.
         """
         indexes = [
-            index for index, line in enumerate(lines) if _ELASTICITY_CONSTANTS in line
+            index for index, line in enumerate(lines) if markers.ELASTICITY_CONSTANTS in line
         ]
         if not indexes:
             raise ValueError("Elastic stiffness header not found in CRYSTAL output.")
@@ -373,7 +365,7 @@ class CrystalElasticityReader(BasicReader[None]):
     def _read_elastic_pressure(lines: list[str]) -> float:
         """Read the pressure associated with the final elastic coefficients."""
         for line in reversed(lines):
-            if _ELASTIC_PRESSURE in line:
+            if markers.ELASTIC_PRESSURE in line:
                 values = _float_values(line)
                 if values:
                     return float(values[-1])
@@ -410,7 +402,7 @@ class CrystalElasticityReader(BasicReader[None]):
     def _read_final_density(lines: list[str]) -> float:
         """Return the final crystal density in g cm^-3."""
         for line in reversed(lines):
-            if _CRYSTAL_DENSITY in line:
+            if markers.CRYSTAL_DENSITY in line:
                 tail = line.split("=", maxsplit=1)[-1]
                 values = _float_values(tail)
                 if values:
@@ -422,10 +414,10 @@ class CrystalElasticityReader(BasicReader[None]):
         """Return the last CRYSTAL total DFT energy in hartree."""
         matches: list[float] = []
         for line in lines:
-            match = _ENERGY_RE.search(line)
+            match = patterns.TOTAL_DFT_ENERGY_RE.search(line)
             if match is not None:
                 matches.append(
-                    float(match.group(1).replace("D", "E").replace("d", "e"))
+                    float(match.group("energy").replace("D", "E").replace("d", "e"))
                 )
         if not matches:
             return np.nan
