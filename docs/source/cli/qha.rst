@@ -26,6 +26,48 @@ energy-volume data with polynomial and EOS previews and reports the implied
 pressure support.  A dense requested P--T grid does not extend the support of
 the sampled volumes.
 
+Generating and checking the phonon input
+----------------------------------------
+
+For independent CRYSTAL phonon calculations at several volumes, place one
+output path per line in a text file and run
+
+.. code-block:: console
+
+   quantas qha inpgen files.txt --list --interface crystal \
+      --reference 0 --output material.yaml
+
+When printed eigenvectors are available, Quantas validates that all sources use
+the same q mesh, q-point weights, supercell, units, and mode count.  It then
+tracks modes between adjacent volumes, treats numerical degeneracies as
+subspaces, and writes the resulting continuity status and diagnostics to the
+YAML.
+
+A monolithic CRYSTAL QHA output uses the source-managed route:
+
+.. code-block:: console
+
+   quantas qha inpgen qha.out --interface crystal-qha \
+      --output material.yaml
+
+If CRYSTAL reports that frequency continuity with volume was found, Quantas
+records ``mode_continuity: verified`` with ``method: crystal-qha`` rather than
+claiming that its own multi-file tracker established the result.
+
+Use ``--debug`` to inspect ambiguous or low-overlap assignments.  Use
+``--quiet`` for silent successful batch generation; ``--quiet`` and ``--debug``
+are mutually exclusive.
+
+.. warning::
+
+   ``inpgen`` refuses incompatible q meshes and records unresolved mode
+   assignments instead of silently reordering a scientifically unsupported
+   dataset.  Do not edit the resulting continuity status by hand to bypass the
+   ``freq``-scheme preflight check.
+
+The equations and acceptance criteria are documented in
+:doc:`../workflows/phonon_input_generation`.
+
 Choosing options
 ----------------
 
@@ -48,7 +90,8 @@ Choosing options
   with ``--temperature``.  Plot construction never interpolates or snaps the
   requested coordinate.
 
-See :doc:`../workflows/qha` for the decision guide,
+See :doc:`../workflows/phonon_input_generation` for input-generation science,
+:doc:`../workflows/qha` for the decision guide,
 :doc:`../tutorials/qha` for reproducible calculations and method comparisons,
 and :doc:`../formats/phonon_yaml` for input details.
 

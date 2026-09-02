@@ -172,8 +172,8 @@
     },
     {
       "path": "qha/README.md",
-      "sha256": "ffd9fbbabd63619bef5d3c514fd2e9682b279e146dc7ae2160490c1cae091ee9",
-      "size_bytes": 463
+      "sha256": "91f24660ba061fe595235e9391c6f14be468ac72a2fb9102ec15f9e6ff9cedb7",
+      "size_bytes": 949
     },
     {
       "path": "qha/compare_methods.py",
@@ -182,8 +182,8 @@
     },
     {
       "path": "qha/crystal-phonons/dol_pbe0.yaml",
-      "sha256": "6ccbe1c75eb1d159f0c0c3a23b6da473b435acdc569a8f59a7422c50e9c0b153",
-      "size_bytes": 139388
+      "sha256": "c7263ddb90d2c9f70620ac765217c854d0a206c4e932bef4253127c4b80a678a",
+      "size_bytes": 138930
     },
     {
       "path": "qha/crystal-phonons/dol_pbe0_crystal_pdisp_p01.out",
@@ -232,8 +232,8 @@
     },
     {
       "path": "qha/crystal-qha/mgo_b3lyp.yaml",
-      "sha256": "a895d3d2383058d7dca75600c4aaf8322b978403da5b74e675e247dd77e3331e",
-      "size_bytes": 54849
+      "sha256": "6b61ffc7b2fc6ae9684b8597123f703f2701ccf2eb7dd652edb1b6c874c11b7b",
+      "size_bytes": 53855
     },
     {
       "path": "qha/run_api.py",

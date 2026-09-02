@@ -138,3 +138,141 @@ def test_ha_plot_forwards_exact_grid_sections_to_public_api(
     assert captured["options"].curve_axis == "volume"
     assert captured["options"].selected_temperatures == (100.0, 200.0)
     assert captured["options"].include_contours is True
+
+
+def test_ha_inpgen_help_exposes_quiet_and_debug_modes():
+    result = CliRunner().invoke(ha, ["inpgen", "--help"])
+
+    assert result.exit_code == 0
+    assert "--quiet" in result.output
+    assert "--debug" in result.output
+
+
+def test_inpgen_quiet_suppresses_success_output(tmp_path, monkeypatch):
+    source = tmp_path / "phonons.out"
+    source.write_text("fake", encoding="utf-8")
+    destination = tmp_path / "phonons.yaml"
+
+    def fake_create_input(source, destination, **kwargs):
+        assert kwargs["observer"] is not None
+        return destination
+
+    monkeypatch.setattr(
+        "quantas.cli.phonon_input.create_ha_input",
+        fake_create_input,
+    )
+    monkeypatch.setattr(
+        "quantas.cli.phonon_input._read_generated_structure_summary",
+        lambda filename: None,
+    )
+
+    result = CliRunner().invoke(
+        ha,
+        [
+            "inpgen",
+            str(source),
+            "--output",
+            str(destination),
+            "--jobname",
+            "quiet test",
+            "--quiet",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert result.output == ""
+
+
+def test_inpgen_debug_renders_mode_tracking_table(tmp_path, monkeypatch):
+    from quantas.core.events import Event, EventLevel
+    from quantas.models import ReportTable
+
+    source = tmp_path / "phonons.out"
+    source.write_text("fake", encoding="utf-8")
+    destination = tmp_path / "phonons.yaml"
+
+    summary = ReportTable(
+        title="Phonon mode continuity",
+        columns=["Volume from", "Volume to", "Unresolved"],
+        rows=[[10.0, 11.0, 0]],
+        metadata={
+            "column_units": ["Å³", "Å³", ""],
+            "column_formats": [".4f", ".4f", "integer"],
+        },
+    )
+    detail = ReportTable(
+        title="Mode tracking: q #1",
+        columns=["Branch", "Frequency from", "Frequency to", "Status"],
+        rows=[[1, 100.0, 101.0, "matched"]],
+        metadata={
+            "column_units": ["", "cm^-1", "cm^-1", ""],
+            "column_formats": ["integer", ".4f", ".4f", None],
+        },
+    )
+
+    def fake_create_input(source, destination, **kwargs):
+        observer = kwargs["observer"]
+        observer(
+            Event(
+                "mode tracking complete",
+                level=EventLevel.RESULT,
+                data={"kind": "mode_tracking_summary", "table": summary},
+            )
+        )
+        observer(
+            Event(
+                "mode tracking detail",
+                level=EventLevel.DEBUG,
+                data={"kind": "mode_tracking_detail", "table": detail},
+            )
+        )
+        return destination
+
+    monkeypatch.setattr(
+        "quantas.cli.phonon_input.create_ha_input",
+        fake_create_input,
+    )
+    monkeypatch.setattr(
+        "quantas.cli.phonon_input._read_generated_structure_summary",
+        lambda filename: None,
+    )
+
+    result = CliRunner().invoke(
+        ha,
+        [
+            "inpgen",
+            str(source),
+            "--output",
+            str(destination),
+            "--jobname",
+            "debug test",
+            "--debug",
+        ],
+        terminal_width=240,
+    )
+
+    assert result.exit_code == 0
+    assert "Phonon mode continuity" in result.output
+    assert "Mode tracking: q #1" in result.output
+    assert "(Å³)" in result.output
+    assert "(cm^-1)" in result.output
+
+
+def test_inpgen_rejects_quiet_and_debug_together(tmp_path):
+    source = tmp_path / "phonons.out"
+    source.write_text("fake", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        ha,
+        [
+            "inpgen",
+            str(source),
+            "--jobname",
+            "conflict test",
+            "--quiet",
+            "--debug",
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "--quiet and --debug cannot be used together" in result.output

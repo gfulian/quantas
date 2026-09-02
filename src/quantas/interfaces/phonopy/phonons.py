@@ -166,6 +166,25 @@ class PhonopyReader(BasicReader[None]):
         return self._data["energy"]
 
     @property
+    def units(self) -> dict[str, str]:
+        """Return the physical units exposed by this Phonopy reader.
+
+        The current interface reads static energies from a companion VASP XML
+        file and converts Phonopy frequencies from THz to wavenumbers.
+
+        Returns
+        -------
+        dict
+            Energy, volume, frequency, and structural length units.
+        """
+        return {
+            "energy": "eV",
+            "volume": "angstrom^3",
+            "frequency": "cm^-1",
+            "length": "angstrom",
+        }
+
+    @property
     def kpoints(self) -> int:
         """Return the number of primitive-cell repetitions in the supercell."""
         return int(np.around(np.linalg.det(self._data["expansion"]), 0))

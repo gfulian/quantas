@@ -66,6 +66,7 @@ Start here
    :hidden:
 
    workflows/concepts/index
+   workflows/phonon_input_generation
    workflows/ha
    workflows/qha
    workflows/elasticity

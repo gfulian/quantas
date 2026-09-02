@@ -79,7 +79,8 @@ def test_all_public_cli_options_have_help_text() -> None:
 def test_removed_cli_options_are_absent_from_the_public_command_tree() -> None:
     """The pre-release migration leaves no historical option aliases behind."""
     for path, command in _leaf_commands(main):
-        overlap = _REMOVED_OPTIONS & _option_names(command)
+        allowed = {"--debug"} if path in {("ha", "inpgen"), ("qha", "inpgen")} else set()
+        overlap = (_REMOVED_OPTIONS - allowed) & _option_names(command)
         assert overlap == set(), f"{' '.join(path)} still exposes {sorted(overlap)}"
 
 

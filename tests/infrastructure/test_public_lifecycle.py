@@ -242,6 +242,7 @@ def test_qha_input_generator_uses_shared_phonon_contract(
         "reference": 0,
         "jobname": "Public QHA",
         "formula_units": 4,
+        "observer": None,
     }
 
 

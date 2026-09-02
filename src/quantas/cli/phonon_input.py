@@ -14,9 +14,10 @@ from pathlib import Path
 from typing import cast
 
 import click
-
 from quantas.cli.grouped_options import GroupedCommand
-from quantas.cli.messages import confirm, echo, echo_error, echo_warning
+from quantas.cli.phonon_input_observer import PhononInputTextObserver
+from quantas.cli.messages import confirm, echo_error
+from quantas.core.events import EventLevel
 from quantas.io.phonons import PhononInputFileReader
 from quantas.api.ha import (
     PhononInterface,
@@ -81,6 +82,20 @@ from quantas.api.qha import create_input as create_qha_input
     show_default=True,
     help="Number of chemical formula units in the normalization cell.",
 )
+@click.option(
+    "-q",
+    "--quiet",
+    "silent",
+    is_flag=True,
+    default=False,
+    help="Do not print input-generation output on screen.",
+)
+@click.option(
+    "--debug",
+    is_flag=True,
+    default=False,
+    help="Print mode-by-mode phonon continuity diagnostics.",
+)
 @click.pass_context
 def phonon_inpgen(
     ctx: click.Context,
@@ -91,6 +106,8 @@ def phonon_inpgen(
     reference: int,
     jobname: str | None,
     formula_units: int,
+    silent: bool,
+    debug: bool,
 ) -> None:
     """Generate a shared Quantas HA/QHA YAML input from phonon outputs.
 
@@ -115,6 +132,10 @@ def phonon_inpgen(
         user with a workflow-specific default.
     formula_units : int
         Number of formula units in the thermodynamic normalization cell.
+    silent : bool
+        Suppress standard terminal output.
+    debug : bool
+        Render detailed mode-by-mode continuity diagnostics.
 
     Raises
     ------
@@ -123,6 +144,9 @@ def phonon_inpgen(
     """
     workflow = _parent_workflow_name(ctx)
     destination = outfile if outfile is not None else filename.with_suffix(".yaml")
+    if silent and debug:
+        raise click.UsageError("--quiet and --debug cannot be used together")
+    observer = PhononInputTextObserver(silent=silent, debug=debug)
 
     if jobname is None:
         jobname = click.prompt(
@@ -137,7 +161,7 @@ def phonon_inpgen(
             default=False,
         )
         if not overwrite:
-            echo("Input file not written")
+            observer.output.message("Input file not written", persist=False)
             return
 
     try:
@@ -150,26 +174,32 @@ def phonon_inpgen(
             reference=reference,
             jobname=jobname,
             formula_units=formula_units,
+            observer=observer,
         )
         summary = _read_generated_structure_summary(output)
     except Exception as exc:
         echo_error(str(exc))
         raise click.Abort() from exc
+    finally:
+        observer.close()
 
-    echo(f"Input file written to: {output}")
+    observer.output.message(f"Input file written to: {output}", persist=False)
     if summary is None:
-        echo_warning(
+        observer.output.message(
             "No structural volume path was written. HA/QHA thermodynamics remain "
             "available, but lattice parameters and linear/tensorial thermal "
-            "expansion cannot be calculated from this input."
+            "expansion cannot be calculated from this input.",
+            level=EventLevel.WARNING,
+            persist=False,
         )
     else:
         natoms, nvol, symmetry = summary
         suffix = f", symmetry {symmetry}" if symmetry else ""
-        echo(
+        observer.output.message(
             "Structural volume path written: "
             f"{nvol} structure(s), {natoms} atom(s) in the primitive "
-            f"representation{suffix}."
+            f"representation{suffix}.",
+            persist=False,
         )
 
 

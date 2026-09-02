@@ -26,6 +26,22 @@ The tutorial uses the same normalized MgO input as the HA tutorial:
 
 :download:`Download the MgO YAML input <../_downloads/mgo_b3lyp.yaml>`
 
+The file can be regenerated from the distributed CRYSTAL QHA output with
+
+.. code-block:: console
+
+   quantas qha inpgen examples/qha/crystal-qha/mgo-b3lyp-crystal-qha.out \
+       --interface crystal-qha \
+       --jobname "MgO Periclase (CRYSTAL17 QHA)" \
+       --output mgo_b3lyp.yaml
+
+The generated YAML records ``mode_continuity: verified`` with
+``method: crystal-qha`` because the native CRYSTAL workflow explicitly reports
+continuity of the frequencies with volume.  This is source-managed provenance;
+it is distinct from the Quantas eigenvector tracking used for independent
+single-volume phonon outputs.  See
+:doc:`../workflows/phonon_input_generation`.
+
 In HA, the eleven volumes were independent calculation points.  In QHA, their
 static energies and phonon properties define continuous volume-dependent
 models.  Quantas then searches these models for the equilibrium state at every
@@ -79,9 +95,10 @@ This tutorial uses:
 
 ``--scheme freq``
    Fit each phonon branch as a function of volume and evaluate the frequencies
-   at the equilibrium volume.  The input marks mode continuity as ``assumed``;
-   it is suitable for this curated example but is not presented as an
-   independently verified branch-tracking result.
+   at the equilibrium volume.  The input records verified, source-managed
+   continuity from the native CRYSTAL QHA calculation.  This is sufficient for
+   mode-resolved QHA while preserving the actual provenance of the continuity
+   assessment.
 
 ``--minimization poly``
    Represent the free-energy curves by polynomials and minimize them at each

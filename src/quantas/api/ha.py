@@ -49,8 +49,14 @@ def create_input(
     reference: int = 0,
     jobname: str = "Quantas HA input",
     formula_units: int = 1,
+    observer: Observer | None = None,
 ) -> Path:
     """Create a normalized HA YAML input from an interface output.
+
+    Compatible multi-volume sources are checked for common q-point sampling,
+    units, and structural normalization.  When normalized phonon eigenvectors
+    are available, the shared generator also evaluates mode continuity and
+    stores its diagnostics in the YAML for possible QHA reuse.
 
     Parameters
     ----------
@@ -68,6 +74,8 @@ def create_input(
         Human-readable workflow title.
     formula_units : int, optional
         Formula units represented by the crystallographic cell.
+    observer : Observer or None, optional
+        Frontend-neutral observer receiving input-generation events.
 
     Returns
     -------
@@ -87,6 +95,7 @@ def create_input(
         reference=reference,
         jobname=jobname,
         formula_units=formula_units,
+        observer=observer,
     )
 
 

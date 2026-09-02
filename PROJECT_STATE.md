@@ -9,12 +9,12 @@ recorded separately in the Quantas/Quantas GUI architectural decisions.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-08-02 |
-| Current development version | `2.0.0b9` |
+| Last updated | 2026-09-02 |
+| Current development version | `2.0.0b10` |
 | Baseline | `2.0.0b9`, `dev/refactor` |
-| Working branch target | `dev/refactor` release-candidate freeze |
+| Working branch target | `dev/crystal-parser` CRYSTAL parser and phonon-continuity closure |
 | Development status | Pre-RC scientific validation and release preparation |
-| Numerical baseline | Unchanged from `2.0.0b6` |
+| Numerical baseline | HA/QHA calculators unchanged; QHA input-generation continuity corrected in `2.0.0b10` |
 | Persistence schemas | Unchanged |
 
 ## Source hierarchy
@@ -71,6 +71,13 @@ No approved numerical algorithm, thermodynamic formulation, unit convention,
 stored scientific array, or HDF5 schema was intentionally changed by the public
 lifecycle, SEISMIC API stabilization, and QHA inspection-presentation work.
 
+The current `2.0.0b10` feature branch additionally completes CRYSTAL phonon
+eigenvector parsing and independent-volume QHA mode-continuity validation.  The
+HA/QHA calculators and HDF5 result schemas remain unchanged, while QHA input
+generation can now reorder raw printed frequencies to follow eigenvector-supported
+branches.  The corresponding scientific method, thresholds, failure semantics,
+real-data regressions, and YAML provenance are documented and covered by tests.
+
 ## Verified evidence
 
 The complete Windows public-lifecycle validation passed with Python 3.10.11,
@@ -96,10 +103,13 @@ failures.
 
 ## Immediate next operation
 
-Build the formal RC validation matrix workflow by workflow. Each public claim
-must identify its input, independent reference or analytical identity,
-observable, units, comparison method, tolerance, automated test, evidence, and
-known methodological limitations.
+Close the `dev/crystal-parser` scientific tranche through the complete
+warning-as-error documentation build, clean whole-package regression, commit,
+and pull request into `dev/refactor`.  After merge, resume the formal RC
+validation matrix workflow by workflow. Each public claim must identify its
+input, independent reference or analytical identity, observable, units,
+comparison method, tolerance, automated test, evidence, and known
+methodological limitations.
 
 Begin with exact or controlled references before using literature values:
 

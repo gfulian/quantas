@@ -5,6 +5,89 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
+## [2.0.0b10] - Unreleased
+
+### Added
+
+- Added backend-neutral computational records for external-code run
+  termination, energies, SCF convergence, and geometry-optimization history.
+- Added a shared CRYSTAL output document/parser foundation with centralized
+  regular expressions for termination, SCF, energy, and optimization markers.
+- Added characterization tests against distributed CRYSTAL phonon, native-QHA,
+  and elasticity outputs, including incomplete and failed synthetic cases.
+- Added CRYSTAL phonon-eigenvector parsing for real Gamma modes and complex
+  in-phase/anti-phase dispersion modes, with mass-weighted unit normalization
+  and explicit atom-order validation.
+- Added backend-neutral adjacent-volume phonon-mode tracking for independent
+  multi-volume calculations.  Non-degenerate modes use global one-to-one
+  eigenvector-overlap assignment; numerical degeneracies are compared as
+  eigenspaces through singular values; weak overlaps require symmetric
+  leave-one-out frequency-path validation before they can remain usable.
+- Added structured mode-continuity provenance and diagnostics to generated
+  phonon YAML inputs, including local and final reorder counts, ambiguity and
+  low-overlap statistics, degenerate-subspace checks, global frequency-path
+  diagnostics, and leave-one-out validation metadata.
+- Added standard and debug input-generation reports for HA/QHA, with
+  frontend-neutral tables and deterministic plain-text rendering for redirected
+  output.
+- Added a scientific manual section for phonon input generation and mode
+  continuity, expanded HA/QHA format, CLI, API, tutorial, interface, and
+  validation documentation, and real-data regression evidence for native MgO
+  QHA and independent-volume dolomite phonons.
+
+### Changed
+
+- CRYSTAL geometry parsing now preserves conventional atomic numbers as source
+  metadata while exposing chemical atomic numbers through ``CrystalStructure``.
+- HA/QHA phonon input generation now writes explicit unit and provenance
+  metadata while retaining backward-compatible reading of historical YAML files
+  that omit the unit mapping.
+- Independent multi-volume CRYSTAL QHA input generation now restores physical
+  branch continuity from parsed eigenvectors instead of assuming the raw mode
+  order is continuous.  The reference volume fixes final branch labels but does
+  not influence adjacent-volume matching.
+- Native CRYSTAL QHA input generation records a source-managed ``verified``
+  continuity status when CRYSTAL explicitly reports frequency continuity with
+  volume.
+- Phonon YAML presentation now uses compact flow-style vectors and matrix rows
+  without changing the loaded mapping or stored floating-point values.  Debug
+  frequencies are displayed to four decimal places, while in-memory and YAML
+  values remain full ``float64`` data.
+- Redirected HA/QHA input-generation diagnostics use deterministic plain text
+  rather than terminal-width Rich compression, avoiding Unicode ellipses and
+  platform-dependent truncation.
+
+### Validation
+
+- Characterized the CRYSTAL eigenvector parser on the distributed dolomite
+  dispersion outputs (27 q-points, 30 modes, 10 atoms) and native MgO QHA
+  output (11 volume-dependent 192-mode, 64-atom Gamma sets), including complex
+  mode reconstruction, unit norms, mass weighting, and partial final blocks.
+- Validated mode tracking with manufactured permutations, arbitrary complex
+  phases, rotated degenerate subspaces, reference changes, deliberately weak
+  overlaps, and an adversarial case in which a smooth global fit must not rescue
+  a leave-one-out failure.
+- The seven-volume dolomite regression contains 4860 adjacent-volume mode links,
+  274 cautions, six low-overlap links, and zero unresolved assignments.  All six
+  weak links are independently supported by the symmetric leave-one-out check;
+  the minimum matched degenerate-subspace singular value is approximately
+  0.8821.
+- Updated curated MgO and dolomite YAML examples and regenerated the examples
+  manifest.  The current HA/QHA readers load the regenerated examples with the
+  same numerical arrays and normalization contracts.
+
+### Scientific compatibility
+
+The HA, QHA, and Thermoelasticity thermodynamic equations, numerical precision,
+unit conversions, result models, and HDF5 schemas are unchanged by this work.
+The scientific behavior of **QHA input generation** is intentionally stricter:
+for independent CRYSTAL volume calculations, printed frequencies may be
+reordered so that each stored branch follows the eigenvector-supported physical
+mode through volume.  This can change a frequency-based QHA result relative to
+an input that incorrectly assumed raw printed mode order was continuous; that
+change is the purpose of the correction rather than a display or rounding
+change.  Generated YAML formatting does not round stored scientific values.
+
 ## [2.0.0b9] - Unreleased
 
 ### Added
@@ -365,6 +448,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b10]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b10
 [2.0.0b9]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b9
 [2.0.0b8]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b8
 [2.0.0b6]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b6

@@ -64,6 +64,7 @@ class HAInputFileReader(PhononInputFileReader):
             weights=data.weights,
             qcoords=data.qcoords,
             structure=data.structure,
+            units=dict(data.units),
             source=data.source,
             metadata=dict(data.metadata),
         )
@@ -94,6 +95,7 @@ def phonon_to_ha_input(input_data: PhononInputData) -> HAInput:
         weights=input_data.weights,
         qcoords=input_data.qcoords,
         structure=input_data.structure,
+        units=dict(input_data.units),
         source=input_data.source,
         metadata=dict(input_data.metadata),
     )

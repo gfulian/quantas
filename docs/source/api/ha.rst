@@ -61,9 +61,13 @@ Input preparation
 -----------------
 
 ``create_input`` converts supported code-specific outputs to the normalized
-phonon YAML contract.  ``read_input`` parses that YAML.  ``normalize_input``
-accepts either the public HA input, the shared phonon input contract, or a
-path.
+phonon YAML contract.  For compatible multi-volume outputs it also performs the
+shared structural normalization and mode-continuity analysis when eigenvectors
+are available.  ``read_input`` parses the YAML.  ``normalize_input`` accepts
+either the public HA input, the shared phonon input contract, or a path.
+
+The scientific generation procedure is documented in
+:doc:`../workflows/phonon_input_generation`.
 
 .. autofunction:: quantas.api.ha.create_input
 
@@ -123,6 +127,7 @@ by :func:`describe_plots`; Quantas does not interpolate missing coordinates.
 See also
 --------
 
+- :doc:`../workflows/phonon_input_generation`
 - :doc:`../workflows/ha`
 - :doc:`../tutorials/ha`
 - :doc:`../formats/phonon_yaml`

@@ -119,3 +119,32 @@ def test_reader_accepts_explicit_formula_units(tmp_path):
 
     assert input_data.formula_units == 2
     assert input_data.natoms_per_formula_unit == 1.0
+
+
+def test_reader_defaults_historical_input_units(tmp_path):
+    input_file = tmp_path / "ha_input.yaml"
+    input_file.write_text(YAML_INPUT, encoding="utf-8")
+
+    input_data = HAInputFileReader(input_file).to_input()
+
+    assert input_data.units == {
+        "energy": "Ha",
+        "volume": "angstrom^3",
+        "frequency": "cm^-1",
+        "length": "angstrom",
+    }
+
+
+def test_reader_preserves_explicit_input_units(tmp_path):
+    input_file = tmp_path / "ha_input.yaml"
+    explicit = YAML_INPUT.replace(
+        "natom: 2",
+        "natom: 2\nunits:\n  energy: eV\n  volume: angstrom^3\n"
+        "  frequency: cm^-1\n  length: angstrom",
+    )
+    input_file.write_text(explicit, encoding="utf-8")
+
+    input_data = HAInputFileReader(input_file).to_input()
+
+    assert input_data.units["energy"] == "eV"
+    assert input_data.units["frequency"] == "cm^-1"

@@ -14,37 +14,15 @@ from quantas.core.geometry import (
     reconstruct_primitive_structure,
     supercell_repetitions,
 )
+from quantas.interfaces.crystal import markers, patterns
 from quantas.interfaces.crystal.geometry import CrystalGeometryParser
+from quantas.interfaces.crystal.phonon_modes import CrystalPhononModeParser
 from quantas.models.reader import BasicReader
 from quantas.models.structures import (
     CellNormalization,
     StructureReconstructionDiagnostics,
     StructureVolumeSeries,
 )
-
-# Geometry strings
-geometry_consistent = "GEOMETRY NOW FULLY CONSISTENT WITH THE GROUP"
-geometry_sym_changed = "SYMMETRY CHANGED DURING OLD RUN :"
-geometry_wf = "GEOMETRY FOR WAVE FUNCTION - "
-primitive_cell = "PRIMITIVE CELL - "
-supercell_option = " * SUPERCELL OPTION"
-supercell_expansion = "EXPANSION MATRIX OF PRIMITIVE CELL"
-lattice_vectors = "DIRECT LATTICE VECTORS CARTESIAN COMPONENTS"
-# FREQCALC-specific strings
-frequency_calculation = "EIGENVALUES (EIGV) OF THE MASS WEIGHTED HESSIAN"
-frequency_calculation += " MATRIX AND HARMONIC"
-scelphono_option = "PHONON FREQUENCIES AT A SET OF K POINTS BY USING "
-scelphono_option += "A SUPERCELL"
-hess_interpolation = "ACTIVATED INTERPOLATION OF THE HESSIAN UP TO"
-scelphono_qpoints = "THAT PERMITS THE CALCULATION OF MODES AT"
-central_energy = "    CENTRAL POINT"
-frequency_header = "MODES         EIGV          FREQUENCIES     IRREP"
-# QHA-specific strings
-qha_header = "QUASI-HARMONIC APPROXIMATION"
-qha_freq = "FREQUENCY #"
-qha_ev = "SORTING VOLUMES/ENERGIES"
-qha_opt = "FINAL OPTIMIZED GEOMETRY"
-qha_restart = "READING DATA FROM RESTART UNIT"
 
 
 class CrystalPhononReader(BasicReader):
@@ -106,6 +84,8 @@ class CrystalPhononReader(BasicReader):
             "shrinkf": np.ones(3, dtype=int),
             "q_position_source": "unavailable",
             "structure_series": None,
+            "mode_data": None,
+            "source_path": None,
         }
 
     def load(self, file):
@@ -120,6 +100,7 @@ class CrystalPhononReader(BasicReader):
 
         """
         self._data = self._empty_data()
+        self._data["source_path"] = Path(file)
         geometry = CrystalGeometryParser(file)
 
         if not self.is_frequency_calculation(file):
@@ -193,7 +174,7 @@ class CrystalPhononReader(BasicReader):
         """
         with open(file, "r") as f:
             for line in f:
-                if frequency_calculation in line:
+                if markers.FREQUENCY_CALCULATION in line:
                     return True
             return False
 
@@ -218,7 +199,7 @@ class CrystalPhononReader(BasicReader):
         """
         with open(file, "r") as f:
             for line in f:
-                if supercell_option in line:
+                if markers.SUPERCELL_OPTION in line:
                     return True
             return False
 
@@ -259,7 +240,7 @@ class CrystalPhononReader(BasicReader):
         """
         with open(file, "r") as f:
             for line in f:
-                if scelphono_option in line:
+                if markers.SCELPHONO_OPTION in line:
                     return True
             return False
 
@@ -301,7 +282,7 @@ class CrystalPhononReader(BasicReader):
         """
         with open(file, "r") as f:
             for line in f:
-                if hess_interpolation in line:
+                if markers.HESSIAN_INTERPOLATION in line:
                     return True
             return False
 
@@ -437,6 +418,22 @@ class CrystalPhononReader(BasicReader):
         """
         self._data["expansion"] = expansion.copy()
         return
+
+    @property
+    def units(self) -> dict[str, str]:
+        """Return the physical units exposed by this CRYSTAL reader.
+
+        Returns
+        -------
+        dict
+            Energy, volume, frequency, and structural length units.
+        """
+        return {
+            "energy": "Ha",
+            "volume": "angstrom^3",
+            "frequency": "cm^-1",
+            "length": "angstrom",
+        }
 
     @property
     def kpoints(self):
@@ -599,6 +596,33 @@ class CrystalPhononReader(BasicReader):
         )
 
     @property
+    def mode_data(self):
+        """Return parsed mass-weighted phonon eigenvectors when available.
+
+        Returns
+        -------
+        PhononModeData or None
+            Frequencies and unit-norm eigenvectors, or ``None`` when CRYSTAL
+            did not print eigenvectors in the source output. The data are
+            parsed lazily and cached because HA thermodynamics do not require
+            eigenvectors unless mode continuity is inspected.
+
+        Raises
+        ------
+        ValueError
+            If CRYSTAL prints an incomplete or inconsistent eigenvector block.
+        """
+        cached = self._data.get("mode_data")
+        if cached is not None:
+            return cached
+        source = self._data.get("source_path")
+        if source is None:
+            return None
+        parsed = CrystalPhononModeParser(source).parse(self.nphonon)
+        self._data["mode_data"] = parsed
+        return parsed
+
+    @property
     def structure_series(self):
         """Return the compact primitive structural series when available.
 
@@ -742,7 +766,7 @@ class CrystalPhononReader(BasicReader):
             :math:`3 \\times 3` array of the expansion matrix.
 
         """
-        sline = self._get_start_line(file, supercell_expansion) + 1
+        sline = self._get_start_line(file, markers.SUPERCELL_EXPANSION) + 1
 
         with open(file, "r") as f:
             data = f.readlines()
@@ -994,13 +1018,13 @@ class CrystalPhononReader(BasicReader):
         """Retain support for historical INTERPHESS output layouts."""
         hess = True
         sline = next(
-            (index for index, line in enumerate(data) if hess_interpolation in line),
+            (index for index, line in enumerate(data) if markers.HESSIAN_INTERPOLATION in line),
             None,
         )
         if sline is None:
             hess = False
             sline = next(
-                (index for index, line in enumerate(data) if scelphono_qpoints in line),
+                (index for index, line in enumerate(data) if markers.SCELPHONO_QPOINTS in line),
                 None,
             )
         if sline is None:
@@ -1054,12 +1078,17 @@ class CrystalPhononReader(BasicReader):
             Energy of the crystal cell.
 
         """
-        sline = self._get_start_line(file, central_energy)
-
         with open(file, "r") as f:
-            data = f.readlines()
+            for line in f:
+                match = patterns.CENTRAL_POINT_RE.search(line)
+                if match is not None:
+                    return float(
+                        match.group("energy")
+                        .replace("D", "E")
+                        .replace("d", "e")
+                    )
 
-        return float(data[sline].split()[2])
+        raise ValueError("CRYSTAL central-point energy not found")
 
     def set_phonons(self, file):
         """ """
@@ -1070,7 +1099,7 @@ class CrystalPhononReader(BasicReader):
             data = f.readlines()
 
         for i in range(len(data)):
-            if frequency_header in data[i]:
+            if markers.FREQUENCY_HEADER in data[i]:
                 finished = False
                 band = np.zeros(self.nphonon, dtype=float)
                 line_counter = 0

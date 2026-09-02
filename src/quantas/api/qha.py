@@ -78,12 +78,16 @@ def create_input(
     reference: int = 0,
     jobname: str = "Quantas QHA input",
     formula_units: int = 1,
+    observer: Observer | None = None,
 ) -> Path:
     """Create a normalized QHA YAML input from phonon output data.
 
     QHA and HA intentionally share the same frontend-neutral phonon input
     generator. This public wrapper keeps the QHA lifecycle discoverable from
-    :mod:`quantas.api.qha` without duplicating parsing or YAML logic.
+    :mod:`quantas.api.qha` without duplicating parsing or YAML logic.  For
+    independent multi-volume sources, compatible eigenvectors are tracked
+    between adjacent volumes; native QHA sources retain their own continuity
+    provenance.
 
     Parameters
     ----------
@@ -91,6 +95,8 @@ def create_input(
         See :func:`quantas.api.ha.create_input`.
     jobname : str, optional
         Human-readable QHA workflow title.
+    observer : Observer or None, optional
+        Frontend-neutral observer receiving input-generation events.
 
     Returns
     -------
@@ -105,6 +111,7 @@ def create_input(
         reference=reference,
         jobname=jobname,
         formula_units=formula_units,
+        observer=observer,
     )
 
 
