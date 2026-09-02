@@ -3,9 +3,19 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import yaml
 
+from quantas.core.events import EventLevel, ListObserver
+from quantas.models import ReportTable
 from quantas.models.phonons import PhononModeData
-from quantas.modules.ha.io.inpgen import HAInputCreator, create_ha_input
+from quantas.renderers.tables.text import render_table
+from quantas.modules.ha.io.inpgen import (
+    HAInputCreator,
+    create_ha_input,
+    format_quantas_yaml,
+    mode_tracking_detail_table,
+    mode_tracking_summary_table,
+)
 from quantas.modules.ha.io.reader import HAInputFileReader
 
 
@@ -333,3 +343,194 @@ def test_multiple_file_generator_reorders_verified_mode_branches(tmp_path):
         frequencies,
         [[100.0, 101.0], [200.0, 201.0], [300.0, 301.0]],
     )
+
+
+def test_input_generator_emits_tracking_events_and_diagnostics(tmp_path):
+    first = tmp_path / "v0.out"
+    second = tmp_path / "v1.out"
+    first.write_text("0", encoding="utf-8")
+    second.write_text("1", encoding="utf-8")
+    file_list = tmp_path / "phonons.lst"
+    file_list.write_text("v0.out\nv1.out\n", encoding="utf-8")
+    observer = ListObserver()
+
+    creator = HAInputCreator(
+        interface="crystal",
+        interface_filter={"crystal": TrackingFakePhononReader},
+        observer=observer,
+    )
+    completed, error = creator.read(file_list, is_list=True)
+    assert completed is True, error
+
+    data = creator.to_dict(jobname="tracked continuity", reference=0)
+
+    kinds = [event.data.get("kind") for event in observer.events]
+    assert "phonon_input_sources" in kinds
+    assert "phonon_sources_parsed" in kinds
+    assert "mode_tracking_summary" in kinds
+    assert "mode_tracking_detail" in kinds
+    tracking_event = next(
+        event
+        for event in observer.events
+        if event.data.get("kind") == "mode_tracking_summary"
+    )
+    assert tracking_event.level == EventLevel.RESULT
+    assert isinstance(tracking_event.data["table"], ReportTable)
+    assert creator.last_tracking_result is not None
+
+    metadata = data["mode_continuity_metadata"]
+    assert metadata["caution_assignments"] == 0
+    assert metadata["unresolved_assignments"] == 0
+    assert metadata["frequency_fit"]["degree"] is None
+    assert metadata["frequency_fit"]["residual_degrees_of_freedom"] == 0
+    loo = metadata["frequency_fit"]["leave_one_out_validation"]
+    assert loo["degree"] is None
+    assert loo["residual_degrees_of_freedom"] == 0
+
+
+def test_mode_tracking_tables_render_units_in_parentheses(tmp_path):
+    first = tmp_path / "v0.out"
+    second = tmp_path / "v1.out"
+    first.write_text("0", encoding="utf-8")
+    second.write_text("1", encoding="utf-8")
+    file_list = tmp_path / "phonons.lst"
+    file_list.write_text("v0.out\nv1.out\n", encoding="utf-8")
+
+    creator = HAInputCreator(
+        interface="crystal",
+        interface_filter={"crystal": TrackingFakePhononReader},
+    )
+    completed, error = creator.read(file_list, is_list=True)
+    assert completed is True, error
+    creator.to_dict(jobname="tracked continuity", reference=0)
+    tracking = creator.last_tracking_result
+    assert tracking is not None
+    volumes = np.array([10.0, 11.0])
+
+    summary = render_table(mode_tracking_summary_table(tracking, volumes))
+    detail = render_table(
+        mode_tracking_detail_table(
+            tracking,
+            tracking.steps[0],
+            volumes,
+            qcoords=np.array([[0.0, 0.0, 0.0]]),
+            frequency_unit="cm^-1",
+        )
+    )
+
+    assert "(angstrom^3)" in summary
+    assert "Volume from /" not in summary
+    assert "(cm^-1)" in detail
+    assert "Frequency from /" not in detail
+    assert "Local reorder" in summary
+    assert "Deg. subspaces" in summary
+    assert "Raw mode from" in detail
+    assert "Global fit R^2" in detail
+    assert "LOO residual" in detail
+    summary.encode("ascii")
+    detail.encode("ascii")
+
+
+
+def test_yaml_layout_compacts_vectors_and_matrix_rows():
+    """YAML layout changes preserve the complete parsed data mapping."""
+    lattice = [
+        [1.0, 0.0, 0.0],
+        [0.0, 2.0, 0.0],
+        [0.0, 0.0, 3.0],
+    ]
+    positions = [[0.0, 0.0, 0.0], [0.5, 0.5, 0.5]]
+    data = {
+        "job": "presentation test",
+        "natom": 2,
+        "formula_units": 1,
+        "units": FakePhononReader.units,
+        "mode_continuity": "verified",
+        "mode_continuity_metadata": {
+            "method": "eigenvector_overlap",
+            "volume_order": [1, 0],
+            "traversal": {"compression": [0, 1], "expansion": [0]},
+        },
+        "supercell": [[2, 0, 0], [0, 2, 0], [0, 0, 2]],
+        "structure": {
+            "representation": "primitive",
+            "atomic_numbers": [12, 8],
+            "reference": {
+                "lattice": lattice,
+                "fractional_positions": positions,
+                "atomic_numbers": [12, 8],
+            },
+            "volume_series": {
+                "volume": [10.0, 11.0],
+                "lattice": [lattice, lattice],
+                "fractional_positions": [positions, positions],
+            },
+            "normalization": {
+                "expansion_matrix": [[2, 0, 0], [0, 2, 0], [0, 0, 2]],
+            },
+            "symmetry": {
+                "equivalent_atoms": [0, 1],
+                "transformation_matrix": lattice,
+                "origin_shift": [0.0, 0.0, 0.0],
+            },
+            "transformations": {
+                "primitive_to_crystallographic": lattice,
+            },
+        },
+        "qpoints": 1,
+        "volume": [10.0, 11.0],
+        "energy": [-1.0, -2.0],
+        "phonon": [
+            {
+                "q-position": [0.0, 0.0, 0.0],
+                "weight": 1,
+                "band": [{"frequency": [100.1234, 101.5678]}],
+            }
+        ],
+    }
+
+    text = format_quantas_yaml(data)
+    loaded = yaml.safe_load(text)
+
+    assert loaded == data
+    assert "volume_order: [1, 0]" in text
+    assert "compression: [0, 1]" in text
+    assert "atomic_numbers: [12, 8]" in text
+    assert "volume: [10.0, 11.0]" in text
+    assert "- [1.0, 0.0, 0.0]" in text
+    assert "- [0.5, 0.5, 0.5]" in text
+    assert "equivalent_atoms: [0, 1]" in text
+    assert "origin_shift: [0.0, 0.0, 0.0]" in text
+    assert "frequency: [   100.1234000000,   101.5678000000 ]" in text
+
+
+def test_mode_tracking_debug_displays_frequencies_with_four_decimals(tmp_path):
+    """Debug presentation follows the four-decimal CRYSTAL frequency output."""
+    first = tmp_path / "v0.out"
+    second = tmp_path / "v1.out"
+    first.write_text("0", encoding="utf-8")
+    second.write_text("1", encoding="utf-8")
+    file_list = tmp_path / "phonons.lst"
+    file_list.write_text("v0.out\nv1.out\n", encoding="utf-8")
+    creator = HAInputCreator(
+        interface="crystal",
+        interface_filter={"crystal": TrackingFakePhononReader},
+    )
+    completed, error = creator.read(file_list, is_list=True)
+    assert completed is True, error
+    creator.to_dict(jobname="frequency presentation", reference=0)
+    tracking = creator.last_tracking_result
+    assert tracking is not None
+
+    text = render_table(
+        mode_tracking_detail_table(
+            tracking,
+            tracking.steps[0],
+            np.array([10.0, 11.0]),
+            qcoords=np.array([[0.0, 0.0, 0.0]]),
+        )
+    )
+
+    assert "100.0000" in text
+    assert "101.0000" in text
+    assert "100.000000" not in text

@@ -16,12 +16,16 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 import numpy as np
+from numpy.typing import ArrayLike
 import yaml
 
+from quantas.core.events import Event, EventLevel, NullObserver, Observer
 from quantas.core.numerics.phonon_tracking import (
     PhononModeTrackingResult,
+    PhononModeTrackingStep,
     track_phonon_modes,
 )
+from quantas.models import ReportTable
 from quantas.models.phonons import default_phonon_input_units
 from quantas.models.structures import StructureVolumeSeries
 
@@ -70,6 +74,8 @@ class HAInputCreator:
         Optional mapping used to override the default interface readers. This
         is mainly useful for tests and for external applications that provide
         compatible reader classes.
+    observer : Observer or None, optional
+        Frontend-neutral observer receiving input-generation events.
 
     Attributes
     ----------
@@ -92,6 +98,7 @@ class HAInputCreator:
         self,
         interface: str | None = None,
         interface_filter: dict[str, type[Any] | None] | None = None,
+        observer: Observer | None = None,
     ) -> None:
         """
         Initialize the input creator.
@@ -102,6 +109,8 @@ class HAInputCreator:
             Input interface name.
         interface_filter : dict or None, optional
             Optional reader mapping overriding the default interfaces.
+        observer : Observer or None, optional
+            Frontend-neutral observer receiving input-generation events.
         """
         self.interface_flag = interface or "crystal"
         self._interface_filter = (
@@ -111,6 +120,28 @@ class HAInputCreator:
         )
         self.phondata: list[Any] | Any = []
         self.files: list[Path] = []
+        self.observer = observer if observer is not None else NullObserver()
+        self.last_tracking_result: PhononModeTrackingResult | None = None
+
+    def emit(
+        self,
+        message: str,
+        *,
+        level: EventLevel = EventLevel.INFO,
+        data: dict[str, Any] | None = None,
+    ) -> None:
+        """Emit one frontend-neutral input-generation event.
+
+        Parameters
+        ----------
+        message : str
+            Human-readable event message.
+        level : EventLevel, optional
+            Event severity or structured-result level.
+        data : dict or None, optional
+            Optional structured payload for frontend observers.
+        """
+        self.observer(Event(message=message, level=level, data=data or {}))
 
     def read(
         self,
@@ -163,6 +194,16 @@ class HAInputCreator:
         if reference < 0 or reference >= len(files):
             return False, "Invalid reference provided"
 
+        self.emit(
+            f"Reading {len(files)} phonon output file(s) with the "
+            f"{self.interface_flag} interface",
+            data={
+                "kind": "phonon_input_sources",
+                "interface": self.interface_flag,
+                "source_count": len(files),
+                "reference_index": int(reference),
+            },
+        )
         self.phondata = [] if self.interface_flag != "crystal-qha" else None
         self.files = []
 
@@ -188,7 +229,26 @@ class HAInputCreator:
                     raise RuntimeError("multiple-file interface state is not a list")
                 self.phondata.append(data)
             self.files.append(file)
+            self.emit(
+                f"Parsed phonon source {file}",
+                level=EventLevel.DEBUG,
+                data={
+                    "kind": "phonon_source_parsed",
+                    "source": str(file),
+                    "source_index": len(self.files) - 1,
+                },
+            )
 
+        self.emit(
+            "Phonon source parsing completed",
+            level=EventLevel.RESULT,
+            data={
+                "kind": "phonon_sources_parsed",
+                "interface": self.interface_flag,
+                "source_count": len(self.files),
+                "reference_index": int(reference),
+            },
+        )
         return True, None
 
     @staticmethod
@@ -288,6 +348,17 @@ class HAInputCreator:
             data["provenance"] = _provenance_dict(
                 self.interface_flag, self.files, reference_index=0
             )
+            self.last_tracking_result = None
+            self.emit(
+                "Using phonon-mode continuity reported by the source QHA workflow",
+                level=EventLevel.RESULT,
+                data={
+                    "kind": "mode_continuity_source",
+                    "status": data.get("mode_continuity", "unknown"),
+                    "metadata": dict(data.get("mode_continuity_metadata", {})),
+                },
+            )
+            self._emit_input_summary(data)
             return data
 
         if not isinstance(self.phondata, list) or not self.phondata:
@@ -300,7 +371,31 @@ class HAInputCreator:
         data["provenance"] = _provenance_dict(
             self.interface_flag, self.files, reference_index=reference
         )
+        self._emit_input_summary(data)
         return data
+
+    def _emit_input_summary(self, data: dict[str, Any]) -> None:
+        """Emit a compact structured summary of the generated input data.
+
+        Parameters
+        ----------
+        data : dict
+            Normalized YAML mapping before serialization.
+        """
+        table = phonon_input_summary_table(
+            data,
+            interface=self.interface_flag,
+            source_count=len(self.files),
+            eigenvectors_available=self.last_tracking_result is not None,
+        )
+        self.emit(
+            "Phonon input data assembled",
+            level=EventLevel.RESULT,
+            data={
+                "kind": "phonon_input_summary",
+                "table": table,
+            },
+        )
 
     def to_yaml_lines(
         self,
@@ -382,8 +477,8 @@ class HAInputCreator:
         outfile.write_text(text, encoding="utf-8")
         return outfile
 
-    @staticmethod
     def _dict_from_multiple_readers(
+        self,
         phondata: list[Any],
         jobname: str,
         reference: int,
@@ -419,18 +514,73 @@ class HAInputCreator:
         structure = _combine_structure_series(phondata, reference)
         if structure is not None:
             data["structure"] = structure.as_dict(include_source=False)
-        tracking = _track_multiple_reader_modes(phondata, reference)
-        if tracking is None:
+        tracking = _track_multiple_reader_modes(phondata, reference) if nvol > 1 else None
+        self.last_tracking_result = tracking
+        if nvol > 1 and tracking is None:
             data["mode_continuity"] = "unknown"
             data["mode_continuity_metadata"] = {
                 "method": "none",
                 "reason": "phonon_eigenvectors_unavailable",
             }
             tracked_frequencies = None
-        else:
+            self.emit(
+                "Phonon-mode continuity could not be verified because one or "
+                "more sources do not expose eigenvectors",
+                level=EventLevel.WARNING,
+                data={"kind": "mode_tracking_unavailable"},
+            )
+        elif tracking is not None:
             data["mode_continuity"] = tracking.status
             data["mode_continuity_metadata"] = _mode_tracking_metadata(tracking)
             tracked_frequencies = tracking.frequencies
+            volumes = np.asarray(data["volume"], dtype=np.float64)
+            qcoords = _fractional_qcoords(ref, int(getattr(ref, "qpoints")))
+            frequency_unit = _reader_units(ref)["frequency"]
+            self.emit(
+                "Phonon-mode continuity analysis completed",
+                level=EventLevel.RESULT,
+                data={
+                    "kind": "mode_tracking_summary",
+                    "table": mode_tracking_summary_table(tracking, volumes),
+                },
+            )
+            for step in tracking.steps:
+                self.emit(
+                    "Detailed phonon-mode continuity diagnostics",
+                    level=EventLevel.DEBUG,
+                    data={
+                        "kind": "mode_tracking_detail",
+                        "table": mode_tracking_detail_table(
+                            tracking,
+                            step,
+                            volumes,
+                            qcoords=qcoords,
+                            frequency_unit=frequency_unit,
+                        ),
+                    },
+                )
+            if tracking.unresolved_assignments:
+                self.emit(
+                    f"{tracking.unresolved_assignments} phonon-mode assignment(s) "
+                    "remain unresolved; frequency-based QHA should not be used",
+                    level=EventLevel.WARNING,
+                    data={
+                        "kind": "mode_tracking_unresolved",
+                        "count": tracking.unresolved_assignments,
+                    },
+                )
+            elif tracking.caution_assignments:
+                self.emit(
+                    f"Mode continuity verified with {tracking.caution_assignments} "
+                    "assignment caution(s)",
+                    level=EventLevel.WARNING,
+                    data={
+                        "kind": "mode_tracking_cautions",
+                        "count": tracking.caution_assignments,
+                    },
+                )
+        else:
+            tracked_frequencies = None
         data["phonon"] = _phonon_entries(
             ref,
             nvol,
@@ -479,6 +629,112 @@ class HAInputCreator:
         return data
 
 
+class _FlowSequence(list):
+    """YAML sequence rendered in flow style without changing its values."""
+
+
+class _QuantasYamlDumper(yaml.SafeDumper):
+    """Safe YAML dumper with presentation-only sequence controls."""
+
+
+def _represent_flow_sequence(
+    dumper: _QuantasYamlDumper,
+    data: _FlowSequence,
+) -> yaml.nodes.SequenceNode:
+    """Represent one sequence as ``[a, b, c]`` in generated YAML."""
+    node = dumper.represent_list(list(data))
+    node.flow_style = True
+    return node
+
+
+_QuantasYamlDumper.add_representer(_FlowSequence, _represent_flow_sequence)
+
+
+def _yaml_presentation_data(value: Any, *, path: tuple[str, ...] = ()) -> Any:
+    """Return YAML-safe data with presentation-only sequence annotations.
+
+    The returned object preserves all scalar values and mapping keys.  Selected
+    vectors are rendered on one line and selected matrices keep one flow-style
+    vector per physical row.  This function deliberately changes no numerical
+    precision and is used only by :func:`format_quantas_yaml`.
+
+    Parameters
+    ----------
+    value : object
+        Plain or NumPy-rich data to prepare for YAML serialization.
+    path : tuple of str, optional
+        Mapping path used to identify vectors and matrices whose layout should
+        be compacted.
+
+    Returns
+    -------
+    object
+        YAML-safe dictionaries/lists with selected lists tagged for flow style.
+    """
+    plain = _plain_data(value)
+    if isinstance(plain, dict):
+        return {
+            str(key): _yaml_presentation_data(item, path=(*path, str(key)))
+            for key, item in plain.items()
+        }
+    if not isinstance(plain, list):
+        return plain
+
+    key = path[-1] if path else ""
+    inline_vector = key in {
+        "atomic_numbers",
+        "volume_order",
+        "compression",
+        "expansion",
+        "equivalent_atoms",
+        "origin_shift",
+    } or path[-2:] == ("volume_series", "volume")
+    row_vector_container = key in {
+        "lattice",
+        "fractional_positions",
+        "expansion_matrix",
+        "transformation_matrix",
+        "primitive_to_crystallographic",
+    }
+
+    if inline_vector and _is_scalar_sequence(plain):
+        return _FlowSequence(plain)
+    if row_vector_container:
+        return _compact_yaml_rows(plain)
+    return [
+        _yaml_presentation_data(item, path=path)
+        if isinstance(item, (dict, list))
+        else item
+        for item in plain
+    ]
+
+
+def _compact_yaml_rows(value: list[Any]) -> list[Any] | _FlowSequence:
+    """Render the innermost numeric vectors of one array-like value inline."""
+    if _is_scalar_sequence(value):
+        return _FlowSequence(value)
+    return [
+        _compact_yaml_rows(item) if isinstance(item, list) else item
+        for item in value
+    ]
+
+
+def _is_scalar_sequence(value: list[Any]) -> bool:
+    """Return whether one list contains no nested mappings or sequences."""
+    return all(not isinstance(item, (dict, list, tuple)) for item in value)
+
+
+def _dump_yaml_section(key: str, value: Any) -> str:
+    """Serialize one mapping section with Quantas presentation conventions."""
+    prepared = _yaml_presentation_data({key: value})
+    return yaml.dump(
+        prepared,
+        Dumper=_QuantasYamlDumper,
+        sort_keys=False,
+        default_flow_style=False,
+        width=4096,
+    ).rstrip()
+
 def format_quantas_yaml(data: dict[str, Any]) -> str:
     """
     Serialize Quantas HA/QHA input data using the reference readable layout.
@@ -498,55 +754,37 @@ def format_quantas_yaml(data: dict[str, Any]) -> str:
     lines.append(f"job: {data.get('job', 'Quantas HA input')}")
     lines.append(f"natom: {int(data['natom']):3d}")
     lines.append(f"formula_units: {int(data.get('formula_units', 1))}")
-    units_text = yaml.safe_dump(
-        {"units": _plain_data(data.get("units", default_phonon_input_units()))},
-        sort_keys=False,
-        default_flow_style=False,
-        width=120,
-    ).rstrip()
+    units_text = _dump_yaml_section(
+        "units", data.get("units", default_phonon_input_units())
+    )
     lines.extend(units_text.splitlines())
     if "provenance" in data:
-        provenance_text = yaml.safe_dump(
-            {"provenance": _plain_data(data["provenance"])},
-            sort_keys=False,
-            default_flow_style=False,
-            width=120,
-        ).rstrip()
+        provenance_text = _dump_yaml_section("provenance", data["provenance"])
         lines.extend(provenance_text.splitlines())
     if np.asarray(data.get("volume", [])).size > 1:
         continuity = str(data.get("mode_continuity", "unknown"))
         lines.append(f"mode_continuity: {continuity}")
         continuity_metadata = data.get("mode_continuity_metadata")
         if continuity_metadata:
-            metadata_text = yaml.safe_dump(
-                {"mode_continuity_metadata": _plain_data(continuity_metadata)},
-                sort_keys=False,
-                default_flow_style=False,
-                width=120,
-            ).rstrip()
+            metadata_text = _dump_yaml_section(
+                "mode_continuity_metadata", continuity_metadata
+            )
             lines.extend(metadata_text.splitlines())
     lines.append("supercell:")
     for row in data["supercell"]:
         values = ", ".join(f"{int(value):7d}" for value in row)
         lines.append(f"- [ {values} ]")
     if "structure" in data:
-        structure_text = yaml.safe_dump(
-            {"structure": _plain_data(data["structure"])},
-            sort_keys=False,
-            default_flow_style=False,
-            width=120,
-        ).rstrip()
+        structure_text = _dump_yaml_section("structure", data["structure"])
         lines.extend(structure_text.splitlines())
     if "q_position_source" in data:
         lines.append(f"q_position_source: {data['q_position_source']}")
     if "q_position_convention" in data:
         lines.append(f"q_position_convention: {data['q_position_convention']}")
     if "q_position_note" in data:
-        note_text = yaml.safe_dump(
-            {"q_position_note": str(data["q_position_note"])},
-            sort_keys=False,
-            width=120,
-        ).rstrip()
+        note_text = _dump_yaml_section(
+            "q_position_note", str(data["q_position_note"])
+        )
         lines.extend(note_text.splitlines())
     lines.append(f"qpoints: {int(data['qpoints'])}")
     lines.append(f"volume: {_format_float_sequence(data['volume'], precision=8)}")
@@ -641,6 +879,7 @@ def create_ha_input(
     jobname: str = "Quantas HA input",
     formula_units: int = 1,
     interface_filter: dict[str, type[Any] | None] | None = None,
+    observer: Observer | None = None,
 ) -> Path:
     """
     Create a Quantas HA/QHA YAML input file from QM output data.
@@ -665,6 +904,8 @@ def create_ha_input(
         Number of chemical formula units in the thermodynamic normalization cell.
     interface_filter : dict or None, optional
         Optional reader mapping overriding the default interface readers.
+    observer : Observer or None, optional
+        Frontend-neutral observer receiving input-generation events.
 
     Returns
     -------
@@ -678,7 +919,11 @@ def create_ha_input(
     OSError
         If files cannot be read or written.
     """
-    creator = HAInputCreator(interface=interface, interface_filter=interface_filter)
+    creator = HAInputCreator(
+        interface=interface,
+        interface_filter=interface_filter,
+        observer=observer,
+    )
     completed, error = creator.read(filename, is_list=is_list, reference=reference)
     if not completed:
         raise ValueError(error or "Unable to create HA input")
@@ -967,24 +1212,474 @@ def _mode_tracking_metadata(
     result: PhononModeTrackingResult,
 ) -> dict[str, Any]:
     """Return compact YAML metadata for one phonon-mode tracking result."""
+    fit = result.fit
+    fit_r2 = fit.r_squared[np.isfinite(fit.r_squared)]
+    fit_rmse = fit.rmse[np.isfinite(fit.rmse)]
+    fit_residual = fit.max_residual[np.isfinite(fit.max_residual)]
+    volume_order = [int(index) for index in result.volume_order]
+    reference_position = volume_order.index(int(result.reference_index))
     return {
         "method": "eigenvector_overlap",
         "reference_index": int(result.reference_index),
-        "traversal": [int(index) for index in result.traversal],
+        "volume_order": volume_order,
+        "traversal": {
+            "compression": [
+                int(result.reference_index),
+                *reversed(volume_order[:reference_position]),
+            ],
+            "expansion": [
+                int(result.reference_index),
+                *volume_order[reference_position + 1 :],
+            ],
+        },
         "minimum_overlap": _finite_or_none(result.minimum_overlap),
         "minimum_subspace_singular_value": _finite_or_none(
             result.minimum_subspace_singular_value
         ),
         "reordered_assignments": int(result.reordered_assignments),
+        "local_reordered_assignments": int(result.local_reordered_assignments),
         "ambiguous_assignments": int(result.ambiguous_assignments),
         "low_overlap_assignments": int(result.low_overlap_assignments),
+        "caution_assignments": int(result.caution_assignments),
+        "unresolved_assignments": int(result.unresolved_assignments),
         "degenerate_subspaces": int(result.degenerate_subspaces),
+        "unresolved_degenerate_subspaces": int(
+            result.unresolved_degenerate_subspaces
+        ),
         "ambiguity_margin": 0.4,
         "minimum_required_overlap": 0.5,
         "degeneracy_atol_cm-1": 5.0e-2,
         "degeneracy_rtol": 1.0e-6,
         "minimum_subspace_overlap": 0.8,
+        "frequency_fit": {
+            "model": "polynomial",
+            "maximum_degree": 3,
+            "degree": fit.degree,
+            "residual_degrees_of_freedom": int(
+                fit.residual_degrees_of_freedom
+            ),
+            "minimum_r_squared": (
+                float(np.min(fit_r2)) if fit_r2.size else None
+            ),
+            "maximum_rmse_cm-1": (
+                float(np.max(fit_rmse)) if fit_rmse.size else None
+            ),
+            "maximum_residual_cm-1": (
+                float(np.max(fit_residual)) if fit_residual.size else None
+            ),
+            "supported_branches": int(np.count_nonzero(fit.supported)),
+            "total_branches": int(fit.supported.size),
+            "support_min_r_squared": 0.98,
+            "support_max_rmse_cm-1": 2.0,
+            "leave_one_out_validation": {
+                "degree": fit.predictive_degree,
+                "residual_degrees_of_freedom": int(
+                    fit.predictive_residual_degrees_of_freedom
+                ),
+                "absolute_residual_floor_cm-1": 2.0,
+                "maximum_training_range_fraction": 0.10,
+                "supported_low_overlap_assignments": int(
+                    sum(
+                        np.count_nonzero(
+                            step.low_overlap_mask & ~step.unresolved_mask
+                        )
+                        for step in result.steps
+                    )
+                ),
+                "unresolved_low_overlap_assignments": int(
+                    sum(
+                        np.count_nonzero(
+                            step.low_overlap_mask & step.unresolved_mask
+                        )
+                        for step in result.steps
+                    )
+                ),
+            },
+        },
     }
+
+
+def phonon_input_summary_table(
+    data: dict[str, Any],
+    *,
+    interface: str,
+    source_count: int,
+    eigenvectors_available: bool,
+) -> ReportTable:
+    """Build a compact neutral table describing generated phonon input data.
+
+    Parameters
+    ----------
+    data : dict
+        Generated HA/QHA input mapping.
+    interface : str
+        Interface used to read source calculations.
+    source_count : int
+        Number of source files read.
+    eigenvectors_available : bool
+        Whether Quantas had eigenvectors available for its own mode tracking.
+
+    Returns
+    -------
+    ReportTable
+        Frontend-neutral input-generation summary.
+    """
+    volumes = np.atleast_1d(np.asarray(data.get("volume", []), dtype=np.float64))
+    phonon = data.get("phonon", [])
+    modes = 0
+    if isinstance(phonon, list) and phonon and isinstance(phonon[0], dict):
+        bands = phonon[0].get("band", [])
+        if isinstance(bands, list):
+            modes = len(bands)
+    if interface == "crystal-qha":
+        eigenvectors = "source-managed"
+    else:
+        eigenvectors = "available" if eigenvectors_available else "unavailable"
+
+    rows: list[list[Any]] = [
+        ["Interface", interface],
+        ["Source files", int(source_count)],
+        ["Atoms", int(data.get("natom", 0))],
+        ["Volumes", int(volumes.size)],
+        ["Q-points", int(data.get("qpoints", 0))],
+        ["Modes per q-point", int(modes)],
+        ["Eigenvectors", eigenvectors],
+    ]
+    if volumes.size:
+        rows.append(
+            [
+                "Volume range (angstrom^3)",
+                f"{float(np.min(volumes)):.6f} -> {float(np.max(volumes)):.6f}",
+            ]
+        )
+    if volumes.size > 1:
+        rows.append(["Mode continuity", str(data.get("mode_continuity", "unknown"))])
+    return ReportTable(
+        title="Phonon input generation",
+        columns=["Property", "Value"],
+        rows=rows,
+    )
+
+
+def mode_tracking_summary_table(
+    result: PhononModeTrackingResult,
+    volumes: ArrayLike,
+) -> ReportTable:
+    """Build the standard adjacent-volume mode-tracking summary table.
+
+    Parameters
+    ----------
+    result : PhononModeTrackingResult
+        Completed backend-neutral tracking result.
+    volumes : array_like
+        Original sampled volumes in cubic angstrom.
+
+    Returns
+    -------
+    ReportTable
+        Frontend-neutral summary with one row per adjacent volume interval.
+    """
+    volume = np.asarray(volumes, dtype=np.float64)
+    grouped: dict[tuple[int, int], list[PhononModeTrackingStep]] = {}
+    for step in result.steps:
+        grouped.setdefault((step.predecessor_index, step.source_index), []).append(step)
+
+    rows: list[list[Any]] = []
+    for (lower, upper), steps in grouped.items():
+        reordered = sum(
+            np.count_nonzero(step.permutation != np.arange(step.permutation.size))
+            for step in steps
+        )
+        degenerate = sum(len(step.degenerate_subspaces) for step in steps)
+        low = sum(np.count_nonzero(step.low_overlap_mask) for step in steps)
+        cautions = sum(np.count_nonzero(step.caution_mask) for step in steps)
+        unresolved = sum(np.count_nonzero(step.unresolved_mask) for step in steps)
+        nondegenerate = [
+            step.overlaps[~step.degenerate_mask]
+            for step in steps
+            if np.any(~step.degenerate_mask)
+        ]
+        min_overlap = (
+            float(np.min(np.concatenate(nondegenerate)))
+            if nondegenerate
+            else float("nan")
+        )
+        singular = [
+            value
+            for step in steps
+            for value in step.subspace_min_singular_values
+        ]
+        min_singular = float(min(singular)) if singular else float("nan")
+        rows.append(
+            [
+                float(volume[lower]),
+                float(volume[upper]),
+                int(reordered),
+                int(degenerate),
+                int(low),
+                int(cautions),
+                int(unresolved),
+                min_overlap,
+                min_singular,
+            ]
+        )
+
+    fit = result.fit
+    fit_text = "not available"
+    if fit.degree is not None:
+        fit_text = (
+            f"degree {fit.degree}, residual dof {fit.residual_degrees_of_freedom}"
+        )
+    status = result.status
+    if result.verified and result.caution_assignments:
+        status = "verified with cautions"
+    notes = [
+        f"Overall mode continuity: {status}.",
+        (
+            f"Ambiguous assignments: {result.ambiguous_assignments}; "
+            f"low-overlap assignments: {result.low_overlap_assignments}."
+        ),
+        (
+            f"Final reordered assignments: {result.reordered_assignments}; "
+            f"local reordered assignments: {result.local_reordered_assignments}."
+        ),
+        f"Global frequency-path diagnostic: polynomial fit ({fit_text}).",
+        (
+            "Low-overlap validation: symmetric leave-one-out prediction "
+            f"(degree {fit.predictive_degree}, residual dof "
+            f"{fit.predictive_residual_degrees_of_freedom})."
+            if fit.predictive_degree is not None
+            else "Low-overlap validation: leave-one-out prediction unavailable."
+        ),
+    ]
+    return ReportTable(
+        title="Phonon mode continuity",
+        columns=[
+            "Volume from",
+            "Volume to",
+            "Local reorder",
+            "Deg. subspaces",
+            "Low overlap",
+            "Cautions",
+            "Unresolved",
+            "Min overlap",
+            "Min sigma",
+        ],
+        rows=rows,
+        metadata={
+            "column_units": [
+                "angstrom^3",
+                "angstrom^3",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+            ],
+            "column_formats": [
+                ".6f",
+                ".6f",
+                "integer",
+                "integer",
+                "integer",
+                "integer",
+                "integer",
+                ".4f",
+                ".4f",
+            ],
+            "column_alignments": ["right"] * 9,
+            "notes": notes,
+        },
+    )
+
+
+def mode_tracking_detail_table(
+    result: PhononModeTrackingResult,
+    step: PhononModeTrackingStep,
+    volumes: ArrayLike,
+    *,
+    qcoords: ArrayLike | None = None,
+    frequency_unit: str = "cm^-1",
+) -> ReportTable:
+    """Build one detailed q-point table for debug mode-tracking output.
+
+    Parameters
+    ----------
+    result : PhononModeTrackingResult
+        Complete tracking result.
+    step : PhononModeTrackingStep
+        Adjacent-volume q-point assignment to describe.
+    volumes : array_like
+        Original sampled volumes in cubic angstrom.
+    qcoords : array_like or None, optional
+        Fractional q-point coordinates.
+    frequency_unit : str, optional
+        Frequency unit displayed by the renderer.
+
+    Returns
+    -------
+    ReportTable
+        Mode-by-mode diagnostics ordered by final branch label.
+    """
+    volume = np.asarray(volumes, dtype=np.float64)
+    coordinate_text = "unavailable"
+    if qcoords is not None:
+        coordinates = np.asarray(qcoords, dtype=np.float64)
+        q = coordinates[step.qpoint_index]
+        coordinate_text = f"({q[0]:.6f}, {q[1]:.6f}, {q[2]:.6f})"
+    title = (
+        "Mode tracking: "
+        f"{volume[step.predecessor_index]:.6f} -> "
+        f"{volume[step.source_index]:.6f} (angstrom^3); "
+        f"q #{step.qpoint_index + 1} = {coordinate_text}"
+    )
+
+    sigma_by_raw: dict[int, float] = {}
+    for groups, singular_values in (
+        (
+            step.degenerate_subspaces,
+            step.degenerate_subspace_min_singular_values,
+        ),
+        (
+            step.unresolved_degenerate_subspaces,
+            step.unresolved_degenerate_subspace_min_singular_values,
+        ),
+    ):
+        for group, singular in zip(groups, singular_values, strict=True):
+            for raw_mode in group:
+                sigma_by_raw[int(raw_mode)] = float(singular)
+
+    rows: list[list[Any]] = []
+    order = np.argsort(step.branch_indices, kind="stable")
+    for raw_from in order:
+        branch = int(step.branch_indices[raw_from])
+        raw_to = int(step.permutation[raw_from])
+        if step.unresolved_mask[raw_from]:
+            status = "unresolved"
+        elif step.degenerate_mask[raw_from]:
+            status = "degenerate"
+        elif step.caution_mask[raw_from]:
+            status = "caution"
+        else:
+            status = "matched"
+        competitor: float | None = None
+        gap: float | None = None
+        if not step.degenerate_mask[raw_from]:
+            competitor = float(step.competitor_overlaps[raw_from])
+            gap = float(step.overlap_gaps[raw_from])
+        fit_r2 = float(result.fit.r_squared[step.qpoint_index, branch])
+        fit_rmse = float(result.fit.rmse[step.qpoint_index, branch])
+        loo_residual: float | None = None
+        loo_limit: float | None = None
+        if step.low_overlap_mask[raw_from]:
+            endpoint_diagnostics = []
+            for state_index in (step.predecessor_index, step.source_index):
+                residual = float(
+                    result.fit.predictive_residuals[
+                        state_index, step.qpoint_index, branch
+                    ]
+                )
+                tolerance = float(
+                    result.fit.predictive_tolerances[
+                        state_index, step.qpoint_index, branch
+                    ]
+                )
+                if np.isfinite(residual) and np.isfinite(tolerance):
+                    ratio = residual / tolerance if tolerance > 0.0 else float("inf")
+                    endpoint_diagnostics.append((ratio, residual, tolerance))
+            if endpoint_diagnostics:
+                _, loo_residual, loo_limit = max(endpoint_diagnostics)
+        rows.append(
+            [
+                branch + 1,
+                int(raw_from) + 1,
+                raw_to + 1,
+                float(result.frequencies[step.predecessor_index, step.qpoint_index, branch]),
+                float(result.frequencies[step.source_index, step.qpoint_index, branch]),
+                None if step.degenerate_mask[raw_from] else float(step.overlaps[raw_from]),
+                competitor,
+                gap,
+                sigma_by_raw.get(int(raw_from)),
+                status,
+                loo_residual,
+                loo_limit,
+                fit_r2 if np.isfinite(fit_r2) else None,
+                fit_rmse if np.isfinite(fit_rmse) else None,
+            ]
+        )
+
+    return ReportTable(
+        title=title,
+        columns=[
+            "Branch",
+            "Raw mode from",
+            "Raw mode to",
+            "Frequency from",
+            "Frequency to",
+            "Overlap",
+            "Competitor",
+            "Gap",
+            "Subspace sigma min",
+            "Status",
+            "LOO residual",
+            "LOO limit",
+            "Global fit R^2",
+            "Global fit RMSE",
+        ],
+        rows=rows,
+        metadata={
+            "column_units": [
+                "",
+                "",
+                "",
+                frequency_unit,
+                frequency_unit,
+                "",
+                "",
+                "",
+                "",
+                "",
+                frequency_unit,
+                frequency_unit,
+                "",
+                frequency_unit,
+            ],
+            "column_formats": [
+                "integer",
+                "integer",
+                "integer",
+                ".4f",
+                ".4f",
+                ".4f",
+                ".4f",
+                ".4f",
+                ".4f",
+                None,
+                ".4f",
+                ".4f",
+                ".6f",
+                ".4f",
+            ],
+            "column_alignments": [
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "right",
+                "left",
+                "right",
+                "right",
+                "right",
+                "right",
+            ],
+        },
+    )
 
 
 def _finite_or_none(value: float) -> float | None:

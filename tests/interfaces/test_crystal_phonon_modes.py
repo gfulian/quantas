@@ -120,4 +120,5 @@ def test_native_qha_mode_sets_are_trackable_without_ambiguity() -> None:
     assert result.verified
     assert result.ambiguous_assignments == 0
     assert result.low_overlap_assignments == 0
-    assert result.minimum_overlap > 0.9
+    assert np.isnan(result.minimum_overlap)
+    assert result.minimum_subspace_singular_value > 0.9

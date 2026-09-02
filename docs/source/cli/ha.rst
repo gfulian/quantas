@@ -21,6 +21,41 @@ Recommended sequence
 creates the scientific archive and report.  ``plot`` and ``export`` read that
 archive without repeating harmonic sums.
 
+Generating the phonon input
+---------------------------
+
+The shared ``inpgen`` command supports three interface routes:
+
+.. code-block:: console
+
+   quantas ha inpgen phonon.out --interface crystal --output material.yaml
+
+   quantas ha inpgen files.txt --list --interface crystal \
+      --reference 0 --output material.yaml
+
+   quantas ha inpgen qha.out --interface crystal-qha --output material.yaml
+
+``--reference`` selects the source structure used for reference metadata and
+final branch labels in a multi-file series.  It does not change the local
+adjacent-volume overlap assignments performed by the mode tracker.
+
+``--formula-units`` records the number of chemical formula units represented by
+the normalization cell.  This value participates in later molar conversions
+and should not be chosen from the phonon supercell size alone.
+
+``--debug`` prints mode-by-mode continuity diagnostics for multi-volume inputs:
+raw source modes, frequencies, selected and competing overlaps, overlap gap,
+degenerate-subspace singular value, leave-one-out diagnostics for weak
+overlaps, and global frequency-path fit diagnostics.  ``--quiet`` suppresses
+normal successful output.  The two options are mutually exclusive.
+
+.. note::
+
+   HA itself does not require phonon branch continuity across volume.  The
+   shared generator nevertheless records continuity when it can, so the same
+   YAML can later be used safely by QHA.  See
+   :doc:`../workflows/phonon_input_generation` for the scientific procedure.
+
 Important distinctions
 ----------------------
 
@@ -37,7 +72,8 @@ Important distinctions
 * q-point weights are taken from the input and normalized; the CLI does not
   derive missing symmetry multiplicities.
 
-See :doc:`../workflows/ha` for implementation choices,
+See :doc:`../workflows/phonon_input_generation` for input-generation science,
+:doc:`../workflows/ha` for HA implementation choices,
 :doc:`../tutorials/ha` for a complete MgO calculation, and
 :doc:`../formats/phonon_yaml` for the input contract.
 

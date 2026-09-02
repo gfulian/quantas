@@ -162,7 +162,14 @@ class CLIOutput:
             self._append_chunk("table", render_table(table).rstrip())
         if not self.silent:
             self._prepare_terminal_block("table")
-            self.console.print(build_rich_renderable(table))
+            if self.console.is_terminal:
+                self.console.print(build_rich_renderable(table))
+            else:
+                self.console.print(
+                    Text(render_table(table).rstrip()),
+                    soft_wrap=True,
+                    crop=False,
+                )
             self._terminal_last_kind = "table"
 
     def tables(

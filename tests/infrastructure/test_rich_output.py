@@ -116,6 +116,95 @@ def test_redirected_stream_disables_all_ansi_sequences() -> None:
     assert "\x1b[" not in rendered
 
 
+
+
+
+def test_redirected_wide_table_uses_complete_ascii_plain_text() -> None:
+    """Redirected tables are never cropped with Rich Unicode ellipses."""
+    stream = StringIO()
+    output = CLIOutput(console=create_console(file=stream), show_progress=False)
+    output.table(
+        ReportTable(
+            title="Mode tracking",
+            columns=[
+                "Branch",
+                "Raw mode from",
+                "Raw mode to",
+                "Frequency from",
+                "Frequency to",
+                "Overlap",
+                "Competitor",
+                "Gap",
+                "Subspace sigma min",
+                "Status",
+                "LOO residual",
+                "LOO limit",
+                "Global fit R^2",
+                "Global fit RMSE",
+            ],
+            rows=[
+                [
+                    30,
+                    30,
+                    30,
+                    1661.8266,
+                    1644.3888,
+                    1.0,
+                    0.0033,
+                    0.9967,
+                    None,
+                    "matched",
+                    None,
+                    None,
+                    0.999993,
+                    0.0867,
+                ]
+            ],
+            metadata={
+                "column_units": [
+                    "",
+                    "",
+                    "",
+                    "cm^-1",
+                    "cm^-1",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "",
+                    "cm^-1",
+                    "cm^-1",
+                    "",
+                    "cm^-1",
+                ],
+                "column_formats": [
+                    "integer",
+                    "integer",
+                    "integer",
+                    ".4f",
+                    ".4f",
+                    ".4f",
+                    ".4f",
+                    ".4f",
+                    ".4f",
+                    None,
+                    ".4f",
+                    ".4f",
+                    ".6f",
+                    ".4f",
+                ],
+            },
+        ),
+        persist=False,
+    )
+
+    text = stream.getvalue()
+    assert "1661.8266" in text
+    assert "1644.3888" in text
+    assert "…" not in text
+    text.encode("ascii")
+
+
 def test_explicit_no_ansi_disables_styles_on_tty(monkeypatch) -> None:
     """QUANTAS_NO_ANSI provides a conservative terminal fallback."""
     stream = _TTYStringIO()

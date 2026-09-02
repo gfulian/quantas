@@ -39,6 +39,34 @@ The numerical thermodynamic backend is vectorized with NumPy.  Each property
 is evaluated over all temperatures, q-points, modes, and volumes without a
 Python loop over individual oscillators.
 
+Input generation boundary
+-------------------------
+
+The HA calculator consumes the normalized phonon contract; it does not parse
+CRYSTAL or Phonopy output itself.  Use ``quantas ha inpgen`` or
+:func:`quantas.api.ha.create_input` to construct that contract from supported
+external outputs.  The generator validates units, q-point sampling, cell
+normalization, and the optional structural volume path before the HA
+calculation begins.
+
+For a multi-volume source with available eigenvectors, the shared generator may
+also establish phonon-mode continuity and write its diagnostics to the YAML.
+HA does not require those branch labels for the harmonic sums: each sampled
+volume is evaluated independently.  The same metadata becomes essential when
+the file is later used by frequency-based QHA.
+
+The complete input-generation procedure, including primitive reconstruction,
+CRYSTAL eigenvector normalization, adjacent-volume matching, degenerate
+subspaces, and leave-one-out validation, is documented in
+:doc:`phonon_input_generation`.
+
+.. important::
+
+   Successful HA input generation does not certify that every non-positive
+   frequency is physically harmless.  Structural and mode-continuity checks
+   establish consistency of the supplied dataset; dynamical stability remains
+   a separate scientific question.
+
 Scientific input contract
 -------------------------
 
@@ -297,6 +325,7 @@ Decision guide
 Related documentation
 ---------------------
 
+- Input generation and mode continuity: :doc:`phonon_input_generation`
 - Scientific theory: :doc:`../theory/ha`
 - Complete worked example: :doc:`../tutorials/ha`
 - Input specification: :doc:`../formats/phonon_yaml`

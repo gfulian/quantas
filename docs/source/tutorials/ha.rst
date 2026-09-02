@@ -49,7 +49,15 @@ volume-dependent structures and all frequency arrays.
    job: MgO Periclase (CRYSTAL17 QHA)
    natom: 2
    formula_units: 1
-   mode_continuity: assumed
+   units:
+     energy: Ha
+     volume: angstrom^3
+     frequency: cm^-1
+     length: angstrom
+   mode_continuity: verified
+   mode_continuity_metadata:
+     method: crystal-qha
+     source: crystal
    supercell:
      - [-2,  2,  2]
      - [ 2, -2,  2]
@@ -58,11 +66,7 @@ volume-dependent structures and all frequency arrays.
      representation: primitive
      reference_index: 6
      volume_series:
-       volume:
-         - 15.495426716592775
-         - 16.068019225910940
-         # ... nine additional volumes ...
-         - 21.164485271468507
+       volume: [15.495426716592775, 16.068019225910940, ..., 21.164485271468507]
    qpoints: 32
    phonon:
      - q-position: [0.0, 0.0, 0.0]
@@ -76,6 +80,22 @@ volume-dependent structures and all frequency arrays.
    Quantas uses the q-point weights supplied by the input.  It does not derive
    symmetry multiplicities during an HA or QHA run.  Input weights must
    therefore already represent the intended sampling convention.
+
+The normalized tutorial input can be regenerated directly from the distributed
+native CRYSTAL QHA output:
+
+.. code-block:: console
+
+   quantas ha inpgen examples/qha/crystal-qha/mgo-b3lyp-crystal-qha.out \
+       --interface crystal-qha \
+       --jobname "MgO Periclase (CRYSTAL17 QHA)" \
+       --output mgo_b3lyp.yaml
+
+The generated file records CRYSTAL's source-managed mode-continuity result.
+That metadata is not required by HA itself, but it allows the same normalized
+file to be reused by the QHA tutorial without weakening the input contract.
+See :doc:`../workflows/phonon_input_generation` for the complete generation
+procedure.
 
 Temperature grid
 ----------------

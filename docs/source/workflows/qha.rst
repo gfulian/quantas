@@ -75,23 +75,50 @@ Input requirements and mode continuity
 
 QHA uses the same normalized phonon arrays as HA, but requires a genuine
 multi-volume series for interpolation and minimization.  The input may also
-store a volume-constrained structural path.
+store a volume-constrained structural path used to reconstruct equilibrium
+lattice parameters and anisotropic expansion.
 
-The frequency scheme additionally depends on a mode-continuity status:
+The scientific construction of this normalized dataset is described in
+:doc:`phonon_input_generation`.  In particular, independent CRYSTAL phonon
+outputs can be checked by a backend-neutral eigenvector tracker before their
+frequency arrays are assembled.
+
+The frequency scheme depends on the public ``mode_continuity`` status:
 
 ``verified``
-   Branch continuity across volume was explicitly checked.
+   Branch correspondence was established by a documented procedure.  Inspect
+   ``mode_continuity_metadata`` to distinguish Quantas eigenvector tracking from
+   source-managed continuity such as a native CRYSTAL QHA calculation.
 
 ``assumed``
-   The array order is accepted as continuous, but no explicit verification is
-   recorded.  Quantas permits the calculation and emits a warning.
+   The stored array order is accepted as continuous, but no explicit
+   verification is recorded.  Quantas permits frequency QHA and emits a
+   warning.
 
-``unknown`` or ``unreliable``
-   Frequency QHA is rejected because mode-by-mode volume fits would have no
-   defensible correspondence.
+``unknown``
+   Continuity was not established, commonly because the required eigenvectors
+   were unavailable.  Frequency QHA is rejected.
 
-The thermodynamic scheme does not require mode-by-mode continuity because it
-interpolates summed thermodynamic properties.
+``unreliable``
+   At least one mode assignment or degenerate subspace remains unresolved.
+   Frequency QHA is rejected.
+
+The thermodynamic ``td`` scheme does not require mode-by-mode continuity
+because it interpolates harmonic quantities after the mode summation.
+
+.. warning::
+
+   Do not change ``unknown`` or ``unreliable`` to ``assumed`` merely to make a
+   ``scheme=freq`` run start.  That edits the scientific claim made by the input
+   without adding evidence.  Either establish continuity from the source data,
+   extend or improve the phonon sampling, or use ``scheme=td`` when
+   mode-resolved information is not required.
+
+.. important::
+
+   ``mode_continuity: verified`` addresses branch correspondence only.  It does
+   not establish dynamical stability, force-constant convergence, adequacy of
+   the volume range, or validity of the quasi-harmonic approximation.
 
 The sampled harmonic stage
 --------------------------
@@ -808,6 +835,7 @@ A method comparison should focus on physical quantities, not only fit metrics:
 Related documentation
 ---------------------
 
+- Input generation and mode continuity: :doc:`phonon_input_generation`
 - Scientific theory: :doc:`../theory/qha`
 - Complete worked example and method exercise: :doc:`../tutorials/qha`
 - Input specification: :doc:`../formats/phonon_yaml`

@@ -5,8 +5,9 @@
 The `2.0.0b9` public lifecycle baseline, SEISMIC input-generation work, and
 frontend-neutral QHA inspection presentation are merged into `dev/refactor`.
 The backend has returned to release-candidate freeze. A temporary
-`dev/crystal-parser` branch carries the `2.0.0b10` CRYSTAL parser hardening
-work and will be merged only after focused scientific and regression validation.
+`dev/crystal-parser` branch carries the `2.0.0b10` CRYSTAL parser hardening,
+phonon-eigenvector parsing, and QHA mode-continuity work.  It will be merged
+only after focused scientific, documentation, and regression validation.
 
 The completed stabilization covers:
 
@@ -18,7 +19,9 @@ The completed stabilization covers:
 - VASP density extraction for SEISMIC;
 - rejection of unstable native SEISMIC results.
 - public QHA inspection tables and sampled energy-volume plot specifications
-  derived from the existing inspection result without repeating the fit.
+  derived from the existing inspection result without repeating the fit;
+- CRYSTAL phonon input normalization and independent-volume mode-continuity
+  validation on `dev/crystal-parser`, pending merge after final branch checks.
 
 It did not intentionally change approved numerical baselines, physical
 conventions, scientific array layouts, or HDF5 schemas.

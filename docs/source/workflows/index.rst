@@ -19,6 +19,7 @@ The pages complement, but do not duplicate, the worked examples in
 :doc:`../tutorials/index` or the exact option syntax in :doc:`../cli/index`.
 
 - :doc:`concepts/index`
+- :doc:`phonon_input_generation`
 - :doc:`ha`
 - :doc:`qha`
 - :doc:`elasticity`

@@ -153,6 +153,7 @@ def create_ha_input(
     reference: int = 0,
     jobname: str = "Quantas HA input",
     formula_units: int = 1,
+    observer: Observer | None = None,
 ) -> Path:
     """
     Generate a Quantas phonon YAML input file from QM output data.
@@ -173,6 +174,8 @@ def create_ha_input(
         Description written to the YAML ``job`` field.
     formula_units : int, optional
         Number of chemical formula units in the crystallographic cell.
+    observer : Observer or None, optional
+        Frontend-neutral observer receiving input-generation events.
 
     Returns
     -------
@@ -194,6 +197,7 @@ def create_ha_input(
         reference=reference,
         jobname=jobname,
         formula_units=formula_units,
+        observer=observer,
     )
 
 

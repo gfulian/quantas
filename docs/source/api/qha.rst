@@ -100,6 +100,11 @@ Passive contracts
 Input, inspection, and calculation
 ----------------------------------
 
+``create_input`` shares the HA/QHA phonon generator.  For independent
+multi-volume outputs, the normalized YAML may contain Quantas eigenvector-based
+mode-continuity diagnostics; for native QHA sources it preserves source-managed
+continuity provenance.  See :doc:`../workflows/phonon_input_generation`.
+
 .. autofunction:: quantas.api.qha.create_input
 
 .. autofunction:: quantas.api.qha.available_energy_eos
@@ -183,6 +188,7 @@ public implementation does not interpolate or snap nearby values.
 See also
 --------
 
+- :doc:`../workflows/phonon_input_generation`
 - :doc:`../workflows/qha`
 - :doc:`../tutorials/qha`
 - :doc:`../formats/phonon_yaml`

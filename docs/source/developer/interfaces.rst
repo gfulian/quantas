@@ -93,6 +93,58 @@ Do not reorder atoms without recording and testing the mapping. Thermoelastic
 co-rotation and multi-volume structural paths depend on consistent atom
 identity.
 
+Phonon eigenvectors and mode continuity
+---------------------------------------
+
+Phonon parsers follow the same separation of responsibilities, with one extra
+boundary:
+
+.. code-block:: text
+
+   external phonon output
+           |
+           v
+   code-specific parser
+           |
+           +-- frequencies
+           +-- normalized eigenvectors
+           +-- atom ordering and q metadata
+           |
+           v
+   PhononModeData
+           |
+           v
+   core.numerics phonon tracker
+           |
+           v
+   normalized PhononInputData / QHA input
+
+The parser is responsible for reconstructing the eigenvector representation of
+the external code and documenting its normalization.  It must not decide that a
+QHA branch correspondence is acceptable merely because two raw mode indices
+match.
+
+The backend-neutral tracker receives ``float64`` frequencies and ``complex128``
+unit-norm eigenvectors.  It knows nothing about CRYSTAL markers, Phonopy YAML,
+or future VASP/QE syntax.  Conversely, the CRYSTAL parser does not know QHA
+failure policy or CLI rendering.
+
+For CRYSTAL, general-q vectors are reconstructed from in-phase and anti-phase
+components and converted to unit-norm mass-weighted directions before they
+leave the interface layer.  Degenerate-subspace matching, Hungarian assignment,
+ambiguity classification, and leave-one-out validation belong to the numerical
+tracking layer.
+
+.. important::
+
+   Do not move mode-continuity policy into a code-specific parser.  A future
+   interface must be able to supply the same neutral ``PhononModeData`` and
+   obtain the same tracking result from the same normalized arrays.
+
+When an external workflow has already established continuity, preserve that
+fact explicitly as source provenance rather than relabelling it as a Quantas
+tracking result.  The ``crystal-qha`` path is the current example.
+
 Provenance
 ----------
 
