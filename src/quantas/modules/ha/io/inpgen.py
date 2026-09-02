@@ -1430,11 +1430,11 @@ def mode_tracking_summary_table(
         fit_text = (
             f"degree {fit.degree}, residual dof {fit.residual_degrees_of_freedom}"
         )
-    status = result.status
+    status_text: str = result.status
     if result.verified and result.caution_assignments:
-        status = "verified with cautions"
+        status_text = "verified with cautions"
     notes = [
-        f"Overall mode continuity: {status}.",
+        f"Overall mode continuity: {status_text}.",
         (
             f"Ambiguous assignments: {result.ambiguous_assignments}; "
             f"low-overlap assignments: {result.low_overlap_assignments}."
