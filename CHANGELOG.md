@@ -24,6 +24,9 @@ public contract; they must still be documented and validated.
   cutoff-series, and explicit volume-matching contracts.  Incremental tensor
   conventions are now distinguishable from raw energy-strain tensors before
   any acoustic workflow is connected.
+- Added direct composition from an incremental elastic volume series to
+  volume-resolved Kieffer effective velocities and cutoffs, including per-state
+  quadrature and pressure provenance and workflow-level progress callbacks.
 - Added backend-neutral computational records for external-code run
   termination, energies, SCF convergence, and geometry-optimization history.
 - Added a shared CRYSTAL output document/parser foundation with centralized
@@ -52,6 +55,9 @@ public contract; they must still be documented and validated.
 
 ### Changed
 
+- Relaxed only the historical Kieffer reference-test tolerance to accommodate
+  platform-dependent adaptive-quadrature differences observed on Python 3.10;
+  analytical and thermodynamic-identity tolerances remain unchanged.
 - Corrected the historical Kieffer entropy integrand to use the published Bose
   occupation denominator.  The legacy squared-denominator result is preserved
   only as a characterization datum and is not available as a runtime mode.

@@ -20,33 +20,35 @@ CUTOFFS = np.array([3.0e12, 4.0e12, 5.0e12], dtype=np.float64)
 
 
 def test_historical_helmholtz_and_cv_reference() -> None:
-    """The corrected core preserves legacy quantities that match the paper."""
+    """The corrected core preserves historical quantities matching the paper."""
     temperature = np.array([298.15], dtype=np.float64)
 
     # Frozen outputs from the historical Kieffer class.  Its Helmholtz method
     # returns J mol^-1 despite not documenting the unit.
-    legacy_helmholtz_j_mol = -6521.4320263502705
-    legacy_cv_j_mol_k = 24.237038581996995
+    historical_helmholtz_j_mol = -6521.4320263502705
+    historical_cv_j_mol_k = 24.237038581996995
 
     np.testing.assert_allclose(
         kieffer_thermal_free_energy(temperature, CUTOFFS)[0, 0],
-        1.0e-3 * legacy_helmholtz_j_mol,
-        rtol=2.0e-12,
+        1.0e-3 * historical_helmholtz_j_mol,
+        rtol=5.0e-11,
+        atol=2.0e-10,
     )
     np.testing.assert_allclose(
         kieffer_isochoric_heat_capacity(temperature, CUTOFFS)[0, 0],
-        legacy_cv_j_mol_k,
-        rtol=2.0e-12,
+        historical_cv_j_mol_k,
+        rtol=5.0e-11,
+        atol=2.0e-10,
     )
 
 
 def test_historical_entropy_defect_is_corrected() -> None:
-    """Freeze and expose the squared-denominator error in legacy entropy."""
+    """Freeze and expose the historical squared-denominator entropy defect."""
     temperature = np.array([298.15], dtype=np.float64)
-    legacy_entropy_j_mol_k = 50.62987574670751
+    historical_entropy_j_mol_k = 50.62987574670751
     corrected = kieffer_entropy(temperature, CUTOFFS)[0, 0]
 
-    assert not np.isclose(corrected, legacy_entropy_j_mol_k, rtol=1.0e-3)
+    assert not np.isclose(corrected, historical_entropy_j_mol_k, rtol=1.0e-3)
     np.testing.assert_allclose(corrected, 40.437182509075214, rtol=2.0e-11)
 
 

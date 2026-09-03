@@ -124,6 +124,27 @@ interpolation method.  Exact matching between independently printed QHA and
 elastic volumes uses a stored relative and absolute tolerance and reports both
 differences for every association; missing or ambiguous matches are errors.
 
+Direct elastic-to-cutoff composition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+An incremental elastic series can now be transformed directly into a Kieffer
+cutoff series.  Every volume is processed independently through the shared
+Christoffel solver, inverse-cube spherical average, equal-volume Brillouin
+sphere, and sine-wave cutoff equations.  The result preserves the source-state
+index, tensor convention, pressure origin, quadrature orders, refinement
+change, degeneracy count, and clamped-eigenvalue count.
+
+The workflow validates the complete tensor series before processing its first
+volume.  A raw or unknown tensor therefore fails without producing a partial
+cutoff series.  An isotropic two-volume test independently verifies the
+expected density dependence :math:`u\propto\rho^{-1/2}` and the combined cutoff
+scaling :math:`\nu_{\max}\propto uV^{-1/3}`.
+
+The comparison against output frozen from the historical implementation uses
+a cross-platform tolerance for adaptive quadrature.  This tolerance is not
+used by the analytical zero-point, high-temperature, or thermodynamic-identity
+tests.
+
 Validation hierarchy
 --------------------
 
