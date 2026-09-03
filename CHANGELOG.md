@@ -20,6 +20,10 @@ public contract; they must still be documented and validated.
   acoustic velocity averages, quadrature-refinement diagnostics, and conversion
   from effective velocities and primitive-cell volume to Kieffer cutoff
   frequencies in rad/s, Hz, and cm^-1.
+- Added backend-neutral elastic-state, pressure/pre-stress provenance, Kieffer
+  cutoff-series, and explicit volume-matching contracts.  Incremental tensor
+  conventions are now distinguishable from raw energy-strain tensors before
+  any acoustic workflow is connected.
 - Added backend-neutral computational records for external-code run
   termination, energies, SCF convergence, and geometry-optimization history.
 - Added a shared CRYSTAL output document/parser foundation with centralized

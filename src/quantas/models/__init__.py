@@ -9,6 +9,14 @@ readers, exporters, scientific results, reports, plots, and persistence.
 from .calculator import BasicCalculator
 from .data import InputData, ResultData, ResultMetadata
 from .export import BasicExport, BasicHDF5Export
+from .elastic_states import (
+    ElasticState,
+    ElasticStateSeries,
+    ElasticTensorKind,
+    PressureSource,
+    PrestressProvenance,
+)
+from .kieffer import CutoffVolumeSource, KiefferCutoffState, KiefferVolumeSeries
 from .module import ModuleContract
 from .phonons import PhononInputData, PhononModeData
 from .plot import (
@@ -66,6 +74,7 @@ from .schema import (
     validate_result_schema,
 )
 from .thermodynamics import HarmonicThermodynamicResult
+from .volume_matching import VolumeMatch, VolumeMatchPolicy, match_sampled_volumes
 
 __all__ = [
     "BasicCalculator",
@@ -74,14 +83,22 @@ __all__ = [
     "BasicReader",
     "CellNormalization",
     "CrystalStructure",
+    "CutoffVolumeSource",
+    "ElasticState",
+    "ElasticStateSeries",
+    "ElasticTensorKind",
     "HarmonicThermodynamicResult",
     "StructureReconstructionDiagnostics",
     "StructureVolumeSeries",
     "SymmetryMetadata",
     "InputData",
+    "KiefferCutoffState",
+    "KiefferVolumeSeries",
     "ModuleContract",
     "PhononInputData",
     "PhononModeData",
+    "PressureSource",
+    "PrestressProvenance",
     "AxisFieldLayer",
     "ColoredPathSeries",
     "ColoredPathStyle",
@@ -126,4 +143,7 @@ __all__ = [
     "RESULT_SCHEMA_VERSION",
     "ResultSchema",
     "validate_result_schema",
+    "VolumeMatch",
+    "VolumeMatchPolicy",
+    "match_sampled_volumes",
 ]

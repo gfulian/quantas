@@ -102,6 +102,28 @@ For primitive-cell volume :math:`V` the cutoff validation uses
 Tests independently verify the conversions from cubic angstrom to cubic metre,
 from km/s to m/s, and from hertz to inverse centimetre.
 
+Elastic-state and cutoff provenance
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The shared model layer distinguishes raw energy--strain stiffness matrices
+from hydrostatic Wallace and full-stress incremental tensors.  A correction
+record contains the source tensor convention, pressure value and origin,
+correction method, and the component that applied it.  Validation rejects a
+correction whose source is already incremental, preventing silent double
+application before the data reach Christoffel acoustics.
+
+Pressure provenance distinguishes applied pre-stress, parsed output stress,
+manual pressure, energy-EoS pressure, and energy-polynomial pressure.  Raw
+tensors remain representable because a later enrichment stage may correct
+them, but the acoustic eligibility check rejects them until that operation has
+been completed explicitly.
+
+Volume-resolved cutoff states retain the source elastic-state indices and mark
+each value as direct or interpolated.  Interpolated series require a named
+interpolation method.  Exact matching between independently printed QHA and
+elastic volumes uses a stored relative and absolute tolerance and reports both
+differences for every association; missing or ambiguous matches are errors.
+
 Validation hierarchy
 --------------------
 
