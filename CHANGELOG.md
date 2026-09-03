@@ -16,6 +16,10 @@ public contract; they must still be documented and validated.
 - Added legacy characterization, analytical-limit, thermodynamic-identity,
   high-temperature, zero-temperature, shape, precision, and input-validation
   tests for the Kieffer model.
+- Added arbitrary-direction batched phase solving, inverse-cube spherical
+  acoustic velocity averages, quadrature-refinement diagnostics, and conversion
+  from effective velocities and primitive-cell volume to Kieffer cutoff
+  frequencies in rad/s, Hz, and cm^-1.
 - Added backend-neutral computational records for external-code run
   termination, energies, SCF convergence, and geometry-optimization history.
 - Added a shared CRYSTAL output document/parser foundation with centralized

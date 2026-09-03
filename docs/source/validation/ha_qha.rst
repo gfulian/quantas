@@ -69,6 +69,39 @@ characterization datum, but the new core intentionally uses the published
 formula.  The corrected result is independently constrained by
 :math:`S=-\partial F/\partial T`; no compatibility switch preserves the defect.
 
+Acoustic velocity averages
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The acoustic cutoff path reuses the SEISMIC Christoffel solver.  Phase
+velocities are integrated with Gauss--Legendre quadrature in
+:math:`\mu=\cos\theta` and a periodic uniform quadrature in :math:`\phi`:
+
+.. math::
+
+   u_i = \left[\frac{1}{4\pi}\int_{4\pi}v_i^{-3}\,d\Omega\right]^{-1/3}.
+
+The modes follow the existing SEISMIC convention of local ascending phase
+speed: slow quasi-shear, fast quasi-shear, and quasi-longitudinal.  Exact shear
+degeneracy is therefore harmless for the integral because the two coincident
+speeds make the local labelling immaterial.  Degenerate directions and clamped
+eigenvalues remain explicit diagnostics.
+
+An isotropic analytical test recovers both shear velocities and the
+longitudinal velocity independently of quadrature order.  An anisotropic
+hydroxylapatite test checks convergence under simultaneous refinement of both
+angular orders.
+
+For primitive-cell volume :math:`V` the cutoff validation uses
+
+.. math::
+
+   K_{\max}=\left(\frac{6\pi^2}{V}\right)^{1/3},\qquad
+   \omega_{i,\max}=\frac{2}{\pi}u_iK_{\max},\qquad
+   \nu_{i,\max}=\frac{\omega_{i,\max}}{2\pi}.
+
+Tests independently verify the conversions from cubic angstrom to cubic metre,
+from km/s to m/s, and from hertz to inverse centimetre.
+
 Validation hierarchy
 --------------------
 

@@ -3,6 +3,12 @@
 """Acoustic-wave propagation in anisotropic elastic solids."""
 
 from .christoffel import ChristoffelSolver
+from .acoustic import (
+    AcousticVelocityAverage,
+    KiefferCutoffFrequencies,
+    average_acoustic_phase_velocities,
+    kieffer_cutoff_frequencies,
+)
 from .isotropic import IsotropicSeismicVelocities, isotropic_seismic_velocities
 from .medium import ElasticMedium
 from .enhancement import (
@@ -43,6 +49,7 @@ from .sampling import (
     SamplingLevel,
     SeismicFieldResult,
     sample_seismic_field,
+    solve_phase_directions,
 )
 from .tracking import (
     PolarizationBranchField,
@@ -62,6 +69,8 @@ __all__ = [
     "MODE_PAIR_SYMBOLS",
     "MODE_SYMBOLS",
     "ChristoffelSolver",
+    "AcousticVelocityAverage",
+    "KiefferCutoffFrequencies",
     "ElasticMedium",
     "IsotropicSeismicVelocities",
     "DirectionalEnhancementResult",
@@ -83,6 +92,9 @@ __all__ = [
     "PolarizationTrackingResult",
     "WaveMode",
     "sample_seismic_field",
+    "solve_phase_directions",
+    "average_acoustic_phase_velocities",
+    "kieffer_cutoff_frequencies",
     "SeismicFieldResult",
     "SamplingLevel",
     "align_axial_vector",
