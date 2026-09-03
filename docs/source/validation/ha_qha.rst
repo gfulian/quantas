@@ -21,6 +21,54 @@ thermodynamic equations and workflow choices are documented in
 The authoritative implementation of input generation is described in
 :doc:`../workflows/phonon_input_generation`.
 
+Kieffer acoustic thermodynamics
+-------------------------------
+
+The Kieffer sine-wave model is currently validated as an isolated
+statistical-thermodynamics core.  It is not yet connected to HA/QHA input,
+calculators, or command-line options.  This separation ensures that the
+published equations are characterized before acoustic cutoff construction and
+workflow composition are introduced.
+
+The validation uses ordinary cutoff frequencies in hertz and the nonsingular
+integration variable
+
+.. math::
+
+   \theta=\arcsin(\nu/\nu_{\max}), \qquad 0\leq\theta\leq\frac{\pi}{2}.
+
+It verifies the following properties:
+
+* the historical Helmholtz-above-0-K and heat-capacity results are reproduced;
+* the zero-point energy is checked against the analytical mean frequency
+
+  .. math::
+
+     \langle\nu\rangle = \nu_{\max}\frac{24(\pi-2)}{\pi^3};
+
+* :math:`S=-\partial F/\partial T`, :math:`C_V=T\partial S/\partial T`, and
+  :math:`U_{\mathrm{th}}=F_{\mathrm{th}}+TS` hold numerically;
+* entropy and all thermal contributions vanish at zero temperature;
+* three acoustic branches approach :math:`3R` in heat capacity at high
+  temperature;
+* multi-volume inputs preserve ``float64`` values and the ``(T,V)`` result
+  shape.
+
+Historical entropy defect
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The original Quantas ``Kieffer.entropy`` routine squared the Bose occupation
+denominator in the first entropy term.  The published equation contains
+
+.. math::
+
+   \frac{x}{e^x-1}
+
+rather than :math:`x/(e^x-1)^2`.  The historical value is retained as a frozen
+characterization datum, but the new core intentionally uses the published
+formula.  The corrected result is independently constrained by
+:math:`S=-\partial F/\partial T`; no compatibility switch preserves the defect.
+
 Validation hierarchy
 --------------------
 

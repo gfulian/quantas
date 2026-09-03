@@ -9,6 +9,13 @@ public contract; they must still be documented and validated.
 
 ### Added
 
+- Added a frontend-neutral Kieffer sine-wave acoustic-thermodynamics core with
+  zero-point energy, thermal energy, Helmholtz energy, entropy, and isochoric
+  heat capacity for single- and multi-volume cutoff series.  The core is not
+  yet connected to HA/QHA workflows.
+- Added legacy characterization, analytical-limit, thermodynamic-identity,
+  high-temperature, zero-temperature, shape, precision, and input-validation
+  tests for the Kieffer model.
 - Added backend-neutral computational records for external-code run
   termination, energies, SCF convergence, and geometry-optimization history.
 - Added a shared CRYSTAL output document/parser foundation with centralized
@@ -37,6 +44,9 @@ public contract; they must still be documented and validated.
 
 ### Changed
 
+- Corrected the historical Kieffer entropy integrand to use the published Bose
+  occupation denominator.  The legacy squared-denominator result is preserved
+  only as a characterization datum and is not available as a runtime mode.
 - CRYSTAL geometry parsing now preserves conventional atomic numbers as source
   metadata while exposing chemical atomic numbers through ``CrystalStructure``.
 - HA/QHA phonon input generation now writes explicit unit and provenance
