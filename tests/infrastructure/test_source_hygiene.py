@@ -124,6 +124,16 @@ def test_repository_configuration_files_are_present() -> None:
     assert not (project_root / "uv.lock").exists()
 
 
+def test_windows_docs_build_starts_from_repository_root() -> None:
+    """The Windows Sphinx entry point keeps Git discovery at repository root."""
+    project_root = _TEST_ROOT.parent
+    batch = (project_root / "docs" / "make.bat").read_text(encoding="utf-8")
+    assert 'set "ROOT_DIR=%~dp0.."' in batch
+    assert 'pushd "%ROOT_DIR%"' in batch
+    assert '"docs\\source" "docs\\_build"' in batch
+    assert 'pushd "%~dp0"' not in batch
+
+
 def test_public_source_objects_have_docstrings() -> None:
     """Every public source module, class, function, and method is documented."""
     source_root = _TEST_ROOT.parent / "src" / "quantas"

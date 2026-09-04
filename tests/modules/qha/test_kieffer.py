@@ -13,7 +13,10 @@ from quantas.core.physics.units import convert_energy
 from quantas.models.kieffer import KiefferCutoffState, KiefferVolumeSeries
 from quantas.modules.qha.kieffer import validate_kieffer_qha_applicability
 from quantas.modules.qha.models import QHAInput, QHAOptions
-from quantas.modules.qha.thermodynamics import calculate_sampled_thermodynamics
+from quantas.modules.qha.thermodynamics import (
+    FrequencyThermodynamicEvaluator,
+    calculate_sampled_thermodynamics,
+)
 
 
 def _input() -> QHAInput:
@@ -154,11 +157,68 @@ def test_qha_api_td_round_trip_retains_sampled_kieffer_component(tmp_path) -> No
     )
 
 
-def test_qha_frequency_scheme_is_rejected_until_cutoff_fit_is_available() -> None:
-    """The frequency scheme cannot silently omit equilibrium Kieffer terms."""
-    with pytest.raises(ValueError, match="requires scheme='td'"):
+def test_frequency_evaluator_adds_fitted_kieffer_properties() -> None:
+    """The frequency route evaluates acoustic cutoffs at arbitrary volumes."""
+    options = _options(scheme="freq")
+    harmonic = FrequencyThermodynamicEvaluator(_input(), options)
+    enriched = FrequencyThermodynamicEvaluator(
+        _input(),
+        options,
+        kieffer_cutoffs=_cutoffs(),
+    )
+    volumes = np.array([9.25, 10.25], dtype=np.float64)
+    temperature = 300.0
+    expected = convert_energy(
+        kieffer_vibrational_free_energy(
+            np.array([temperature]),
+            enriched.kieffer_cutoffs_at(volumes),
+        )[0],
+        "kjmol",
+        "Ha",
+    )
+    np.testing.assert_allclose(
+        enriched.properties_at(volumes, temperature)["vibrational_free_energy"]
+        - harmonic.properties_at(volumes, temperature)["vibrational_free_energy"],
+        expected,
+    )
+
+
+def test_frequency_evaluator_rejects_nonpositive_extrapolated_cutoff() -> None:
+    """A fitted acoustic branch cannot disappear during extrapolation."""
+    evaluator = FrequencyThermodynamicEvaluator(
+        _input(),
+        _options(scheme="freq"),
+        kieffer_cutoffs=_cutoffs(),
+    )
+    with pytest.raises(ValueError, match="non-positive or non-finite"):
+        evaluator.kieffer_cutoffs_at(100.0)
+
+
+def test_qha_frequency_scheme_includes_kieffer_at_equilibrium() -> None:
+    """Local minimization and final frequency thermodynamics include Kieffer."""
+    options = _options(scheme="freq")
+    harmonic = qha.get_result(qha.run(_input(), options=options))
+    enriched = qha.get_result(
         qha.run(
             _input(),
-            options=_options(scheme="freq"),
+            options=options,
+            kieffer_cutoffs=_cutoffs(),
+        )
+    )
+    assert enriched.completed is True
+    assert enriched.equilibrium_volume is not None
+    assert harmonic.equilibrium_volume is not None
+    assert not np.allclose(enriched.equilibrium_volume, harmonic.equilibrium_volume)
+    assert enriched.metadata["thermodynamics"]["kieffer_cutoff_fit_status"] == (
+        "success"
+    )
+
+
+def test_kieffer_frequency_scheme_rejects_mode_gruneisen_analysis() -> None:
+    """An incomplete optical-only mode-Gruneisen average is never reported."""
+    with pytest.raises(ValueError, match="does not yet support mode-Gruneisen"):
+        qha.run(
+            _input(),
+            options=_options(scheme="freq", calculate_mode_gruneisen=True),
             kieffer_cutoffs=_cutoffs(),
         )

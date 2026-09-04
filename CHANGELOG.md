@@ -35,9 +35,17 @@ public contract; they must still be documented and validated.
 - Added multi-volume Kieffer enrichment to the thermodynamic-property QHA
   scheme.  Direct cutoff states are matched explicitly to primitive Gamma-only
   input volumes, added before free-energy minimization, retained as a separate
-  sampled contribution, and preserved in native QHA HDF5 results.  The
-  frequency-interpolation scheme is rejected until its cutoff-volume evaluator
-  is implemented.
+  sampled contribution, and preserved in native QHA HDF5 results.
+- Extended Kieffer QHA to the frequency scheme with volume-fitted cutoff
+  frequencies used consistently during minimization and equilibrium-property
+  reconstruction; incomplete mode-Gruneisen coupling is rejected explicitly.
+- Made the Windows documentation batch entry point retain the repository root
+  as its working directory so Git-aware documentation components remain
+  portable.
+- Added explicit hydrostatic Wallace correction for raw energy--strain
+  stiffness tensors and complete state/series provenance.  Corrected series
+  feed directly into the Kieffer acoustic workflow, while missing pressure and
+  repeated correction are rejected.
 - Added backend-neutral computational records for external-code run
   termination, energies, SCF convergence, and geometry-optimization history.
 - Added a shared CRYSTAL output document/parser foundation with centralized

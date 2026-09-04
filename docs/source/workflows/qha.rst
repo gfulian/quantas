@@ -121,13 +121,47 @@ separately on the sampled temperature-volume grid and persisted in the native
 HDF5 result together with cutoff frequencies, effective velocities, and
 matching diagnostics.
 
-This integration currently applies to ``scheme=td``.  In that scheme the
-combined harmonic-plus-acoustic properties are fitted and interpolated through
-the existing thermodynamic QHA path, so the Kieffer contribution enters both
-the free-energy minimization and the final pressure-temperature properties.
-``scheme=freq`` is rejected explicitly: supporting it requires a documented
-cutoff-volume evaluator used consistently by local minimization and by every
-equilibrium thermodynamic property.
+Raw elastic tensors and hydrostatic pre-stress
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Elastic constants obtained from an energy--strain calculation without an
+explicit finite-pressure correction cannot be passed directly to the
+Christoffel solver.  Once a hydrostatic pressure has been assigned to every
+state, Quantas converts the raw tensor into the incremental Wallace tensor
+using the convention derived in :doc:`../theory/thermoelasticity`:
+
+.. math::
+
+   B_{ijkl}(V_i)
+   =C^{\mathrm{raw}}_{ijkl}(V_i)-P_i\,\Delta_{ijkl}.
+
+Pressure is positive in compression.  The source of every :math:`P_i` is part
+of the data contract: it may come from the output stress, a manually supplied
+value, or eventually an energy EOS or polynomial derivative.  The correction
+produces a new elastic state and records the source and target tensor kinds,
+method, pressure source, and software applying it.  An already incremental
+tensor is rejected, which prevents accidental double correction.
+
+The reusable Python operations are
+``hydrostatic_wallace_stiffness()``,
+``correct_hydrostatic_elastic_state()``, and
+``correct_hydrostatic_elastic_series()`` in
+:mod:`quantas.core.physics.elasticity`.  The corrected series can be passed
+directly to ``build_kieffer_volume_series()``.
+
+Both QHA schemes include the acoustic contribution consistently.  With
+``scheme=td``, the combined harmonic-plus-acoustic properties are fitted and
+interpolated through the thermodynamic QHA path.  With ``scheme=freq``, Quantas
+fits each of the three cutoff frequencies against volume using
+``frequency_degree``.  Those fitted cutoffs are evaluated both during local
+free-energy minimization and at the final equilibrium volumes before the
+thermodynamic properties are recalculated.
+
+Kieffer-enriched frequency QHA does not currently support the
+``mode_gruneisen`` thermal-expansion route or the optional mode-Gruneisen
+analysis.  A phonon-only weighted average would omit the acoustic branches and
+is therefore rejected explicitly.  The default ``mixed_derivative`` route and
+the numerical thermal-expansion route remain available.
 
 .. warning::
 
@@ -200,6 +234,11 @@ Limitations
 
 Use ``freq`` when the phonon branches are continuous and mode information is
 scientifically important.
+
+For Kieffer-enriched calculations, this scheme also requires a stable positive
+fit for every cutoff over the volumes reached by local minimization.  A
+non-positive or non-finite fitted cutoff invalidates that state rather than
+being silently discarded.
 
 ``td``: thermodynamic-property interpolation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

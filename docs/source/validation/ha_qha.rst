@@ -25,9 +25,9 @@ Kieffer acoustic thermodynamics
 -------------------------------
 
 The Kieffer sine-wave model is validated as a statistical-thermodynamics core
-and is connected to the single-volume HA Python API and the multi-volume
-thermodynamic-property QHA scheme.  YAML enrichment and command-line activation
-remain separate later steps.
+and is connected to the single-volume HA Python API and both multi-volume QHA
+schemes.  YAML enrichment and command-line activation remain separate later
+steps.
 
 The validation uses ordinary cutoff frequencies in hertz and the nonsingular
 integration variable
@@ -92,10 +92,14 @@ Kieffer evaluation at every temperature and volume, while the original Gamma
 frequency array remains unchanged.
 
 Negative tests cover missing or non-Gamma coordinates, non-identity phonon
-supercells, incomplete or mismatched cutoff volume sets, and attempted use of
-the frequency-interpolation scheme.  A public API and HDF5 round-trip test
-confirms that the sampled acoustic component and its provenance survive the
-complete QHA lifecycle.
+supercells, and incomplete or mismatched cutoff volume sets.  Frequency-scheme
+tests fit all three cutoffs against volume, compare their independently
+evaluated thermodynamic contribution at arbitrary volumes, and verify that the
+same acoustic surface affects both minimization and final equilibrium
+properties.  Mode-Gruneisen analysis is rejected until the acoustic branches
+can be included in its heat-capacity-weighted average.  A public API and HDF5
+round-trip test confirms that the sampled acoustic component and its provenance
+survive the complete QHA lifecycle.
 
 Historical entropy defect
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,6 +186,18 @@ volume.  A raw or unknown tensor therefore fails without producing a partial
 cutoff series.  An isotropic two-volume test independently verifies the
 expected density dependence :math:`u\propto\rho^{-1/2}` and the combined cutoff
 scaling :math:`\nu_{\max}\propto uV^{-1/3}`.
+
+Hydrostatic correction of raw elastic states
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The raw-to-incremental path is tested separately from parsing and acoustics.
+Analytical component tests verify the normal, normal-coupling, and shear terms
+of ``C_raw - P * Delta`` with pressure positive in compression.  State and
+series tests require complete pressure provenance, preserve structural and
+energy metadata, and confirm that applying the operation to an incremental
+tensor is rejected.  The corrected synthetic series is then passed through the
+complete Christoffel averaging and Kieffer cutoff construction to verify that
+the result is immediately acoustic-ready.
 
 The comparison against output frozen from the historical implementation uses
 a cross-platform tolerance for adaptive quadrature.  This tolerance is not

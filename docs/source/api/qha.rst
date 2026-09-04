@@ -109,9 +109,10 @@ mode-continuity diagnostics; for native QHA sources it preserves source-managed
 continuity provenance.  See :doc:`../workflows/phonon_input_generation`.
 
 The ``kieffer_cutoffs`` argument accepts one direct cutoff state for every
-sampled primitive-cell volume.  This stage supports ``Options(scheme="td")``;
-``scheme="freq"`` is rejected until cutoff-frequency evaluation at arbitrary
-equilibrium volumes is available.
+sampled primitive-cell volume.  Both QHA schemes are supported.  The frequency
+scheme fits the cutoff-volume relations and evaluates them during minimization
+and at the final equilibrium volumes; mode-Gruneisen analysis remains disabled
+for Kieffer-enriched runs until its acoustic weighting is implemented.
 
 .. autofunction:: quantas.api.qha.create_input
 

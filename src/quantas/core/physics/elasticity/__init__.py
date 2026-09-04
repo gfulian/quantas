@@ -45,6 +45,11 @@ from .quasistatic import (
     eulerian_finite_strain,
     wallace_hydrostatic_delta_voigt,
 )
+from .prestress import (
+    correct_hydrostatic_elastic_series,
+    correct_hydrostatic_elastic_state,
+    hydrostatic_wallace_stiffness,
+)
 from .sampling import (
     SUPPORTED_DIRECTIONAL_PROPERTIES,
     ElasticDirectionalField,
@@ -124,6 +129,8 @@ __all__ = [
     "check_positive_definiteness",
     "evaluate_stability_field",
     "compute_elastic_averages",
+    "correct_hydrostatic_elastic_series",
+    "correct_hydrostatic_elastic_state",
     "cold_finite_strain_component",
     "cold_finite_strain_component_jacobian",
     "cold_finite_strain_stiffness",
@@ -137,6 +144,7 @@ __all__ = [
     "sample_elastic_directional_field",
     "exact_transverse_extrema",
     "invert_stiffness_matrix",
+    "hydrostatic_wallace_stiffness",
     "is_elastic_symmetry",
     "linear_compressibility",
     "poisson_ratio",

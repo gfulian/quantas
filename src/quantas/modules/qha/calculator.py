@@ -49,7 +49,7 @@ class QHACalculator(BasicCalculator):
         Options controlling the calculation. If ``None``, default QHA options
         are used.
     kieffer_cutoffs : KiefferVolumeSeries or None, optional
-        Direct acoustic cutoff series for ``scheme="td"``.
+        Direct acoustic cutoff series for Kieffer-enriched QHA.
     observer : Observer or None, optional
         Observer receiving workflow events. If ``None``, a null observer is
         used by the base calculator.
@@ -111,10 +111,13 @@ class QHACalculator(BasicCalculator):
         self.qha_input.validate_shapes()
         self.qha_options.validate()
         if self.kieffer_cutoffs is not None:
-            if self.qha_options.scheme != "td":
+            if self.qha_options.scheme == "freq" and (
+                self.qha_options.calculate_mode_gruneisen
+                or self.qha_options.thermal_expansion_method == "mode_gruneisen"
+            ):
                 raise ValueError(
-                    "Kieffer QHA currently requires scheme='td'; frequency-scheme "
-                    "cutoff evaluation at equilibrium volume is not yet available"
+                    "Kieffer frequency QHA does not yet support mode-Gruneisen "
+                    "analysis; use mixed_derivative or numerical thermal expansion"
                 )
             validate_kieffer_qha_applicability(
                 self.qha_input,
@@ -248,8 +251,13 @@ class QHACalculator(BasicCalculator):
                 frequency_evaluator = FrequencyThermodynamicEvaluator(
                     self.qha_input,
                     self.qha_options,
+                    kieffer_cutoffs=self.kieffer_cutoffs,
                 )
         except ValueError as exc:
+            if self.kieffer_cutoffs is not None:
+                raise ValueError(
+                    f"Kieffer thermodynamics could not be evaluated ({exc})"
+                ) from exc
             self.add_warning(
                 "harmonic thermodynamics could not be evaluated; "
                 f"falling back to static-energy minimization ({exc})"

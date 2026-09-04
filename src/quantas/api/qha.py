@@ -268,8 +268,7 @@ def run(
     options : Options or None, optional
         Thermodynamic domain, fitting, minimization, and unit controls.
     kieffer_cutoffs : KiefferVolumeSeries or None, optional
-        Direct multi-volume acoustic cutoffs. Currently supported with
-        ``Options(scheme="td")``.
+        Direct multi-volume acoustic cutoffs for either QHA scheme.
     observer : Observer or None, optional
         Frontend-neutral event observer.
 

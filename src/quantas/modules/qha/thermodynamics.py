@@ -53,6 +53,7 @@ from quantas.models.thermodynamics import HarmonicThermodynamicResult
 from quantas.models.volume_matching import VolumeMatch
 from quantas.modules.qha.analysis import pressure_energy_density
 from quantas.modules.qha.core.interpolation import (
+    PolynomialSeriesFit,
     fit_polynomial_series,
 )
 from quantas.modules.qha.core.gruneisen import thermal_gruneisen_from_modes
@@ -326,6 +327,8 @@ class FrequencyThermodynamicEvaluator:
         q-point weights.
     options : QHAOptions
         QHA options defining polynomial degrees and unit conventions.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct acoustic cutoff states fitted against sampled volume.
 
     Raises
     ------
@@ -333,7 +336,12 @@ class FrequencyThermodynamicEvaluator:
         If required input data are missing or a polynomial fit fails.
     """
 
-    def __init__(self, input_data: QHAInput, options: QHAOptions) -> None:
+    def __init__(
+        self,
+        input_data: QHAInput,
+        options: QHAOptions,
+        kieffer_cutoffs: KiefferVolumeSeries | None = None,
+    ) -> None:
         """Fit frequency and static-energy models over sampled volumes.
 
         Parameters
@@ -342,6 +350,8 @@ class FrequencyThermodynamicEvaluator:
             Volume-dependent phonon and static-energy input data.
         options : QHAOptions
             Polynomial degrees and unit conventions used by the evaluator.
+        kieffer_cutoffs : KiefferVolumeSeries or None, optional
+            Direct acoustic cutoff states fitted against sampled volume.
 
         Raises
         ------
@@ -396,6 +406,36 @@ class FrequencyThermodynamicEvaluator:
             -1,
             0,
         )
+        self.kieffer_cutoffs = kieffer_cutoffs
+        self.kieffer_cutoff_fit: PolynomialSeriesFit | None = None
+        self._kieffer_cutoff_coefficients: np.ndarray | None = None
+        if kieffer_cutoffs is not None:
+            matches = validate_kieffer_qha_applicability(
+                input_data,
+                kieffer_cutoffs,
+            )
+            matched_cutoffs, _ = matched_kieffer_arrays(kieffer_cutoffs, matches)
+            self.kieffer_cutoff_fit = fit_polynomial_series(
+                self.sampled_volume,
+                matched_cutoffs,
+                self.frequency_degree,
+                axis=-1,
+                metadata={"quantity": "kieffer_cutoff_frequency_hz"},
+            )
+            if (
+                not self.kieffer_cutoff_fit.success
+                or self.kieffer_cutoff_fit.coefficients is None
+            ):
+                detail = (
+                    "; ".join(self.kieffer_cutoff_fit.warnings)
+                    or "Kieffer cutoff fit failed"
+                )
+                raise ValueError(detail)
+            self._kieffer_cutoff_coefficients = np.moveaxis(
+                self.kieffer_cutoff_fit.coefficients,
+                -1,
+                0,
+            )
 
     def frequencies_at(self, volume: np.ndarray | float) -> np.ndarray:
         """Return mode-resolved frequencies at selected volumes.
@@ -469,6 +509,45 @@ class FrequencyThermodynamicEvaluator:
             gamma,
             np.nan,
         )
+
+    def kieffer_cutoffs_at(
+        self,
+        volume: np.ndarray | float,
+    ) -> np.ndarray:
+        """Return the three fitted Kieffer cutoffs at selected volumes.
+
+        Parameters
+        ----------
+        volume : ndarray or float
+            Volumes at which cutoff frequencies are evaluated.
+
+        Returns
+        -------
+        ndarray
+            Ordinary cutoff frequencies in hertz, with the acoustic branch
+            axis first.
+
+        Raises
+        ------
+        ValueError
+            If no Kieffer series was supplied or the fit produces a non-finite
+            or non-positive cutoff.
+        """
+        if self._kieffer_cutoff_coefficients is None:
+            raise ValueError("Kieffer cutoff evaluation is not configured")
+        values = np.asarray(
+            np.polynomial.polynomial.polyval(
+                np.asarray(volume, dtype=np.float64),
+                self._kieffer_cutoff_coefficients,
+            ),
+            dtype=np.float64,
+        )
+        if not np.all(np.isfinite(values)) or np.any(values <= 0.0):
+            raise ValueError(
+                "Kieffer cutoff interpolation produced non-positive or "
+                "non-finite values"
+            )
+        return values
 
     def static_energy_at(self, volume: np.ndarray | float) -> np.ndarray:
         """Return fitted static energies at selected volumes.
@@ -574,6 +653,53 @@ class FrequencyThermodynamicEvaluator:
             ),
             dtype=np.float64,
         )
+        if self._kieffer_cutoff_coefficients is not None:
+            cutoffs = self.kieffer_cutoffs_at(volume_array)
+            kieffer_uzp = np.asarray(
+                convert_energy(
+                    kieffer_zero_point_energy(local_temperature, cutoffs)[0],
+                    "kjmol",
+                    self.options.energy_unit,
+                ),
+                dtype=np.float64,
+            )
+            kieffer_uth = np.asarray(
+                convert_energy(
+                    kieffer_thermal_energy(local_temperature, cutoffs)[0],
+                    "kjmol",
+                    self.options.energy_unit,
+                ),
+                dtype=np.float64,
+            )
+            kieffer_entropy_values = np.asarray(
+                convert_energy_per_temperature(
+                    kieffer_entropy(local_temperature, cutoffs)[0],
+                    "J mol^-1 K^-1",
+                    f"{self.options.energy_unit} cell^-1 K^-1",
+                ),
+                dtype=np.float64,
+            )
+            kieffer_cv = np.asarray(
+                convert_energy_per_temperature(
+                    kieffer_isochoric_heat_capacity(local_temperature, cutoffs)[0],
+                    "J mol^-1 K^-1",
+                    f"{self.options.energy_unit} cell^-1 K^-1",
+                ),
+                dtype=np.float64,
+            )
+            kieffer_fvib = np.asarray(
+                convert_energy(
+                    kieffer_vibrational_free_energy(local_temperature, cutoffs)[0],
+                    "kjmol",
+                    self.options.energy_unit,
+                ),
+                dtype=np.float64,
+            )
+            uzp += kieffer_uzp
+            uth += kieffer_uth
+            entropy_values += kieffer_entropy_values
+            cv += kieffer_cv
+            fvib += kieffer_fvib
         return {
             "zero_point_energy": uzp,
             "thermal_energy": uth,
@@ -688,6 +814,16 @@ def calculate_frequency_thermodynamics_at_equilibrium(
             "frequency_fit_status": prepared.frequency_fit.status.value,
             "frequency_fit_failures": len(prepared.frequency_fit.failed_indices),
             "backend": prepared.backend_name,
+            "kieffer_cutoff_degree": (
+                None
+                if prepared.kieffer_cutoff_fit is None
+                else prepared.frequency_degree
+            ),
+            "kieffer_cutoff_fit_status": (
+                None
+                if prepared.kieffer_cutoff_fit is None
+                else prepared.kieffer_cutoff_fit.status.value
+            ),
         }
     )
 
