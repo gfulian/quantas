@@ -148,6 +148,54 @@ class KiefferVolumeSeries:
         )
 
 
+@dataclass(slots=True)
+class KiefferThermodynamicContribution:
+    """Separately traceable acoustic contribution on a sampled volume grid."""
+
+    cutoff_frequencies_hz: NDArray[np.float64]
+    effective_velocities_km_s: NDArray[np.float64]
+    zero_point_energy: NDArray[np.float64]
+    thermal_energy: NDArray[np.float64]
+    entropy: NDArray[np.float64]
+    vibrational_free_energy: NDArray[np.float64]
+    isochoric_heat_capacity: NDArray[np.float64]
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Normalize arrays and validate component dimensions."""
+        self.cutoff_frequencies_hz = _positive_matrix(
+            self.cutoff_frequencies_hz, "cutoff_frequencies_hz"
+        )
+        self.effective_velocities_km_s = _positive_matrix(
+            self.effective_velocities_km_s, "effective_velocities_km_s"
+        )
+        if self.cutoff_frequencies_hz.shape != self.effective_velocities_km_s.shape:
+            raise ValueError(
+                "Kieffer cutoff and velocity arrays must have equal shapes"
+            )
+        nvol = self.cutoff_frequencies_hz.shape[1]
+        thermal_shape: tuple[int, ...] | None = None
+        for name in (
+            "zero_point_energy",
+            "thermal_energy",
+            "entropy",
+            "vibrational_free_energy",
+            "isochoric_heat_capacity",
+        ):
+            value = np.asarray(getattr(self, name), dtype=np.float64)
+            if value.ndim != 2 or value.shape[1] != nvol:
+                raise ValueError(f"{name} must have shape (temperature, {nvol})")
+            if not np.all(np.isfinite(value)):
+                raise ValueError(f"{name} must contain finite values")
+            if name != "zero_point_energy":
+                if thermal_shape is None:
+                    thermal_shape = value.shape
+                elif value.shape != thermal_shape:
+                    raise ValueError("Kieffer thermal arrays must have equal shapes")
+            setattr(self, name, value.copy())
+        self.metadata = dict(self.metadata)
+
+
 def _positive_triplet(values: ArrayLike, name: str) -> NDArray[np.float64]:
     """Return a copied read-only positive floating-point triplet."""
     array = np.asarray(values, dtype=np.float64)
@@ -158,4 +206,19 @@ def _positive_triplet(values: ArrayLike, name: str) -> NDArray[np.float64]:
     return result
 
 
-__all__ = ["CutoffVolumeSource", "KiefferCutoffState", "KiefferVolumeSeries"]
+def _positive_matrix(values: ArrayLike, name: str) -> NDArray[np.float64]:
+    """Return a copied positive ``(3, volumes)`` floating-point array."""
+    array = np.asarray(values, dtype=np.float64)
+    if array.ndim != 2 or array.shape[0] != 3 or array.shape[1] == 0:
+        raise ValueError(f"{name} must have shape (3, volumes)")
+    if not np.all(np.isfinite(array)) or np.any(array <= 0.0):
+        raise ValueError(f"{name} must contain finite positive values")
+    return array.copy()
+
+
+__all__ = [
+    "CutoffVolumeSource",
+    "KiefferCutoffState",
+    "KiefferThermodynamicContribution",
+    "KiefferVolumeSeries",
+]

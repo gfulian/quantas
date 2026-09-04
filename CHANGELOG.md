@@ -27,6 +27,17 @@ public contract; they must still be documented and validated.
 - Added direct composition from an incremental elastic volume series to
   volume-resolved Kieffer effective velocities and cutoffs, including per-state
   quadrature and pressure provenance and workflow-level progress callbacks.
+- Added the first HA integration for Kieffer cutoffs through the Python API.
+  The integration is restricted to a single primitive Gamma point with an
+  identity phonon supercell, requires a direct volume match, preserves the
+  acoustic component separately in HDF5, and adds its three branches without
+  removing or replacing any calculated Gamma mode.
+- Added multi-volume Kieffer enrichment to the thermodynamic-property QHA
+  scheme.  Direct cutoff states are matched explicitly to primitive Gamma-only
+  input volumes, added before free-energy minimization, retained as a separate
+  sampled contribution, and preserved in native QHA HDF5 results.  The
+  frequency-interpolation scheme is rejected until its cutoff-volume evaluator
+  is implemented.
 - Added backend-neutral computational records for external-code run
   termination, energies, SCF convergence, and geometry-optimization history.
 - Added a shared CRYSTAL output document/parser foundation with centralized

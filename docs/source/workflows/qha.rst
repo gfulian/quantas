@@ -106,6 +106,29 @@ The frequency scheme depends on the public ``mode_continuity`` status:
 The thermodynamic ``td`` scheme does not require mode-by-mode continuity
 because it interpolates harmonic quantities after the mode summation.
 
+Kieffer acoustic enrichment
+---------------------------
+
+The Python API can add a volume-resolved ``KiefferVolumeSeries`` to primitive,
+Gamma-only QHA data.  Every sampled QHA volume must match exactly one direct
+cutoff state under the documented volume-tolerance policy.  File order is not
+used as a scientific association: Quantas records and applies an explicit
+one-to-one volume mapping.
+
+The three Kieffer branches are added to the calculated Gamma phonons.  No
+Gamma mode is removed or replaced.  The acoustic contribution is retained
+separately on the sampled temperature-volume grid and persisted in the native
+HDF5 result together with cutoff frequencies, effective velocities, and
+matching diagnostics.
+
+This integration currently applies to ``scheme=td``.  In that scheme the
+combined harmonic-plus-acoustic properties are fitted and interpolated through
+the existing thermodynamic QHA path, so the Kieffer contribution enters both
+the free-energy minimization and the final pressure-temperature properties.
+``scheme=freq`` is rejected explicitly: supporting it requires a documented
+cutoff-volume evaluator used consistently by local minimization and by every
+equilibrium thermodynamic property.
+
 .. warning::
 
    Do not change ``unknown`` or ``unreliable`` to ``assumed`` merely to make a

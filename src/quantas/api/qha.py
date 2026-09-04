@@ -9,6 +9,7 @@ from typing import Literal
 
 from quantas.core.events import Observer
 from quantas.core.physics.eos import available_eos_tags
+from quantas.models.kieffer import KiefferVolumeSeries
 from quantas.modules.qha.formatting import QHATableFormat as TableFormat
 from quantas.modules.qha.io.export import QHATableExport
 from quantas.modules.qha.api import (
@@ -255,6 +256,7 @@ def build_inspection_plots(
 def run(
     input_data: Input | PhononInputData | str | Path,
     options: Options | None = None,
+    kieffer_cutoffs: KiefferVolumeSeries | None = None,
     observer: Observer | None = None,
 ) -> ResultData:
     """Run a quasi-harmonic thermodynamic workflow.
@@ -265,6 +267,9 @@ def run(
         QHA input contract, neutral phonon data, or YAML path.
     options : Options or None, optional
         Thermodynamic domain, fitting, minimization, and unit controls.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct multi-volume acoustic cutoffs. Currently supported with
+        ``Options(scheme="td")``.
     observer : Observer or None, optional
         Frontend-neutral event observer.
 
@@ -278,7 +283,12 @@ def run(
     ValueError
         If the input, fits, or requested thermodynamic domain are invalid.
     """
-    return _run(input_data, options=options, observer=observer)
+    return _run(
+        input_data,
+        options=options,
+        kieffer_cutoffs=kieffer_cutoffs,
+        observer=observer,
+    )
 
 
 def get_result(result: ResultData) -> Result:
@@ -503,6 +513,7 @@ __all__ = [
     "CurveAxis",
     "FitFailurePolicy",
     "Input",
+    "KiefferVolumeSeries",
     "Minimization",
     "ModeContinuity",
     "Options",

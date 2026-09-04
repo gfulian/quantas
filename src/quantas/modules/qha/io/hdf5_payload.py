@@ -25,6 +25,7 @@ from quantas.io.hdf5 import (
     write_value,
 )
 from quantas.models import InputData
+from quantas.models.kieffer import KiefferThermodynamicContribution
 from quantas.modules.qha.models import QHAFailedPoint, QHAFitRecord, QHAResult
 
 
@@ -125,6 +126,8 @@ def write_qha_payload(h5: h5py.File, result: QHAResult) -> h5py.Group:
             write_array_dataset(group, attribute, value)
     if result.valid_mask is not None:
         write_array_dataset(group, "valid_mask", result.valid_mask)
+    if result.kieffer_sampled_contribution is not None:
+        _write_kieffer_contribution(group, result.kieffer_sampled_contribution)
 
     uncertainties = group.create_group("uncertainties")
     for key, value in result.uncertainties.items():
@@ -214,12 +217,65 @@ def read_qha_payload(group: h5py.Group) -> QHAResult:
         gruneisen=arrays.get("gruneisen"),
         mode_weighted_gruneisen=arrays.get("mode_weighted_gruneisen"),
         mode_gruneisen=arrays.get("mode_gruneisen"),
+        kieffer_sampled_contribution=_read_kieffer_contribution(group),
         uncertainties=uncertainties,
         fit_records=fit_records,
         failed_points=failed_points,
         valid_mask=arrays.get("valid_mask"),
         completed=bool(decode_scalar(group.attrs.get("completed", True))),
         metadata=metadata,
+    )
+
+
+def _write_kieffer_contribution(
+    group: h5py.Group,
+    contribution: KiefferThermodynamicContribution,
+) -> None:
+    """Write the Kieffer component on the sampled QHA volume grid."""
+    acoustic = group.create_group("kieffer_sampled_contribution")
+    for name in (
+        "cutoff_frequencies_hz",
+        "effective_velocities_km_s",
+        "zero_point_energy",
+        "thermal_energy",
+        "entropy",
+        "vibrational_free_energy",
+        "isochoric_heat_capacity",
+    ):
+        write_array_dataset(acoustic, name, getattr(contribution, name))
+    metadata = acoustic.create_group("metadata")
+    write_mapping(metadata, contribution.metadata)
+
+
+def _read_kieffer_contribution(
+    group: h5py.Group,
+) -> KiefferThermodynamicContribution | None:
+    """Read an optional sampled-volume Kieffer component."""
+    acoustic = group.get("kieffer_sampled_contribution")
+    if not isinstance(acoustic, h5py.Group):
+        return None
+    names = (
+        "cutoff_frequencies_hz",
+        "effective_velocities_km_s",
+        "zero_point_energy",
+        "thermal_energy",
+        "entropy",
+        "vibrational_free_energy",
+        "isochoric_heat_capacity",
+    )
+    values = {name: np.asarray(read_node(acoustic[name])) for name in names}
+    metadata = acoustic.get("metadata")
+    return KiefferThermodynamicContribution(
+        cutoff_frequencies_hz=values["cutoff_frequencies_hz"],
+        effective_velocities_km_s=values["effective_velocities_km_s"],
+        zero_point_energy=values["zero_point_energy"],
+        thermal_energy=values["thermal_energy"],
+        entropy=values["entropy"],
+        vibrational_free_energy=values["vibrational_free_energy"],
+        isochoric_heat_capacity=values["isochoric_heat_capacity"],
+        metadata=(
+            read_group_mapping(metadata) if isinstance(metadata, h5py.Group) else {}
+        ),
     )
 
 

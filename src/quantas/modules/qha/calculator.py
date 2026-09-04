@@ -17,7 +17,9 @@ from typing import Any
 
 from quantas.core.events import EventLevel, Observer
 from quantas.models import BasicCalculator, InputData, ResultData, ResultMetadata
+from quantas.models.kieffer import KiefferVolumeSeries
 from quantas.modules.qha.inspect import pressure_volume_preview
+from quantas.modules.qha.kieffer import validate_kieffer_qha_applicability
 from quantas.modules.qha.models import QHAInput, QHAOptions, QHAResult
 from quantas.modules.qha.structural import calculate_structural_thermal_expansion
 from quantas.modules.qha.thermodynamics import (
@@ -46,6 +48,8 @@ class QHACalculator(BasicCalculator):
     options : QHAOptions or None, optional
         Options controlling the calculation. If ``None``, default QHA options
         are used.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct acoustic cutoff series for ``scheme="td"``.
     observer : Observer or None, optional
         Observer receiving workflow events. If ``None``, a null observer is
         used by the base calculator.
@@ -58,11 +62,13 @@ class QHACalculator(BasicCalculator):
         self,
         qha_input: QHAInput,
         options: QHAOptions | None = None,
+        kieffer_cutoffs: KiefferVolumeSeries | None = None,
         observer: Observer | None = None,
     ) -> None:
         """Initialize the QHA calculator."""
         self.qha_input = qha_input
         self.qha_options = options if options is not None else QHAOptions()
+        self.kieffer_cutoffs = kieffer_cutoffs
 
         input_data = InputData(
             source=qha_input.source,
@@ -104,6 +110,16 @@ class QHACalculator(BasicCalculator):
         self.emit("Preparing QHA calculation", level=EventLevel.DEBUG)
         self.qha_input.validate_shapes()
         self.qha_options.validate()
+        if self.kieffer_cutoffs is not None:
+            if self.qha_options.scheme != "td":
+                raise ValueError(
+                    "Kieffer QHA currently requires scheme='td'; frequency-scheme "
+                    "cutoff evaluation at equilibrium volume is not yet available"
+                )
+            validate_kieffer_qha_applicability(
+                self.qha_input,
+                self.kieffer_cutoffs,
+            )
 
         if self.qha_options.requires_mode_continuity():
             status = self.qha_input.mode_continuity_status()
@@ -225,6 +241,7 @@ class QHACalculator(BasicCalculator):
             sampled_thermodynamics = calculate_sampled_thermodynamics(
                 self.qha_input,
                 self.qha_options,
+                kieffer_cutoffs=self.kieffer_cutoffs,
             )
             free_energy = free_energy_grid(sampled_thermodynamics)
             if self.qha_options.scheme == "freq":
@@ -275,6 +292,14 @@ class QHACalculator(BasicCalculator):
             local_free_energy_evaluator=local_free_energy_evaluator,
             callback=self._workflow_event,
         )
+        if sampled_thermodynamics is not None:
+            qha_result.kieffer_sampled_contribution = (
+                sampled_thermodynamics.kieffer_contribution
+            )
+            if sampled_thermodynamics.kieffer_contribution is not None:
+                qha_result.metadata["kieffer"] = dict(
+                    sampled_thermodynamics.kieffer_contribution.metadata
+                )
 
         if (
             sampled_thermodynamics is not None

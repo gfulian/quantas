@@ -19,6 +19,20 @@ This distinction is operationally important:
 The HA workflow is therefore both a complete calculation in its own right and
 the first numerical stage of a QHA calculation.
 
+Optional Kieffer acoustic contribution
+--------------------------------------
+
+The Python API accepts one direct ``KiefferVolumeSeries`` for a single-volume,
+primitive Gamma calculation.  The model supplies three continuous acoustic
+branches in addition to the phonons calculated at Gamma.  It does not replace
+the three translational frequencies and does not modify the input frequency
+array.
+
+This stage deliberately exposes the already validated cutoff contract rather
+than reading elastic files during HA execution.  Generation and persistence of
+cutoffs in enriched YAML input, followed by CLI activation, belong to the
+input-enrichment stage.
+
 Computational pipeline
 ----------------------
 

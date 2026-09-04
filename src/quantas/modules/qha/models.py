@@ -16,7 +16,9 @@ from typing import Any, Literal, Mapping
 import numpy as np
 
 from quantas.core.math.fitting import FitResult
+from quantas.models.kieffer import KiefferThermodynamicContribution
 from quantas.models.phonons import PhononInputData
+from quantas.models.thermodynamics import HarmonicThermodynamicResult
 
 QHAScheme = Literal["freq", "td"]
 QHAMinimization = Literal["poly", "eos"]
@@ -532,6 +534,13 @@ class QHAFailedPoint:
 
 
 @dataclass(slots=True)
+class QHASampledThermodynamicResult(HarmonicThermodynamicResult):
+    """Harmonic sampled-volume surface with an optional acoustic component."""
+
+    kieffer_contribution: KiefferThermodynamicContribution | None = None
+
+
+@dataclass(slots=True)
 class QHAResult:
     """Results of a quasi-harmonic approximation calculation.
 
@@ -616,6 +625,9 @@ class QHAResult:
         temperature grid.
     mode_gruneisen : ndarray or None, optional
         Mode-resolved Grüneisen parameters on the sampled volume grid.
+    kieffer_sampled_contribution : KiefferThermodynamicContribution or None, optional
+        Separately retained Kieffer acoustic properties on the sampled
+        temperature-volume grid.
     uncertainties : dict, optional
         Property uncertainties keyed by result name. Suggested keys are
         ``sigma_VT``, ``sigma_KT``, and analogous names for other properties.
@@ -666,6 +678,7 @@ class QHAResult:
     gruneisen: np.ndarray | None = None
     mode_weighted_gruneisen: np.ndarray | None = None
     mode_gruneisen: np.ndarray | None = None
+    kieffer_sampled_contribution: KiefferThermodynamicContribution | None = None
 
     uncertainties: dict[str, np.ndarray] = field(default_factory=dict)
     fit_records: list[QHAFitRecord] = field(default_factory=list)
@@ -851,6 +864,7 @@ class QHAResult:
             gruneisen=filter_value(self.gruneisen),
             mode_weighted_gruneisen=filter_value(self.mode_weighted_gruneisen),
             mode_gruneisen=self.mode_gruneisen,
+            kieffer_sampled_contribution=self.kieffer_sampled_contribution,
             uncertainties=uncertainties,
             fit_records=list(self.fit_records),
             failed_points=list(self.failed_points),

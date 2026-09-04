@@ -16,7 +16,12 @@ from .elastic_states import (
     PressureSource,
     PrestressProvenance,
 )
-from .kieffer import CutoffVolumeSource, KiefferCutoffState, KiefferVolumeSeries
+from .kieffer import (
+    CutoffVolumeSource,
+    KiefferCutoffState,
+    KiefferThermodynamicContribution,
+    KiefferVolumeSeries,
+)
 from .module import ModuleContract
 from .phonons import PhononInputData, PhononModeData
 from .plot import (
@@ -93,6 +98,7 @@ __all__ = [
     "SymmetryMetadata",
     "InputData",
     "KiefferCutoffState",
+    "KiefferThermodynamicContribution",
     "KiefferVolumeSeries",
     "ModuleContract",
     "PhononInputData",

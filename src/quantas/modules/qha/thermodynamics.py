@@ -29,6 +29,11 @@ from quantas.core.physics.thermodynamics import (
     thermal_energy,
     vibrational_free_energy,
     zero_point_energy,
+    kieffer_entropy,
+    kieffer_isochoric_heat_capacity,
+    kieffer_thermal_energy,
+    kieffer_vibrational_free_energy,
+    kieffer_zero_point_energy,
 )
 from quantas.core.physics.units import (
     N,
@@ -40,13 +45,27 @@ from quantas.core.physics.units import (
     convert_volume,
     energy_to_pressure,
 )
+from quantas.models.kieffer import (
+    KiefferThermodynamicContribution,
+    KiefferVolumeSeries,
+)
 from quantas.models.thermodynamics import HarmonicThermodynamicResult
+from quantas.models.volume_matching import VolumeMatch
 from quantas.modules.qha.analysis import pressure_energy_density
 from quantas.modules.qha.core.interpolation import (
     fit_polynomial_series,
 )
 from quantas.modules.qha.core.gruneisen import thermal_gruneisen_from_modes
-from quantas.modules.qha.models import QHAInput, QHAOptions, QHAResult
+from quantas.modules.qha.kieffer import (
+    matched_kieffer_arrays,
+    validate_kieffer_qha_applicability,
+)
+from quantas.modules.qha.models import (
+    QHAInput,
+    QHAOptions,
+    QHAResult,
+    QHASampledThermodynamicResult,
+)
 
 
 _PROPERTY_MAP: tuple[tuple[str, str], ...] = (
@@ -71,7 +90,8 @@ THERMAL_EXPANSION_SOURCE_CODES: dict[str, int] = {
 def calculate_sampled_thermodynamics(
     input_data: QHAInput,
     options: QHAOptions,
-) -> HarmonicThermodynamicResult:
+    kieffer_cutoffs: KiefferVolumeSeries | None = None,
+) -> QHASampledThermodynamicResult:
     """Calculate harmonic thermodynamic properties at sampled volumes.
 
     Parameters
@@ -81,10 +101,12 @@ def calculate_sampled_thermodynamics(
         weights on the sampled volume grid.
     options : QHAOptions
         QHA options defining temperature and unit conventions.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct cutoff states matched explicitly to all sampled volumes.
 
     Returns
     -------
-    HarmonicThermodynamicResult
+    QHASampledThermodynamicResult
         Harmonic properties sampled on the temperature-volume grid.
 
     Raises
@@ -108,6 +130,20 @@ def calculate_sampled_thermodynamics(
     )
     weights = input_data.normalized_weights()
     static_energy = np.asarray(input_data.energy, dtype=np.float64)
+    kieffer_contribution = None
+    if kieffer_cutoffs is not None:
+        matches = validate_kieffer_qha_applicability(input_data, kieffer_cutoffs)
+        matched_cutoffs, matched_velocities = matched_kieffer_arrays(
+            kieffer_cutoffs,
+            matches,
+        )
+        kieffer_contribution = _sampled_kieffer_contribution(
+            temperature_k,
+            matched_cutoffs,
+            matched_velocities,
+            options,
+            matches,
+        )
 
     uzp = np.asarray(
         convert_energy(
@@ -153,7 +189,13 @@ def calculate_sampled_thermodynamics(
         ),
         dtype=np.float64,
     )
-    result = HarmonicThermodynamicResult(
+    if kieffer_contribution is not None:
+        uzp += kieffer_contribution.zero_point_energy
+        uth += kieffer_contribution.thermal_energy
+        entropy_values += kieffer_contribution.entropy
+        cv += kieffer_contribution.isochoric_heat_capacity
+        fvib += kieffer_contribution.vibrational_free_energy
+    result = QHASampledThermodynamicResult(
         jobname=input_data.jobname,
         temperature=temperature,
         volume=np.asarray(input_data.volume, dtype=np.float64).copy(),
@@ -165,6 +207,7 @@ def calculate_sampled_thermodynamics(
         vibrational_free_energy=fvib,
         free_energy=free_energy(static_energy, fvib),
         isochoric_heat_capacity=cv,
+        kieffer_contribution=kieffer_contribution,
         metadata={
             "module": "qha",
             "method": "sampled_harmonic_thermodynamics",
@@ -179,6 +222,63 @@ def calculate_sampled_thermodynamics(
         },
     )
     return result
+
+
+def _sampled_kieffer_contribution(
+    temperature_k: np.ndarray,
+    cutoffs: np.ndarray,
+    velocities: np.ndarray,
+    options: QHAOptions,
+    matches: tuple[VolumeMatch, ...],
+) -> KiefferThermodynamicContribution:
+    """Evaluate the acoustic contribution on the sampled QHA volume grid."""
+
+    def energy(values: np.ndarray) -> np.ndarray:
+        return np.asarray(
+            convert_energy(values, "kjmol", options.energy_unit),
+            dtype=np.float64,
+        )
+
+    def derivative(values: np.ndarray) -> np.ndarray:
+        return np.asarray(
+            convert_energy_per_temperature(
+                values,
+                "J mol^-1 K^-1",
+                f"{options.energy_unit} cell^-1 K^-1",
+            ),
+            dtype=np.float64,
+        )
+
+    return KiefferThermodynamicContribution(
+        cutoff_frequencies_hz=cutoffs,
+        effective_velocities_km_s=velocities,
+        zero_point_energy=energy(
+            kieffer_zero_point_energy(np.zeros(1, dtype=np.float64), cutoffs)
+        ),
+        thermal_energy=energy(kieffer_thermal_energy(temperature_k, cutoffs)),
+        entropy=derivative(kieffer_entropy(temperature_k, cutoffs)),
+        vibrational_free_energy=energy(
+            kieffer_vibrational_free_energy(temperature_k, cutoffs)
+        ),
+        isochoric_heat_capacity=derivative(
+            kieffer_isochoric_heat_capacity(temperature_k, cutoffs)
+        ),
+        metadata={
+            "method": "kieffer-sine-wave",
+            "composition": "additional-acoustic-branches",
+            "volume_matches": [
+                {
+                    "qha_index": match.target_index,
+                    "cutoff_index": match.source_index,
+                    "qha_volume": match.target_volume,
+                    "cutoff_volume": match.source_volume,
+                    "absolute_difference": match.absolute_difference,
+                    "relative_difference": match.relative_difference,
+                }
+                for match in matches
+            ],
+        },
+    )
 
 
 def free_energy_grid(

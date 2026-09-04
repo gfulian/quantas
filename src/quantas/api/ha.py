@@ -24,6 +24,7 @@ from quantas.modules.ha.models import (
     HAOptions as Options,
     HAResult as Result,
 )
+from quantas.models.kieffer import KiefferVolumeSeries
 from quantas.modules.ha.io.export import HATableExport
 from quantas.modules.ha.plot import HACurveAxis as CurveAxis
 from quantas.modules.ha.plot import HAPlotOptions as PlotOptions
@@ -146,6 +147,7 @@ def normalize_input(source: Input | PhononInputData | str | Path) -> Input:
 def run(
     input_data: Input | PhononInputData | str | Path,
     options: Options | None = None,
+    kieffer_cutoffs: KiefferVolumeSeries | None = None,
     observer: Observer | None = None,
 ) -> ResultData:
     """Run a harmonic thermodynamic workflow.
@@ -156,6 +158,8 @@ def run(
         Harmonic input contract, neutral phonon data, or YAML path.
     options : Options or None, optional
         Temperature grid, units, and scientific calculation controls.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct cutoff state used to add the three Kieffer acoustic branches.
     observer : Observer or None, optional
         Frontend-neutral event observer.
 
@@ -169,7 +173,12 @@ def run(
     ValueError
         If the input or selected temperature domain is invalid.
     """
-    return _run(input_data, options=options, observer=observer)
+    return _run(
+        input_data,
+        options=options,
+        kieffer_cutoffs=kieffer_cutoffs,
+        observer=observer,
+    )
 
 
 def get_result(result: ResultData) -> Result:
@@ -374,6 +383,7 @@ def __dir__() -> list[str]:
 __all__ = [
     "CurveAxis",
     "Input",
+    "KiefferVolumeSeries",
     "Options",
     "PlotOptions",
     "PhononInterface",

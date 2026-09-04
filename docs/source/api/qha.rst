@@ -88,6 +88,9 @@ Passive contracts
    :members:
    :show-inheritance:
 
+.. autoclass:: quantas.api.qha.KiefferVolumeSeries
+   :members:
+
 .. autoclass:: quantas.api.qha.Preview
    :members:
    :show-inheritance:
@@ -104,6 +107,11 @@ Input, inspection, and calculation
 multi-volume outputs, the normalized YAML may contain Quantas eigenvector-based
 mode-continuity diagnostics; for native QHA sources it preserves source-managed
 continuity provenance.  See :doc:`../workflows/phonon_input_generation`.
+
+The ``kieffer_cutoffs`` argument accepts one direct cutoff state for every
+sampled primitive-cell volume.  This stage supports ``Options(scheme="td")``;
+``scheme="freq"`` is rejected until cutoff-frequency evaluation at arbitrary
+equilibrium volumes is available.
 
 .. autofunction:: quantas.api.qha.create_input
 

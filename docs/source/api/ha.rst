@@ -57,6 +57,9 @@ Passive contracts
    :members:
    :show-inheritance:
 
+.. autoclass:: quantas.api.ha.KiefferVolumeSeries
+   :members:
+
 Input preparation
 -----------------
 
@@ -77,6 +80,12 @@ The scientific generation procedure is documented in
 
 Calculation and typed results
 -----------------------------
+
+An explicit single-volume Kieffer cutoff series can be supplied through
+``kieffer_cutoffs``.  This API-stage integration requires primitive Gamma-only
+phonons and adds three acoustic branches without changing the stored Gamma
+frequencies.  Input-file enrichment and CLI activation are not part of this
+stage.
 
 .. autofunction:: quantas.api.ha.run
 

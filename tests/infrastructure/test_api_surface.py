@@ -152,6 +152,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
     "ha": {
         "CurveAxis",
         "Input",
+        "KiefferVolumeSeries",
         "Options",
         "PlotOptions",
         "PhononInterface",
@@ -228,6 +229,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "CurveAxis",
         "FitFailurePolicy",
         "Input",
+        "KiefferVolumeSeries",
         "Minimization",
         "ModeContinuity",
         "Options",

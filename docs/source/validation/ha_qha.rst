@@ -24,11 +24,10 @@ The authoritative implementation of input generation is described in
 Kieffer acoustic thermodynamics
 -------------------------------
 
-The Kieffer sine-wave model is currently validated as an isolated
-statistical-thermodynamics core.  It is not yet connected to HA/QHA input,
-calculators, or command-line options.  This separation ensures that the
-published equations are characterized before acoustic cutoff construction and
-workflow composition are introduced.
+The Kieffer sine-wave model is validated as a statistical-thermodynamics core
+and is connected to the single-volume HA Python API and the multi-volume
+thermodynamic-property QHA scheme.  YAML enrichment and command-line activation
+remain separate later steps.
 
 The validation uses ordinary cutoff frequencies in hertz and the nonsingular
 integration variable
@@ -53,6 +52,50 @@ It verifies the following properties:
   temperature;
 * multi-volume inputs preserve ``float64`` values and the ``(T,V)`` result
   shape.
+
+Single-volume HA composition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The first workflow integration accepts an explicit ``KiefferVolumeSeries``
+through ``quantas.api.ha.run(..., kieffer_cutoffs=...)``.  It requires exactly
+one direct cutoff state and validates all of the following before evaluating
+the acoustic thermodynamics:
+
+* one sampled volume and one q-point;
+* explicit Gamma coordinates, modulo reciprocal-lattice vectors;
+* the identity phonon-supercell matrix;
+* primitive, single-repetition structural normalization when structural
+  metadata are present;
+* an explicit unique match between the HA and cutoff primitive-cell volumes.
+
+The three sine-wave branches are **additional** acoustic contributions.  No
+calculated Gamma frequency is selected, removed, or replaced.  Tests compare a
+normal HA result with an enriched result and verify that their difference is
+exactly the independently evaluated Kieffer contribution, even when the three
+lowest Gamma frequencies are small and positive.
+
+The total HA arrays contain the composed thermodynamic properties, while the
+acoustic zero-point energy, thermal energy, entropy, heat capacity, and
+Helmholtz energy are retained separately under ``kieffer_contribution``.  The
+same separation is preserved in the native HDF5 payload together with cutoff
+frequencies, effective velocities, composition policy, and volume-match
+diagnostics.
+
+Multi-volume thermodynamic QHA composition
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The QHA validation uses input volumes deliberately ordered differently from
+the increasing cutoff series.  It verifies that explicit one-to-one volume
+matches, rather than array indices, determine the acoustic association.  The
+enriched-minus-harmonic sampled Helmholtz surface must equal an independent
+Kieffer evaluation at every temperature and volume, while the original Gamma
+frequency array remains unchanged.
+
+Negative tests cover missing or non-Gamma coordinates, non-identity phonon
+supercells, incomplete or mismatched cutoff volume sets, and attempted use of
+the frequency-interpolation scheme.  A public API and HDF5 round-trip test
+confirms that the sampled acoustic component and its provenance survive the
+complete QHA lifecycle.
 
 Historical entropy defect
 ~~~~~~~~~~~~~~~~~~~~~~~~~

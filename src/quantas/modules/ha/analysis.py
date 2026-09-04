@@ -35,8 +35,21 @@ from quantas.core.physics.thermodynamics import (
     thermal_energy,
     vibrational_free_energy,
     zero_point_energy,
+    kieffer_entropy,
+    kieffer_isochoric_heat_capacity,
+    kieffer_thermal_energy,
+    kieffer_vibrational_free_energy,
+    kieffer_zero_point_energy,
 )
-from quantas.modules.ha.models import HAInput, HAOptions, HAResult
+from quantas.models.kieffer import KiefferVolumeSeries
+from quantas.models.volume_matching import VolumeMatch
+from quantas.modules.ha.kieffer import validate_kieffer_ha_applicability
+from quantas.modules.ha.models import (
+    HAKiefferContribution,
+    HAInput,
+    HAOptions,
+    HAResult,
+)
 
 
 ProgressCallback = Callable[[str, int, int], None]
@@ -199,6 +212,7 @@ def prepare_phonon_data(
 def calculate_thermodynamic_properties(
     input_data: HAInput,
     options: HAOptions | None = None,
+    kieffer_cutoffs: KiefferVolumeSeries | None = None,
     progress_callback: ProgressCallback | None = None,
     step_callback: StepCallback | None = None,
     result_callback: ResultCallback | None = None,
@@ -214,6 +228,10 @@ def calculate_thermodynamic_properties(
     options : HAOptions or None, optional
         Options controlling units and temperature range. If ``None``, default
         options are used.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        One direct cutoff state for an applicable primitive Gamma-only HA
+        calculation.  Its three acoustic branches are added to, and never
+        substituted for, the calculated Gamma phonons.
     progress_callback : callable or None, optional
         Optional callback receiving ``label``, ``current`` and ``total`` after
         each major calculation step.
@@ -240,6 +258,12 @@ def calculate_thermodynamic_properties(
         If a requested unit conversion is unsupported.
     """
     options = options or HAOptions()
+    volume_match = None
+    if kieffer_cutoffs is not None:
+        volume_match = validate_kieffer_ha_applicability(
+            input_data,
+            kieffer_cutoffs,
+        )
     temperature, frequencies, weights, static_energy = prepare_phonon_data(
         input_data,
         options,
@@ -297,6 +321,19 @@ def calculate_thermodynamic_properties(
     if not options.calculate_thermodynamics:
         return result
 
+    kieffer_contribution = None
+    if kieffer_cutoffs is not None:
+        if volume_match is None:
+            raise RuntimeError("Kieffer volume validation did not return a match")
+        kieffer_contribution = _calculate_kieffer_contribution(
+            temperature,
+            kieffer_cutoffs,
+            options,
+            volume_match,
+        )
+        result.kieffer_contribution = kieffer_contribution
+        result.metadata["kieffer"] = dict(kieffer_contribution.metadata)
+
     total = len(THERMODYNAMIC_STEPS)
     current = 0
 
@@ -314,6 +351,8 @@ def calculate_thermodynamic_properties(
         convert_energy(uzp_raw, "kjmol", options.energy_unit),
         dtype=np.float64,
     )
+    if kieffer_contribution is not None:
+        result.zero_point_energy += kieffer_contribution.zero_point_energy
     _notify_result(
         "zero_point_energy",
         {
@@ -343,6 +382,8 @@ def calculate_thermodynamic_properties(
         convert_energy(uth_raw, "kjmol", options.energy_unit),
         dtype=np.float64,
     )
+    if kieffer_contribution is not None:
+        result.thermal_energy += kieffer_contribution.thermal_energy
     _notify_result(
         "thermal_energy",
         {
@@ -376,6 +417,8 @@ def calculate_thermodynamic_properties(
         ),
         dtype=np.float64,
     )
+    if kieffer_contribution is not None:
+        result.entropy += kieffer_contribution.entropy
     _notify_result(
         "entropy",
         {
@@ -409,6 +452,8 @@ def calculate_thermodynamic_properties(
         ),
         dtype=np.float64,
     )
+    if kieffer_contribution is not None:
+        result.isochoric_heat_capacity += kieffer_contribution.isochoric_heat_capacity
     _notify_result(
         "isochoric_heat_capacity",
         {
@@ -442,6 +487,8 @@ def calculate_thermodynamic_properties(
         convert_energy(fvib_raw, "kjmol", options.energy_unit),
         dtype=np.float64,
     )
+    if kieffer_contribution is not None:
+        result.vibrational_free_energy += kieffer_contribution.vibrational_free_energy
     _notify_result(
         "vibrational_free_energy",
         {
@@ -490,6 +537,77 @@ def calculate_thermodynamic_properties(
     result.metadata["timing"] = _timing_records_to_dict(timing_records)
 
     return result
+
+
+def _calculate_kieffer_contribution(
+    temperature: np.ndarray,
+    cutoff_series: KiefferVolumeSeries,
+    options: HAOptions,
+    volume_match: VolumeMatch,
+) -> HAKiefferContribution:
+    """Calculate one separately traceable acoustic Kieffer contribution."""
+    cutoffs = cutoff_series.frequencies_hz
+    acoustic_uzp = np.asarray(
+        convert_energy(
+            kieffer_zero_point_energy(np.zeros(1, dtype=np.float64), cutoffs),
+            "kjmol",
+            options.energy_unit,
+        ),
+        dtype=np.float64,
+    )
+    acoustic_uth = np.asarray(
+        convert_energy(
+            kieffer_thermal_energy(temperature, cutoffs),
+            "kjmol",
+            options.energy_unit,
+        ),
+        dtype=np.float64,
+    )
+    acoustic_entropy = np.asarray(
+        convert_energy_per_temperature(
+            kieffer_entropy(temperature, cutoffs),
+            "J mol^-1 K^-1",
+            f"{options.energy_unit} cell^-1 K^-1",
+        ),
+        dtype=np.float64,
+    )
+    acoustic_cv = np.asarray(
+        convert_energy_per_temperature(
+            kieffer_isochoric_heat_capacity(temperature, cutoffs),
+            "J mol^-1 K^-1",
+            f"{options.energy_unit} cell^-1 K^-1",
+        ),
+        dtype=np.float64,
+    )
+    acoustic_fvib = np.asarray(
+        convert_energy(
+            kieffer_vibrational_free_energy(temperature, cutoffs),
+            "kjmol",
+            options.energy_unit,
+        ),
+        dtype=np.float64,
+    )
+    return HAKiefferContribution(
+        cutoff_frequencies_hz=cutoffs.copy(),
+        effective_velocities_km_s=(cutoff_series.effective_velocities_km_s.copy()),
+        zero_point_energy=acoustic_uzp,
+        thermal_energy=acoustic_uth,
+        entropy=acoustic_entropy,
+        vibrational_free_energy=acoustic_fvib,
+        isochoric_heat_capacity=acoustic_cv,
+        metadata={
+            "method": "kieffer-sine-wave",
+            "composition": "additional-acoustic-branches",
+            "volume_match": {
+                "ha_index": volume_match.target_index,
+                "cutoff_index": volume_match.source_index,
+                "ha_volume": volume_match.target_volume,
+                "cutoff_volume": volume_match.source_volume,
+                "absolute_difference": volume_match.absolute_difference,
+                "relative_difference": volume_match.relative_difference,
+            },
+        },
+    )
 
 
 def _build_result_metadata(
