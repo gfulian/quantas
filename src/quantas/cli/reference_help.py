@@ -84,12 +84,21 @@ _COMMAND_HELP: Final[Mapping[tuple[str, ...], str]] = {
         "weights, normalization, and mode-continuity metadata and should be reviewed before "
         "calculation."
     ),
+    ("ha", "add-kieffer"): (
+        "Create a new HA YAML input with Kieffer sine-wave acoustic cutoffs.\n\n"
+        "FILENAME must be a primitive, single-volume Gamma-only phonon input. "
+        "Supply one completed CRYSTAL ELASTCON or ELAPIEZO output either as a "
+        "positional argument or through '--elastic-list'. Quantas derives the "
+        "three acoustic cutoff frequencies from the incremental elastic tensor "
+        "and writes a separate YAML file without replacing any calculated mode."
+    ),
     ("ha", "run"): (
         "Run a harmonic-approximation calculation from a Quantas YAML input file.\n\n"
         "FILENAME supplies static energies, volumes, phonon frequencies, q-point weights, "
         "and normalization metadata.  The command evaluates every requested temperature at "
         "every stored volume, writes a native HDF5 result and deterministic report, and can "
-        "optionally render a compact plot set."
+        "optionally render a compact plot set.  '--kieffer' additionally reads the validated "
+        "acoustic cutoff block embedded by 'add-kieffer'."
     ),
     ("ha", "export"): (
         "Export one harmonic property from a Quantas HA HDF5 result.\n\n"
@@ -117,6 +126,14 @@ _COMMAND_HELP: Final[Mapping[tuple[str, ...], str]] = {
         "weights, normalization, and mode-continuity metadata and should be reviewed before "
         "calculation."
     ),
+    ("qha", "add-kieffer"): (
+        "Create a new QHA YAML input with volume-resolved Kieffer cutoffs.\n\n"
+        "FILENAME must contain primitive Gamma-only phonons. Supply one completed "
+        "CRYSTAL ELASTCON or ELAPIEZO output for every QHA volume, directly or "
+        "through '--elastic-list'. Quantas matches volumes explicitly, applies "
+        "the recorded hydrostatic pre-stress treatment once, evaluates the "
+        "anisotropic acoustic averages, and preserves the source input unchanged."
+    ),
     ("qha", "inspect"): (
         "Inspect the sampled static energy–volume relation before a full QHA run.\n\n"
         "FILENAME is fitted independently with a polynomial and an energy EOS unless either "
@@ -129,7 +146,9 @@ _COMMAND_HELP: Final[Mapping[tuple[str, ...], str]] = {
         "FILENAME supplies the multi-volume static and vibrational dataset.  Quantas builds "
         "the selected volume representation, minimizes the Gibbs energy at every pressure-"
         "temperature state, reconstructs thermodynamic and structural properties, records "
-        "fit diagnostics and fallback provenance, and writes a native HDF5 archive."
+        "fit diagnostics and fallback provenance, and writes a native HDF5 archive.  "
+        "'--kieffer' activates the separately stored acoustic cutoff series throughout the "
+        "sampled and equilibrium-volume calculations."
     ),
     ("qha", "plot"): (
         "Generate line plots or pressure–temperature maps from a QHA HDF5 result.\n\n"
@@ -456,6 +475,10 @@ _CONTEXT_OPTION_HELP: Final[Mapping[tuple[tuple[str, ...], str], str]] = {
         "Render backend timing events in addition to the scientific report.  Benchmarking is diagnostic only and "
         "does not change harmonic sums, stored arrays, or numerical precision."
     ),
+    (("ha", "run"), "kieffer"): (
+        "Read and activate the validated Kieffer cutoff state embedded in FILENAME.  The three sine-wave acoustic "
+        "branches are added to the Gamma phonons and retained separately; omitting the flag leaves the block inactive."
+    ),
     (("qha", "run"), "gruneisen"): (
         "Calculate and persist the macroscopic thermodynamic Gruneisen parameter when its inputs are well defined. "
         "Disabling it omits this derived output but does not change equilibrium-volume minimization."
@@ -463,6 +486,11 @@ _CONTEXT_OPTION_HELP: Final[Mapping[tuple[tuple[str, ...], str], str]] = {
     (("qha", "run"), "mode_gruneisen"): (
         "Calculate mode-resolved Gruneisen parameters for the frequency interpolation scheme.  Disable this output "
         "to reduce work when modal interpretation is unnecessary; it is unavailable for the thermodynamic scheme."
+    ),
+    (("qha", "run"), "kieffer"): (
+        "Read and activate the volume-resolved Kieffer cutoff series embedded in FILENAME.  Frequency QHA disables "
+        "the default mode-Gruneisen output because the continuous acoustic branches are not yet weighted there; an "
+        "explicit '--mode-gruneisen' request remains an error."
     ),
     (("eos", "run"), "spec_path"): (
         "Read a strict 'QUANTAS EOS SPEC 1' batch plan.  The file can define heterogeneous jobs, selections, "

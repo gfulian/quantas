@@ -123,6 +123,16 @@ class QHACalculator(BasicCalculator):
                 self.qha_input,
                 self.kieffer_cutoffs,
             )
+            self.emit(
+                "Kieffer sine-wave acoustic contribution enabled",
+                level=EventLevel.INFO,
+                data={
+                    "kind": "kieffer_configuration",
+                    "composition": "additional-acoustic-branches",
+                    "cutoff_states": len(self.kieffer_cutoffs.states),
+                    "scheme": self.qha_options.scheme,
+                },
+            )
 
         if self.qha_options.requires_mode_continuity():
             status = self.qha_input.mode_continuity_status()

@@ -74,7 +74,11 @@ The scientific generation procedure is documented in
 
 .. autofunction:: quantas.api.ha.create_input
 
+.. autofunction:: quantas.api.ha.add_kieffer_input
+
 .. autofunction:: quantas.api.ha.read_input
+
+.. autofunction:: quantas.api.ha.read_kieffer_input
 
 .. autofunction:: quantas.api.ha.normalize_input
 
@@ -84,8 +88,9 @@ Calculation and typed results
 An explicit single-volume Kieffer cutoff series can be supplied through
 ``kieffer_cutoffs``.  This API-stage integration requires primitive Gamma-only
 phonons and adds three acoustic branches without changing the stored Gamma
-frequencies.  Input-file enrichment and CLI activation are not part of this
-stage.
+frequencies.  ``add_kieffer_input`` provides the corresponding persistent YAML
+representation, while calculation activation remains explicit through the
+``kieffer_cutoffs`` argument.
 
 .. autofunction:: quantas.api.ha.run
 

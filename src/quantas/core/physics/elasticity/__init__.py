@@ -46,6 +46,7 @@ from .quasistatic import (
     wallace_hydrostatic_delta_voigt,
 )
 from .prestress import (
+    assign_hydrostatic_pressures,
     correct_hydrostatic_elastic_series,
     correct_hydrostatic_elastic_state,
     hydrostatic_wallace_stiffness,
@@ -129,6 +130,7 @@ __all__ = [
     "check_positive_definiteness",
     "evaluate_stability_field",
     "compute_elastic_averages",
+    "assign_hydrostatic_pressures",
     "correct_hydrostatic_elastic_series",
     "correct_hydrostatic_elastic_state",
     "cold_finite_strain_component",

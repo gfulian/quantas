@@ -26,8 +26,9 @@ Kieffer acoustic thermodynamics
 
 The Kieffer sine-wave model is validated as a statistical-thermodynamics core
 and is connected to the single-volume HA Python API and both multi-volume QHA
-schemes.  YAML enrichment and command-line activation remain separate later
-steps.
+schemes.  End-to-end CLI tests now verify that ``run --kieffer`` reads the
+embedded YAML series, evaluates the acoustic contribution, and preserves it in
+native HA and QHA HDF5 results.
 
 The validation uses ordinary cutoff frequencies in hertz and the nonsingular
 integration variable
@@ -99,7 +100,10 @@ same acoustic surface affects both minimization and final equilibrium
 properties.  Mode-Gruneisen analysis is rejected until the acoustic branches
 can be included in its heat-capacity-weighted average.  A public API and HDF5
 round-trip test confirms that the sampled acoustic component and its provenance
-survive the complete QHA lifecycle.
+survive the complete QHA lifecycle.  CLI tests additionally verify opt-in
+forwarding, automatic resolution of the frequency-scheme modal default,
+rejection of an explicit incompatible request, Kieffer citation output, and
+complete enriched-input-to-HDF5 execution for both HA and QHA.
 
 Historical entropy defect
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -203,6 +207,244 @@ The comparison against output frozen from the historical implementation uses
 a cross-platform tolerance for adaptive quadrature.  This tolerance is not
 used by the analytical zero-point, high-temperature, or thermodynamic-identity
 tests.
+
+OHAp multi-volume characterization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The complete hydroxylapatite (OHAp) characterization starts from ten
+independent CRYSTAL Gamma-frequency calculations and ten raw ELAPIEZO elastic
+calculations.  Every volume has both data types.  The normalized QHA input
+contains 44 atoms, 132 Gamma modes, two formula units, and volumes from
+482.2593 to 566.1216 angstrom cubed.  The first three frequencies are exactly
+zero at every volume; they remain in the input, while the three Kieffer
+branches are added as a separate continuous acoustic contribution.
+
+The source archive used for this characterization has SHA-256
+``b27ee27f1bb3832816edfe693513c16c278b5a9b0dab0c021b414bee024f8563``.
+The aggregate digest over the two portable list files and their 20 referenced
+outputs is
+``2c1c1483ac67afe88b11eabce03e147366ae4d19f8cae9611c0fc14e154e428b``.
+The compact numerical subset retained by the automated regression is
+``tests/modules/qha/data/ohap_kieffer_reference.json``; it records both
+digests so that results from a different archive are not silently compared.
+
+Reproducible validation driver
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The developer utility ``tools/validate_kieffer_ohap.py`` reproduces the full
+chain without modifying the source outputs:
+
+.. code-block:: console
+
+   python tools/validate_kieffer_ohap.py /path/to/ohap_complete_kieffer \
+      --source-archive /path/to/ohap_complete_kieffer.zip \
+      --output-dir ohap_kieffer_validation
+
+It regenerates the base QHA YAML, creates all pressure-source variants,
+performs the acoustic quadrature study, runs phonon-only and Kieffer-enriched
+QHA, round-trips the primary pair through HDF5, exercises expected failures,
+and writes Markdown, JSON, and long-form CSV evidence.  Existing results are
+protected unless ``--force`` is stated explicitly.
+
+Pressure routes and acoustic convergence
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+``auto``, ``output-stress``, and manual pressures reproduce exactly the same
+cutoffs; the result is also invariant to reversing the elastic-file list.
+``auto`` chooses output stress here because all ten CRYSTAL outputs contain a
+complete unstrained-stress pressure.  The two energy-derived alternatives
+exercise the path needed when those values are absent:
+
+.. list-table:: OHAp pressure-source characterization
+   :header-rows: 1
+   :widths: 30 22 22 26
+
+   * - Pressure source
+     - Pressure range (GPa)
+     - Maximum difference from output stress (GPa)
+     - Maximum cutoff difference from output stress (%)
+   * - CRYSTAL output stress
+     - 11.5300 to -7.4420
+     - 0
+     - 0
+   * - Energy BM3
+     - 11.0863 to -7.6862
+     - 0.4437
+     - 0.4745
+   * - Degree-three energy polynomial
+     - 10.9800 to -7.5801
+     - 0.5500
+     - 0.3867
+
+The integrated BM3 fit is classified ``good`` with
+:math:`R^2=0.9998476` and an energy RMSE of
+:math:`2.0103\times10^{-4}` Ha.  The centred and scaled cubic polynomial is
+also classified ``good`` with :math:`R^2=0.9998586` and an RMSE of
+:math:`1.9364\times10^{-4}` Ha.  These numbers compare independent pressure
+estimators; neither fitted curve is forced to reproduce the output stress.
+
+The default 12 by 24 quadrature, refined to 24 by 48, changes by at most
+:math:`1.0501\times10^{-3}` internally.  Comparing its final cutoffs with a
+24 by 48 calculation refined to 48 by 96 gives a maximum relative change of
+:math:`7.1339\times10^{-4}`.  A 48 by 96 calculation refined to 96 by 192
+reduces both its reported refinement change and the dense-to-fine difference
+to :math:`1.2787\times10^{-4}`.  This fine series is used for the reference
+QHA comparison, rather than treating the default as converged by assumption.
+
+At the static-energy minimum, :math:`V=527.75215929` angstrom cubed, the fine
+effective velocities are 3.75295, 4.14359, and 7.57286 km/s.  The corresponding
+ordinary cutoff frequencies are 1.83406, 2.02497, and 3.70084 THz.
+
+Acoustic and optical temperature dependence
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The cleanest composition diagnostic evaluates both contributions at the same
+sampled volume.  For each positive additive property the reported percentage
+is
+
+.. math::
+
+   100\frac{X_{\mathrm{acoustic}}}
+   {X_{\mathrm{optical}}+X_{\mathrm{acoustic}}}.
+
+.. list-table:: Direct Kieffer share at the OHAp static minimum
+   :header-rows: 1
+   :widths: 16 28 28 28
+
+   * - Temperature (K)
+     - Thermal energy (%)
+     - Entropy (%)
+     - :math:`C_V` (%)
+   * - 1
+     - 100.0000
+     - 100.0000
+     - 100.0000
+   * - 5
+     - 85.4191
+     - 87.7057
+     - 68.2755
+   * - 10
+     - 30.0217
+     - 32.0743
+     - 25.7445
+   * - 20
+     - 29.9219
+     - 29.8223
+     - 31.8078
+   * - 50
+     - 23.2324
+     - 24.6772
+     - 16.9299
+   * - 100
+     - 12.0008
+     - 14.4319
+     - 7.4351
+   * - 300
+     - 5.0527
+     - 6.9928
+     - 3.3478
+   * - 1000
+     - 3.0269
+     - 4.4616
+     - 2.4228
+   * - 1500
+     - 2.7667
+     - 4.0734
+     - 2.3483
+
+The expected broad trend is present: the acoustic fraction dominates at low
+temperature and decreases as the 129 positive Gamma modes become populated.
+It must not, however, be encoded as strict point-by-point monotonicity.  OHAp
+has optical modes beginning near 39 inverse centimetres, and their activation
+in the same low-temperature window produces a genuine 10--20 K crossover in
+the :math:`C_V` fraction.  At the classical limit the acoustic fraction does
+not vanish; it approaches the branch-count ratio
+
+.. math::
+
+   \frac{3}{129+3}\,100 = 2.272727\%.
+
+The numerical result at :math:`10^7` K is 2.2727273%.  Equivalently, the
+optical share grows from approximately zero at 1 K toward 97.727273%.
+
+Net effect on equilibrium QHA properties
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+All four supported combinations--frequency or thermodynamic-property scheme,
+with polynomial or EOS minimization--complete from 0 to 1500 K at zero
+pressure with finite properties, no failed states, and equilibrium volumes
+inside the sampled interval.  The primary frequency-polynomial comparison is:
+
+.. list-table:: Kieffer-enriched minus phonon-only QHA at zero pressure
+   :header-rows: 1
+   :widths: 13 18 18 17 17 17
+
+   * - Temperature (K)
+     - :math:`\Delta V` (angstrom cubed)
+     - :math:`\Delta V/V` (%)
+     - :math:`\Delta C_V/C_V` (%)
+     - :math:`\Delta S/S` (%)
+     - :math:`\Delta K_T/K_T` (%)
+   * - 0
+     - 0.0552866
+     - 0.010470
+     - --
+     - --
+     - -0.050268
+   * - 300
+     - 0.3415710
+     - 0.064421
+     - 3.483974
+     - 7.608327
+     - -0.483698
+   * - 1000
+     - 1.3872771
+     - 0.256172
+     - 2.493718
+     - 4.876451
+     - -1.910547
+   * - 1500
+     - 2.2929304
+     - 0.416414
+     - 2.412688
+     - 4.539445
+     - -3.130525
+
+These percentages are **not** the direct acoustic fractions in the preceding
+table.  They compare two independently minimized QHA states, so they also
+contain the volume shift caused by the acoustic free energy.  Keeping the two
+definitions separate avoids attributing an equilibrium-volume feedback to a
+fixed-volume branch contribution.  The enriched :math:`C_V` moves closer to
+the complete 132-branch Dulong--Petit limit: at 1500 K the phonon-only value is
+94.5675% of that limit and the enriched value is 96.8491%.
+
+Stress and failure characterization
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+A second run over -2 to 5 GPa in 1 GPa steps and 0 to 1500 K in 300 K steps
+passes for all four QHA combinations.  Its equilibrium volumes remain between
+506.7 and 564.2 angstrom cubed, within the source interval.  It can be
+reproduced with:
+
+.. code-block:: console
+
+   python tools/validate_kieffer_ohap.py /path/to/ohap_complete_kieffer \
+      --temperature 0 1500 300 --pressure -2 5 1 \
+      --output-dir ohap_kieffer_pressure_validation
+
+The same driver deliberately confirms rejection of a base input without an
+embedded Kieffer block, a non-Gamma q-point, a phonon supercell, an incomplete
+or mismatched cutoff series, a negative cutoff, an incompatible mode-Gruneisen
+request, duplicate elastic sources, in-place enrichment, silent replacement
+of an existing Kieffer block, and an incomplete elastic-volume series.  The
+primary phonon-only and enriched HDF5 results reproduce every public property
+exactly after a write/read round trip.
+
+This characterization establishes numerical consistency, provenance, and
+workflow behavior for a realistic material.  It is not an experimental
+validation of the chosen electronic-structure method, the quasi-harmonic
+approximation, or the hydrostatic treatment of a state with appreciable
+deviatoric stress.
 
 Validation hierarchy
 --------------------

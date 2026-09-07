@@ -688,6 +688,9 @@ def _yaml_presentation_data(value: Any, *, path: tuple[str, ...] = ()) -> Any:
         "expansion",
         "equivalent_atoms",
         "origin_shift",
+        "cutoff_frequency",
+        "effective_velocity",
+        "source_elastic_indices",
     } or path[-2:] == ("volume_series", "volume")
     row_vector_container = key in {
         "lattice",
@@ -789,6 +792,9 @@ def format_quantas_yaml(data: dict[str, Any]) -> str:
     lines.append(f"qpoints: {int(data['qpoints'])}")
     lines.append(f"volume: {_format_float_sequence(data['volume'], precision=8)}")
     lines.append(f"energy: {_format_energy_sequence(data['energy'])}")
+    if "kieffer" in data:
+        kieffer_text = _dump_yaml_section("kieffer", data["kieffer"])
+        lines.extend(kieffer_text.splitlines())
     lines.append("phonon:")
 
     for qpoint in data["phonon"]:

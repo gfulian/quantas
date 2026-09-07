@@ -22,6 +22,7 @@ from quantas.modules.ha.analysis import (
     calculate_thermodynamic_properties,
     validate_input,
 )
+from quantas.modules.ha.kieffer import validate_kieffer_ha_applicability
 from quantas.modules.ha.models import HAInput, HAOptions, HAResult
 
 
@@ -98,6 +99,20 @@ class HACalculator(BasicCalculator):
         """
         self.emit("Preparing HA calculation", level=EventLevel.DEBUG)
         validate_input(self.ha_input)
+        if self.kieffer_cutoffs is not None:
+            validate_kieffer_ha_applicability(
+                self.ha_input,
+                self.kieffer_cutoffs,
+            )
+            self.emit(
+                "Kieffer sine-wave acoustic contribution enabled",
+                level=EventLevel.INFO,
+                data={
+                    "kind": "kieffer_configuration",
+                    "composition": "additional-acoustic-branches",
+                    "cutoff_states": len(self.kieffer_cutoffs.states),
+                },
+            )
 
         self.emit(
             "HA input summary",

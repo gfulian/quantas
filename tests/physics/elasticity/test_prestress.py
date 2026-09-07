@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from quantas.core.physics.elasticity import (
+    assign_hydrostatic_pressures,
     correct_hydrostatic_elastic_series,
     correct_hydrostatic_elastic_state,
     hydrostatic_wallace_stiffness,
@@ -121,3 +122,41 @@ def test_series_correction_produces_acoustic_ready_states() -> None:
     )
     assert len(cutoffs.states) == 2
     assert np.all(cutoffs.frequencies_hz > 0.0)
+
+
+def test_external_pressure_assignment_precedes_wallace_correction() -> None:
+    """Fitted E(V) pressures remain traceable through the separate correction."""
+    raw = ElasticStateSeries(
+        states=(_state(100.0, None), _state(110.0, None)),
+        reference_index=0,
+        metadata={"dataset": "synthetic"},
+    )
+
+    assigned = assign_hydrostatic_pressures(
+        raw,
+        [2.5, -1.0],
+        pressure_source=PressureSource.ENERGY_EOS,
+        assignment_method="energy_eos",
+        metadata={"settings": {"eos": "BM3"}},
+    )
+    corrected = correct_hydrostatic_elastic_series(assigned)
+
+    assert assigned.states[0].stiffness[0, 0] == pytest.approx(200.0)
+    assert assigned.states[0].prestress.pressure_gpa == pytest.approx(2.5)
+    assert assigned.states[0].prestress.pressure_source is PressureSource.ENERGY_EOS
+    assert assigned.metadata["pressure_assignment"]["settings"] == {"eos": "BM3"}
+    assert corrected.states[0].stiffness[0, 0] == pytest.approx(207.5)
+    assert corrected.states[0].prestress.pressure_source is PressureSource.ENERGY_EOS
+
+
+def test_external_pressure_assignment_cannot_replace_provenance() -> None:
+    """Pressure assignment accepts only raw states with no existing value."""
+    series = ElasticStateSeries(states=(_state(100.0, 1.0),), reference_index=0)
+
+    with pytest.raises(ValueError, match="cannot be replaced"):
+        assign_hydrostatic_pressures(
+            series,
+            [2.0],
+            pressure_source=PressureSource.ENERGY_POLYNOMIAL,
+            assignment_method="energy_polynomial",
+        )

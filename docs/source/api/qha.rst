@@ -89,6 +89,7 @@ Passive contracts
    :show-inheritance:
 
 .. autoclass:: quantas.api.qha.KiefferVolumeSeries
+   :no-index:
    :members:
 
 .. autoclass:: quantas.api.qha.Preview
@@ -116,9 +117,13 @@ for Kieffer-enriched runs until its acoustic weighting is implemented.
 
 .. autofunction:: quantas.api.qha.create_input
 
+.. autofunction:: quantas.api.qha.add_kieffer_input
+
 .. autofunction:: quantas.api.qha.available_energy_eos
 
 .. autofunction:: quantas.api.qha.read_input
+
+.. autofunction:: quantas.api.qha.read_kieffer_input
 
 .. autofunction:: quantas.api.qha.normalize_input
 

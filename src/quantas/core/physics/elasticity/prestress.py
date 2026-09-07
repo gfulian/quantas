@@ -9,6 +9,8 @@ wave propagation.  Positive pressure denotes compression throughout.
 
 from __future__ import annotations
 
+from typing import Any, Mapping
+
 import numpy as np
 from numpy.typing import ArrayLike, NDArray
 
@@ -21,6 +23,117 @@ from quantas.models.elastic_states import (
 )
 
 from .quasistatic import wallace_hydrostatic_delta_voigt
+
+
+def assign_hydrostatic_pressures(
+    series: ElasticStateSeries,
+    pressures_gpa: ArrayLike,
+    *,
+    pressure_source: PressureSource | str,
+    assignment_method: str,
+    metadata: Mapping[str, Any] | None = None,
+) -> ElasticStateSeries:
+    """Attach externally derived pressures to an explicitly raw series.
+
+    This operation does not alter any stiffness coefficient.  It prepares raw
+    energy--strain tensors for a subsequent, separately auditable hydrostatic
+    Wallace correction.  Existing pressure or correction provenance cannot be
+    replaced.
+
+    Parameters
+    ----------
+    series : ElasticStateSeries
+        Increasing series of raw tensors without assigned pressures.
+    pressures_gpa : array_like
+        One finite hydrostatic pressure per state, positive in compression.
+    pressure_source : PressureSource or str
+        Origin of the supplied pressure values.
+    assignment_method : str
+        Stable description of the calculation that produced the values.
+    metadata : mapping, optional
+        Additional series-level provenance, for example EOS fit diagnostics.
+
+    Returns
+    -------
+    ElasticStateSeries
+        Independent raw series with complete pressure provenance.
+
+    Raises
+    ------
+    TypeError
+        If ``series`` has an unsupported type.
+    ValueError
+        If values, sources, or existing tensor provenance are incompatible.
+    """
+    if not isinstance(series, ElasticStateSeries):
+        raise TypeError("series must be an ElasticStateSeries")
+    pressures = np.asarray(pressures_gpa, dtype=np.float64)
+    if pressures.shape != (series.nstates,) or not np.all(np.isfinite(pressures)):
+        raise ValueError("pressures_gpa must contain one finite value per state")
+    source = PressureSource(pressure_source)
+    if source in {PressureSource.UNAVAILABLE, PressureSource.APPLIED_PRESTRESS}:
+        raise ValueError("pressure_source must identify an external pressure value")
+    method = str(assignment_method).strip()
+    if not method:
+        raise ValueError("assignment_method must be non-empty")
+
+    states: list[ElasticState] = []
+    for index, (state, pressure) in enumerate(
+        zip(series.states, pressures, strict=True)
+    ):
+        tensor_kind = ElasticTensorKind(state.prestress.tensor_kind)
+        state_source = PressureSource(state.prestress.pressure_source)
+        if tensor_kind is not ElasticTensorKind.RAW_ENERGY_STRAIN:
+            raise ValueError(
+                f"elastic state {index}: pressure assignment requires an "
+                "explicitly raw energy-strain tensor"
+            )
+        if state.prestress.pressure_gpa is not None or (
+            state_source is not PressureSource.UNAVAILABLE
+        ):
+            raise ValueError(
+                f"elastic state {index}: existing pressure provenance cannot "
+                "be replaced"
+            )
+        state_metadata = dict(state.metadata)
+        state_metadata["pressure_assignment"] = {
+            "method": method,
+            "pressure_gpa": float(pressure),
+            "pressure_source": source.value,
+        }
+        states.append(
+            ElasticState(
+                volume=state.volume,
+                density=state.density,
+                stiffness=state.stiffness,
+                prestress=PrestressProvenance(
+                    tensor_kind=tensor_kind,
+                    pressure_gpa=float(pressure),
+                    pressure_source=source,
+                ),
+                energy=state.energy,
+                energy_unit=state.energy_unit,
+                lattice=state.lattice,
+                source=state.source,
+                metadata=state_metadata,
+            )
+        )
+
+    series_metadata = dict(series.metadata)
+    assignment: dict[str, Any] = {
+        "method": method,
+        "pressure_source": source.value,
+        "pressure_unit": "GPa",
+        "state_count": series.nstates,
+    }
+    assignment.update(dict(metadata or {}))
+    series_metadata["pressure_assignment"] = assignment
+    return ElasticStateSeries(
+        states=tuple(states),
+        reference_index=series.reference_index,
+        orientation=series.orientation,
+        metadata=series_metadata,
+    )
 
 
 def hydrostatic_wallace_stiffness(
@@ -196,6 +309,7 @@ def correct_hydrostatic_elastic_series(
 
 
 __all__ = [
+    "assign_hydrostatic_pressures",
     "correct_hydrostatic_elastic_series",
     "correct_hydrostatic_elastic_state",
     "hydrostatic_wallace_stiffness",

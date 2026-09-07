@@ -429,6 +429,13 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
                 description="Convert supported phonon outputs to Quantas YAML.",
             ),
             OperationDescriptor(
+                key="add_kieffer_input",
+                capability=Capability.CREATE_INPUT,
+                function_name="add_kieffer_input",
+                name="Add Kieffer data to HA input",
+                description="Enrich primitive Gamma phonons from elastic outputs.",
+            ),
+            OperationDescriptor(
                 key="export_property_table",
                 capability=Capability.EXPORT,
                 function_name="write_table",
@@ -482,6 +489,13 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
                 function_name="create_input",
                 name="Create QHA input",
                 description="Convert supported phonon outputs to Quantas YAML.",
+            ),
+            OperationDescriptor(
+                key="add_kieffer_input",
+                capability=Capability.CREATE_INPUT,
+                function_name="add_kieffer_input",
+                name="Add Kieffer data to QHA input",
+                description="Enrich a Gamma-only volume series from elastic outputs.",
             ),
             OperationDescriptor(
                 key="export_pt_table",

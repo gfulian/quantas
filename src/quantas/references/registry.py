@@ -43,6 +43,21 @@ MCQUARRIE_SIMON_1997 = Citation(
     publisher="University Science Books, Sausalito, California",
 )
 
+KIEFFER_1979 = Citation(
+    key="kieffer_1979",
+    authors=("Susan Werner Kieffer",),
+    title=(
+        "Thermodynamics and lattice vibrations of minerals: 3. Lattice "
+        "dynamics and an approximation for minerals with application to "
+        "simple substances and framework silicates"
+    ),
+    year=1979,
+    journal="Reviews of Geophysics and Space Physics",
+    volume="17",
+    pages="35-59",
+    doi="10.1029/RG017i001p00035",
+)
+
 ANDERSON_1995 = Citation(
     key="anderson_1995",
     authors=("Orson L. Anderson",),
@@ -347,6 +362,7 @@ CITATIONS = {
         QUANTAS_2022,
         QHA_ULIAN_VALDRE_2018,
         MCQUARRIE_SIMON_1997,
+        KIEFFER_1979,
         ANDERSON_1995,
         ANDERSON_MASUDA_ISAAK_1995,
         ERBA_2014,
@@ -399,6 +415,7 @@ __all__ = [
     "ERBA_SHAHROKHI_MORADIAN_DOVESI_2015",
     "HILL_1952",
     "JAEKEN_COTTENIER_2016",
+    "KIEFFER_1979",
     "MCQUARRIE_SIMON_1997",
     "NYE_1985",
     "QHA_ULIAN_VALDRE_2018",

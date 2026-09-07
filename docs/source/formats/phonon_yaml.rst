@@ -17,6 +17,10 @@ to ``float64`` before calculation.  YAML flow-style vectors such as
 ``[1, 2, 3]`` and block-style sequences are semantically equivalent; the
 current generator uses compact formatting only to improve readability.
 
+An optional top-level ``kieffer`` block may enrich physically applicable
+primitive Gamma-only inputs with three additional acoustic branches.  It does
+not change the entries under ``phonon``.
+
 .. important::
 
    This page defines the normalized **data contract**.  The scientific procedure
@@ -191,6 +195,106 @@ The top-level ``volume`` array is the direct thermodynamic input.  A
 is available.  The duplication is currently retained deliberately because the
 phonon contract and the structural path are independently inspectable objects.
 They must agree numerically.
+
+Optional Kieffer acoustic data
+------------------------------
+
+``quantas ha add-kieffer`` and ``quantas qha add-kieffer`` add a mapping of the
+following form:
+
+.. code-block:: yaml
+
+   kieffer:
+     method: kieffer-sine-wave
+     composition: additional-acoustic-branches
+     units:
+       volume: angstrom^3
+       cutoff_frequency: Hz
+       effective_velocity: km/s
+       pressure: GPa
+     states:
+     - volume: 80.0
+       cutoff_frequency: [3.1e12, 4.0e12, 6.8e12]
+       effective_velocity: [3.2, 4.1, 7.0]
+       source: direct
+       source_elastic_indices: [0]
+       metadata:
+         tensor_kind: wallace_hydrostatic
+         pressure_gpa: 2.0
+         pressure_source: output_stress
+         quadrature:
+           mu_order: 24
+           phi_order: 48
+           direction_count: 1152
+           relative_errors: [1.0e-6, 8.0e-7, 4.0e-7]
+     provenance:
+       elastic_interface: crystal
+       pressure_source: output_stress
+
+All state values use canonical units independent of the main phonon-frequency
+unit. Cutoffs are ordinary frequencies, not angular frequencies. State order
+is increasing in volume and every state records the corresponding source
+elastic index. QHA requires a unique direct match for every sampled phonon
+volume; HA requires exactly one state.
+
+When pressure is obtained from the QHA static energy path, ``pressure_model``
+is normative provenance rather than input for a later refit: it stores the
+model actually used during enrichment and the pressures already applied to the
+raw elastic tensors. ``energy_eos`` records the canonical EOS family and order;
+``energy_polynomial`` records its degree. The complete generated mapping also
+contains fit parameters, residual diagnostics, warnings, and one explicit
+volume-match record per state.
+
+An abbreviated energy-EOS provenance block is:
+
+.. code-block:: yaml
+
+   provenance:
+     elastic_interface: crystal
+     pressure_source: energy_eos
+     pressure_model:
+       method: energy_eos
+       relation: P(V) = -dE/dV
+       source_dataset: phonon_input_static_energy
+       energy_unit: Ha
+       volume_unit: angstrom^3
+       volume_length_unit: angstrom
+       pressure_unit: GPa
+       settings:
+         eos: BM3
+         eos_family: birchmurnaghan
+         eos_order: 3
+       evaluated_pressures_gpa: [2.0, 0.0, -2.0]
+       fit:
+         success: true
+         quality: good
+         parameter_names: [E0, K0, KP, V0]
+       volume_matches:
+       - elastic_index: 0
+         phonon_index: 0
+         elastic_volume: 80.0
+         phonon_volume: 80.0
+         absolute_difference: 0.0
+         relative_difference: 0.0
+
+The Python constructors deliberately accept general array-like values and
+string forms of the source enum. Before YAML serialization, Quantas explicitly
+normalizes cutoff and velocity triplets to ``float64`` arrays and the source to
+``CutoffVolumeSource``. The persisted mapping therefore always contains plain
+floating-point lists and the canonical ``direct`` or ``interpolated`` label,
+independently of the convenient constructor form used by an application.
+
+``composition: additional-acoustic-branches`` is normative: the sine-wave
+model adds its three branches to the thermodynamic sums. It does not identify,
+remove, or replace the three calculated translational Gamma modes. The normal
+harmonic treatment continues to handle the original frequency array according
+to its existing rules.
+
+Presence is not activation.  The HA/QHA readers preserve the optional mapping,
+but command-line calculations use it only when ``run --kieffer`` is selected.
+Without that flag the standard phonon-only calculation is performed from the
+same YAML file.  A requested activation fails if the block is absent, malformed,
+or incompatible with the Gamma-only primitive input.
 
 Q-point records
 ---------------

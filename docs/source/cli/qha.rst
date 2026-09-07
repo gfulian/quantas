@@ -13,13 +13,17 @@ Recommended sequence
 .. code-block:: console
 
    quantas qha inpgen qha-outputs.txt --list --output material.yaml
-   quantas qha inspect material.yaml --eos BM3 --degree 3
-   quantas qha run material.yaml --scheme freq --minimization poly \
-      --temperature 0 1000 25 --pressure 0 10 1
-   quantas qha plot material_QHA.hdf5 --property VT --property alphaV --2d
-   quantas qha plot material_QHA.hdf5 --property VT --axis pressure \
+   quantas qha add-kieffer material.yaml --elastic-list elastic-files.txt \
+      --interface crystal --pressure-source energy-eos --eos BM3 \
+      --output material-kieffer.yaml
+   quantas qha inspect material-kieffer.yaml --eos BM3 --degree 3
+   quantas qha run material-kieffer.yaml --kieffer --scheme freq \
+      --no-mode-gruneisen --minimization poly --temperature 0 1000 25 \
+      --pressure 0 10 1
+   quantas qha plot material-kieffer_QHA.hdf5 --property VT --property alphaV --2d
+   quantas qha plot material-kieffer_QHA.hdf5 --property VT --axis pressure \
       --temperature 300 --temperature 1000
-   quantas qha export material_QHA.hdf5 --property VT --format csv
+   quantas qha export material-kieffer_QHA.hdf5 --property VT --format csv
 
 Use ``inspect`` before a production run.  It compares the sampled static
 energy-volume data with polynomial and EOS previews and reports the implied
@@ -67,6 +71,67 @@ are mutually exclusive.
 
 The equations and acceptance criteria are documented in
 :doc:`../workflows/phonon_input_generation`.
+
+Adding volume-resolved Kieffer branches
+---------------------------------------
+
+``add-kieffer`` requires one CRYSTAL ELASTCON or ELAPIEZO output for every QHA
+volume. The files may be supplied as positional arguments or through
+``--elastic-list``. Select the reader with ``--interface crystal``, following
+the same interface naming used by ``inpgen``. Quantas sorts the independently
+calculated elastic states, matches them to the QHA volumes under the explicit
+matching policy, applies the hydrostatic Wallace correction when necessary,
+and writes a separate ``*-kieffer.yaml`` input.
+
+For raw elastic tensors, pressure can be reconstructed directly from the
+static ``volume`` and ``energy`` arrays already stored in the QHA input:
+
+.. code-block:: console
+
+   quantas qha add-kieffer material.yaml --elastic-list elastic-files.txt \
+      --interface crystal --pressure-source energy-eos --eos BM3 \
+      --output material-kieffer-eos.yaml
+
+   quantas qha add-kieffer material.yaml --elastic-list elastic-files.txt \
+      --interface crystal --pressure-source energy-polynomial --degree 3 \
+      --output material-kieffer-poly.yaml
+
+Both routes evaluate :math:`P(V)=-dE/dV` at the sampled phonon volumes. The
+generated Kieffer provenance records the exact EOS or polynomial degree, fit
+parameters and diagnostics, input units, evaluated pressures, warnings, and
+every elastic-to-phonon volume association. At least three volume-energy points
+are required; a selected polynomial also needs enough points for its degree,
+while the energy EOS may impose a stricter model-specific minimum. Use
+``--pressure-source manual`` when the dataset is insufficient for a fit.
+The polynomial route centres and scales the sampled volume coordinate before
+fitting; the transform is stored with the coefficients so that conditioning
+and the physical :math:`dE/dV` derivative remain independently inspectable.
+
+``energy-eos`` and ``energy-polynomial`` deliberately require raw elastic
+tensors. Their parsed output-stress value is not substituted into the fit.
+The derived pressures are attached first and the hydrostatic Wallace
+correction is then applied once, with both operations retained in provenance.
+The hydrostatic assumption is not valid for a path carrying substantial
+deviatoric stress.
+
+The directional integration defaults to a 12 by 24 coarse quadrature refined
+by a factor of two. ``--mu-order``, ``--phi-order``, and
+``--refinement-factor`` are convergence controls; changes should be supported
+by a sensitivity test for the material under study.
+
+``add-kieffer`` only stores the validated data.  ``qha run`` reads and applies
+them when ``--kieffer`` is present; omission of the flag leaves the block
+inactive and reproduces the ordinary phonon-only workflow.  Both ``freq`` and
+``td`` schemes are supported, and the sampled acoustic component remains
+separate in the HDF5 result even though the total properties include it.
+
+For ``--scheme freq``, mode-Gruneisen analysis cannot yet include the continuous
+acoustic branches.  Quantas therefore disables its normal CLI default when
+``--kieffer`` is selected and records that decision in the run options.  An
+explicit ``--mode-gruneisen`` or ``--thermal-expansion mode_gruneisen`` request
+is rejected.  Production scripts should state ``--no-mode-gruneisen`` as in the
+example above; ``mixed_derivative`` and ``numerical`` thermal expansion remain
+available.
 
 Choosing options
 ----------------

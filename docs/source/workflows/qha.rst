@@ -121,6 +121,12 @@ separately on the sampled temperature-volume grid and persisted in the native
 HDF5 result together with cutoff frequencies, effective velocities, and
 matching diagnostics.
 
+The CLI activates the embedded series explicitly with
+``quantas qha run INPUT --kieffer``.  Omitting the flag ignores the optional
+block and runs the normal phonon-only model.  This opt-in boundary separates
+input enrichment from scientific model selection and permits direct paired
+calculations from one immutable YAML file.
+
 Raw elastic tensors and hydrostatic pre-stress
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -137,13 +143,19 @@ using the convention derived in :doc:`../theory/thermoelasticity`:
 
 Pressure is positive in compression.  The source of every :math:`P_i` is part
 of the data contract: it may come from the output stress, a manually supplied
-value, or eventually an energy EOS or polynomial derivative.  The correction
-produces a new elastic state and records the source and target tensor kinds,
-method, pressure source, and software applying it.  An already incremental
-tensor is rejected, which prevents accidental double correction.
+value, an integrated energy EOS, or a polynomial derivative of the QHA input's
+static :math:`E(V)` series. For the latter two routes, Quantas first imports the
+tensors as raw, matches elastic and phonon volumes explicitly, evaluates
+:math:`P(V)=-dE/dV`, and only then applies the correction. The generated input
+records the selected EOS tag or polynomial degree, fit diagnostics, units,
+evaluated pressures, and volume associations. The correction produces a new
+elastic state and records the source and target tensor kinds, method, pressure
+source, and software applying it. An already incremental tensor is rejected,
+which prevents accidental double correction.
 
 The reusable Python operations are
 ``hydrostatic_wallace_stiffness()``,
+``assign_hydrostatic_pressures()``,
 ``correct_hydrostatic_elastic_state()``, and
 ``correct_hydrostatic_elastic_series()`` in
 :mod:`quantas.core.physics.elasticity`.  The corrected series can be passed
@@ -160,8 +172,11 @@ thermodynamic properties are recalculated.
 Kieffer-enriched frequency QHA does not currently support the
 ``mode_gruneisen`` thermal-expansion route or the optional mode-Gruneisen
 analysis.  A phonon-only weighted average would omit the acoustic branches and
-is therefore rejected explicitly.  The default ``mixed_derivative`` route and
-the numerical thermal-expansion route remain available.
+is therefore rejected explicitly.  At the CLI, ``--kieffer`` automatically
+turns off the otherwise enabled-by-default mode-Gruneisen output and records
+that resolution in the options; an explicit ``--mode-gruneisen`` request is an
+error.  The default ``mixed_derivative`` route and the numerical
+thermal-expansion route remain available.
 
 .. warning::
 

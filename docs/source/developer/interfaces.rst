@@ -163,6 +163,131 @@ elastic pressure are scientifically relevant because they establish whether
 the output contains the stress-corrected coefficients required under
 hydrostatic pre-stress.
 
+CRYSTAL elastic volume series
+-----------------------------
+
+:func:`quantas.interfaces.crystal.read_crystal_elastic_series` composes a set
+of completed ELASTCON or ELAPIEZO outputs into the backend-neutral
+:class:`quantas.models.elastic_states.ElasticStateSeries` contract.  This is
+the interface boundary used by Kieffer and available to other multi-volume
+elastic workflows; it does not create a Kieffer-specific elastic format.
+
+The importer requires finite volume, density, static energy, and stiffness at
+every state.  It sorts the resulting states by increasing volume and selects
+the minimum-static-energy state as the reference.  Tensor axes remain in the
+CRYSTAL Cartesian frame.
+
+Pressure selection is explicit:
+
+``auto``
+   Preserve tensors already corrected by CRYSTAL when the ``PRESSURE`` keyword
+   is present.  For raw tensors, use the pressure printed for the unstrained
+   stress tensor.
+
+``output_stress``
+   Require raw tensors and explicitly use their reported unstrained-stress
+   pressure.
+
+``manual``
+   Require one finite pressure in GPa per input file.  Values follow input-file
+   order before volume sorting.  Positive pressure denotes compression.
+
+``deferred``
+   Retain a raw tensor without attaching pressure. This adapter-level route
+   requires ``apply_prestress_correction=False`` and exists so a composing
+   workflow can attach independently derived pressure provenance before a
+   separate correction. It is not exposed as a user-facing ``add-kieffer``
+   pressure source.
+
+By default, raw energy--strain tensors are converted once to Wallace
+hydrostatic coefficients.  The pressure value, source, method, source tensor
+kind, and software applying the correction are retained in each state.
+Passing a non-auto pressure policy for a tensor already corrected by CRYSTAL is
+an error, preventing an accidental second correction.
+
+.. code-block:: python
+
+   from quantas.interfaces.crystal import read_crystal_elastic_series
+
+   series = read_crystal_elastic_series(
+       ["state_01.out", "state_02.out", "state_03.out"],
+       pressure_policy="output_stress",
+   )
+
+If the structural block reconstructed from an output does not have the same
+volume as the final elastic scalar, the final elastic volume remains
+authoritative.  The inconsistent lattice is not attached to the state; its
+volume and the failed consistency check are recorded in metadata.  This avoids
+silently coupling a tensor to a stale geometry block while retaining the
+diagnostic needed to inspect the source output.
+
+Kieffer input enrichment
+------------------------
+
+The public HA and QHA APIs expose ``add_kieffer_input``.  Their shared
+implementation reads the phonon input and the CRYSTAL elastic volume series,
+builds the anisotropic acoustic averages, validates the appropriate HA or QHA
+applicability contract, and writes a new YAML file.  The corresponding command
+is registered under both workflows:
+
+.. code-block:: console
+
+   quantas ha add-kieffer ha.yaml state.out -o ha-kieffer.yaml
+   quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
+       --interface crystal -o qha-kieffer.yaml
+
+Paths inside ``elastic-files.txt`` are resolved relative to the list file. Blank
+lines and lines beginning with ``#`` are ignored. This makes the list portable
+when the complete calculation directory is moved.
+
+The default ``--pressure-source auto`` preserves tensors corrected by CRYSTAL's
+``PRESSURE`` keyword and otherwise uses pressure from the unstrained stress.
+Manual pressure values can be supplied in input-file order:
+
+.. code-block:: console
+
+   quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
+       --pressure-source manual \
+       --pressure 11.53 --pressure 8.718 --pressure 6.069 \
+       -o qha-kieffer.yaml
+
+For multi-volume QHA inputs, pressure may instead be evaluated from the static
+energy-volume arrays already present in the phonon input:
+
+.. code-block:: console
+
+   quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
+       --interface crystal --pressure-source energy-eos --eos BM3 \
+       -o qha-kieffer.yaml
+
+   quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
+       --interface crystal --pressure-source energy-polynomial --degree 3 \
+       -o qha-kieffer.yaml
+
+The reusable fit operations live in :mod:`quantas.core.physics.eos`; pressure
+assignment and hydrostatic correction remain separate operations in
+:mod:`quantas.core.physics.elasticity`. This boundary lets tests verify that
+``P(V)`` is attached to an unmodified raw tensor before the tensor is corrected
+exactly once.
+
+The destination defaults to ``<input-stem>-kieffer.yaml`` and must differ from
+the source path. An existing Kieffer block is never replaced silently.  The
+generated top-level ``kieffer`` mapping identifies the sine-wave method and its
+additive composition, declares canonical units, and stores one state per
+volume with:
+
+* cutoff frequencies in Hz;
+* effective slow-shear, fast-shear, and longitudinal velocities in km/s;
+* pressure and tensor convention;
+* elastic-state association;
+* spherical-quadrature diagnostics;
+* original phonon and elastic source paths.
+
+The public ``read_kieffer_input`` operation restores this block as a validated
+:class:`quantas.models.kieffer.KiefferVolumeSeries`.  It can therefore be
+passed explicitly to the HA/QHA calculation APIs without reconstructing the
+elastic calculation.
+
 Error handling
 --------------
 

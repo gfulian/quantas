@@ -76,6 +76,7 @@ def test_developer_tools_use_public_human_readable_names() -> None:
         "update_examples_manifest.py",
         "update_scientific_reference.py",
         "update_seismic_reference.py",
+        "validate_kieffer_ohap.py",
     }
     assert names == expected
 

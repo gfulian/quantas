@@ -11,104 +11,19 @@ rendered by the command-line interface or by a graphical frontend.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Sequence
+from typing import Any, Sequence
 
 import numpy as np
 
-from quantas.core.physics.units import energy_to_pressure
-from quantas.core.physics.eos import EnergyEOS
-from quantas.core.math.fitting import FitQuality, FitResult, FitStatus, validate_xy
-from quantas.core.math.derivative import polynomial_derivative_from_coefficients
-from quantas.core.math.polynomials import fit_polynomial_result as polynomial_fit
+from quantas.core.math.fitting import validate_xy
+from quantas.core.physics.eos import (
+    PressureEstimate,
+    pressure_from_energy_eos,
+    pressure_from_energy_polynomial,
+)
 from quantas.modules.qha.models import QHAInput, QHAOptions
 
 ArrayLike = np.ndarray | Sequence[float]
-
-
-@dataclass(slots=True)
-class PressureEstimate:
-    """Pressure estimates associated with a single fitting method.
-
-    Parameters
-    ----------
-    method : str
-        Name of the method used to estimate the pressure values.
-    pressure : ndarray
-        Pressure values evaluated at the input volumes.
-    fit : FitResult
-        Fit diagnostics associated with the estimate.
-    unit : str
-        Pressure unit used for the returned values.
-    warnings : list of str
-        Non-fatal diagnostic messages.
-    metadata : dict
-        Additional method-specific information.
-    """
-
-    method: str
-    pressure: np.ndarray
-    fit: FitResult
-    unit: str
-    warnings: list[str] = field(default_factory=list)
-    metadata: dict[str, Any] = field(default_factory=dict)
-
-    @property
-    def success(self) -> bool:
-        """Return whether the pressure estimate is usable.
-
-        Returns
-        -------
-        bool
-            ``True`` when the underlying fit succeeded and pressure values are
-            finite.
-        """
-        return bool(self.fit.success and np.all(np.isfinite(self.pressure)))
-
-    @property
-    def pressure_min(self) -> float | None:
-        """Return the minimum pressure value.
-
-        Returns
-        -------
-        float or None
-            Minimum pressure, or ``None`` when no values are available.
-        """
-        if self.pressure.size == 0:
-            return None
-        return float(np.nanmin(self.pressure))
-
-    @property
-    def pressure_max(self) -> float | None:
-        """Return the maximum pressure value.
-
-        Returns
-        -------
-        float or None
-            Maximum pressure, or ``None`` when no values are available.
-        """
-        if self.pressure.size == 0:
-            return None
-        return float(np.nanmax(self.pressure))
-
-    def as_dict(self) -> dict[str, Any]:
-        """Return the pressure estimate as a serializable dictionary.
-
-        Returns
-        -------
-        dict
-            Dictionary representation of the pressure estimate.
-        """
-        return {
-            "method": self.method,
-            "success": self.success,
-            "pressure": self.pressure.tolist(),
-            "pressure_min": self.pressure_min,
-            "pressure_max": self.pressure_max,
-            "unit": self.unit,
-            "fit": self.fit.as_dict(),
-            "warnings": list(self.warnings),
-            "metadata": dict(self.metadata),
-        }
 
 
 @dataclass(slots=True)
@@ -215,186 +130,6 @@ class PressureVolumePreview:
         }
 
 
-def _failed_estimate(
-    method: str,
-    message: str,
-    *,
-    unit: str,
-    metadata: Mapping[str, Any] | None = None,
-) -> PressureEstimate:
-    """Create a failed pressure estimate.
-
-    Parameters
-    ----------
-    method : str
-        Name of the method that failed.
-    message : str
-        Failure message.
-    unit : str
-        Pressure unit requested by the caller.
-    metadata : mapping, optional
-        Additional diagnostic information.
-
-    Returns
-    -------
-    PressureEstimate
-        Failed pressure estimate with an empty pressure array.
-    """
-    return PressureEstimate(
-        method=method,
-        pressure=np.asarray([], dtype=np.float64),
-        fit=FitResult.failed(
-            message, status=FitStatus.FAILED, metadata=dict(metadata or {})
-        ),
-        unit=unit,
-        warnings=[message],
-        metadata=dict(metadata or {}),
-    )
-
-
-def _polynomial_pressure(
-    volume: np.ndarray,
-    energy: np.ndarray,
-    *,
-    degree: int,
-    energy_unit: str,
-    volume_unit: str,
-    pressure_unit: str,
-) -> PressureEstimate:
-    """Estimate pressure from a polynomial energy-volume fit.
-
-    Parameters
-    ----------
-    volume : ndarray
-        Unit-cell volumes.
-    energy : ndarray
-        Static energies.
-    degree : int
-        Polynomial degree.
-    energy_unit : str
-        Energy unit of the static energies.
-    volume_unit : str
-        Length unit defining the volume unit.
-    pressure_unit : str
-        Requested pressure unit.
-
-    Returns
-    -------
-    PressureEstimate
-        Polynomial pressure estimate.
-    """
-    fit = polynomial_fit(volume, energy, degree)
-    if not fit.success or fit.parameters is None:
-        return PressureEstimate(
-            "polynomial",
-            np.asarray([], dtype=np.float64),
-            fit,
-            pressure_unit,
-            [fit.message],
-        )
-
-    pressure_energy_density = -polynomial_derivative_from_coefficients(
-        fit.parameters,
-        volume,
-    )
-    pressure = np.asarray(
-        energy_to_pressure(
-            pressure_energy_density, energy_unit, volume_unit, pressure_unit
-        ),
-        dtype=np.float64,
-    )
-    warnings_: list[str] = []
-    if fit.quality is FitQuality.POOR:
-        warnings_.append("the polynomial pressure estimate is based on a poor fit")
-    warnings_.extend(fit.warnings)
-    return PressureEstimate(
-        method="polynomial",
-        pressure=pressure,
-        fit=fit,
-        unit=pressure_unit,
-        warnings=warnings_,
-        metadata={"degree": int(degree)},
-    )
-
-
-def _eos_pressure(
-    volume: np.ndarray,
-    energy: np.ndarray,
-    *,
-    eos: str,
-    energy_unit: str,
-    volume_unit: str,
-    pressure_unit: str,
-    maxfev: int | None = None,
-) -> PressureEstimate:
-    """Estimate pressure from an energy equation-of-state fit.
-
-    Parameters
-    ----------
-    volume : ndarray
-        Unit-cell volumes.
-    energy : ndarray
-        Static energies.
-    eos : str
-        Equation-of-state model.
-    energy_unit : str
-        Energy unit of the static energies.
-    volume_unit : str
-        Length unit defining the volume unit.
-    pressure_unit : str
-        Requested pressure unit.
-    maxfev : int, optional
-        Maximum number of optimizer evaluations.
-
-    Returns
-    -------
-    PressureEstimate
-        EOS pressure estimate.
-    """
-    model = EnergyEOS()
-    try:
-        model_spec = model.model(eos)
-    except ValueError as exc:
-        return _failed_estimate(
-            "eos", str(exc), unit=pressure_unit, metadata={"eos": eos}
-        )
-
-    fit = model.fit(model_spec, volume, energy, maxfev=maxfev)
-    if not fit.success or fit.parameters is None:
-        return PressureEstimate(
-            "eos",
-            np.asarray([], dtype=np.float64),
-            fit,
-            pressure_unit,
-            [fit.message],
-            {"eos": model_spec.tag},
-        )
-
-    pressure_energy_density = model.pressure(model_spec, fit.parameters, volume)
-    pressure = np.asarray(
-        energy_to_pressure(
-            pressure_energy_density, energy_unit, volume_unit, pressure_unit
-        ),
-        dtype=np.float64,
-    )
-    warnings_: list[str] = []
-    if fit.quality is FitQuality.POOR:
-        warnings_.append("the EOS pressure estimate is based on a poor fit")
-    warnings_.extend(fit.warnings)
-    return PressureEstimate(
-        method="eos",
-        pressure=pressure,
-        fit=fit,
-        unit=pressure_unit,
-        warnings=warnings_,
-        metadata={
-            "eos": model_spec.tag,
-            "eos_family": model_spec.family.value,
-            "eos_order": model_spec.order,
-        },
-    )
-
-
 def pressure_volume_preview(
     qha_input: QHAInput,
     options: QHAOptions | None = None,
@@ -450,7 +185,7 @@ def pressure_volume_preview(
     eos_estimate = None
 
     if include_polynomial:
-        polynomial = _polynomial_pressure(
+        polynomial = pressure_from_energy_polynomial(
             volume,
             energy,
             degree=degree,
@@ -461,7 +196,7 @@ def pressure_volume_preview(
         warnings_.extend(polynomial.warnings)
 
     if include_eos:
-        eos_estimate = _eos_pressure(
+        eos_estimate = pressure_from_energy_eos(
             volume,
             energy,
             eos=eos_name,
