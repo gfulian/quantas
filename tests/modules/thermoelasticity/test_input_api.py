@@ -105,7 +105,7 @@ def test_generator_sorts_points_and_round_trips(tmp_path: Path) -> None:
 
 
 
-def test_generator_can_reuse_static_energy_from_kieffer_enriched_qha(
+def test_generator_reuses_kieffer_qha_static_energy(
     tmp_path: Path,
 ) -> None:
     """QSA pressure fitting consumes E(V) independently of a Kieffer block."""
@@ -259,7 +259,7 @@ def test_list_file_paths_are_local_and_sorted_by_volume(tmp_path: Path) -> None:
     ]
 
 
-def test_generator_preserves_backend_keyword_without_reported_elastic_pressure(
+def test_generator_preserves_backend_pressure_keyword(
     tmp_path: Path,
 ) -> None:
     """A backend PRESSURE value remains authoritative if the elastic line is absent."""
@@ -311,7 +311,7 @@ def test_generator_auto_corrects_raw_tensor_from_output_stress(tmp_path: Path) -
     assert parsed.elastic_series.points[0].pressure == 2.0
 
 
-def test_generator_requires_explicit_policy_when_raw_pressure_is_unavailable(
+def test_generator_rejects_raw_tensor_without_pressure(
     tmp_path: Path,
 ) -> None:
     """A raw tensor without pressure information cannot enter QSA silently."""

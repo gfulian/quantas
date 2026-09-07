@@ -168,10 +168,15 @@ def test_ohap_frequency_qha_matches_frozen_reference() -> None:
         expected = reference[label]
         for name, values in expected.items():
             actual = np.asarray(getattr(result, name), dtype=np.float64)[indices, 0]
+            # K_T is a second derivative of a local polynomial free-energy fit.
+            # Supported NumPy/LAPACK combinations differ at about 1e-6 relative
+            # for this derived quantity, while primary thermodynamic observables
+            # reproduce the frozen reference much more tightly.
+            rtol = 2.0e-6 if name == "isothermal_bulk_modulus" else 2.0e-7
             np.testing.assert_allclose(
                 actual,
                 np.asarray(values, dtype=np.float64),
-                rtol=2.0e-7,
+                rtol=rtol,
                 atol=2.0e-10,
             )
         validation = qha.validate_result(result, input_data)

@@ -336,6 +336,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "PlotLayout",
         "PlotPreset",
         "PlotStyleOptions",
+        "PressureSourcePolicy",
         "ProfileBackground",
         "ProfileColor",
         "ProfileMode",

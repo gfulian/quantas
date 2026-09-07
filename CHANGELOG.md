@@ -98,6 +98,11 @@ public contract; they must still be documented and validated.
 
 ### Fixed
 
+- Restored CI contracts for the generalized QSA pressure-source API by
+  documenting ``PressureSourcePolicy`` and updating the frozen public surface.
+  The OHAp QHA regression now keeps tight tolerances for primary thermodynamic
+  observables while allowing the observed supported-platform spread only for
+  the derivative-sensitive isothermal bulk modulus.
 - Made Kieffer YAML serialization explicitly narrow flexible ``ArrayLike`` and
   string-or-enum constructor fields to canonical NumPy arrays and
   ``CutoffVolumeSource`` values, restoring clean mypy validation without

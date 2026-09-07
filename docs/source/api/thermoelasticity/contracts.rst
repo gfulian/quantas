@@ -10,6 +10,8 @@ Scientific selectors
 
 .. autodata:: quantas.api.thermoelasticity.InputInterface
 
+.. autodata:: quantas.api.thermoelasticity.PressureSourcePolicy
+
 .. autoclass:: quantas.api.thermoelasticity.FitMethod
    :no-index:
    :members:
