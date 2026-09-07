@@ -4,9 +4,9 @@
 
 The reader extracts the final structure, volume, density, static pressure,
 energy, and symmetrized stiffness matrix required by elasticity and
-quasi-static thermoelastic workflows. CRYSTAL's ``PRESSURE`` keyword is
-tracked explicitly because it determines whether hydrostatic pre-stress terms
-are included in the reported elastic coefficients.
+quasi-static thermoelastic workflows. CRYSTAL's ``PRESSURE`` and ``PRESSEOS`` keywords are tracked explicitly
+because they determine whether hydrostatic pre-stress terms are included in
+the reported elastic coefficients.
 """
 
 from __future__ import annotations
@@ -37,6 +37,7 @@ class _ElasticityData(TypedDict):
     pressure: float
     stress_pressure: float
     pressure_keyword_value: float
+    prestress_keyword: str | None
     prestress_applied: bool
     structure: CrystalStructure | None
     symmetry: SymmetryMetadata | None
@@ -108,6 +109,7 @@ class CrystalElasticityReader(BasicReader[None]):
             "pressure": np.nan,
             "stress_pressure": np.nan,
             "pressure_keyword_value": np.nan,
+            "prestress_keyword": None,
             "prestress_applied": False,
             "structure": None,
             "symmetry": None,
@@ -145,12 +147,17 @@ class CrystalElasticityReader(BasicReader[None]):
 
     @property
     def pressure_keyword_value(self) -> float:
-        """Return the value supplied to CRYSTAL's ``PRESSURE`` keyword."""
+        """Return the value supplied to CRYSTAL ``PRESSURE`` or ``PRESSEOS``."""
         return self._data["pressure_keyword_value"]
 
     @property
+    def prestress_keyword(self) -> str | None:
+        """Return the CRYSTAL pre-stress keyword, when explicitly present."""
+        return self._data["prestress_keyword"]
+
+    @property
     def prestress_applied(self) -> bool:
-        """Return whether an explicit CRYSTAL ``PRESSURE`` keyword was found."""
+        """Return whether CRYSTAL applied an explicit hydrostatic correction."""
         return self._data["prestress_applied"]
 
     @property
@@ -189,9 +196,11 @@ class CrystalElasticityReader(BasicReader[None]):
         try:
             self._data["stiffness"] = self._read_stiffness(lines)
             self._data["pressure"] = self._read_elastic_pressure(lines)
-            keyword_value = self._read_pressure_keyword(lines)
-            if keyword_value is not None:
+            keyword = self._read_prestress_keyword(lines)
+            if keyword is not None:
+                keyword_name, keyword_value = keyword
                 self._data["pressure_keyword_value"] = keyword_value
+                self._data["prestress_keyword"] = keyword_name
                 self._data["prestress_applied"] = True
             self._data["stress_pressure"] = self._read_last_scalar_after_marker(
                 lines,
@@ -372,16 +381,23 @@ class CrystalElasticityReader(BasicReader[None]):
         return np.nan
 
     @staticmethod
-    def _read_pressure_keyword(lines: list[str]) -> float | None:
-        """Read an explicit ``PRESSURE`` keyword and its following value."""
+    def _read_prestress_keyword(lines: list[str]) -> tuple[str, float] | None:
+        """Read an explicit ``PRESSURE`` or ``PRESSEOS`` keyword and value."""
         for index, line in enumerate(lines):
-            if line.strip().upper() != "PRESSURE":
+            keyword = line.strip().upper()
+            if keyword not in {"PRESSURE", "PRESSEOS"}:
                 continue
             for following in lines[index + 1 : index + 5]:
                 values = _float_values(following)
                 if values:
-                    return float(values[0])
+                    return keyword, float(values[0])
         return None
+
+    @staticmethod
+    def _read_pressure_keyword(lines: list[str]) -> float | None:
+        """Return the explicit CRYSTAL pre-stress value, when present."""
+        keyword = CrystalElasticityReader._read_prestress_keyword(lines)
+        return None if keyword is None else keyword[1]
 
     @staticmethod
     def _read_last_scalar_after_marker(

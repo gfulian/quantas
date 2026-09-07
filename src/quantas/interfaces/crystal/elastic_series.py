@@ -37,6 +37,7 @@ def read_crystal_elastic_series(
     pressure_policy: CrystalPressurePolicy | str = CrystalPressurePolicy.AUTO,
     manual_pressures_gpa: Sequence[float] | None = None,
     apply_prestress_correction: bool = True,
+    correction_applied_by: str = "quantas-crystal-import",
     symprec: float = 1.0e-5,
     angle_tolerance: float = -1.0,
 ) -> ElasticStateSeries:
@@ -51,8 +52,8 @@ def read_crystal_elastic_series(
     filenames : sequence of str or Path
         Completed CRYSTAL ELASTCON or ELAPIEZO output files.
     pressure_policy : CrystalPressurePolicy or str, optional
-        ``"auto"`` accepts a CRYSTAL-corrected tensor when the ``PRESSURE``
-        keyword is present and otherwise uses pressure from the unstrained
+        ``"auto"`` accepts a CRYSTAL-corrected tensor when ``PRESSURE`` or
+        ``PRESSEOS`` is present and otherwise uses pressure from the unstrained
         output stress. ``"output_stress"`` requires raw tensors and uses that
         stress explicitly. ``"manual"`` requires ``manual_pressures_gpa``.
         ``"deferred"`` retains an explicitly raw tensor without assigning a
@@ -64,6 +65,8 @@ def read_crystal_elastic_series(
     apply_prestress_correction : bool, optional
         Convert raw energy--strain tensors to Wallace hydrostatic tensors.
         Tensors already corrected by CRYSTAL are retained unchanged.
+    correction_applied_by : str, optional
+        Provenance label used when Quantas applies the Wallace correction.
     symprec, angle_tolerance : float, optional
         Symmetry tolerances forwarded to :class:`CrystalElasticityReader`.
 
@@ -106,7 +109,7 @@ def read_crystal_elastic_series(
         if apply_prestress_correction and not tensor_kind.is_incremental:
             state = correct_hydrostatic_elastic_state(
                 state,
-                correction_applied_by="quantas-crystal-import",
+                correction_applied_by=correction_applied_by,
             )
         states.append(state)
 
@@ -179,7 +182,7 @@ def _state_from_reader(
     if reader.prestress_applied:
         if policy is not CrystalPressurePolicy.AUTO:
             raise ValueError(
-                f"CRYSTAL output {path} already contains a PRESSURE correction; "
+                f"CRYSTAL output {path} already contains a {reader.prestress_keyword or 'pre-stress'} correction; "
                 "use pressure_policy='auto' to preserve it"
             )
         pressure = (
@@ -189,13 +192,15 @@ def _state_from_reader(
         )
         if not np.isfinite(pressure):
             raise ValueError(
-                f"CRYSTAL output {path} reports PRESSURE correction without a value"
+                f"CRYSTAL output {path} reports a pre-stress correction without a value"
             )
         prestress = PrestressProvenance(
             tensor_kind=ElasticTensorKind.WALLACE_HYDROSTATIC,
             pressure_gpa=pressure,
             pressure_source=PressureSource.APPLIED_PRESTRESS,
-            correction_method="crystal-pressure-keyword",
+            correction_method=(
+                f"crystal-{(reader.prestress_keyword or 'pressure').lower()}-keyword"
+            ),
             correction_applied_by="crystal",
             source_tensor_kind=ElasticTensorKind.RAW_ENERGY_STRAIN,
         )
@@ -214,6 +219,7 @@ def _state_from_reader(
         "backend": "crystal",
         "calculation": "elastic_constants",
         "prestress_applied_by_backend": reader.prestress_applied,
+        "prestress_keyword": reader.prestress_keyword,
     }
     if structure is not None:
         metadata["parsed_structure_volume_angstrom3"] = structure.volume

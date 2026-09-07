@@ -100,6 +100,11 @@ class ThermoelasticityCalculator(BasicCalculator):
                 "elastic_volume_bounds_A3": list(
                     context.input_data.elastic_series.volume_bounds
                 ),
+                "pressure_resolution": dict(
+                    context.input_data.elastic_series.metadata.get(
+                        "pressure_resolution", {}
+                    )
+                ),
                 "qha_source": (
                     None
                     if context.qha_result_data.input_data is None
@@ -395,8 +400,15 @@ class ThermoelasticityCalculator(BasicCalculator):
             ),
             "reference_eos_state": "static 0 K, P=0 reference",
             "wallace_convention": (
-                "CRYSTAL PRESSURE-corrected Wallace stress-strain coefficients; "
-                "no second pressure correction is applied"
+                "hydrostatic Wallace stress-strain coefficients; backend-corrected "
+                "PRESSURE/PRESSEOS tensors are preserved and raw tensors are "
+                "corrected exactly once during input generation; no second pressure "
+                "correction is applied during calibration"
+            ),
+            "pressure_resolution": dict(
+                self.context.input_data.elastic_series.metadata.get(
+                    "pressure_resolution", {}
+                )
             ),
             "citation_keys": list(module_citation_keys("thermoelasticity")),
             "elastic_symmetry": elastic_symmetry,

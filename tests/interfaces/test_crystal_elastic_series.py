@@ -144,6 +144,27 @@ def test_auto_preserves_crystal_pressure_correction(tmp_path) -> None:
     assert state.stiffness[0, 0] == pytest.approx(200.0)
 
 
+
+def test_auto_preserves_crystal_presseos_correction(tmp_path) -> None:
+    """PRESSEOS is recognized as backend-applied Wallace provenance."""
+    output = _write_output(
+        tmp_path / "presseos.out",
+        volume=100.0,
+        density_g_cm3=3.3,
+        energy_hartree=-10.0,
+        stress_pressure_gpa=2.1,
+        crystal_pressure_gpa=2.0,
+    )
+    text = output.read_text(encoding="utf-8").replace("\nPRESSURE\n", "\nPRESSEOS\n")
+    output.write_text(text, encoding="utf-8")
+
+    state = read_crystal_elastic_series([output]).states[0]
+
+    assert state.prestress.tensor_kind is ElasticTensorKind.WALLACE_HYDROSTATIC
+    assert state.prestress.pressure_gpa == pytest.approx(2.0)
+    assert state.prestress.correction_method == "crystal-presseos-keyword"
+    assert state.metadata["prestress_keyword"] == "PRESSEOS"
+
 def test_missing_stress_requests_manual_pressure(tmp_path) -> None:
     """Raw tensors without output stress do not acquire an implicit pressure."""
     output = _write_output(

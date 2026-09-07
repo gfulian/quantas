@@ -105,6 +105,13 @@ from .qha import Options as QHAOptions
 
 
 InputInterface = Literal["crystal"]
+PressureSourcePolicy = Literal[
+    "auto",
+    "output_stress",
+    "manual",
+    "energy_eos",
+    "energy_polynomial",
+]
 
 
 def create_input(
@@ -120,6 +127,12 @@ def create_input(
     elastic_tolerance: float = 1.0e-3,
     pressure_tolerance: float = 5.0e-2,
     structure_correspondence_tolerance: float = 5.0e-1,
+    pressure_source: PressureSourcePolicy = "auto",
+    manual_pressures_gpa: Sequence[float] | None = None,
+    eos: str = "BM3",
+    polynomial_degree: int = 3,
+    maxfev: int | None = None,
+    energy_input: str | Path | None = None,
 ) -> Path:
     """Create a thermoelastic YAML input from elastic-tensor outputs.
 
@@ -147,6 +160,19 @@ def create_input(
         Pressure consistency tolerance in GPa.
     structure_correspondence_tolerance : float, optional
         Atomic correspondence tolerance in angstrom.
+    pressure_source : PressureSourcePolicy, optional
+        Hydrostatic pressure source used when CRYSTAL did not already apply
+        ``PRESSURE`` or ``PRESSEOS``.
+    manual_pressures_gpa : sequence of float or None, optional
+        Manual pressures in source-file order.
+    eos : str, optional
+        Energy EOS used by the energy-EOS pressure source.
+    polynomial_degree : int, optional
+        Polynomial degree used by the energy-polynomial pressure source.
+    maxfev : int or None, optional
+        Optional energy-EOS iteration limit.
+    energy_input : str, Path, or None, optional
+        Optional HA/QHA YAML supplying the static energy-volume dataset.
 
     Returns
     -------
@@ -171,6 +197,12 @@ def create_input(
         elastic_tolerance=elastic_tolerance,
         pressure_tolerance=pressure_tolerance,
         structure_correspondence_tolerance=structure_correspondence_tolerance,
+        pressure_source=pressure_source,
+        manual_pressures_gpa=manual_pressures_gpa,
+        eos=eos,
+        polynomial_degree=polynomial_degree,
+        maxfev=maxfev,
+        energy_input=energy_input,
     )
 
 
@@ -499,6 +531,7 @@ __all__ = [
     "FitPlotOptions",
     "Input",
     "InputInterface",
+    "PressureSourcePolicy",
     "Options",
     "PTPlotOptions",
     "PTQuantity",

@@ -105,6 +105,17 @@ public contract; they must still be documented and validated.
 
 ### Changed
 
+- Generalized CRYSTAL quasi-static thermoelastic input generation around an
+  explicit pressure-resolution contract. ``PRESSURE`` and ``PRESSEOS`` tensors
+  are preserved as backend-corrected Wallace coefficients; raw energy--strain
+  tensors can instead use output-stress, manual, energy-EOS, or
+  energy-polynomial pressures before one Barron--Klein/Wallace correction.
+  Energy-derived pressure may reuse the static ``E(V)`` dataset from an HA/QHA
+  YAML, independently of whether that thermodynamic input is Gamma-only,
+  Kieffer-enriched, or based on explicit phonon dispersion. Pressure and tensor
+  provenance are retained in the normalized YAML and propagated into native
+  thermoelastic HDF5 results.
+
 - Relaxed only the historical Kieffer reference-test tolerance to accommodate
   platform-dependent adaptive-quadrature differences observed on Python 3.10;
   analytical and thermodynamic-identity tolerances remain unchanged.
@@ -132,6 +143,11 @@ public contract; they must still be documented and validated.
   platform-dependent truncation.
 
 ### Validation
+
+- Added QSA input-generation coverage for backend ``PRESSEOS`` provenance,
+  raw-tensor correction from output stress and static ``E(V)``, explicit failure
+  when raw pressure is unavailable, reuse of Kieffer-enriched QHA static energy,
+  and HDF5 round-trip persistence of pressure-resolution provenance.
 
 - Added a compact ten-volume OHAp regression derived from the checksummed QM
   dataset.  It freezes the 132-mode spectrum and fine acoustic cutoffs, verifies

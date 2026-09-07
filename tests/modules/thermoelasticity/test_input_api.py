@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import yaml
 
 from quantas.api.thermoelasticity import prepare_context
 from quantas.models import ResultData, ResultMetadata
@@ -103,6 +104,76 @@ def test_generator_sorts_points_and_round_trips(tmp_path: Path) -> None:
     assert frame["maximum_removed_rotation_degrees"] == 0.0
 
 
+
+def test_generator_can_reuse_static_energy_from_kieffer_enriched_qha(
+    tmp_path: Path,
+) -> None:
+    """QSA pressure fitting consumes E(V) independently of a Kieffer block."""
+    volumes = [90.0, 95.0, 100.0, 105.0, 110.0]
+    energies = [-100.0 + 1.0e-4 * (volume - 100.0) ** 2 for volume in volumes]
+    qha_input = tmp_path / "qha-kieffer.yaml"
+    qha_input.write_text(
+        yaml.safe_dump(
+            {
+                "job": "QSA static E(V) reuse",
+                "natom": 1,
+                "formula_units": 1,
+                "units": {
+                    "energy": "Ha",
+                    "volume": "angstrom^3",
+                    "frequency": "cm^-1",
+                    "length": "angstrom",
+                },
+                "supercell": np.eye(3, dtype=int).tolist(),
+                "q_position_source": "crystal-output",
+                "q_position_convention": "fractional-reciprocal",
+                "qpoints": 1,
+                "volume": volumes,
+                "energy": energies,
+                "phonon": [
+                    {
+                        "q-position": [0.0, 0.0, 0.0],
+                        "weight": 1.0,
+                        "band": [
+                            {"frequency": [0.0] * len(volumes)} for _ in range(3)
+                        ],
+                    }
+                ],
+                "kieffer": {"model": "sine-wave", "provenance": {"test": True}},
+            },
+            sort_keys=False,
+        ),
+        encoding="utf-8",
+    )
+    files: list[Path] = []
+    for index, volume in enumerate(reversed(volumes)):
+        path = tmp_path / f"elastic-energy-{index}.out"
+        _write_crystal_soec(
+            path,
+            pressure=0.0,
+            volume=volume,
+            density=3.0,
+            energy=-1.0,
+        )
+        text = path.read_text(encoding="utf-8")
+        text = text.replace("PRESSURE\n0.0\n", "")
+        text = text.replace("PRESSURE IN GIGAPASCAL: 0.00000000E+00\n", "")
+        path.write_text(text, encoding="utf-8")
+        files.append(path)
+
+    output = create_thermoelastic_input(
+        files,
+        tmp_path / "energy-input.yaml",
+        pressure_source="energy_polynomial",
+        polynomial_degree=2,
+        energy_input=qha_input,
+    )
+    parsed = read_thermoelastic_input(output)
+    model = parsed.elastic_series.metadata["pressure_resolution"]["energy_model"]
+    assert model["source_dataset"] == str(qha_input)
+    assert len(model["volume_matches"]) == len(volumes)
+    assert model["fit"]["success"] is True
+
 def test_prepare_context_reports_elastic_extrapolation(tmp_path: Path) -> None:
     """The API marks QHA volumes outside the sampled elastic interval."""
     files = []
@@ -188,9 +259,63 @@ def test_list_file_paths_are_local_and_sorted_by_volume(tmp_path: Path) -> None:
     ]
 
 
-def test_generator_requires_crystal_pressure_keyword(tmp_path: Path) -> None:
-    """A corrected tensor without explicit PRESSURE provenance is rejected."""
-    path = tmp_path / "uncorrected.out"
+def test_generator_preserves_backend_keyword_without_reported_elastic_pressure(
+    tmp_path: Path,
+) -> None:
+    """A backend PRESSURE value remains authoritative if the elastic line is absent."""
+    path = tmp_path / "corrected-no-elastic-pressure.out"
+    _write_crystal_soec(
+        path,
+        pressure=2.0,
+        volume=100.0,
+        density=3.0,
+        energy=-100.0,
+    )
+    text = path.read_text(encoding="utf-8")
+    text = text.replace("ELASTIC PROPERTIES AT PRESSURE (GPa) = 2.00000000\n", "")
+    path.write_text(text, encoding="utf-8")
+
+    output = create_thermoelastic_input(path, tmp_path / "corrected.yaml")
+    parsed = read_thermoelastic_input(output)
+    resolution = parsed.elastic_series.metadata["pressure_resolution"]
+    assert parsed.elastic_series.points[0].pressure == 2.0
+    assert resolution["states"][0]["pressure_source"] == "applied_prestress"
+    assert resolution["states"][0]["correction_applied_by"] == "crystal"
+
+
+def test_generator_auto_corrects_raw_tensor_from_output_stress(tmp_path: Path) -> None:
+    """Raw CRYSTAL tensors use output stress and record one Wallace correction."""
+    path = tmp_path / "raw.out"
+    _write_crystal_soec(
+        path,
+        pressure=2.0,
+        volume=100.0,
+        density=3.0,
+        energy=-100.0,
+    )
+    text = path.read_text(encoding="utf-8")
+    text = text.replace("PRESSURE\n2.0\n", "")
+    path.write_text(text, encoding="utf-8")
+
+    output = create_thermoelastic_input(path, tmp_path / "auto.yaml")
+    parsed = read_thermoelastic_input(output)
+    resolution = parsed.elastic_series.metadata["pressure_resolution"]
+    assert resolution["requested_source"] == "auto"
+    assert resolution["states"][0]["pressure_source"] == "output_stress"
+    assert resolution["states"][0]["correction_method"] == (
+        "barron-klein-wallace-hydrostatic"
+    )
+    assert resolution["states"][0]["correction_applied_by"] == (
+        "quantas-thermoelastic-inpgen"
+    )
+    assert parsed.elastic_series.points[0].pressure == 2.0
+
+
+def test_generator_requires_explicit_policy_when_raw_pressure_is_unavailable(
+    tmp_path: Path,
+) -> None:
+    """A raw tensor without pressure information cannot enter QSA silently."""
+    path = tmp_path / "raw-no-pressure.out"
     _write_crystal_soec(
         path,
         pressure=0.0,
@@ -200,7 +325,45 @@ def test_generator_requires_crystal_pressure_keyword(tmp_path: Path) -> None:
     )
     text = path.read_text(encoding="utf-8")
     text = text.replace("PRESSURE\n0.0\n", "")
+    text = text.replace("PRESSURE IN GIGAPASCAL: 0.00000000E+00\n", "")
     path.write_text(text, encoding="utf-8")
 
-    with np.testing.assert_raises_regex(ValueError, "PRESSURE keyword is required"):
+    with np.testing.assert_raises_regex(ValueError, "Select an explicit pressure source"):
         create_thermoelastic_input(path, tmp_path / "invalid.yaml")
+
+
+def test_generator_energy_polynomial_corrects_raw_series(tmp_path: Path) -> None:
+    """Static elastic-output E(V) can supply pressure for raw QSA tensors."""
+    files: list[Path] = []
+    volumes = np.asarray([90.0, 95.0, 100.0, 105.0, 110.0])
+    for index, volume in enumerate(volumes):
+        path = tmp_path / f"raw-{index}.out"
+        energy = -100.0 + 1.0e-4 * (volume - 100.0) ** 2
+        _write_crystal_soec(
+            path,
+            pressure=0.0,
+            volume=float(volume),
+            density=3.0,
+            energy=float(energy),
+        )
+        text = path.read_text(encoding="utf-8")
+        text = text.replace("PRESSURE\n0.0\n", "")
+        text = text.replace("PRESSURE IN GIGAPASCAL: 0.00000000E+00\n", "")
+        path.write_text(text, encoding="utf-8")
+        files.append(path)
+
+    output = create_thermoelastic_input(
+        files,
+        tmp_path / "energy.yaml",
+        pressure_source="energy_polynomial",
+        polynomial_degree=2,
+    )
+    parsed = read_thermoelastic_input(output)
+    resolution = parsed.elastic_series.metadata["pressure_resolution"]
+    assert resolution["requested_source"] == "energy_polynomial"
+    assert resolution["energy_model"]["relation"] == "P(V) = -dE/dV"
+    assert resolution["energy_model"]["fit"]["success"] is True
+    assert all(
+        state["pressure_source"] == "energy_polynomial"
+        for state in resolution["states"]
+    )

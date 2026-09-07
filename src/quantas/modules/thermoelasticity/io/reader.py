@@ -164,13 +164,15 @@ def _mapping_to_input(
                 f"elastic_data[{index}].frame.principal_logarithmic_strain must have length 3"
             )
         point_metadata: dict[str, Any] = {"frame_normalization": normalized_frame}
+        stress_value = mapping.get("stress_pressure", mapping.get("pressure"))
+        stress_pressure = (
+            np.nan if stress_value is None else float(stress_value)
+        )
         points.append(
             ElasticVolumePoint(
                 source=str(_required(mapping, "source")),
                 pressure=float(_required(mapping, "pressure")),
-                stress_pressure=float(
-                    mapping.get("stress_pressure", _required(mapping, "pressure"))
-                ),
+                stress_pressure=stress_pressure,
                 volume=float(_required(mapping, "volume")),
                 density=float(_required(mapping, "density")),
                 energy=float(_required(mapping, "energy")),
@@ -226,6 +228,7 @@ def _mapping_to_input(
             "interface": str(data.get("interface", "unknown")),
             "schema_version": schema_version,
             "frame_normalization": frame_metadata,
+            "pressure_resolution": dict(data.get("pressure_resolution", {})),
         },
     )
     return ThermoelasticInput(
@@ -236,6 +239,7 @@ def _mapping_to_input(
         metadata={
             "schema_name": str(schema.get("name")),
             "schema_version": schema_version,
+            "pressure_resolution": dict(data.get("pressure_resolution", {})),
         },
     )
 
