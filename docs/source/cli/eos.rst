@@ -7,6 +7,33 @@ constraints, and initial values.  Quantas therefore stores immutable fit
 records in a persistent archive and tracks which record is accepted or marked
 as a candidate for each scientific slot.
 
+Model discovery
+---------------
+
+Quantas keeps the historical compact EOS tags (for example ``M``, ``BM3``,
+``NS4``/``PT4``, ``V3``, ``T3``, and ``SJ``) rather than exposing a separate
+family/order option pair in workflows that already consume model tags.  Long
+family aliases are accepted by the common resolver and normalized to the
+canonical tag used in reports and persisted metadata.
+
+The complete isothermal catalogue is available without expanding every command
+help page into a long choice list::
+
+   quantas eos show-models
+   quantas eos show-models --domain pv
+   quantas eos show-models --domain ev
+   quantas eos show-models --domain pv --domain ev
+
+Repeated ``--domain`` options request models that support *all* selected
+domains.  The P--V column means direct standalone pressure-volume fitting; an
+E--V-only model may still provide an analytical ``P(V) = -dE/dV`` derivative.
+
+EOS-valued CLI options use the same resolver and provide shell-completion
+candidates when Click completion has been enabled for the active shell.  The
+normal ``--help`` output therefore shows only ``MODEL`` plus a pointer to
+``quantas eos show-models``.  Completion includes canonical compact tags and a
+small set of established aliases such as ``NS`` and ``SJEOS``.
+
 Recommended sequence
 --------------------
 

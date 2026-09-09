@@ -106,6 +106,12 @@ and ``K''(V)`` are available to the shared numerical Energy EOS service.  SJEOS
 is deliberately exposed as an E--V model only in the standalone fitting
 registry; direct P--V fitting remains unchanged in this tranche.
 
+EOS model selection at CLI boundaries now uses the shared scientific resolver
+instead of duplicated large ``click.Choice`` catalogues.  The historical compact
+tags remain the canonical workflow representation, ``quantas eos show-models``
+provides domain-filtered discovery, and shell completion exposes concise model
+candidates without changing numerical or persistence contracts.
+
 The remaining b11 work is intentionally incremental: complete energy-unit
 normalization, promote the ``ev/energy`` domain through
 fitting/diagnostics/HDF5/reporting, expose derived P(V) inspection, and only

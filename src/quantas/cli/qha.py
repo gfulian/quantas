@@ -58,7 +58,6 @@ from quantas.api.qha import (
     PolynomialDerivativeMethod as QHAPolynomialDerivativeMethod,
     Scheme as QHAScheme,
     ThermalExpansionMethod as QHAThermalExpansionMethod,
-    available_energy_eos,
     build_inspection_report,
     build_plots as build_qha_plots,
     inspect as inspect_qha_input,
@@ -71,6 +70,7 @@ from quantas.api.qha import (
     write_table as write_qha_table,
 )
 from quantas.cli.output import CLIOutput
+from quantas.cli.eos_model_type import ENERGY_EOS_MODEL
 from quantas.cli.kieffer_input import add_kieffer
 from quantas.cli.qha_observer import QHATextObserver
 from quantas.cli.phonon_input import phonon_inpgen
@@ -80,8 +80,6 @@ from quantas.references import (
     module_citation_keys,
     render_citation_notice,
 )
-
-_QHA_ENERGY_EOS_CHOICES = available_energy_eos()
 
 
 def _resolve_kieffer_mode_gruneisen(
@@ -136,10 +134,11 @@ qha.add_command(add_kieffer)
 @grouped_option(
     "--eos",
     group=SCIENTIFIC_GROUP,
-    type=click.Choice(_QHA_ENERGY_EOS_CHOICES, case_sensitive=True),
+    type=ENERGY_EOS_MODEL,
     default="BM3",
     show_default=True,
-    help="Equation-of-state family and order used for the preview fit.",
+    help=("EOS model used for the preview fit. Run 'quantas eos show-models "
+        "--domain ev' to list compatible models."),
 )
 @grouped_option(
     "--degree",
@@ -283,10 +282,11 @@ def inspect(
     "-E",
     "--eos",
     group=SCIENTIFIC_GROUP,
-    type=click.Choice(_QHA_ENERGY_EOS_CHOICES, case_sensitive=True),
+    type=ENERGY_EOS_MODEL,
     default="BM3",
     show_default=True,
-    help="Equation-of-state family and order used for EOS minimization.",
+    help=("EOS model used for EOS minimization. Run 'quantas eos show-models "
+        "--domain ev' to list compatible models."),
 )
 @grouped_option(
     "--gruneisen/--no-gruneisen",

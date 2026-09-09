@@ -63,6 +63,8 @@ def test_parser_rejects_unknown_unsupported_and_conflicting_orders():
         parse_eos_model("unknown")
     with pytest.raises(ValueError, match="unsupported order"):
         parse_eos_model("V4")
+    with pytest.raises(ValueError, match="unsupported order"):
+        parse_eos_model("BM5")
     with pytest.raises(ValueError, match="conflicting EOS orders"):
         parse_eos_model("BM2", order=3)
 

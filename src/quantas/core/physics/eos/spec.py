@@ -143,9 +143,14 @@ class EOSModel:
         return prefix if self.order is None else f"{prefix}{self.order}"
 
     @property
+    def family_name(self) -> str:
+        """Return the human-readable physical family name."""
+        return _DISPLAY_NAME[self.family]
+
+    @property
     def name(self) -> str:
         """Return a human-readable model name."""
-        base = _DISPLAY_NAME[self.family]
+        base = self.family_name
         return base if self.order is None else f"{base}, order {self.order}"
 
     @property
@@ -314,7 +319,7 @@ def parse_eos_model(
         embedded_order = None
     else:
         raw = str(eos).strip().lower()
-        match = re.fullmatch(r"(.+?)([234])?", raw)
+        match = re.fullmatch(r"(.+?)(\d+)?", raw)
         if match is None:
             raise ValueError(f"unknown equation of state: {eos!r}")
         base, suffix = match.groups()

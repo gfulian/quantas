@@ -41,6 +41,22 @@ energy curves can later expose pressure reconstruction and inspection.  SJEOS
 is not advertised as a direct P--V fitting model in the standalone workflow at
 this stage.
 
+Model naming and discovery
+--------------------------
+
+Isothermal EOS selection is normalized by one shared model resolver.  Compact
+Quantas tags such as ``BM3``, ``PT4`` (or historical alias ``NS4``), ``V3``,
+``T3``, and ``SJ`` remain the canonical persisted identifiers.  Descriptive
+aliases such as ``birch-murnaghan3`` and ``natural-strain4`` are accepted at
+CLI boundaries and resolve to the same scientific model.
+
+Use ``quantas eos show-models`` to inspect the catalogue.  ``--domain pv``
+selects models exposed for direct pressure-volume fitting, while ``--domain ev``
+selects models with an integrated energy-volume form.  Repeating the option
+returns the intersection of the requested capabilities.  This discovery layer
+is frontend-only: it does not alter EOS equations, parameters, fitting, or
+persistence semantics.
+
 Why EOS uses a different command-line workflow
 ----------------------------------------------
 

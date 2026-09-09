@@ -54,3 +54,17 @@ def test_eos_workflow_postfit_limits() -> None:
         "Common interpretation errors",
     ):
         assert phrase in text
+
+
+def test_eos_workflow_model_discovery() -> None:
+    """The EOS manual documents registry-backed model discovery."""
+    text = _text()
+    for phrase in (
+        "Model naming and discovery",
+        "quantas eos show-models",
+        "--domain pv",
+        "--domain ev",
+        "NS4",
+        "canonical persisted identifiers",
+    ):
+        assert phrase in text

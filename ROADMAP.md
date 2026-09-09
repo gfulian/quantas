@@ -12,6 +12,8 @@ standalone Energy EOS workflow.  Work proceeds in small validated steps:
 - complete parity between P(V) and volume-integrated E(V) model families;
 - retain and validate the newly added SJEOS Energy EOS in its physical
   equilibrium-parameter form, including derived P(V) inspection;
+- keep EOS model discovery centralized through the shared resolver, compact
+  historical tags, ``quantas eos show-models``, and shell completion;
 - complete canonical energy-unit handling while preserving all existing unit
   aliases and conversions;
 - promote ``ev/energy`` from shared core capability to public fitting,

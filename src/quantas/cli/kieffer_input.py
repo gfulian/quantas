@@ -13,8 +13,7 @@ from quantas.api import qha as qha_api
 from quantas.cli.contracts import NUMERICAL_GROUP, OUTPUT_GROUP, SCIENTIFIC_GROUP
 from quantas.cli.grouped_options import GroupedCommand, grouped_option
 from quantas.cli.messages import confirm, echo_error
-
-_ENERGY_EOS_CHOICES = qha_api.available_energy_eos()
+from quantas.cli.eos_model_type import ENERGY_EOS_MODEL
 
 
 @click.command(
@@ -75,11 +74,12 @@ _ENERGY_EOS_CHOICES = qha_api.available_energy_eos()
 )
 @grouped_option(
     "--eos",
-    type=click.Choice(_ENERGY_EOS_CHOICES, case_sensitive=True),
+    type=ENERGY_EOS_MODEL,
     default="BM3",
     show_default=True,
     group=SCIENTIFIC_GROUP,
-    help="Energy EOS used with --pressure-source energy-eos.",
+    help=("Energy EOS used with --pressure-source energy-eos. Run "
+        "'quantas eos show-models --domain ev' to list compatible models."),
 )
 @grouped_option(
     "--degree",

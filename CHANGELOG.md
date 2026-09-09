@@ -9,6 +9,14 @@ public contract; they must still be documented and validated.
 
 ### Added
 
+- Added ``quantas eos show-models`` as a compact, registry-backed catalogue of
+  isothermal EOS formulations.  ``--domain pv`` and ``--domain ev`` may be
+  repeated to restrict the table to models compatible with every requested
+  domain.
+- Added capability-aware shell completion for EOS-valued CLI options.  Compact
+  canonical tags and selected historical aliases are proposed interactively
+  without expanding normal ``--help`` output into a long ``click.Choice`` list.
+
 - Added volume-integrated modified Tait energy equations for the existing T2,
   T3, and T4 EOS orders.  The implementation is an analytical integral of the
   canonical Quantas/EosFit pressure form and preserves
@@ -21,6 +29,11 @@ public contract; they must still be documented and validated.
   Energy EOS core for pressure reconstruction and later ``inspect`` use.
 
 ### Changed
+
+- Replaced large energy-EOS ``click.Choice`` lists in QHA, Kieffer enrichment,
+  and thermoelastic input/QHA adapters with the shared EOS resolver.  Existing
+  compact tags remain valid, long aliases are normalized to canonical tags, and
+  invalid family/order combinations now report actionable model-specific errors.
 
 - Promoted Tait models to the integrated-energy EOS registry, making T2, T3,
   and T4 available to the common ``EnergyEOS`` fitting core alongside
@@ -35,6 +48,10 @@ public contract; they must still be documented and validated.
   experimental P-V fit model in this tranche.
 
 ### Validation
+
+- Added CLI tests for EOS alias normalization, unsupported-order diagnostics,
+  E(V)-versus-direct-P-V capability checks, shell-completion candidates,
+  ``show-models`` domain filtering, and compact QHA help rendering.
 
 - Added analytical/numerical consistency tests for integrated Tait energies,
   including direct numerical integration of the pressure form, the removable
