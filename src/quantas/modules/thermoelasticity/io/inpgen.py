@@ -228,6 +228,7 @@ class ThermoelasticInputCreator:
                     f"{path}: elastic-reference lattice is incompatible with the "
                     "reported primitive-cell volume"
                 )
+            lattice = np.asarray(lattice, dtype=np.float64)
             pressure = state.prestress.pressure_gpa
             if pressure is None or not np.isfinite(pressure):
                 raise ValueError(f"{path}: corrected tensor lacks finite pressure provenance")
