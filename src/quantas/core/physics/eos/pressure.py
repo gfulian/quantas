@@ -15,7 +15,11 @@ from typing import TypeAlias
 
 import numpy as np
 
-from .parameters import EOSParameters, resolve_pressure_parameters
+from .parameters import (
+    EOSParameters,
+    resolve_pressure_parameters,
+    _tait_coefficients,
+)
 from .spec import EOSFamily, EOSModel, parse_eos_model
 
 ArrayLike: TypeAlias = np.ndarray | float | Sequence[float]
@@ -106,7 +110,7 @@ class PressureEOS:
             return -x * first / 3.0
         if model.family is EOSFamily.TAIT:
             pressure = self._tait_pressure(values, pars)
-            a, b, c = self._tait_coefficients(pars)
+            a, b, c = _tait_coefficients(pars)
             ratio = values / pars.V0
             return pars.K0 * ratio * (1.0 + b * pressure) ** (c + 1.0)
         raise ValueError(f"unknown pressure EOS: {eos!r}")
@@ -141,7 +145,7 @@ class PressureEOS:
             return -(1.0 + x * second / first) / 3.0
         if model.family is EOSFamily.TAIT:
             pressure = self._tait_pressure(values, pars)
-            a, b, c = self._tait_coefficients(pars)
+            a, b, c = _tait_coefficients(pars)
             return (pars.KP + 1.0) * ((1.0 - a) * (1.0 + b * pressure) ** c + a) - 1.0
         raise ValueError(f"unknown pressure EOS: {eos!r}")
 
@@ -178,7 +182,7 @@ class PressureEOS:
             return derivative / first
         if model.family is EOSFamily.TAIT:
             pressure = self._tait_pressure(values, pars)
-            a, b, c = self._tait_coefficients(pars)
+            a, b, c = _tait_coefficients(pars)
             return (
                 (pars.KP + 1.0) * (1.0 - a) * c * b * (1.0 + b * pressure) ** (c - 1.0)
             )
@@ -424,18 +428,8 @@ class PressureEOS:
         return pressure, first, second, third
 
     @staticmethod
-    def _tait_coefficients(pars: EOSParameters) -> tuple[float, float, float]:
-        denominator = 1.0 + pars.KP + pars.K0 * pars.KPP
-        a = (1.0 + pars.KP) / denominator
-        b = pars.KP / pars.K0 - pars.KPP / (1.0 + pars.KP)
-        c = denominator / (pars.KP**2 + pars.KP - pars.K0 * pars.KPP)
-        if not np.all(np.isfinite([a, b, c])) or a == 0.0 or b == 0.0 or c == 0.0:
-            raise ValueError("Tait parameters produce a singular equation")
-        return float(a), float(b), float(c)
-
-    @classmethod
-    def _tait_pressure(cls, volume: np.ndarray, pars: EOSParameters) -> np.ndarray:
-        a, b, c = cls._tait_coefficients(pars)
+    def _tait_pressure(volume: np.ndarray, pars: EOSParameters) -> np.ndarray:
+        a, b, c = _tait_coefficients(pars)
         argument = ((volume / pars.V0) + a - 1.0) / a
         if np.any(argument <= 0.0):
             raise ValueError("Tait EOS is undefined for the requested volume")

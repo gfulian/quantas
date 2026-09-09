@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import numpy as np
 import pytest
+from scipy.integrate import quad
 
 from quantas.core.physics.eos import EnergyEOS
 from quantas.core.math.fitting import FitQuality, FitStatus
@@ -70,7 +71,7 @@ def test_energy_eos_fits_return_structured_diagnostics():
     volume = np.linspace(68.0, 76.0, 11)
     expected = np.array([-100.0, 0.55, 4.2, 72.0], dtype=np.float64)
 
-    for tag in ["murnaghan", "birchmurnaghan", "poirier-tarantola", "vinet"]:
+    for tag in ["murnaghan", "birchmurnaghan", "poirier-tarantola", "vinet", "tait"]:
         energy = eos.function(tag)(volume, *expected)
         result = eos.fit(tag, volume, energy)
         assert result.success, result.message
@@ -145,7 +146,7 @@ def test_energy_eos_pressure_is_zero_at_reference_volume():
     pars = np.array([-100.0, 0.55, 4.2, 72.0], dtype=np.float64)
     volume = np.array([pars[3]], dtype=np.float64)
 
-    for tag in ["M", "BM", "PT", "V"]:
+    for tag in ["M", "BM", "PT", "V", "T"]:
         np.testing.assert_allclose(
             eos.pressure(tag, pars, volume), np.array([0.0]), atol=1.0e-14
         )
@@ -169,6 +170,9 @@ def test_energy_eos_rejects_unknown_tag():
         ("PT4", [-100.0, 0.55, 4.2, -0.04, 72.0]),
         ("V2", [-100.0, 0.55, 72.0]),
         ("V3", [-100.0, 0.55, 4.2, 72.0]),
+        ("T2", [-100.0, 0.55, 72.0]),
+        ("T3", [-100.0, 0.55, 4.2, 72.0]),
+        ("T4", [-100.0, 0.55, 4.2, -0.04, 72.0]),
     ],
 )
 def test_every_integrated_order_differentiates_to_matching_pressure(tag, parameters):
@@ -182,6 +186,84 @@ def test_every_integrated_order_differentiates_to_matching_pressure(tag, paramet
     pressure = eos.pressure(tag, parameters, volume)
 
     np.testing.assert_allclose(pressure, numerical, rtol=3.0e-7, atol=2.0e-9)
+
+
+@pytest.mark.parametrize(
+    ("tag", "parameters"),
+    [
+        ("T2", [-100.0, 0.55, 72.0]),
+        ("T3", [-100.0, 0.55, 4.2, 72.0]),
+        ("T4", [-100.0, 0.55, 4.2, -0.04, 72.0]),
+    ],
+)
+def test_integrated_tait_matches_numerical_pressure_integral(tag, parameters):
+    eos = EnergyEOS()
+    e0 = float(parameters[0])
+    v0 = float(parameters[-1])
+    volume = np.array([68.0, 70.0, 74.0, 76.0], dtype=np.float64)
+
+    expected = []
+    for value in volume:
+        integral, _ = quad(
+            lambda candidate: float(
+                eos.pressure(tag, parameters, np.array([candidate]))[0]
+            ),
+            v0,
+            float(value),
+            epsabs=1.0e-12,
+            epsrel=1.0e-12,
+        )
+        expected.append(e0 - integral)
+
+    np.testing.assert_allclose(
+        eos.evaluate(tag, volume, parameters),
+        np.asarray(expected),
+        rtol=2.0e-13,
+        atol=2.0e-13,
+    )
+
+
+def test_integrated_tait_uses_logarithmic_c_equal_one_limit():
+    eos = EnergyEOS()
+    parameters = [-100.0, 0.5, 2.0, 3.0, 72.0]
+    volume = np.array([68.0, 72.0, 76.0], dtype=np.float64)
+
+    energy = eos.evaluate("T4", volume, parameters)
+
+    assert np.all(np.isfinite(energy))
+    np.testing.assert_allclose(energy[1], -100.0, rtol=0.0, atol=1.0e-14)
+    step = 1.0e-5
+    numerical = -(
+        eos.evaluate("T4", volume + step, parameters)
+        - eos.evaluate("T4", volume - step, parameters)
+    ) / (2.0 * step)
+    np.testing.assert_allclose(
+        eos.pressure("T4", parameters, volume),
+        numerical,
+        rtol=3.0e-7,
+        atol=2.0e-9,
+    )
+
+
+@pytest.mark.parametrize(
+    ("tag", "parameters"),
+    [
+        ("T2", [-100.0, 0.55, 72.0]),
+        ("T3", [-100.0, 0.55, 4.2, 72.0]),
+        ("T4", [-100.0, 0.55, 4.2, -0.04, 72.0]),
+    ],
+)
+def test_integrated_tait_fits_recover_exact_synthetic_parameters(tag, parameters):
+    eos = EnergyEOS()
+    volume = np.linspace(67.0, 77.0, 17)
+    energy = eos.evaluate(tag, volume, parameters)
+
+    result = eos.fit(tag, volume, energy, p0=parameters)
+
+    assert result.success, result.message
+    np.testing.assert_allclose(
+        result.parameters, np.asarray(parameters), rtol=2.0e-9, atol=2.0e-9
+    )
 
 
 @pytest.mark.parametrize(

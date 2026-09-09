@@ -15,10 +15,10 @@ state.
 | Item | Current value |
 |---|---|
 | Last updated | 2026-09-09 |
-| Current development version | `2.0.0b10` |
-| Stable development baseline | `2.0.0b9`, `dev/refactor` |
-| Active scientific branch | `dev/kieffer` |
-| Current focus | Kieffer acoustic thermodynamics, CRYSTAL phonon continuity, and quasi-static thermoelastic validation |
+| Current development version | `2.0.0b11` |
+| Stable development baseline | `2.0.0b10`, `dev/refactor` |
+| Active scientific branch | `dev/energyeos` |
+| Current focus | Standalone Energy EOS: integrated E(V) models, units, fitting, diagnostics, and backend input generation |
 | Development status | Pre-RC scientific closure and validation |
 | Numerical precision | `float64` for real calculations and native HDF5 values; `complex128` for complex quantities |
 | Persistence | Native HDF5 envelope retained; HA/QHA and Thermoelasticity payloads have been extended additively with Kieffer and pressure/provenance data |
@@ -86,7 +86,26 @@ The `2.0.0b9` baseline already provides:
 Python support remains 3.10 through 3.13 until the complete scientific
 stack is validated on Python 3.14.
 
-## What `2.0.0b10` / `dev/kieffer` adds
+## Current `2.0.0b11` / `dev/energyeos` tranche
+
+The Kieffer/QSA branch has been merged into ``dev/refactor`` with the complete
+CI matrix green.  The current branch promotes the already shared Energy EOS
+numerical core into a complete standalone EOS workflow without making QHA or
+Thermoelasticity depend on a frontend module.
+
+The first scientific step is model parity between pressure and integrated
+energy representations.  Modified Tait T2/T3/T4 now have analytical E(V) forms
+that use the same auxiliary coefficients and implied-parameter rules as the
+existing P(V) implementation.  Their pressure derivative is validated against
+the canonical Tait pressure equation.
+
+The remaining b11 work is intentionally incremental: add the selected
+electronic-structure E(V) models, complete energy-unit normalization, promote
+the ``ev/energy`` domain through fitting/diagnostics/HDF5/reporting, expose
+derived P(V) inspection, and only then add backend-specific ``eos inpgen``
+starting with CRYSTAL and later VASP.
+
+## What `2.0.0b10` / `dev/kieffer` added
 
 The current branch is substantially larger than the original
 `dev/crystal-parser` task.  Kieffer acoustic thermodynamics was intentionally

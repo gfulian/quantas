@@ -24,6 +24,7 @@ from .parameters import (
     free_energy_parameters,
     resolve_energy_parameters,
     resolved_energy_parameter_covariance,
+    _tait_coefficients,
 )
 from .pressure import PressureEOS
 from .spec import EOSFamily, EOSModel, parse_eos_model
@@ -93,6 +94,8 @@ class EnergyEOS:
             return self._strain_energy(values, pars, EOSFamily.NATURAL_STRAIN)
         if model.family is EOSFamily.VINET:
             return self._vinet_energy(values, pars, model.order)
+        if model.family is EOSFamily.TAIT:
+            return self._tait_energy(values, pars)
         raise ValueError(f"unknown energy EOS: {eos!r}")
 
     def fit(
@@ -414,6 +417,53 @@ class EnergyEOS:
         """
         return self.evaluate("V3", volume, [E0, K0, KP, V0])
 
+    def tait(
+        self,
+        volume: ArrayLike,
+        E0: float,
+        K0: float,
+        KP: float,
+        V0: float,
+    ) -> np.ndarray:
+        r"""Return the third-order volume-integrated modified Tait energy.
+
+        With the EosFit auxiliary coefficients :math:`a`, :math:`b`, and
+        :math:`c`, define
+
+        .. math::
+
+            y=\frac{V/V_0+a-1}{a}.
+
+        The energy is obtained analytically from
+        :math:`P(V)=-\mathrm dE/\mathrm dV`.  For :math:`c\ne1`,
+
+        .. math::
+
+            E(V)=E_0+\frac{aV_0}{b}\left[
+            (y-1)-\frac{c}{c-1}
+            \left(y^{(c-1)/c}-1\right)\right].
+
+        The removable :math:`c=1` limit is evaluated as
+
+        .. math::
+
+            E(V)=E_0+\frac{aV_0}{b}\left[y-1-\ln y\right].
+
+        Parameters
+        ----------
+        volume : array-like
+            Positive volume values.
+        E0, K0, KP, V0 : float
+            Reference energy, bulk modulus, first pressure derivative and
+            reference volume.
+
+        Returns
+        -------
+        ndarray
+            Energy values at ``volume``.
+        """
+        return self.evaluate("T3", volume, [E0, K0, KP, V0])
+
     @staticmethod
     def _fit_metadata(model: EOSModel) -> dict[str, object]:
         return {
@@ -499,6 +549,21 @@ class EnergyEOS:
             - (5.0 + 3.0 * pars.KP * (x - 1.0) - 3.0 * x)
             * np.exp(-1.5 * (pars.KP - 1.0) * (x - 1.0))
         )
+
+    @staticmethod
+    def _tait_energy(volume: np.ndarray, pars: EOSParameters) -> np.ndarray:
+        if pars.E0 is None:
+            raise ValueError("energy EOS parameters require E0")
+        a, b, c = _tait_coefficients(pars)
+        y = ((volume / pars.V0) + a - 1.0) / a
+        if np.any(y <= 0.0):
+            raise ValueError("Tait EOS is undefined for the requested volume")
+        exponent = (c - 1.0) / c
+        if abs(exponent) <= 1.0e-12:
+            integral = y - 1.0 - np.log(y)
+        else:
+            integral = (y - 1.0) - np.expm1(exponent * np.log(y)) / exponent
+        return pars.E0 + a * pars.V0 / b * integral
 
     @staticmethod
     def _validate_volume(volume: ArrayLike) -> np.ndarray:

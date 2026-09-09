@@ -361,6 +361,83 @@ whether the dataset genuinely resolves higher derivatives.
      - Good behavior at high compression
      - Lower-order truncation has limited theoretical basis
 
+Volume-integrated energy equations of state
+-------------------------------------------
+
+Static electronic-structure calculations naturally provide total energies at a
+set of cell volumes.  Quantas represents the corresponding integrated EOS by
+introducing a reference energy :math:`E_0=E(V_0)` and requiring
+
+.. math::
+
+   P(V)=-\frac{\mathrm dE}{\mathrm dV}.
+
+The physical pressure parameters :math:`V_0`, :math:`K_0`, :math:`K'_0`, and,
+where applicable, :math:`K''_0` therefore retain the same meaning as in the
+matching P--V equation.  Lower-order integrated models use the same implied
+parameter rules as their pressure counterparts.  The EOS implementation uses
+this identity directly when reconstructing pressure from a fitted static
+energy--volume curve.
+
+At the current ``2.0.0b11`` checkpoint, the numerical core provides integrated
+forms for Murnaghan, Birch--Murnaghan orders 2--4, natural-strain
+Poirier--Tarantola orders 2--4, Vinet orders 2--3, and modified Tait orders
+2--4.  The standalone public E--V workflow is being completed separately from
+these shared core equations; QHA and Thermoelasticity continue to consume the
+common numerical implementation rather than a frontend workflow.
+
+Integrated modified Tait equation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The modified Tait pressure form and auxiliary coefficients follow Angel
+*et al.* (2014) [#eosfit7_angel_gonzalez_platas_alvaro_2014]_.  Define
+
+.. math::
+
+   y=\frac{V/V_0+a-1}{a},
+
+so that :math:`y=1` at :math:`V=V_0`.  Because
+:math:`\mathrm dV=aV_0\,\mathrm dy`, direct integration of the canonical Tait
+pressure equation gives, for :math:`c\neq1`,
+
+.. math::
+
+   E(V)=E_0+\frac{aV_0}{b}
+   \left[
+   (y-1)-\frac{c}{c-1}
+   \left(y^{(c-1)/c}-1\right)
+   \right].
+
+The apparent singularity at :math:`c=1` is removable.  Quantas evaluates the
+analytic limit
+
+.. math::
+
+   E(V)=E_0+\frac{aV_0}{b}\left[y-1-\ln y\right].
+
+The implementation evaluates the power term through ``expm1`` and ``log`` to
+avoid unnecessary cancellation when :math:`c` is close to one.  T2, T3, and T4
+use exactly the same implied/fitted :math:`K'_0` and :math:`K''_0` conventions
+as the corresponding Tait P--V models.
+
+Two identities are used as scientific regression tests:
+
+.. math::
+
+   E(V_0)=E_0,
+
+and
+
+.. math::
+
+   -\frac{\mathrm dE}{\mathrm dV}=P_{\mathrm{Tait}}(V).
+
+The second identity is checked both by finite differentiation and by direct
+numerical integration of the independently evaluated pressure equation.  This
+is important because an apparently accurate E--V fit can still yield poor
+pressure or bulk-modulus derivatives if the integrated and pressure forms are
+not mathematically consistent.
+
 Volume--temperature equations of state
 --------------------------------------
 

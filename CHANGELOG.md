@@ -7,12 +7,31 @@ public contract; they must still be documented and validated.
 
 ## [2.0.0b11] - Unreleased
 
+### Added
+
+- Added volume-integrated modified Tait energy equations for the existing T2,
+  T3, and T4 EOS orders.  The implementation is an analytical integral of the
+  canonical Quantas/EosFit pressure form and preserves
+  ``P(V) = -dE/dV`` for every order.
+- Added a shared modified-Tait coefficient resolver so pressure and energy
+  representations use one parameterization and one singularity check.
+
+### Changed
+
+- Promoted Tait models to the integrated-energy EOS registry, making T2, T3,
+  and T4 available to the common ``EnergyEOS`` fitting core alongside
+  Murnaghan, Birch--Murnaghan, natural strain, and Vinet forms.
+- Updated the EOS theory, workflow notes, citation guidance, roadmap, and
+  project-state documentation for the new ``2.0.0b11`` Energy EOS tranche.
+
+### Validation
+
+- Added analytical/numerical consistency tests for integrated Tait energies,
+  including direct numerical integration of the pressure form, the removable
+  ``c = 1`` logarithmic limit, exact synthetic-parameter recovery, and pressure
+  reconstruction from fitted E(V) data.
 
 ## [2.0.0b10] - 2026-09-09
-
-- Accept CRYSTAL dispersion q-points labelled ``R`` when they print only ``MODES IN PHASE`` while continuing to require anti-phase components for explicitly complex ``C`` q-points.
-
-- Enrich HA/QHA ``inpgen`` terminal summaries with q-point coordinate previews and explicit selected-energy/correction provenance while leaving generated YAML unchanged.
 
 ### Added
 
@@ -112,6 +131,10 @@ public contract; they must still be documented and validated.
 
 ### Fixed
 
+- Accepted CRYSTAL dispersion q-points labelled ``R`` when they print only
+  ``MODES IN PHASE``, while continuing to require anti-phase components for
+  explicitly complex ``C`` q-points.
+
 - Corrected CRYSTAL raw energy--strain pre-stress conversion to use the
   finite-pressure stiffness transformation documented by Erba *et al.*
   (J. Chem. Phys. 140, 124703, 2014) and CRYSTAL ``PRESSURE``/``PRESSEOS``.
@@ -137,6 +160,10 @@ public contract; they must still be documented and validated.
   changing serialized numbers or runtime behavior.
 
 ### Changed
+
+- Enriched HA/QHA ``inpgen`` terminal summaries with q-point coordinate previews
+  and explicit selected-energy/correction provenance while leaving generated
+  YAML unchanged.
 
 - Generalized CRYSTAL quasi-static thermoelastic input generation around an
   explicit pressure-resolution contract. ``PRESSURE`` and ``PRESSEOS`` tensors
@@ -581,6 +608,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b11]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b11
 [2.0.0b10]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b10
 [2.0.0b9]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b9
 [2.0.0b8]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b8

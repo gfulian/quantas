@@ -78,6 +78,9 @@ METHOD_CITATION_KEYS: dict[str, tuple[str, ...]] = {
         "eosfit7_angel_gonzalez_platas_alvaro_2014",
         "anderson_1995",
     ),
+    "energy_volume_equations": (
+        "eosfit7_angel_gonzalez_platas_alvaro_2014",
+    ),
     "thermal_expansion_equations": (
         "eosfit7_angel_gonzalez_platas_alvaro_2014",
     ),

@@ -137,8 +137,12 @@ The public fitting domains are:
    the public P--V--T fitting workflow accepts the volume target only.
 
 Energy--volume formulations are shared numerical core functionality used by
-QHA, but there is no public standalone E--V fitting workflow in the EOS
-subsystem.
+QHA and Thermoelasticity.  The ``2.0.0b11`` core includes integrated
+Murnaghan, Birch--Murnaghan, natural-strain, Vinet, and Tait forms, all tied to
+their matching pressure EOS through ``P(V) = -dE/dV``.  The public standalone
+E--V fitting workflow is being completed in the current Energy EOS tranche;
+until that promotion is complete these models remain a shared numerical
+service rather than a separate archived frontend workflow.
 
 A result slot is identified by domain and target, for example:
 

@@ -323,6 +323,9 @@ def test_eos_method_references_follow_the_canonical_review() -> None:
         "eosfit7_angel_gonzalez_platas_alvaro_2014",
         "anderson_1995",
     )
+    assert METHOD_CITATION_KEYS["energy_volume_equations"] == (
+        "eosfit7_angel_gonzalez_platas_alvaro_2014",
+    )
     assert METHOD_CITATION_KEYS["thermal_expansion_equations"] == (
         "eosfit7_angel_gonzalez_platas_alvaro_2014",
     )

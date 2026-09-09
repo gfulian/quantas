@@ -66,6 +66,12 @@ effective-variance weighting used by EOS, cite:
    Kristallographie* **229**, 405--419 (2014),
    doi:10.1515/zkri-2013-1711.
 
+The same reference defines the modified Tait pressure parameterization used by
+Quantas.  Volume-integrated E--V forms retain the corresponding physical EOS
+parameters and are constrained by :math:`P(V)=-\mathrm dE/\mathrm dV`; the
+integrated Tait expression is obtained analytically from that registered
+pressure form.
+
 The effective-variance approach is attributed to:
 
    J. Orear, “Least squares when both variables have uncertainties”,

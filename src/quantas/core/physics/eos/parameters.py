@@ -62,6 +62,45 @@ class EOSParameters:
         }
 
 
+def _tait_coefficients(parameters: EOSParameters) -> tuple[float, float, float]:
+    r"""Return the auxiliary coefficients of the modified Tait EOS.
+
+    The coefficients follow the EosFit parameterization,
+
+    .. math::
+
+        a=\frac{1+K'_0}{1+K'_0+K_0K''_0},
+
+        b=\frac{K'_0}{K_0}-\frac{K''_0}{1+K'_0},
+
+        c=\frac{1+K'_0+K_0K''_0}
+        {(K'_0)^2+K'_0-K_0K''_0}.
+
+    Parameters
+    ----------
+    parameters : EOSParameters
+        Resolved physical EOS parameters.
+
+    Returns
+    -------
+    tuple of float
+        The ``(a, b, c)`` Tait coefficients.
+
+    Raises
+    ------
+    ValueError
+        If the parameters make the Tait representation singular.
+    """
+    pars = parameters
+    denominator = 1.0 + pars.KP + pars.K0 * pars.KPP
+    a = (1.0 + pars.KP) / denominator
+    b = pars.KP / pars.K0 - pars.KPP / (1.0 + pars.KP)
+    c = denominator / (pars.KP**2 + pars.KP - pars.K0 * pars.KPP)
+    if not np.all(np.isfinite([a, b, c])) or a == 0.0 or b == 0.0 or c == 0.0:
+        raise ValueError("Tait parameters produce a singular equation")
+    return float(a), float(b), float(c)
+
+
 def implied_kp(model: EOSModel) -> float | None:
     r"""Return the first bulk-modulus derivative implied by EOS order.
 

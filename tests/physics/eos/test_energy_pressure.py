@@ -79,3 +79,33 @@ def test_energy_pressure_requires_positive_volume() -> None:
             energy_unit="Ha",
             volume_unit="angstrom",
         )
+
+
+def test_tait_energy_pressure_reconstruction_uses_matching_integrated_form() -> None:
+    """The Tait E(V) fit reconstructs its analytical pressure counterpart."""
+    model = EnergyEOS()
+    volume = np.linspace(66.0, 78.0, 11)
+    parameters = np.array([-100.0, 0.55, 4.2, 72.0])
+    energy = model.evaluate("T3", volume, parameters)
+
+    estimate = pressure_from_energy_eos(
+        volume,
+        energy,
+        eos="T3",
+        energy_unit="Ha",
+        volume_unit="angstrom",
+    )
+
+    expected = energy_to_pressure(
+        model.pressure("T3", parameters, volume),
+        "Ha",
+        "angstrom",
+        "GPa",
+    )
+    assert estimate.success
+    assert estimate.metadata == {
+        "eos": "T3",
+        "eos_family": "tait",
+        "eos_order": 3,
+    }
+    np.testing.assert_allclose(estimate.pressure, expected, rtol=2.0e-8, atol=2.0e-7)

@@ -83,7 +83,7 @@ _ENERGY_ORDERS: dict[EOSFamily, tuple[int | None, ...]] = {
     EOSFamily.BIRCH_MURNAGHAN: (2, 3, 4),
     EOSFamily.NATURAL_STRAIN: (2, 3, 4),
     EOSFamily.VINET: (2, 3),
-    EOSFamily.TAIT: (),
+    EOSFamily.TAIT: (2, 3, 4),
 }
 
 

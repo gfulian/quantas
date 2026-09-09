@@ -1,38 +1,29 @@
 # Quantas 2 roadmap
 
-## Source-freeze status
+## Current pre-RC development
 
-The `2.0.0b9` public lifecycle baseline, SEISMIC input-generation work, and
-frontend-neutral QHA inspection presentation are merged into `dev/refactor`.
-The backend has returned to release-candidate freeze. A temporary
-`dev/crystal-parser` branch carries the `2.0.0b10` CRYSTAL parser hardening,
-phonon-eigenvector parsing, and QHA mode-continuity work.  It will be merged
-only after focused scientific, documentation, and regression validation.
+The ``2.0.0b10`` Kieffer, CRYSTAL phonon-continuity, and generalized QSA
+pressure/provenance tranche has been merged into ``dev/refactor`` with the CI
+matrix green.  Development has moved to ``2.0.0b11`` on ``dev/energyeos``.
 
-The completed stabilization covers:
+The remaining scientific feature before release-candidate closure is the
+standalone Energy EOS workflow.  Work proceeds in small validated steps:
 
-- public input, execution, persistence, report, plot, and export lifecycles;
-- typed public contracts and capability discovery;
-- result-aware plot inventories;
-- workflow-owned Elasticity and SEISMIC input generation;
-- CLI/API equivalence;
-- VASP density extraction for SEISMIC;
-- rejection of unstable native SEISMIC results.
-- public QHA inspection tables and sampled energy-volume plot specifications
-  derived from the existing inspection result without repeating the fit;
-- CRYSTAL phonon input normalization and independent-volume mode-continuity
-  validation on `dev/crystal-parser`, pending merge after final branch checks.
+- complete parity between P(V) and volume-integrated E(V) model families;
+- add the selected E(V)-specific model(s), beginning with SJEOS after a
+  dedicated formula/reference audit;
+- complete canonical energy-unit handling while preserving all existing unit
+  aliases and conversions;
+- promote ``ev/energy`` from shared core capability to public fitting,
+  diagnostics, persistence, reporting, and plotting;
+- expose derived ``P(V) = -dE/dV`` as an inspectable Energy EOS result;
+- add ``eos inpgen`` from backend output series, beginning with CRYSTAL and
+  then generalizing to VASP and future interfaces;
+- keep QHA and Thermoelasticity coupled to the shared numerical Energy EOS
+  service, not to the standalone EOS workflow layer.
 
-It did not intentionally change approved numerical baselines, physical
-conventions, scientific array layouts, or HDF5 schemas.
-
-Before the first release candidate, changes are limited to:
-
-- corrections demonstrated by final validation;
-- validation and manual-style documentation;
-- release metadata and publishing configuration;
-- narrowly scoped compatibility fixes that preserve approved scientific
-  behavior.
+The first b11 step completes the analytical integrated modified-Tait T2/T3/T4
+forms and validates them against the existing pressure equations.
 
 ## Before 2.0.0rc1
 
@@ -73,8 +64,6 @@ an existing public result incorrect or unusable.
 
 ## After Quantas 2.0
 
-- Add Kieffer acoustic thermodynamics to HA/QHA after a dedicated formula audit.
-- Extend the standalone EOS workflow, including coupled P--V--T diagnostics.
 - Evaluate additional non-empirical Elasticity observables in a dedicated
   change.
 - Develop additional code interfaces and scientific modules behind the same
