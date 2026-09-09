@@ -156,7 +156,11 @@ def implied_kpp(model: EOSModel, K0: float, KP: float) -> float:
         +\frac{K'_0}{2}-\frac{19}{36}\right],
 
     while the truncated Tait form uses :math:`K''_0=-K'_0/K_0`.
-    Murnaghan assumes :math:`K''_0=0`.
+    Murnaghan assumes :math:`K''_0=0`.  For SJEOS,
+
+    .. math::
+
+        K''_0 = -\frac{9(K'_0)^2-45K'_0+74}{9K_0}.
 
     Parameters
     ----------
@@ -180,6 +184,8 @@ def implied_kpp(model: EOSModel, K0: float, KP: float) -> float:
     """
     if model.family is EOSFamily.MURNAGHAN:
         return 0.0
+    if model.family is EOSFamily.STABILIZED_JELLIUM:
+        return -(9.0 * KP**2 - 45.0 * KP + 74.0) / (9.0 * K0)
     if model.family is EOSFamily.BIRCH_MURNAGHAN:
         return -(((3.0 - KP) * (4.0 - KP)) + 35.0 / 9.0) / K0
     if model.family is EOSFamily.NATURAL_STRAIN:
@@ -351,6 +357,8 @@ def resolved_energy_parameter_jacobian(
                 derivative = -(resolved.KP + 1.0) / (2.0 * resolved.K0)
             elif model.family is EOSFamily.TAIT:
                 derivative = -1.0 / resolved.K0
+            elif model.family is EOSFamily.STABILIZED_JELLIUM:
+                derivative = (5.0 - 2.0 * resolved.KP) / resolved.K0
             else:
                 derivative = 0.0
             jacobian[kpp_row, kp_column] = derivative

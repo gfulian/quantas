@@ -219,6 +219,11 @@ class EOSFitRequest:
         self.target = str(self.target).lower()
         if self.target not in EOS_TARGET_NAMES:
             raise ValueError(f"unsupported EOS fitting target: {self.target}")
+        if self.domain is EOSFitDomain.PRESSURE_VOLUME:
+            if isinstance(self.model, EOSModel) and not self.model.supports_pressure_fit:
+                raise ValueError(
+                    f"{self.model.tag} is not exposed for direct P-V fitting"
+                )
         if self.domain is EOSFitDomain.PRESSURE_VOLUME and self.target not in {
             "volume",
             "a",

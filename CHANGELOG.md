@@ -15,6 +15,10 @@ public contract; they must still be documented and validated.
   ``P(V) = -dE/dV`` for every order.
 - Added a shared modified-Tait coefficient resolver so pressure and energy
   representations use one parameterization and one singularity check.
+- Added the stabilized-jellium energy EOS (SJEOS) of Alchagirov *et al.* using
+  the physical equilibrium parameters ``E0``, ``V0``, ``K0``, and ``KP``.
+  Its analytical pressure and bulk-modulus derivatives are available to the
+  Energy EOS core for pressure reconstruction and later ``inspect`` use.
 
 ### Changed
 
@@ -23,6 +27,12 @@ public contract; they must still be documented and validated.
   Murnaghan, Birch--Murnaghan, natural strain, and Vinet forms.
 - Updated the EOS theory, workflow notes, citation guidance, roadmap, and
   project-state documentation for the new ``2.0.0b11`` Energy EOS tranche.
+- Kept SJEOS scoped to energy-volume fitting in the standalone EOS model
+  registry.  Its inverse-polynomial form is used only to obtain a stable linear
+  initial estimate; the final fit remains in the physical ``E0``, ``V0``,
+  ``K0``, and ``KP`` parameters.  The derived P(V) relation is implemented for
+  thermodynamic reconstruction, but SJEOS is not advertised as a direct
+  experimental P-V fit model in this tranche.
 
 ### Validation
 
@@ -30,6 +40,10 @@ public contract; they must still be documented and validated.
   including direct numerical integration of the pressure form, the removable
   ``c = 1`` logarithmic limit, exact synthetic-parameter recovery, and pressure
   reconstruction from fitted E(V) data.
+- Added SJEOS reference-value, derivative, equilibrium-parameter, synthetic-fit,
+  pressure/enthalpy round-trip, model-registry, citation, and standalone-domain
+  tests.  Updated the b11 version expectation and shortened one Tait test node
+  identifier without changing scientific tolerances.
 
 ## [2.0.0b10] - 2026-09-09
 

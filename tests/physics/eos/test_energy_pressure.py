@@ -81,7 +81,7 @@ def test_energy_pressure_requires_positive_volume() -> None:
         )
 
 
-def test_tait_energy_pressure_reconstruction_uses_matching_integrated_form() -> None:
+def test_tait_pressure_reconstruction_matches_integrated_form() -> None:
     """The Tait E(V) fit reconstructs its analytical pressure counterpart."""
     model = EnergyEOS()
     volume = np.linspace(66.0, 78.0, 11)

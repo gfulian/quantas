@@ -138,6 +138,43 @@ EOSFIT7_ANGEL_ET_AL_2014 = Citation(
     doi="10.1515/zkri-2013-1711",
 )
 
+SJEOS_ALCHAGIROV_ET_AL_2001 = Citation(
+    key="sjeos_alchagirov_perdew_boettger_albers_fiolhais_2001",
+    authors=(
+        "Alim B. Alchagirov",
+        "John P. Perdew",
+        "Jonathan C. Boettger",
+        "R. C. Albers",
+        "Carlos Fiolhais",
+    ),
+    title=(
+        "Energy and pressure versus volume: Equations of state motivated by "
+        "the stabilized jellium model"
+    ),
+    year=2001,
+    journal="Physical Review B",
+    volume="63",
+    pages="224115",
+    doi="10.1103/PhysRevB.63.224115",
+)
+
+
+STAROVEROV_SCUSERIA_TAO_PERDEW_2004 = Citation(
+    key="staroverov_scuseria_tao_perdew_2004",
+    authors=(
+        "Viktor N. Staroverov",
+        "Gustavo E. Scuseria",
+        "Jianmin Tao",
+        "John P. Perdew",
+    ),
+    title="Tests of a ladder of density functionals for bulk solids and surfaces",
+    year=2004,
+    journal="Physical Review B",
+    volume="69",
+    pages="075102",
+    doi="10.1103/PhysRevB.69.075102",
+)
+
 
 NYE_1985 = Citation(
     key="nye_1985",
@@ -369,6 +406,8 @@ CITATIONS = {
         ERBA_SHAHROKHI_MORADIAN_DOVESI_2015,
         EOS_ULIAN_ET_AL_2014,
         EOSFIT7_ANGEL_ET_AL_2014,
+        SJEOS_ALCHAGIROV_ET_AL_2001,
+        STAROVEROV_SCUSERIA_TAO_PERDEW_2004,
         NYE_1985,
         HILL_1952,
         ELASTICITY_ULIAN_ET_AL_2018,
@@ -410,6 +449,8 @@ __all__ = [
     "ELASTICITY_ULIAN_ET_AL_2018",
     "ELATE_GAILLAC_ET_AL_2016",
     "EOSFIT7_ANGEL_ET_AL_2014",
+    "SJEOS_ALCHAGIROV_ET_AL_2001",
+    "STAROVEROV_SCUSERIA_TAO_PERDEW_2004",
     "EOS_ULIAN_ET_AL_2014",
     "ERBA_2014",
     "ERBA_SHAHROKHI_MORADIAN_DOVESI_2015",

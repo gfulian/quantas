@@ -381,9 +381,9 @@ energy--volume curve.
 
 At the current ``2.0.0b11`` checkpoint, the numerical core provides integrated
 forms for Murnaghan, Birch--Murnaghan orders 2--4, natural-strain
-Poirier--Tarantola orders 2--4, Vinet orders 2--3, and modified Tait orders
-2--4.  The standalone public E--V workflow is being completed separately from
-these shared core equations; QHA and Thermoelasticity continue to consume the
+Poirier--Tarantola orders 2--4, Vinet orders 2--3, modified Tait orders 2--4,
+and SJEOS.  The standalone public E--V workflow is being completed separately
+from these shared core equations; QHA and Thermoelasticity continue to consume the
 common numerical implementation rather than a frontend workflow.
 
 Integrated modified Tait equation
@@ -437,6 +437,59 @@ numerical integration of the independently evaluated pressure equation.  This
 is important because an apparently accurate E--V fit can still yield poor
 pressure or bulk-modulus derivatives if the integrated and pressure forms are
 not mathematically consistent.
+
+
+Stabilized-jellium energy EOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Quantas also implements the stabilized-jellium equation of state (SJEOS) of
+Alchagirov *et al.* (2001) [#sjeos_alchagirov_perdew_boettger_albers_fiolhais_2001]_.
+The model was motivated by the stabilized-jellium description of simple metals,
+but its compact E--V form has also been used as an interpolation model for
+first-principles total-energy data across chemically diverse crystalline solids
+[#staroverov_scuseria_tao_perdew_2004]_.  Quantas therefore treats it as an
+Energy EOS option rather than as a universal high-pressure extrapolation law.
+
+Define
+
+.. math::
+
+   x=\left(\frac{V}{V_0}\right)^{1/3}.
+
+The SJEOS energy is a third-degree inverse-power polynomial in
+:math:`x`, or equivalently a cubic polynomial in :math:`V^{-1/3}`.  Quantas
+uses the equivalent physical equilibrium parameterization
+
+.. math::
+
+   E(V)=E_0+\frac{9}{2}K_0V_0\left[
+   (K'_0-3)(x^{-3}-1)
+   +(10-3K'_0)(x^{-2}-1)
+   +(3K'_0-11)(x^{-1}-1)\right].
+
+The polynomial coefficients therefore remain implementation details rather than
+public fit parameters.  This keeps SJEOS compatible with the common Energy EOS
+fitting contract in terms of :math:`E_0`, :math:`V_0`, :math:`K_0`, and
+:math:`K'_0`, including initial values and future fixed-parameter constraints.
+The inverse-polynomial representation is used internally to obtain a robust
+linear initial estimate before the standard physical-parameter fit.  The second
+bulk-modulus derivative is implied by the functional form,
+
+.. math::
+
+   K''_0=-\frac{9(K'_0)^2-45K'_0+74}{9K_0}.
+
+The analytical derivative :math:`P(V)=-\mathrm dE/\mathrm dV` is implemented
+alongside :math:`K(V)`, :math:`K'(V)`, and :math:`K''(V)`.  This allows a fitted
+SJEOS curve to reconstruct the static pressure associated with each sampled
+volume without fitting pressure as an independent observable.
+
+SJEOS is most naturally used to interpolate first-principles E--V data around
+an equilibrium minimum and through moderate compression/expansion within one
+structural and electronic state.  As with any fitted EOS, extrapolation beyond
+the sampled range requires model comparison and physical judgement.  Quantas
+does not present SJEOS as a preferred strong-compression or dissociation-limit
+model, and the augmented ASJEOS form is not implemented.
 
 Volume--temperature equations of state
 --------------------------------------

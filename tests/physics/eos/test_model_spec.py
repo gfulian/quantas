@@ -17,6 +17,7 @@ from quantas.core.physics.eos import EOSFamily, EOSModel, parse_eos_model
         ("V", "V3", EOSFamily.VINET, 3),
         ("V2", "V2", EOSFamily.VINET, 2),
         ("T4", "T4", EOSFamily.TAIT, 4),
+        ("SJEOS", "SJ", EOSFamily.STABILIZED_JELLIUM, None),
     ],
 )
 def test_parse_eos_model_resolves_family_order_and_tag(value, tag, family, order):
@@ -50,6 +51,9 @@ def test_tait_supports_integrated_energy_and_murnaghan_has_no_order():
     assert parse_eos_model("T2").supports_energy
     assert parse_eos_model("T3").supports_energy
     assert parse_eos_model("T4").supports_energy
+    assert parse_eos_model("SJ").supports_energy
+    assert not parse_eos_model("SJ").supports_pressure_fit
+    assert parse_eos_model("SJ").energy_parameter_names == ("E0", "K0", "KP", "V0")
     with pytest.raises(ValueError, match="does not define an EOS order"):
         EOSModel(EOSFamily.MURNAGHAN, 3)
 
@@ -85,7 +89,7 @@ def test_available_model_registry_separates_pressure_and_energy_eos():
         "T3",
         "T4",
     )
-    assert energy_tags == pressure_tags
+    assert energy_tags == pressure_tags + ("SJ",)
     assert available_eos_tags(require_energy=True, include_default_aliases=True) == (
         "M",
         "BM",
@@ -103,4 +107,5 @@ def test_available_model_registry_separates_pressure_and_energy_eos():
         "T2",
         "T3",
         "T4",
+        "SJ",
     )

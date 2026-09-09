@@ -23,6 +23,7 @@ class EOSFamily(str, Enum):
     NATURAL_STRAIN = "poirier-tarantola"
     VINET = "vinet"
     TAIT = "tait"
+    STABILIZED_JELLIUM = "stabilized-jellium"
 
 
 _FAMILY_ALIASES: dict[str, EOSFamily] = {
@@ -44,6 +45,11 @@ _FAMILY_ALIASES: dict[str, EOSFamily] = {
     "vinet": EOSFamily.VINET,
     "t": EOSFamily.TAIT,
     "tait": EOSFamily.TAIT,
+    "sj": EOSFamily.STABILIZED_JELLIUM,
+    "sjeos": EOSFamily.STABILIZED_JELLIUM,
+    "stabilizedjellium": EOSFamily.STABILIZED_JELLIUM,
+    "stabilized-jellium": EOSFamily.STABILIZED_JELLIUM,
+    "stabilized_jellium": EOSFamily.STABILIZED_JELLIUM,
 }
 
 _ALLOWED_ORDERS: dict[EOSFamily, tuple[int, ...]] = {
@@ -52,6 +58,7 @@ _ALLOWED_ORDERS: dict[EOSFamily, tuple[int, ...]] = {
     EOSFamily.NATURAL_STRAIN: (2, 3, 4),
     EOSFamily.VINET: (2, 3),
     EOSFamily.TAIT: (2, 3, 4),
+    EOSFamily.STABILIZED_JELLIUM: (),
 }
 
 _DEFAULT_ORDERS: dict[EOSFamily, int | None] = {
@@ -60,6 +67,7 @@ _DEFAULT_ORDERS: dict[EOSFamily, int | None] = {
     EOSFamily.NATURAL_STRAIN: 3,
     EOSFamily.VINET: 3,
     EOSFamily.TAIT: 3,
+    EOSFamily.STABILIZED_JELLIUM: None,
 }
 
 _TAG_PREFIX: dict[EOSFamily, str] = {
@@ -68,6 +76,7 @@ _TAG_PREFIX: dict[EOSFamily, str] = {
     EOSFamily.NATURAL_STRAIN: "PT",
     EOSFamily.VINET: "V",
     EOSFamily.TAIT: "T",
+    EOSFamily.STABILIZED_JELLIUM: "SJ",
 }
 
 _DISPLAY_NAME: dict[EOSFamily, str] = {
@@ -76,6 +85,7 @@ _DISPLAY_NAME: dict[EOSFamily, str] = {
     EOSFamily.NATURAL_STRAIN: "Natural strain (Poirier-Tarantola)",
     EOSFamily.VINET: "Vinet",
     EOSFamily.TAIT: "Tait",
+    EOSFamily.STABILIZED_JELLIUM: "Stabilized jellium (SJEOS)",
 }
 
 _ENERGY_ORDERS: dict[EOSFamily, tuple[int | None, ...]] = {
@@ -84,6 +94,16 @@ _ENERGY_ORDERS: dict[EOSFamily, tuple[int | None, ...]] = {
     EOSFamily.NATURAL_STRAIN: (2, 3, 4),
     EOSFamily.VINET: (2, 3),
     EOSFamily.TAIT: (2, 3, 4),
+    EOSFamily.STABILIZED_JELLIUM: (None,),
+}
+
+_PRESSURE_FIT_ORDERS: dict[EOSFamily, tuple[int | None, ...]] = {
+    EOSFamily.MURNAGHAN: (None,),
+    EOSFamily.BIRCH_MURNAGHAN: (2, 3, 4),
+    EOSFamily.NATURAL_STRAIN: (2, 3, 4),
+    EOSFamily.VINET: (2, 3),
+    EOSFamily.TAIT: (2, 3, 4),
+    EOSFamily.STABILIZED_JELLIUM: (),
 }
 
 
@@ -134,11 +154,16 @@ class EOSModel:
         return self.order in _ENERGY_ORDERS[self.family]
 
     @property
+    def supports_pressure_fit(self) -> bool:
+        """Return whether the model is exposed for direct P-V fitting."""
+        return self.order in _PRESSURE_FIT_ORDERS[self.family]
+
+    @property
     def energy_parameter_names(self) -> tuple[str, ...]:
         """Return free parameters for an energy-volume fit."""
         if not self.supports_energy:
             raise ValueError(f"{self.tag} has no implemented energy-volume form")
-        if self.family is EOSFamily.MURNAGHAN:
+        if self.family in {EOSFamily.MURNAGHAN, EOSFamily.STABILIZED_JELLIUM}:
             return ("E0", "K0", "KP", "V0")
         if self.order == 2:
             return ("E0", "K0", "V0")
@@ -149,7 +174,7 @@ class EOSModel:
     @property
     def pressure_parameter_names(self) -> tuple[str, ...]:
         """Return free parameters for a pressure-volume fit."""
-        if self.family is EOSFamily.MURNAGHAN:
+        if self.family in {EOSFamily.MURNAGHAN, EOSFamily.STABILIZED_JELLIUM}:
             return ("K0", "KP", "V0")
         if self.order == 2:
             return ("K0", "V0")
@@ -161,7 +186,7 @@ class EOSModel:
     def parameter_sources(self) -> dict[str, str]:
         """Return whether physical parameters are fitted or implied."""
         sources = {"K0": "fitted", "V0": "fitted"}
-        if self.family is EOSFamily.MURNAGHAN:
+        if self.family in {EOSFamily.MURNAGHAN, EOSFamily.STABILIZED_JELLIUM}:
             sources.update({"KP": "fitted", "KPP": "implied"})
         elif self.order == 2:
             sources.update({"KP": "implied", "KPP": "implied"})
@@ -188,7 +213,8 @@ def available_eos_models(*, require_energy: bool = False) -> tuple[EOSModel, ...
     Parameters
     ----------
     require_energy : bool, optional
-        If ``True``, return only models with a volume-integrated energy form.
+        If ``True``, return models with a volume-integrated energy form.  The
+        default returns models exposed for direct pressure-volume fitting.
 
     Returns
     -------
@@ -204,7 +230,10 @@ def available_eos_models(*, require_energy: bool = False) -> tuple[EOSModel, ...
             else tuple(EOSModel(family, order) for order in orders)
         )
         for model in candidates:
-            if not require_energy or model.supports_energy:
+            if require_energy:
+                if model.supports_energy:
+                    models.append(model)
+            elif model.supports_pressure_fit:
                 models.append(model)
     return tuple(models)
 

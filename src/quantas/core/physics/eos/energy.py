@@ -96,6 +96,8 @@ class EnergyEOS:
             return self._vinet_energy(values, pars, model.order)
         if model.family is EOSFamily.TAIT:
             return self._tait_energy(values, pars)
+        if model.family is EOSFamily.STABILIZED_JELLIUM:
+            return self._sjeos_energy(values, pars)
         raise ValueError(f"unknown energy EOS: {eos!r}")
 
     def fit(
@@ -464,6 +466,41 @@ class EnergyEOS:
         """
         return self.evaluate("T3", volume, [E0, K0, KP, V0])
 
+    def sjeos(
+        self,
+        volume: ArrayLike,
+        E0: float,
+        K0: float,
+        KP: float,
+        V0: float,
+    ) -> np.ndarray:
+        r"""Return the stabilized-jellium energy-volume equation.
+
+        Quantas exposes SJEOS through the physical equilibrium parameters
+        :math:`E_0`, :math:`V_0`, :math:`K_0`, and :math:`K'_0`.  With
+
+        .. math::
+
+            x=\left(\frac{V}{V_0}\right)^{1/3},
+
+        the inverse-volume polynomial coefficients are resolved internally
+        from those physical parameters.
+
+        Parameters
+        ----------
+        volume : array-like
+            Positive volume values.
+        E0, K0, KP, V0 : float
+            Reference energy, bulk modulus, first pressure derivative and
+            reference volume.
+
+        Returns
+        -------
+        ndarray
+            Energy values at ``volume``.
+        """
+        return self.evaluate("SJ", volume, [E0, K0, KP, V0])
+
     @staticmethod
     def _fit_metadata(model: EOSModel) -> dict[str, object]:
         return {
@@ -566,6 +603,19 @@ class EnergyEOS:
         return pars.E0 + a * pars.V0 / b * integral
 
     @staticmethod
+    def _sjeos_energy(volume: np.ndarray, pars: EOSParameters) -> np.ndarray:
+        """Evaluate SJEOS in its physical equilibrium parameterization."""
+        if pars.E0 is None:
+            raise ValueError("energy EOS parameters require E0")
+        x = (volume / pars.V0) ** (1.0 / 3.0)
+        scale = 4.5 * pars.K0 * pars.V0
+        return pars.E0 + scale * (
+            (pars.KP - 3.0) * (x**-3 - 1.0)
+            + (10.0 - 3.0 * pars.KP) * (x**-2 - 1.0)
+            + (3.0 * pars.KP - 11.0) * (x**-1 - 1.0)
+        )
+
+    @staticmethod
     def _validate_volume(volume: ArrayLike) -> np.ndarray:
         values = np.asarray(volume, dtype=np.float64)
         if not np.all(np.isfinite(values)):
@@ -600,6 +650,9 @@ class EnergyEOSFitModel(BaseFitModel):
 
     def initial_guess(self, x: ParameterArrayLike, y: ParameterArrayLike) -> np.ndarray:
         """Return an order-aware initial parameter vector."""
+        if self._model.family is EOSFamily.STABILIZED_JELLIUM:
+            return self._sjeos_initial_guess(x, y)
+
         full = self._eos.guess(x, y)
         if self._model.order == 2:
             if self._model.family is EOSFamily.BIRCH_MURNAGHAN:
@@ -615,6 +668,61 @@ class EnergyEOSFitModel(BaseFitModel):
                     E0=full.E0, K0=full.K0, KP=1.0, KPP=0.0, V0=full.V0
                 )
         return free_energy_parameters(self._model, full)
+
+    def _sjeos_initial_guess(
+        self,
+        x: ParameterArrayLike,
+        y: ParameterArrayLike,
+    ) -> np.ndarray:
+        """Estimate physical SJEOS parameters from its linear inverse polynomial."""
+        volume, energy = validate_xy(x, y)
+        if volume.size < 4:
+            raise ValueError(
+                "at least four points are required for the SJEOS initial estimate"
+            )
+
+        inverse_length = volume ** (-1.0 / 3.0)
+        energy_offset = float(np.mean(energy))
+        polynomial = np.polynomial.Polynomial.fit(
+            inverse_length, energy - energy_offset, 3
+        ).convert()
+        coefficients = np.pad(polynomial.coef, (0, max(0, 4 - polynomial.coef.size)))
+        _, c1, c2, c3 = coefficients[:4]
+
+        stationary = np.polynomial.polynomial.polyroots([c1, 2.0 * c2, 3.0 * c3])
+        real = np.real(stationary[np.isclose(np.imag(stationary), 0.0)])
+        positive = real[real > 0.0]
+        curvatures = 2.0 * c2 + 6.0 * c3 * positive
+        minima = positive[curvatures > 0.0]
+        if minima.size == 0:
+            full = self._eos.guess(volume, energy)
+            return free_energy_parameters(self._model, full)
+
+        sampled_minimum = float(volume[np.argmin(energy)])
+        candidate_volumes = minima**-3
+        index = int(np.argmin(np.abs(candidate_volumes - sampled_minimum)))
+        t0 = float(minima[index])
+        v0 = float(candidate_volumes[index])
+        curvature = float(2.0 * c2 + 6.0 * c3 * t0)
+        k0 = float(t0**5 * curvature / 9.0)
+        denominator = float(c2 + 3.0 * c3 * t0)
+        if (
+            not np.isfinite(v0)
+            or v0 <= 0.0
+            or not np.isfinite(k0)
+            or k0 <= 0.0
+            or not np.isfinite(denominator)
+            or np.isclose(denominator, 0.0)
+        ):
+            full = self._eos.guess(volume, energy)
+            return free_energy_parameters(self._model, full)
+
+        kp = float((3.0 * c2 + 10.0 * c3 * t0) / denominator)
+        e0 = float(energy_offset + polynomial(t0))
+        if not np.isfinite(kp) or not np.isfinite(e0):
+            full = self._eos.guess(volume, energy)
+            return free_energy_parameters(self._model, full)
+        return np.asarray([e0, k0, kp, v0], dtype=np.float64)
 
     def metadata(self) -> dict[str, object]:
         """Return model metadata for fit results."""

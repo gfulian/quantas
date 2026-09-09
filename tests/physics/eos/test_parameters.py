@@ -89,3 +89,25 @@ def test_bm3_resolved_kpp_jacobian_matches_finite_differences() -> None:
             - resolve_energy_parameters("BM3", minus).KPP
         ) / (2.0 * step)
         assert jacobian[3, index] == pytest.approx(numerical, rel=1.0e-7)
+
+
+def test_sjeos_implied_kpp_and_jacobian_match_finite_differences() -> None:
+    from quantas.core.physics.eos import resolved_energy_parameter_jacobian
+
+    parameters = np.array([-100.0, 0.55, 4.2, 72.0])
+    resolved = resolve_energy_parameters("SJ", parameters)
+    expected = -(9.0 * 4.2**2 - 45.0 * 4.2 + 74.0) / (9.0 * 0.55)
+    assert resolved.KPP == pytest.approx(expected)
+
+    jacobian = resolved_energy_parameter_jacobian("SJ", parameters)
+    step = 1.0e-6
+    for index in (1, 2):
+        plus = parameters.copy()
+        minus = parameters.copy()
+        plus[index] += step
+        minus[index] -= step
+        numerical = (
+            resolve_energy_parameters("SJ", plus).KPP
+            - resolve_energy_parameters("SJ", minus).KPP
+        ) / (2.0 * step)
+        assert jacobian[3, index] == pytest.approx(numerical, rel=2.0e-7)

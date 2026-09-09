@@ -99,11 +99,17 @@ that use the same auxiliary coefficients and implied-parameter rules as the
 existing P(V) implementation.  Their pressure derivative is validated against
 the canonical Tait pressure equation.
 
-The remaining b11 work is intentionally incremental: add the selected
-electronic-structure E(V) models, complete energy-unit normalization, promote
-the ``ev/energy`` domain through fitting/diagnostics/HDF5/reporting, expose
-derived P(V) inspection, and only then add backend-specific ``eos inpgen``
-starting with CRYSTAL and later VASP.
+The same step adds the stabilized-jellium energy EOS (SJEOS) in the physical
+``E0, V0, K0, KP`` parameterization.  The inverse-volume polynomial
+coefficients remain internal, while analytical ``P(V)``, ``K(V)``, ``K'(V)``,
+and ``K''(V)`` are available to the shared numerical Energy EOS service.  SJEOS
+is deliberately exposed as an E--V model only in the standalone fitting
+registry; direct P--V fitting remains unchanged in this tranche.
+
+The remaining b11 work is intentionally incremental: complete energy-unit
+normalization, promote the ``ev/energy`` domain through
+fitting/diagnostics/HDF5/reporting, expose derived P(V) inspection, and only
+then add backend-specific ``eos inpgen`` starting with CRYSTAL and later VASP.
 
 ## What `2.0.0b10` / `dev/kieffer` added
 

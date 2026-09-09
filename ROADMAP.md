@@ -10,8 +10,8 @@ The remaining scientific feature before release-candidate closure is the
 standalone Energy EOS workflow.  Work proceeds in small validated steps:
 
 - complete parity between P(V) and volume-integrated E(V) model families;
-- add the selected E(V)-specific model(s), beginning with SJEOS after a
-  dedicated formula/reference audit;
+- retain and validate the newly added SJEOS Energy EOS in its physical
+  equilibrium-parameter form, including derived P(V) inspection;
 - complete canonical energy-unit handling while preserving all existing unit
   aliases and conversions;
 - promote ``ev/energy`` from shared core capability to public fitting,

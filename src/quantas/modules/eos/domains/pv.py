@@ -52,6 +52,10 @@ class PressureEOSFitModel(BaseFitModel):
         initial_parameters: Mapping[str, float] | None = None,
     ) -> None:
         self.eos_model = parse_eos_model(model)
+        if not self.eos_model.supports_pressure_fit:
+            raise ValueError(
+                f"{self.eos_model.tag} is not exposed for direct P-V fitting"
+            )
         self._pressure = PressureEOS()
         defaults = {"K0": 1.0, "KP": 4.0, "KPP": 0.0, "V0": 1.0}
         if initial_parameters is not None:

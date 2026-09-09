@@ -33,6 +33,14 @@ The equations and their physical assumptions are described in
 workflow semantics, diagnostics, and reasons why the EOS command line differs
 from the other Quantas modules.
 
+
+During the ``2.0.0b11`` Energy EOS development tranche, SJEOS is registered as
+an E--V model with physical parameters ``E0``, ``V0``, ``K0``, and ``KP``.  Its
+analytical P(V) derivative belongs to the shared numerical service so fitted
+energy curves can later expose pressure reconstruction and inspection.  SJEOS
+is not advertised as a direct P--V fitting model in the standalone workflow at
+this stage.
+
 Why EOS uses a different command-line workflow
 ----------------------------------------------
 

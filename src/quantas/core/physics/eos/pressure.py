@@ -79,6 +79,9 @@ class PressureEOS:
             return pressure
         if model.family is EOSFamily.TAIT:
             return self._tait_pressure(values, pars)
+        if model.family is EOSFamily.STABILIZED_JELLIUM:
+            pressure, _, _, _ = self._sjeos_derivatives(values, pars)
+            return pressure
         raise ValueError(f"unknown pressure EOS: {eos!r}")
 
     def bulk_modulus(
@@ -113,6 +116,10 @@ class PressureEOS:
             a, b, c = _tait_coefficients(pars)
             ratio = values / pars.V0
             return pars.K0 * ratio * (1.0 + b * pressure) ** (c + 1.0)
+        if model.family is EOSFamily.STABILIZED_JELLIUM:
+            _, first, _, _ = self._sjeos_derivatives(values, pars)
+            x = (values / pars.V0) ** (1.0 / 3.0)
+            return -x * first / 3.0
         raise ValueError(f"unknown pressure EOS: {eos!r}")
 
     def bulk_modulus_derivative(
@@ -147,6 +154,10 @@ class PressureEOS:
             pressure = self._tait_pressure(values, pars)
             a, b, c = _tait_coefficients(pars)
             return (pars.KP + 1.0) * ((1.0 - a) * (1.0 + b * pressure) ** c + a) - 1.0
+        if model.family is EOSFamily.STABILIZED_JELLIUM:
+            _, first, second, _ = self._sjeos_derivatives(values, pars)
+            x = (values / pars.V0) ** (1.0 / 3.0)
+            return -(1.0 + x * second / first) / 3.0
         raise ValueError(f"unknown pressure EOS: {eos!r}")
 
     def bulk_modulus_second_derivative(
@@ -186,6 +197,12 @@ class PressureEOS:
             return (
                 (pars.KP + 1.0) * (1.0 - a) * c * b * (1.0 + b * pressure) ** (c - 1.0)
             )
+        if model.family is EOSFamily.STABILIZED_JELLIUM:
+            _, first, second, third = self._sjeos_derivatives(values, pars)
+            x = (values / pars.V0) ** (1.0 / 3.0)
+            ratio = second / first
+            derivative = -(ratio + x * (third / first - ratio**2)) / 3.0
+            return derivative / first
         raise ValueError(f"unknown pressure EOS: {eos!r}")
 
     @staticmethod
@@ -425,6 +442,32 @@ class PressureEOS:
         first = prefactor * (u1 - a * u)
         second = prefactor * (u2 - 2.0 * a * u1 + a**2 * u)
         third = prefactor * (u3 - 3.0 * a * u2 + 3.0 * a**2 * u1 - a**3 * u)
+        return pressure, first, second, third
+
+    @staticmethod
+    def _sjeos_derivatives(
+        volume: np.ndarray,
+        pars: EOSParameters,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Return SJEOS pressure and its first three derivatives in ``x``."""
+        x = (volume / pars.V0) ** (1.0 / 3.0)
+        kp = pars.KP
+        prefactor = 1.5 * pars.K0
+        a = kp - 3.0
+        b = 10.0 - 3.0 * kp
+        c = 3.0 * kp - 11.0
+        pressure = prefactor * (
+            3.0 * a * x**-6 + 2.0 * b * x**-5 + c * x**-4
+        )
+        first = prefactor * (
+            -18.0 * a * x**-7 - 10.0 * b * x**-6 - 4.0 * c * x**-5
+        )
+        second = prefactor * (
+            126.0 * a * x**-8 + 60.0 * b * x**-7 + 20.0 * c * x**-6
+        )
+        third = prefactor * (
+            -1008.0 * a * x**-9 - 420.0 * b * x**-8 - 120.0 * c * x**-7
+        )
         return pressure, first, second, third
 
     @staticmethod

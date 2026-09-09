@@ -133,6 +133,10 @@ class PVTModel:
     def __post_init__(self) -> None:
         """Normalize component models and validate the composition."""
         pressure = parse_eos_model(self.pressure_model)
+        if not pressure.supports_pressure_fit:
+            raise ValueError(
+                f"{pressure.tag} is not exposed as a reference P-V EOS"
+            )
         coupling = parse_pvt_coupling(self.coupling)
         thermal = (
             None

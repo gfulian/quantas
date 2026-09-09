@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from scipy.integrate import quad
 
-from quantas.core.physics.eos import EnergyEOS
+from quantas.core.physics.eos import EnergyEOS, EnergyEOSFitModel
 from quantas.core.math.fitting import FitQuality, FitStatus
 
 
@@ -38,6 +38,25 @@ def _reference_vinet(volume, E0, K0, KP, V0):
     )
 
 
+def _reference_sjeos(volume, E0, K0, KP, V0):
+    x = (volume / V0) ** (1.0 / 3.0)
+    scale = 4.5 * K0 * V0
+    a = scale * (KP - 3.0)
+    b = scale * (10.0 - 3.0 * KP)
+    c = scale * (3.0 * KP - 11.0)
+    d = E0 + scale * (4.0 - KP)
+    return a / x**3 + b / x**2 + c / x + d
+
+
+def _reference_sjeos_pressure(volume, K0, KP, V0):
+    x = (volume / V0) ** (1.0 / 3.0)
+    return 1.5 * K0 * (
+        3.0 * (KP - 3.0) * x**-6
+        + 2.0 * (10.0 - 3.0 * KP) * x**-5
+        + (3.0 * KP - 11.0) * x**-4
+    )
+
+
 def test_energy_eos_formulas_match_reference_values():
     eos = EnergyEOS()
     volume = np.array([68.0, 70.0, 72.0, 74.0, 76.0], dtype=np.float64)
@@ -64,6 +83,12 @@ def test_energy_eos_formulas_match_reference_values():
     np.testing.assert_allclose(
         eos.vinet(volume, *pars), _reference_vinet(volume, *pars), rtol=0.0, atol=0.0
     )
+    np.testing.assert_allclose(
+        eos.sjeos(volume, *pars),
+        _reference_sjeos(volume, *pars),
+        rtol=2.0e-15,
+        atol=2.0e-15,
+    )
 
 
 def test_energy_eos_fits_return_structured_diagnostics():
@@ -71,7 +96,7 @@ def test_energy_eos_fits_return_structured_diagnostics():
     volume = np.linspace(68.0, 76.0, 11)
     expected = np.array([-100.0, 0.55, 4.2, 72.0], dtype=np.float64)
 
-    for tag in ["murnaghan", "birchmurnaghan", "poirier-tarantola", "vinet", "tait"]:
+    for tag in ["murnaghan", "birchmurnaghan", "poirier-tarantola", "vinet", "tait", "sjeos"]:
         energy = eos.function(tag)(volume, *expected)
         result = eos.fit(tag, volume, energy)
         assert result.success, result.message
@@ -146,7 +171,7 @@ def test_energy_eos_pressure_is_zero_at_reference_volume():
     pars = np.array([-100.0, 0.55, 4.2, 72.0], dtype=np.float64)
     volume = np.array([pars[3]], dtype=np.float64)
 
-    for tag in ["M", "BM", "PT", "V", "T"]:
+    for tag in ["M", "BM", "PT", "V", "T", "SJ"]:
         np.testing.assert_allclose(
             eos.pressure(tag, pars, volume), np.array([0.0]), atol=1.0e-14
         )
@@ -299,3 +324,111 @@ def test_birch_murnaghan_fit_uses_order_dependent_free_parameters(tag, expected_
         "KPP",
         "V0",
     ]
+
+
+def test_sjeos_pressure_matches_independent_analytical_derivative():
+    eos = EnergyEOS()
+    volume = np.linspace(67.0, 77.0, 9)
+    parameters = [-100.0, 0.55, 4.2, 72.0]
+
+    expected = _reference_sjeos_pressure(volume, 0.55, 4.2, 72.0)
+    np.testing.assert_allclose(
+        eos.pressure("SJ", parameters, volume),
+        expected,
+        rtol=3.0e-15,
+        atol=3.0e-15,
+    )
+
+
+def test_sjeos_energy_matches_integrated_analytical_pressure():
+    eos = EnergyEOS()
+    parameters = [-100.0, 0.55, 4.2, 72.0]
+    volume = np.array([68.0, 70.0, 74.0, 76.0], dtype=np.float64)
+
+    expected = []
+    for value in volume:
+        integral, _ = quad(
+            lambda candidate: float(
+                eos.pressure("SJ", parameters, np.array([candidate]))[0]
+            ),
+            72.0,
+            float(value),
+            epsabs=1.0e-12,
+            epsrel=1.0e-12,
+        )
+        expected.append(-100.0 - integral)
+
+    np.testing.assert_allclose(
+        eos.evaluate("SJ", volume, parameters),
+        np.asarray(expected),
+        rtol=2.0e-13,
+        atol=2.0e-13,
+    )
+
+
+def test_sjeos_reference_derivatives_match_physical_parameters():
+    eos = EnergyEOS()
+    parameters = [-100.0, 0.55, 4.2, 72.0]
+    volume = np.array([72.0], dtype=np.float64)
+
+    np.testing.assert_allclose(eos.evaluate("SJ", volume, parameters), [-100.0])
+    np.testing.assert_allclose(
+        eos.pressure("SJ", parameters, volume), [0.0], atol=1.0e-14
+    )
+
+    from quantas.core.physics.eos import PressureEOS, resolve_energy_parameters
+
+    resolved = resolve_energy_parameters("SJ", parameters)
+    pressure_eos = PressureEOS()
+    np.testing.assert_allclose(
+        pressure_eos.bulk_modulus("SJ", resolved, volume), [0.55], rtol=1.0e-13
+    )
+    np.testing.assert_allclose(
+        pressure_eos.bulk_modulus_derivative("SJ", resolved, volume),
+        [4.2],
+        rtol=1.0e-13,
+    )
+    expected_kpp = -(9.0 * 4.2**2 - 45.0 * 4.2 + 74.0) / (9.0 * 0.55)
+    np.testing.assert_allclose(
+        pressure_eos.bulk_modulus_second_derivative("SJ", resolved, volume),
+        [expected_kpp],
+        rtol=2.0e-12,
+    )
+
+
+def test_sjeos_inverse_polynomial_initial_guess_recovers_exact_parameters():
+    eos = EnergyEOS()
+    volume = np.linspace(66.0, 78.0, 17)
+    expected = np.array([-100.0, 0.55, 4.2, 72.0], dtype=np.float64)
+    energy = eos.evaluate("SJ", volume, expected)
+
+    initial = EnergyEOSFitModel(eos, "SJ").initial_guess(volume, energy)
+
+    np.testing.assert_allclose(initial, expected, rtol=2.0e-9, atol=2.0e-9)
+
+
+def test_sjeos_initial_guess_is_stable_for_dft_energy_scales():
+    eos = EnergyEOS()
+    expected = np.array([-274.0, 0.0061, 4.1, 18.8], dtype=np.float64)
+    volume = expected[3] * np.linspace(0.91, 1.09, 11)
+    energy = eos.evaluate("SJ", volume, expected)
+
+    initial = EnergyEOSFitModel(eos, "SJ").initial_guess(volume, energy)
+    result = eos.fit("SJ", volume, energy)
+
+    np.testing.assert_allclose(initial, expected, rtol=2.0e-8, atol=2.0e-10)
+    assert result.success, result.message
+    np.testing.assert_allclose(result.parameters, expected, rtol=2.0e-8, atol=2.0e-10)
+
+
+def test_sjeos_fit_recovers_exact_synthetic_physical_parameters():
+    eos = EnergyEOS()
+    volume = np.linspace(66.0, 78.0, 17)
+    expected = np.array([-100.0, 0.55, 4.2, 72.0], dtype=np.float64)
+    energy = eos.evaluate("SJ", volume, expected)
+
+    result = eos.fit("SJ", volume, energy)
+
+    assert result.success, result.message
+    assert result.metadata["parameter_order"] == ["E0", "K0", "KP", "V0"]
+    np.testing.assert_allclose(result.parameters, expected, rtol=2.0e-8, atol=2.0e-9)

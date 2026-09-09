@@ -72,6 +72,14 @@ parameters and are constrained by :math:`P(V)=-\mathrm dE/\mathrm dV`; the
 integrated Tait expression is obtained analytically from that registered
 pressure form.
 
+
+For the stabilized-jellium energy EOS (SJEOS), also cite:
+
+   A. B. Alchagirov, J. P. Perdew, J. C. Boettger, R. C. Albers, and
+   C. Fiolhais, “Energy and pressure versus volume: Equations of state
+   motivated by the stabilized jellium model”, *Physical Review B* **63**,
+   224115 (2001), doi:10.1103/PhysRevB.63.224115.
+
 The effective-variance approach is attributed to:
 
    J. Orear, “Least squares when both variables have uncertainties”,

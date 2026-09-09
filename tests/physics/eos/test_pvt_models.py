@@ -38,6 +38,8 @@ def test_registry_and_model_validation() -> None:
         PVTModel("BM3", "linear")
     with pytest.raises(ValueError, match="must be omitted"):
         PVTModel("BM3", "thermal-pressure", "berman")
+    with pytest.raises(ValueError, match="not exposed as a reference P-V EOS"):
+        PVTModel("SJ", "linear", "berman:quadratic")
 
 
 @pytest.mark.parametrize("coupling", ["linear", "anderson-gruneisen"])
