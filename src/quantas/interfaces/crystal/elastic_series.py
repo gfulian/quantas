@@ -9,8 +9,8 @@ from enum import Enum
 from pathlib import Path
 
 import numpy as np
+from numpy.typing import ArrayLike, NDArray
 
-from quantas.core.physics.elasticity import correct_hydrostatic_elastic_state
 from quantas.models.elastic_states import (
     ElasticState,
     ElasticStateSeries,
@@ -107,7 +107,7 @@ def read_crystal_elastic_series(
         state = _state_from_reader(reader, path, policy, manual[index])
         tensor_kind = ElasticTensorKind(state.prestress.tensor_kind)
         if apply_prestress_correction and not tensor_kind.is_incremental:
-            state = correct_hydrostatic_elastic_state(
+            state = correct_crystal_hydrostatic_elastic_state(
                 state,
                 correction_applied_by=correction_applied_by,
             )
@@ -131,9 +131,215 @@ def read_crystal_elastic_series(
             "reader": "CrystalElasticityReader",
             "pressure_policy": policy.value,
             "prestress_correction_requested": bool(apply_prestress_correction),
+            "prestress_correction_formulation": _CRYSTAL_PRESTRESS_METHOD,
+            "prestress_correction_reference_doi": "10.1063/1.4869144",
             "reference_policy": "minimum_static_energy",
             "input_file_count": len(paths),
         },
+    )
+
+
+_CRYSTAL_PRESTRESS_METHOD = "crystal-erba-2014-hydrostatic"
+
+
+def crystal_hydrostatic_stiffness(
+    raw_stiffness: ArrayLike,
+    pressure_gpa: float,
+) -> NDArray[np.float64]:
+    r"""Return CRYSTAL finite-pressure stiffness coefficients.
+
+    CRYSTAL defines the hydrostatic finite-prestress transformation as
+
+    .. math::
+
+       B_{ijkl}=C_{ijkl}+\frac{P}{2}\left(
+       2\delta_{ij}\delta_{kl}-\delta_{il}\delta_{jk}
+       -\delta_{ik}\delta_{jl}\right),
+
+    where pressure is positive in compression.  In the CRYSTAL Voigt order
+    ``(xx, yy, zz, yz, xz, xy)`` this adds ``+P`` to the three normal
+    off-diagonal couplings and ``-P/2`` to the three shear diagonals, while
+    leaving the normal diagonal elements unchanged.  This is the same
+    transformation applied internally by CRYSTAL ``PRESSURE``/``PRESSEOS``.
+
+    Parameters
+    ----------
+    raw_stiffness : array_like
+        Finite symmetric ``(6, 6)`` CRYSTAL energy--strain stiffness matrix
+        in GPa.
+    pressure_gpa : float
+        Hydrostatic pressure in GPa, positive in compression.
+
+    Returns
+    -------
+    ndarray
+        Corrected symmetric stiffness matrix in GPa.
+
+    Raises
+    ------
+    ValueError
+        If the matrix or pressure is invalid.
+
+    Notes
+    -----
+    The transformation follows Erba et al., *J. Chem. Phys.* **140**,
+    124703 (2014), doi:10.1063/1.4869144, Eq. (6)--(7), and the equivalent
+    CRYSTAL23 manual Eq. (13.11)--(13.12).  It is an interface-specific
+    conversion of CRYSTAL raw energy--strain coefficients and must not be
+    substituted for the finite-strain Wallace term used inside the QSA model.
+    """
+    stiffness = np.asarray(raw_stiffness, dtype=np.float64)
+    pressure = float(pressure_gpa)
+    if stiffness.shape != (6, 6) or not np.all(np.isfinite(stiffness)):
+        raise ValueError("raw_stiffness must be finite with shape (6, 6)")
+    if not np.allclose(stiffness, stiffness.T, rtol=0.0, atol=1.0e-10):
+        raise ValueError("raw_stiffness must be symmetric")
+    if not np.isfinite(pressure):
+        raise ValueError("pressure_gpa must be finite")
+
+    correction = np.zeros((6, 6), dtype=np.float64)
+    correction[0, 1] = correction[1, 0] = pressure
+    correction[0, 2] = correction[2, 0] = pressure
+    correction[1, 2] = correction[2, 1] = pressure
+    correction[3, 3] = -0.5 * pressure
+    correction[4, 4] = -0.5 * pressure
+    correction[5, 5] = -0.5 * pressure
+    corrected = stiffness + correction
+    return np.asarray(0.5 * (corrected + corrected.T), dtype=np.float64)
+
+
+def correct_crystal_hydrostatic_elastic_state(
+    state: ElasticState,
+    *,
+    correction_applied_by: str = "quantas-crystal-import",
+) -> ElasticState:
+    """Correct one raw CRYSTAL state using CRYSTAL's pressure convention.
+
+    Parameters
+    ----------
+    state : ElasticState
+        CRYSTAL state explicitly marked as ``raw_energy_strain`` with finite
+        hydrostatic pressure provenance.
+    correction_applied_by : str, optional
+        Provenance label for the Quantas workflow applying the correction.
+
+    Returns
+    -------
+    ElasticState
+        Independent state containing CRYSTAL-consistent hydrostatic
+        incremental coefficients.
+
+    Raises
+    ------
+    TypeError
+        If ``state`` is not an :class:`ElasticState`.
+    ValueError
+        If the state is not a raw CRYSTAL tensor, lacks pressure provenance,
+        or the provenance label is empty.
+    """
+    if not isinstance(state, ElasticState):
+        raise TypeError("state must be an ElasticState")
+    if str(state.metadata.get("backend", "")).lower() != "crystal":
+        raise ValueError("CRYSTAL pre-stress correction requires backend='crystal'")
+    source_kind = ElasticTensorKind(state.prestress.tensor_kind)
+    if source_kind is not ElasticTensorKind.RAW_ENERGY_STRAIN:
+        raise ValueError(
+            "CRYSTAL pre-stress correction requires an explicitly raw "
+            "energy-strain tensor"
+        )
+    pressure = state.prestress.pressure_gpa
+    pressure_source = PressureSource(state.prestress.pressure_source)
+    if pressure is None or pressure_source is PressureSource.UNAVAILABLE:
+        raise ValueError("CRYSTAL pre-stress correction requires pressure provenance")
+    applied_by = str(correction_applied_by).strip()
+    if not applied_by:
+        raise ValueError("correction_applied_by must be non-empty")
+
+    metadata = dict(state.metadata)
+    metadata["prestress_correction"] = {
+        "method": _CRYSTAL_PRESTRESS_METHOD,
+        "reference": "Erba et al., J. Chem. Phys. 140, 124703 (2014)",
+        "doi": "10.1063/1.4869144",
+        "pressure_gpa": float(pressure),
+        "pressure_source": pressure_source.value,
+        "applied_by": applied_by,
+        "source_tensor_kind": source_kind.value,
+        "target_tensor_kind": ElasticTensorKind.WALLACE_HYDROSTATIC.value,
+    }
+    return ElasticState(
+        volume=state.volume,
+        density=state.density,
+        stiffness=crystal_hydrostatic_stiffness(state.stiffness, pressure),
+        prestress=PrestressProvenance(
+            tensor_kind=ElasticTensorKind.WALLACE_HYDROSTATIC,
+            pressure_gpa=pressure,
+            pressure_source=pressure_source,
+            correction_method=_CRYSTAL_PRESTRESS_METHOD,
+            correction_applied_by=applied_by,
+            source_tensor_kind=source_kind,
+        ),
+        energy=state.energy,
+        energy_unit=state.energy_unit,
+        lattice=state.lattice,
+        source=state.source,
+        metadata=metadata,
+    )
+
+
+def correct_crystal_hydrostatic_elastic_series(
+    series: ElasticStateSeries,
+    *,
+    correction_applied_by: str = "quantas-crystal-import",
+) -> ElasticStateSeries:
+    """Correct every raw CRYSTAL state with the CRYSTAL finite-pressure rule.
+
+    Parameters
+    ----------
+    series : ElasticStateSeries
+        Raw CRYSTAL elastic-state series with finite pressure provenance at
+        every sampled volume.
+    correction_applied_by : str, optional
+        Provenance label recorded in every corrected state.
+
+    Returns
+    -------
+    ElasticStateSeries
+        Independent series containing CRYSTAL-consistent hydrostatic
+        incremental tensors.
+
+    Raises
+    ------
+    TypeError
+        If ``series`` is not an :class:`ElasticStateSeries`.
+    ValueError
+        If any state cannot be corrected exactly once.
+    """
+    if not isinstance(series, ElasticStateSeries):
+        raise TypeError("series must be an ElasticStateSeries")
+    states: list[ElasticState] = []
+    for index, state in enumerate(series.states):
+        try:
+            states.append(
+                correct_crystal_hydrostatic_elastic_state(
+                    state,
+                    correction_applied_by=correction_applied_by,
+                )
+            )
+        except ValueError as exc:
+            raise ValueError(f"elastic state {index}: {exc}") from exc
+    metadata = dict(series.metadata)
+    metadata["prestress_correction"] = {
+        "method": _CRYSTAL_PRESTRESS_METHOD,
+        "reference": "Erba et al., J. Chem. Phys. 140, 124703 (2014)",
+        "doi": "10.1063/1.4869144",
+        "applied_by": str(correction_applied_by).strip(),
+        "state_count": len(states),
+    }
+    return ElasticStateSeries(
+        states=tuple(states),
+        reference_index=series.reference_index,
+        orientation=series.orientation,
+        metadata=metadata,
     )
 
 
@@ -215,11 +421,27 @@ def _state_from_reader(
     structure = reader.structure
     lattice = None
     symmetry = reader.symmetry
+    energy_provenance = reader.energy_provenance
+    correction_labels = energy_provenance.get("corrections", ())
+    if not isinstance(correction_labels, (list, tuple)):
+        correction_labels = ()
     metadata: dict[str, object] = {
         "backend": "crystal",
         "calculation": "elastic_constants",
+        "energy": {
+            "selected_quantity": "total_energy",
+            "scf_energy_hartree": reader.scf_energy,
+            "total_energy_hartree": reader.total_energy,
+            "source_marker": energy_provenance.get("source_marker"),
+            "corrections": list(correction_labels),
+            "total_correction_energy_hartree": energy_provenance.get(
+                "total_correction_energy"
+            ),
+        },
         "prestress_applied_by_backend": reader.prestress_applied,
         "prestress_keyword": reader.prestress_keyword,
+        "prestress_correction_formulation": _CRYSTAL_PRESTRESS_METHOD,
+        "prestress_correction_reference_doi": "10.1063/1.4869144",
     }
     if structure is not None:
         metadata["parsed_structure_volume_angstrom3"] = structure.volume
@@ -270,4 +492,10 @@ def _raw_pressure(
     return reader.stress_pressure, PressureSource.OUTPUT_STRESS
 
 
-__all__ = ["CrystalPressurePolicy", "read_crystal_elastic_series"]
+__all__ = [
+    "CrystalPressurePolicy",
+    "correct_crystal_hydrostatic_elastic_series",
+    "correct_crystal_hydrostatic_elastic_state",
+    "crystal_hydrostatic_stiffness",
+    "read_crystal_elastic_series",
+]

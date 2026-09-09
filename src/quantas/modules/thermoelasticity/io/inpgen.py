@@ -13,7 +13,6 @@ from numpy.typing import NDArray
 
 from quantas.core.physics.elasticity import (
     assign_hydrostatic_pressures,
-    correct_hydrostatic_elastic_series,
     detect_elastic_symmetry,
 )
 from quantas.core.physics.eos import (
@@ -23,6 +22,7 @@ from quantas.core.physics.eos import (
 )
 from quantas.interfaces.crystal import (
     CrystalPressurePolicy,
+    correct_crystal_hydrostatic_elastic_series,
     read_crystal_elastic_series,
 )
 from quantas.interfaces.crystal.elasticity import CrystalElasticityReader
@@ -219,7 +219,15 @@ class ThermoelasticInputCreator:
             structure = reader.structure
             symmetry = reader.symmetry
             if structure is None or symmetry is None:
-                raise ValueError(f"{path}: final structure or symmetry is unavailable")
+                raise ValueError(
+                    f"{path}: elastic-reference structure or symmetry is unavailable"
+                )
+            lattice = state.lattice
+            if lattice is None:
+                raise ValueError(
+                    f"{path}: elastic-reference lattice is incompatible with the "
+                    "reported primitive-cell volume"
+                )
             pressure = state.prestress.pressure_gpa
             if pressure is None or not np.isfinite(pressure):
                 raise ValueError(f"{path}: corrected tensor lacks finite pressure provenance")
@@ -236,7 +244,7 @@ class ThermoelasticInputCreator:
                 density=reader.density,
                 energy=reader.energy,
                 stiffness=stiffness,
-                lattice=structure.lattice,
+                lattice=lattice,
                 prestress_applied=True,
                 metadata={
                     "prestress": _prestress_mapping(state),
@@ -606,7 +614,7 @@ def _resolve_pressure_series(
         assignment_method=pressure_source,
         metadata=model,
     )
-    corrected = correct_hydrostatic_elastic_series(
+    corrected = correct_crystal_hydrostatic_elastic_series(
         assigned,
         correction_applied_by="quantas-thermoelastic-inpgen",
     )
@@ -763,6 +771,8 @@ def _series_pressure_resolution(
         "requested_source": requested_source,
         "target_tensor_kind": "wallace_hydrostatic",
         "correction_policy": "preserve-backend-or-apply-once",
+        "correction_formulation": "crystal-erba-2014-hydrostatic",
+        "correction_reference_doi": "10.1063/1.4869144",
         "states": states,
     }
     if energy_model is not None:

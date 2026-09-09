@@ -9,6 +9,7 @@ import pytest
 
 from quantas.interfaces.crystal import (
     CrystalPressurePolicy,
+    crystal_hydrostatic_stiffness,
     read_crystal_elastic_series,
 )
 from quantas.models.elastic_states import ElasticTensorKind, PressureSource
@@ -22,6 +23,7 @@ def _write_output(
     energy_hartree: float,
     stress_pressure_gpa: float | None,
     crystal_pressure_gpa: float | None = None,
+    corrected_total_hartree: float | None = None,
 ) -> Path:
     """Write the minimal completed CRYSTAL sections required by the reader."""
     lines = [
@@ -30,6 +32,10 @@ def _write_output(
         f"DENSITY OF THE CRYSTAL = {density_g_cm3:.8f}",
         f"TOTAL ENERGY(DFT)(AU)( 12) {energy_hartree:.12f}",
     ]
+    if corrected_total_hartree is not None:
+        lines.append(
+            "TOTAL ENERGY + DISP (AU) " f"{corrected_total_hartree:.12f}"
+        )
     if stress_pressure_gpa is not None:
         lines.append(f"PRESSURE IN GIGAPASCAL: {stress_pressure_gpa:.8f}")
     if crystal_pressure_gpa is not None:
@@ -55,6 +61,54 @@ def _write_output(
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
+
+
+def test_import_uses_corrected_crystal_total_energy(tmp_path) -> None:
+    """Elastic states must use CRYSTAL's corrected total rather than raw SCF energy."""
+    output = _write_output(
+        tmp_path / "d3.out",
+        volume=100.0,
+        density_g_cm3=3.3,
+        energy_hartree=-10.0,
+        corrected_total_hartree=-10.025,
+        stress_pressure_gpa=0.0,
+    )
+
+    state = read_crystal_elastic_series([output]).states[0]
+
+    assert state.energy == pytest.approx(-10.025)
+    energy = state.metadata["energy"]
+    assert energy["selected_quantity"] == "total_energy"
+    assert energy["scf_energy_hartree"] == pytest.approx(-10.0)
+    assert energy["total_energy_hartree"] == pytest.approx(-10.025)
+    assert energy["source_marker"] == "TOTAL ENERGY + DISP (AU)"
+    assert energy["corrections"] == ["DISP"]
+
+
+def test_crystal_pressure_correction_matches_erba_matrix() -> None:
+    """CRYSTAL raw coefficients follow Erba et al. Eq. (6)--(7)."""
+    raw = np.diag([200.0, 210.0, 220.0, 70.0, 75.0, 80.0])
+
+    compressed = crystal_hydrostatic_stiffness(raw, 2.0)
+    expected_compressed = raw.copy()
+    expected_compressed[0, 1] = expected_compressed[1, 0] = 2.0
+    expected_compressed[0, 2] = expected_compressed[2, 0] = 2.0
+    expected_compressed[1, 2] = expected_compressed[2, 1] = 2.0
+    expected_compressed[3, 3] = 69.0
+    expected_compressed[4, 4] = 74.0
+    expected_compressed[5, 5] = 79.0
+    np.testing.assert_allclose(compressed, expected_compressed)
+
+    tensile = crystal_hydrostatic_stiffness(raw, -2.0)
+    expected_tensile = raw.copy()
+    expected_tensile[0, 1] = expected_tensile[1, 0] = -2.0
+    expected_tensile[0, 2] = expected_tensile[2, 0] = -2.0
+    expected_tensile[1, 2] = expected_tensile[2, 1] = -2.0
+    expected_tensile[3, 3] = 71.0
+    expected_tensile[4, 4] = 76.0
+    expected_tensile[5, 5] = 81.0
+    np.testing.assert_allclose(tensile, expected_tensile)
+    np.testing.assert_allclose(crystal_hydrostatic_stiffness(raw, 0.0), raw)
 
 
 def test_import_sorts_states_selects_reference_and_corrects(tmp_path) -> None:
@@ -85,8 +139,12 @@ def test_import_sorts_states_selects_reference_and_corrects(tmp_path) -> None:
     )
     assert series.states[0].prestress.pressure_source is PressureSource.OUTPUT_STRESS
     assert series.states[0].prestress.correction_applied_by == "quantas-crystal-import"
-    assert series.states[0].stiffness[0, 0] == pytest.approx(206.0)
-    assert series.states[0].stiffness[3, 3] == pytest.approx(62.0)
+    assert series.states[0].stiffness[0, 0] == pytest.approx(200.0)
+    assert series.states[0].stiffness[0, 1] == pytest.approx(82.0)
+    assert series.states[0].stiffness[3, 3] == pytest.approx(59.0)
+    assert series.states[0].prestress.correction_method == (
+        "crystal-erba-2014-hydrostatic"
+    )
 
 
 def test_manual_pressure_follows_input_order_before_volume_sort(tmp_path) -> None:
@@ -255,8 +313,8 @@ def test_inconsistent_parsed_lattice_is_recorded_but_not_attached(
 
     monkeypatch.setattr(
         "quantas.interfaces.crystal.elasticity."
-        "CrystalElasticityReader._read_final_structure",
-        staticmethod(lambda _path: structure),
+        "CrystalElasticityReader._read_reference_structure",
+        staticmethod(lambda _lines, *, volume: (structure, 0)),
     )
 
     state = read_crystal_elastic_series([output]).states[0]

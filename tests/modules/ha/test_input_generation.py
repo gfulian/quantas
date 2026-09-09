@@ -81,6 +81,20 @@ class TrackingFakePhononReader(FakePhononReader):
         )
 
 
+class EnergyFakePhononReader(FakePhononReader):
+    """Fake CRYSTAL reader exposing SCF-versus-total energy provenance."""
+
+    def __init__(self, filename: str | Path) -> None:
+        super().__init__(filename)
+        self.scf_energy = self.energy + 0.02
+        self.energy_provenance = {
+            "selected_quantity": "total_energy",
+            "source_marker": "CENTRAL POINT",
+            "resolved_total_source_marker": "TOTAL ENERGY + DISP (AU)",
+            "corrections": ["DISP"],
+        }
+
+
 class FakeCrystalQHAReader:
     """Small completed reader exposing the historical CRYSTAL-QHA attributes."""
 
@@ -294,6 +308,30 @@ def test_input_generator_writes_units_and_source_provenance(tmp_path):
     assert input_data.metadata["provenance"]["interface"] == "crystal-qha"
     assert input_data.metadata["provenance"]["reference_index"] == 0
     assert input_data.metadata["provenance"]["sources"] == [str(source)]
+
+
+def test_multiple_file_input_records_scf_total_energy_provenance(tmp_path) -> None:
+    """Generated phonon YAML should retain the SCF energy behind each total."""
+    first = tmp_path / "v0.out"
+    second = tmp_path / "v1.out"
+    first.write_text("0", encoding="utf-8")
+    second.write_text("1", encoding="utf-8")
+    file_list = tmp_path / "phonons.lst"
+    file_list.write_text("v0.out\nv1.out\n", encoding="utf-8")
+    creator = HAInputCreator(
+        interface="crystal",
+        interface_filter={"crystal": EnergyFakePhononReader},
+    )
+    completed, error = creator.read(file_list, is_list=True)
+    assert completed is True, error
+
+    data = creator.to_dict(jobname="energy provenance")
+
+    energy = data["provenance"]["energy"]
+    assert energy["selected_quantity"] == "total_energy"
+    assert energy["unit"] == "Ha"
+    assert [state["scf_energy"] for state in energy["states"]] == [-99.98, -100.98]
+    assert all(state["corrections"] == ["DISP"] for state in energy["states"])
 
 
 def test_multiple_file_generator_marks_missing_eigenvectors_unknown(tmp_path):

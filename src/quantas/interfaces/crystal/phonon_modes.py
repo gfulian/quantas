@@ -43,9 +43,11 @@ class CrystalPhononModeParser:
 
     CRYSTAL prints eigenvectors in blocks containing at most six modes.  The
     final block may contain fewer columns.  At Gamma the vectors are real and
-    are headed by ``NORMAL MODES NORMALIZED TO CLASSICAL AMPLITUDES``.  At a
-    general q-point CRYSTAL prints separate in-phase and anti-phase components,
-    which are combined as the real and imaginary parts of a complex vector.
+    are headed by ``NORMAL MODES NORMALIZED TO CLASSICAL AMPLITUDES``.  For
+    dispersion q-points CRYSTAL labels coordinates as real (``R``) or complex
+    (``C``). Real q-points may print only ``MODES IN PHASE``; complex q-points
+    print separate in-phase and anti-phase components, which are combined as
+    the real and imaginary parts of a complex vector.
 
     The source vectors are normalized to classical displacement amplitudes in
     bohr.  Quantas removes that amplitude and returns unit-norm mass-weighted
@@ -211,9 +213,25 @@ class CrystalPhononModeParser:
         if phase_index is None:
             return None
         anti_index = self._find_marker(lines, markers.MODES_IN_ANTI_PHASE)
-        if anti_index is None or anti_index <= phase_index:
+        if anti_index is None:
+            qpoint_kind = self._dispersion_qpoint_kind(lines)
+            if qpoint_kind == "C":
+                raise ValueError(
+                    "CRYSTAL complex phonon modes are missing the anti-phase block"
+                )
+            real = self._parse_component(
+                lines[phase_index + 1 :],
+                nmodes,
+                natoms,
+            )
+            return _ModeComponent(
+                frequencies=real.frequencies,
+                vectors=real.vectors.astype(np.complex128),
+                atom_symbols=real.atom_symbols,
+            )
+        if anti_index <= phase_index:
             raise ValueError(
-                "CRYSTAL complex phonon modes are missing the anti-phase block"
+                "CRYSTAL anti-phase phonon block precedes the in-phase block"
             )
 
         real = self._parse_component(
@@ -252,6 +270,27 @@ class CrystalPhononModeParser:
             (index for index, line in enumerate(lines) if marker in line),
             None,
         )
+
+    @staticmethod
+    def _dispersion_qpoint_kind(lines: Sequence[str]) -> str | None:
+        """Return CRYSTAL's real/complex q-point label for one section.
+
+        Parameters
+        ----------
+        lines : sequence of str
+            One dispersion q-point section.
+
+        Returns
+        -------
+        str or None
+            ``"R"`` for a real q-point, ``"C"`` for a complex q-point, or
+            ``None`` when the section has no explicit CRYSTAL coordinate label.
+        """
+        for line in lines:
+            match = patterns.DISPERSION_QPOINT_KIND_RE.search(line)
+            if match is not None:
+                return match.group("kind").upper()
+        return None
 
     def _parse_component(
         self,

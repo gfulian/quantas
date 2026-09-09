@@ -60,8 +60,9 @@ selected with ``--interface crystal``, and writes a new input whose calculated
 Gamma frequencies are unchanged. The three Kieffer branches are stored as a
 separate additive component.
 
-Use ``--pressure-source auto`` for the usual case. A raw tensor is corrected
-using pressure from its unstrained stress; a tensor produced with CRYSTAL's
+Use ``--pressure-source auto`` for the usual case. A raw CRYSTAL tensor is
+corrected from its unstrained-stress pressure with the finite-pressure
+transformation of Erba *et al.* (2014); a tensor produced with CRYSTAL's
 ``PRESSURE`` keyword is recognized as already corrected. Use
 ``--pressure-source manual --pressure VALUE`` only when no usable output-stress
 pressure is available.

@@ -129,8 +129,8 @@ unit-norm eigenvectors.  It knows nothing about CRYSTAL markers, Phonopy YAML,
 or future VASP/QE syntax.  Conversely, the CRYSTAL parser does not know QHA
 failure policy or CLI rendering.
 
-For CRYSTAL, general-q vectors are reconstructed from in-phase and anti-phase
-components and converted to unit-norm mass-weighted directions before they
+For CRYSTAL, complex general-q vectors are reconstructed from in-phase and
+anti-phase components and converted to unit-norm mass-weighted directions before they
 leave the interface layer.  Degenerate-subspace matching, Hungarian assignment,
 ambiguity classification, and leave-one-out validation belong to the numerical
 tracking layer.
@@ -163,6 +163,38 @@ elastic pressure are scientifically relevant because they establish whether
 the output contains the stress-corrected coefficients required under
 hydrostatic pre-stress.
 
+CRYSTAL static-energy semantics
+-------------------------------
+
+CRYSTAL distinguishes the converged electronic SCF energy from the physical
+total energy used when a-posteriori corrections are active.  Quantas preserves
+both quantities at the interface boundary:
+
+``SCF energy``
+   The electronic energy printed on ``SCF ENDED - CONVERGENCE ON ENERGY`` and
+   repeated by ``TOTAL ENERGY(DFT)(AU)``.
+
+``total energy``
+   The corrected energy printed by CRYSTAL when available.  Recognized forms
+   include ``TOTAL ENERGY + DISP (AU)``, ``TOTAL ENERGY + GCP (AU)``, and
+   ``TOTAL ENERGY + DISP + GCP (AU)``.  If CRYSTAL prints no corrected total,
+   the total energy is identical to the SCF energy.
+
+The generic :class:`quantas.interfaces.crystal.output.CrystalOutputParser`
+resolves these values state by state and does not attach a correction printed
+for one SCF calculation to a later state.  The corrected total printed by the
+backend is authoritative; Quantas does not reconstruct it by summing empirical
+components.  Correction labels and the difference between total and SCF
+energy are retained as provenance.
+
+Scientific workflows consume the resolved **total energy**.  In particular,
+CRYSTAL phonon input generation continues to use the ``CENTRAL POINT`` energy,
+which is the total energy attached by CRYSTAL to the undisplaced reference
+configuration.  When it can be matched to the preceding SCF state, the
+uncorrected SCF energy is additionally retained in input provenance.  CRYSTAL
+elastic readers likewise expose ``scf_energy`` and ``total_energy`` while the
+historical ``energy`` property is an alias for ``total_energy``.
+
 CRYSTAL elastic volume series
 -----------------------------
 
@@ -172,10 +204,19 @@ of completed ELASTCON or ELAPIEZO outputs into the backend-neutral
 the interface boundary used by Kieffer and available to other multi-volume
 elastic workflows; it does not create a Kieffer-specific elastic format.
 
-The importer requires finite volume, density, static energy, and stiffness at
+The importer requires finite volume, density, total static energy, and stiffness at
 every state.  It sorts the resulting states by increasing volume and selects
 the minimum-static-energy state as the reference.  Tensor axes remain in the
 CRYSTAL Cartesian frame.
+
+For each elastic output, the structural state is the unstrained reference used
+to generate the elastic distortions.  Quantas therefore restricts structure,
+static energy, density, and output-stress pressure collection to the part of
+the CRYSTAL output preceding the first ``STRAIN MATRIX``.  This distinction is
+important when ``COORPRT`` causes geometries from later strained or internally
+relaxed configurations to be printed.  The selected lattice must also agree
+with the primitive-cell volume reported by the elastic module before it can be
+attached to an :class:`~quantas.models.elastic_states.ElasticState`.
 
 Pressure selection is explicit:
 
@@ -199,11 +240,25 @@ Pressure selection is explicit:
    separate correction. It is not exposed as a user-facing ``add-kieffer``
    pressure source.
 
-By default, raw energy--strain tensors are converted once to Wallace
-hydrostatic coefficients.  The pressure value, source, method, source tensor
-kind, and software applying the correction are retained in each state.
-Passing a non-auto pressure policy for a tensor already corrected by CRYSTAL is
-an error, preventing an accidental second correction.
+By default, raw CRYSTAL energy--strain tensors are converted once with the
+finite-pressure transformation implemented by CRYSTAL itself [Erba2014]_:
+
+.. math::
+
+   B_{ijkl}=C_{ijkl}+\frac{P}{2}
+   \left(2\delta_{ij}\delta_{kl}-\delta_{il}\delta_{jk}-\delta_{ik}\delta_{jl}\right).
+
+In CRYSTAL Voigt order this leaves ``C11``, ``C22``, and ``C33`` unchanged,
+adds ``+P`` to ``C12``, ``C13``, and ``C23``, and adds ``-P/2`` to the three
+shear diagonals.  This interface conversion is deliberately distinct from the
+Eulerian finite-strain Wallace term used internally by the QSA model.  The
+pressure value, source, method, source tensor kind, and software applying the
+correction are retained in each state. Passing a non-auto pressure policy for
+a tensor already corrected by CRYSTAL is an error, preventing an accidental
+second correction.
+
+.. [Erba2014] A. Erba, A. Mahmoud, D. Belmonte, and R. Dovesi,
+   *J. Chem. Phys.* **140**, 124703 (2014), doi:10.1063/1.4869144.
 
 .. code-block:: python
 

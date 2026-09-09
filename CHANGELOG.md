@@ -7,6 +7,10 @@ public contract; they must still be documented and validated.
 
 ## [2.0.0b10] - Unreleased
 
+- Accept CRYSTAL dispersion q-points labelled ``R`` when they print only ``MODES IN PHASE`` while continuing to require anti-phase components for explicitly complex ``C`` q-points.
+
+- Enrich HA/QHA ``inpgen`` terminal summaries with q-point coordinate previews and explicit selected-energy/correction provenance while leaving generated YAML unchanged.
+
 ### Added
 
 - Added a frontend-neutral Kieffer sine-wave acoustic-thermodynamics core with
@@ -74,6 +78,13 @@ public contract; they must still be documented and validated.
   termination, energies, SCF convergence, and geometry-optimization history.
 - Added a shared CRYSTAL output document/parser foundation with centralized
   regular expressions for termination, SCF, energy, and optimization markers.
+- Added state-resolved CRYSTAL SCF/total-energy handling.  ``SCF ENDED`` is
+  retained as the uncorrected electronic energy, while ``TOTAL ENERGY + DISP``,
+  ``TOTAL ENERGY + GCP``, or ``TOTAL ENERGY + DISP + GCP`` is selected as the
+  physical total when present; otherwise total energy falls back to SCF/DFT.
+  Elastic E(V) workflows now consume this resolved total, and phonon inputs
+  retain SCF-versus-total provenance without changing ``CENTRAL POINT``
+  numerical behavior.
 - Added characterization tests against distributed CRYSTAL phonon, native-QHA,
   and elasticity outputs, including incomplete and failed synthetic cases.
 - Added CRYSTAL phonon-eigenvector parsing for real Gamma modes and complex
@@ -98,6 +109,20 @@ public contract; they must still be documented and validated.
 
 ### Fixed
 
+- Corrected CRYSTAL raw energy--strain pre-stress conversion to use the
+  finite-pressure stiffness transformation documented by Erba *et al.*
+  (J. Chem. Phys. 140, 124703, 2014) and CRYSTAL ``PRESSURE``/``PRESSEOS``.
+  The CRYSTAL adapter now leaves normal diagonal terms unchanged, adds ``+P``
+  to normal couplings, and adds ``-P/2`` to shear diagonals.  The distinct
+  Eulerian ``wallace_delta`` term used inside the QSA finite-strain model is
+  unchanged, and future non-CRYSTAL backends must define their own tensor
+  convention before any pressure correction is applied.
+- CRYSTAL elastic readers now bind structure, static energy, density, and
+  output-stress pressure to the unstrained reference state before the first
+  elastic ``STRAIN MATRIX``. Later ``COORPRT`` geometries from strained/internal
+  relaxations can no longer be mistaken for the lattice used to define the
+  reported elastic tensor. QSA input generation consumes only the lattice that
+  has been validated against the reported elastic reference volume.
 - Restored CI contracts for the generalized QSA pressure-source API by
   documenting ``PressureSourcePolicy`` and updating the frozen public surface.
   The OHAp QHA regression now keeps tight tolerances for primary thermodynamic

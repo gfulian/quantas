@@ -16,6 +16,7 @@ from quantas.core.geometry import (
 )
 from quantas.interfaces.crystal import markers, patterns
 from quantas.interfaces.crystal.geometry import CrystalGeometryParser
+from quantas.interfaces.crystal.output import CrystalOutputParser
 from quantas.interfaces.crystal.phonon_modes import CrystalPhononModeParser
 from quantas.models.reader import BasicReader
 from quantas.models.structures import (
@@ -75,6 +76,8 @@ class CrystalPhononReader(BasicReader):
             "supercell": {},
             "expansion": np.identity(3, dtype=int),
             "energy": 0.0,
+            "scf_energy": np.nan,
+            "energy_provenance": {},
             "kpoints": 1,
             "qpoints": 1,
             "qcoords": {},
@@ -133,6 +136,10 @@ class CrystalPhononReader(BasicReader):
             self._data["q_position_source"] = "gamma"
         # Collect energy values and phonons
         self._data["energy"] = self.set_energy(file)
+        (
+            self._data["scf_energy"],
+            self._data["energy_provenance"],
+        ) = self._resolve_energy_provenance(file, self._data["energy"])
         self.phonons = self.set_phonons(file)
         self._data["structure_series"] = self._build_structure_series(geometry)
         #
@@ -332,8 +339,16 @@ class CrystalPhononReader(BasicReader):
     @property
     def energy(self):
         """
-        Get the unit cell (if phonon dispersion relations or if
-        :math:`\\Gamma`-point frequencies) or the supercell energy.
+        Get the total unit-cell or supercell energy used by the phonon state.
+
+        CRYSTAL ``CENTRAL POINT`` energies are treated as the physical total
+        energy and therefore include any empirical corrections already
+        propagated by CRYSTAL.
+
+        Returns
+        -------
+        float
+            Total energy in hartree after the reader's cell normalization.
         """
         if self.supercell_on:
             if self.scelphono_on:
@@ -342,6 +357,49 @@ class CrystalPhononReader(BasicReader):
                 return self._data["energy"]
         else:
             return self._data["energy"] / self.kpoints
+
+    @property
+    def total_energy(self):
+        """Return the total phonon-reference energy.
+
+        Returns
+        -------
+        float
+            Total energy in hartree after the reader's cell normalization.
+        """
+        return self.energy
+
+    @property
+    def scf_energy(self):
+        """Return the uncorrected SCF energy associated with the reference.
+
+        Returns
+        -------
+        float
+            Electronic SCF energy in hartree after the reader's cell
+            normalization, or ``NaN`` when the central point could not be
+            associated unambiguously with an SCF state.
+        """
+        value = float(self._data["scf_energy"])
+        if not np.isfinite(value):
+            return np.nan
+        if self.supercell_on:
+            if self.scelphono_on:
+                return value / self.kpoints
+            return value
+        return value / self.kpoints
+
+    @property
+    def energy_provenance(self) -> dict[str, object]:
+        """Return provenance for SCF and total phonon-reference energies.
+
+        Returns
+        -------
+        dict
+            Source markers, correction labels, and SCF/total matching
+            diagnostics.
+        """
+        return dict(self._data["energy_provenance"])
 
     @property
     def nphonon(self):
@@ -1063,7 +1121,9 @@ class CrystalPhononReader(BasicReader):
     def set_energy(self, file):
         """
         This method sets the energy of the cell. It reads the value from the
-        central point (equilibrium) of displacement.
+        central point (equilibrium) of displacement.  CRYSTAL propagates the
+        total energy of the reference state to this table, including optional
+        a-posteriori corrections when they are active.
 
         Parameters
         ----------
@@ -1089,6 +1149,82 @@ class CrystalPhononReader(BasicReader):
                     )
 
         raise ValueError("CRYSTAL central-point energy not found")
+
+    @staticmethod
+    def _resolve_energy_provenance(
+        file: str | Path,
+        central_point_energy: float,
+    ) -> tuple[float, dict[str, object]]:
+        """Associate a phonon central point with its SCF/total energy state.
+
+        The ``CENTRAL POINT`` value remains authoritative for phonon input
+        generation because it is the energy attached by CRYSTAL to the
+        undisplaced reference configuration.  When the generic CRYSTAL parser
+        can match that value to an earlier SCF state, Quantas additionally
+        records the uncorrected SCF energy and the empirical-correction
+        provenance without changing the numerical value used by HA/QHA.
+
+        Parameters
+        ----------
+        file : str or pathlib.Path
+            CRYSTAL phonon output.
+        central_point_energy : float
+            Reference energy parsed from ``CENTRAL POINT`` in hartree.
+
+        Returns
+        -------
+        scf_energy, provenance : tuple
+            Matched uncorrected SCF energy and provenance mapping.  The SCF
+            value is ``NaN`` when no total-energy state matches the central
+            point within printing precision.
+        """
+        total_records = CrystalOutputParser(file).total_energies()
+        provenance: dict[str, object] = {
+            "selected_quantity": "total_energy",
+            "source_marker": "CENTRAL POINT",
+            "central_point_energy_hartree": float(central_point_energy),
+            "matched_scf_state": False,
+            "corrections": [],
+        }
+        if not total_records:
+            return np.nan, provenance
+
+        # In a standalone CRYSTAL FREQCALC output the first SCF state is the
+        # undisplaced input configuration from which the central point is
+        # constructed.  Do not search later displaced states merely because
+        # one happens to have a numerically similar energy.
+        matched = total_records[0]
+        if not np.isclose(
+            float(matched.value),
+            float(central_point_energy),
+            rtol=1.0e-11,
+            atol=1.0e-8,
+        ):
+            return np.nan, provenance
+
+        metadata = dict(matched.metadata)
+        raw_scf_energy = metadata.get("scf_energy", matched.value)
+        scf_energy = (
+            float(raw_scf_energy)
+            if isinstance(raw_scf_energy, (int, float))
+            else float(matched.value)
+        )
+        correction_labels = metadata.get("corrections", ())
+        if not isinstance(correction_labels, (list, tuple)):
+            correction_labels = ()
+        provenance.update(
+            {
+                "matched_scf_state": True,
+                "scf_energy_hartree": scf_energy,
+                "resolved_total_energy_hartree": float(matched.value),
+                "resolved_total_source_marker": metadata.get("source_marker"),
+                "corrections": list(correction_labels),
+                "total_correction_energy_hartree": metadata.get(
+                    "total_correction_energy"
+                ),
+            }
+        )
+        return scf_energy, provenance
 
     def set_phonons(self, file):
         """ """

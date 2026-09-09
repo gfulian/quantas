@@ -130,24 +130,28 @@ calculations from one immutable YAML file.
 Raw elastic tensors and hydrostatic pre-stress
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Elastic constants obtained from an energy--strain calculation without an
-explicit finite-pressure correction cannot be passed directly to the
+Elastic constants obtained from a CRYSTAL energy--strain calculation without
+an explicit finite-pressure correction cannot be passed directly to the
 Christoffel solver.  Once a hydrostatic pressure has been assigned to every
-state, Quantas converts the raw tensor into the incremental Wallace tensor
-using the convention derived in :doc:`../theory/thermoelasticity`:
+state, the CRYSTAL interface converts the raw coefficients with the same
+finite-pressure relation used by CRYSTAL ``PRESSURE``/``PRESSEOS``
+(Erba *et al.*, *J. Chem. Phys.* **140**, 124703 (2014)):
 
 .. math::
 
-   B_{ijkl}(V_i)
-   =C^{\mathrm{raw}}_{ijkl}(V_i)-P_i\,\Delta_{ijkl}.
+   B_{ijkl}(V_i)=C^{\mathrm{raw}}_{ijkl}(V_i)
+   +\frac{P_i}{2}\left(2\delta_{ij}\delta_{kl}
+   -\delta_{il}\delta_{jk}-\delta_{ik}\delta_{jl}\right).
 
-Pressure is positive in compression.  The source of every :math:`P_i` is part
-of the data contract: it may come from the output stress, a manually supplied
-value, an integrated energy EOS, or a polynomial derivative of the QHA input's
-static :math:`E(V)` series. For the latter two routes, Quantas first imports the
-tensors as raw, matches elastic and phonon volumes explicitly, evaluates
-:math:`P(V)=-dE/dV`, and only then applies the correction. The generated input
-records the selected EOS tag or polynomial degree, fit diagnostics, units,
+Pressure is positive in compression.  This CRYSTAL adapter rule is distinct
+from the finite-strain ``wallace_delta`` term used by the QSA equations.  The
+source of every :math:`P_i` is part of the data contract: it may come from the
+output stress, a manually supplied value, an integrated energy EOS, or a
+polynomial derivative of the QHA input's static :math:`E(V)` series. For the
+latter two routes, Quantas first imports the tensors as raw, matches elastic
+and phonon volumes explicitly, evaluates :math:`P(V)=-dE/dV`, and only then
+applies the CRYSTAL correction. The generated input records the selected EOS
+tag or polynomial degree, fit diagnostics, units,
 evaluated pressures, and volume associations. The correction produces a new
 elastic state and records the source and target tensor kinds, method, pressure
 source, and software applying it. An already incremental tensor is rejected,

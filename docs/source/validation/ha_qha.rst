@@ -512,7 +512,8 @@ Real and complex eigenvectors
 
 At Gamma, parsed eigenvectors are real.  At non-zero q-points, the
 characterization output contains non-zero imaginary components reconstructed
-from CRYSTAL's in-phase and anti-phase sections.
+from CRYSTAL's in-phase and anti-phase sections when the q-point is complex;
+real q-points may provide only the in-phase section.
 
 The parser rejects an inconsistent real/imaginary decomposition if the two
 sections use different frequencies or atom orderings.

@@ -10,10 +10,7 @@ from typing import Any, Literal
 
 import numpy as np
 
-from quantas.core.physics.elasticity import (
-    assign_hydrostatic_pressures,
-    correct_hydrostatic_elastic_series,
-)
+from quantas.core.physics.elasticity import assign_hydrostatic_pressures
 from quantas.core.physics.eos import (
     PressureEstimate,
     pressure_from_energy_eos,
@@ -22,6 +19,7 @@ from quantas.core.physics.eos import (
 from quantas.core.physics.kieffer import build_kieffer_volume_series
 from quantas.interfaces.crystal import (
     CrystalPressurePolicy,
+    correct_crystal_hydrostatic_elastic_series,
     read_crystal_elastic_series,
 )
 from quantas.io.kieffer import (
@@ -121,7 +119,7 @@ def add_kieffer_to_phonon_input(
         "elastic_outputs": [str(state.source) for state in elastic_series.states],
         "elastic_interface": selected_interface,
         "pressure_source": selected_pressure,
-        "prestress_correction": "barron-klein-wallace-hydrostatic",
+        "prestress_correction": "crystal-erba-2014-hydrostatic",
         "reference_elastic_index": elastic_series.reference_index,
     }
     if pressure_model is not None:
@@ -197,7 +195,7 @@ def _prepare_elastic_series(
         assignment_method=pressure_source,
         metadata=fit_provenance,
     )
-    corrected = correct_hydrostatic_elastic_series(
+    corrected = correct_crystal_hydrostatic_elastic_series(
         assigned,
         correction_applied_by="quantas-kieffer-enrichment",
     )

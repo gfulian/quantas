@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 
-"""Hydrostatic finite-stress correction of elastic-state tensors.
+"""Hydrostatic finite-stress operators for backend-neutral elastic states.
 
-The functions in this module convert explicitly raw energy--strain stiffness
-coefficients into the Wallace incremental coefficients required by acoustic
-wave propagation.  Positive pressure denotes compression throughout.
+The correction implemented here follows Quantas' Eulerian finite-strain
+convention and is retained for the internal thermodynamic formulation.  It is
+not a universal external-code ingestion rule: interfaces must apply the
+finite-pressure transformation appropriate to the tensor definition emitted
+by their backend.  In particular, raw CRYSTAL energy--strain tensors are
+converted in :mod:`quantas.interfaces.crystal`.  Positive pressure denotes
+compression throughout.
 """
 
 from __future__ import annotations
@@ -167,6 +171,13 @@ def hydrostatic_wallace_stiffness(
     ------
     ValueError
         If the matrix or pressure is invalid.
+
+    Notes
+    -----
+    This operator is part of Quantas' Eulerian finite-strain convention.
+    External-code raw stiffness tensors may obey a different finite-pressure
+    transformation and must be handled by their interface.  CRYSTAL is one
+    such case.
     """
     stiffness = np.asarray(raw_stiffness, dtype=np.float64)
     pressure = float(pressure_gpa)

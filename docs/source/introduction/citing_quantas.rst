@@ -160,6 +160,15 @@ adiabatic elastic constants, cite:
    “Thermo-Elasticity of Materials from Quasi-Harmonic Calculations”,
    *Minerals* **9**, 16 (2019), doi:10.3390/min9010016.
 
+For CRYSTAL elastic tensors evaluated or reconstructed under hydrostatic
+pre-stress, cite the finite-pressure formulation implemented by CRYSTAL:
+
+   A. Erba, A. Mahmoud, D. Belmonte, and R. Dovesi,
+   “High pressure elastic properties of minerals from ab initio simulations:
+   The case of pyrope, grossular and andradite silicate garnets”,
+   *Journal of Chemical Physics* **140**, 124703 (2014),
+   doi:10.1063/1.4869144.
+
 For the thermodynamically self-consistent Eulerian finite-strain derivation of
 the cold elastic tensor and its quasi-harmonic extension, cite:
 

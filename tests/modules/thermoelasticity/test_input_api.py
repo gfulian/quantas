@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import numpy as np
+import pytest
 import yaml
 
 from quantas.api.thermoelasticity import prepare_context
@@ -303,12 +304,16 @@ def test_generator_auto_corrects_raw_tensor_from_output_stress(tmp_path: Path) -
     assert resolution["requested_source"] == "auto"
     assert resolution["states"][0]["pressure_source"] == "output_stress"
     assert resolution["states"][0]["correction_method"] == (
-        "barron-klein-wallace-hydrostatic"
+        "crystal-erba-2014-hydrostatic"
     )
     assert resolution["states"][0]["correction_applied_by"] == (
         "quantas-thermoelastic-inpgen"
     )
-    assert parsed.elastic_series.points[0].pressure == 2.0
+    point = parsed.elastic_series.points[0]
+    assert point.pressure == 2.0
+    assert point.stiffness[0, 0] == pytest.approx(208.0)
+    assert point.stiffness[0, 1] == pytest.approx(106.0)
+    assert point.stiffness[3, 3] == pytest.approx(81.0)
 
 
 def test_generator_rejects_raw_tensor_without_pressure(
@@ -363,7 +368,13 @@ def test_generator_energy_polynomial_corrects_raw_series(tmp_path: Path) -> None
     assert resolution["requested_source"] == "energy_polynomial"
     assert resolution["energy_model"]["relation"] == "P(V) = -dE/dV"
     assert resolution["energy_model"]["fit"]["success"] is True
+    assert resolution["correction_formulation"] == "crystal-erba-2014-hydrostatic"
     assert all(
         state["pressure_source"] == "energy_polynomial"
         for state in resolution["states"]
     )
+    for point in parsed.elastic_series.points:
+        pressure = point.pressure
+        assert point.stiffness[0, 0] == pytest.approx(200.0)
+        assert point.stiffness[0, 1] == pytest.approx(100.0 + pressure)
+        assert point.stiffness[3, 3] == pytest.approx(80.0 - 0.5 * pressure)

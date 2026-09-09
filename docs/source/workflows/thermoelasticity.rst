@@ -137,10 +137,13 @@ CRYSTAL interface can establish that condition in several explicit ways.
    default.
 
 ``output-stress``
-   For a raw energy--strain tensor, Quantas uses the pressure of the final
-   unstrained stress tensor and applies the hydrostatic Barron--Klein/Wallace
-   correction exactly once.  This is the default fallback selected by
-   ``--pressure-source auto`` when no CRYSTAL pre-stress keyword is present.
+   For a raw CRYSTAL energy--strain tensor, Quantas uses the pressure of the
+   final unstrained stress tensor and applies the CRYSTAL finite-pressure
+   transformation of Erba *et al.* (2014), Eq. 6--7, exactly once.  In Voigt
+   notation the normal diagonals are unchanged, the normal off-diagonal terms
+   receive ``+P``, and the shear diagonals receive ``-P/2``.  This is the
+   default fallback selected by ``--pressure-source auto`` when no CRYSTAL
+   pre-stress keyword is present.
 
 ``manual``
    One pressure is supplied explicitly for each elastic output.  This route is
@@ -150,17 +153,25 @@ CRYSTAL interface can establish that condition in several explicit ways.
 ``energy-eos`` or ``energy-polynomial``
    Quantas evaluates :math:`P(V)=-dE/dV` from a multi-volume static energy
    series, assigns the resulting pressures to the raw tensors, and then applies
-   the same Wallace correction exactly once.  The energy-volume data may come
+   the same CRYSTAL finite-pressure transformation exactly once.  The
+   energy-volume data may come
    from the elastic outputs themselves or from ``--energy-input`` pointing to
    an HA/QHA YAML.  Only the static :math:`E(V)` arrays are consumed, so the
    thermodynamic input may be Gamma-only, Gamma plus Kieffer, or based on an
    explicit phonon dispersion without changing this pressure-resolution step.
+   For CRYSTAL elastic outputs, :math:`E(V)` is the resolved total energy: an
+   explicitly printed DFT-D and/or gCP corrected total is preferred over the
+   uncorrected SCF energy, with the latter used only when no correction is
+   present.
 
 For raw tensors, a pressure source is not optional.  If ``auto`` cannot find a
 finite output-stress pressure, input generation stops and asks for an explicit
 ``output-stress``, ``manual``, ``energy-eos``, or ``energy-polynomial`` policy.
 Quantas never writes a QSA input whose tensor convention or finite-stress
-correction history is ambiguous.
+correction history is ambiguous.  The CRYSTAL adapter transformation must not
+be confused with ``wallace_delta`` in the QSA cold finite-strain equations:
+the latter belongs to the Stixrude--Lithgow-Bertelloni thermodynamic model and
+is not an external-code tensor-ingestion rule.
 
 The normalized YAML records the pressure source, tensor kind, correction
 method, software that applied the correction, source tensor convention, and

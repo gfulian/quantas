@@ -50,6 +50,37 @@ def test_crystal_mode_parser_handles_partial_final_block() -> None:
     )
 
 
+def test_crystal_mode_parser_accepts_phase_only_real_qpoint() -> None:
+    """CRYSTAL real dispersion points may print only the in-phase modes."""
+    lines = [
+        " DISPERSION K POINT NUMBER     1 COORD:  R(  0  0  2 )    WEIGHT:    1.",
+        " MODES IN PHASE",
+    ]
+    lines.extend(_constant_mode_block([1, 2, 3, 4, 5, 6], natoms=2))
+
+    data = CrystalPhononModeParser(lines).parse(nmodes=6)
+
+    assert data is not None
+    assert data.frequencies.shape == (1, 6)
+    assert data.eigenvectors.shape == (1, 6, 2, 3)
+    assert np.allclose(data.eigenvectors.imag, 0.0)
+
+
+def test_crystal_mode_parser_rejects_phase_only_complex_qpoint() -> None:
+    """A CRYSTAL complex dispersion point still requires anti-phase modes."""
+    lines = [
+        " DISPERSION K POINT NUMBER     1 COORD:  C(  0  0  1 )    WEIGHT:    1.",
+        " MODES IN PHASE",
+    ]
+    lines.extend(_constant_mode_block([1, 2, 3, 4, 5, 6], natoms=2))
+
+    with np.testing.assert_raises_regex(
+        ValueError,
+        "complex phonon modes are missing the anti-phase block",
+    ):
+        CrystalPhononModeParser(lines).parse(nmodes=6)
+
+
 def test_crystal_mode_parser_reads_real_dispersion_vectors() -> None:
     """Real and complex CRYSTAL modes should share one neutral representation."""
     data = CrystalPhononModeParser(PHONON_OUTPUT).parse(nmodes=30)

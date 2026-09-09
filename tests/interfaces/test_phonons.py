@@ -73,3 +73,39 @@ def test_crystal_phonon_reads_central_point_energy(tmp_path) -> None:
     energy = CrystalPhononReader().set_energy(filename)
 
     assert energy == pytest.approx(-3.793746542432e4)
+
+
+def test_crystal_phonon_matches_central_point_to_corrected_total(tmp_path) -> None:
+    """Phonon provenance should retain SCF energy without replacing total energy."""
+    filename = tmp_path / "corrected-central-point.out"
+    filename.write_text(
+        "\n".join(
+            [
+                (
+                    " == SCF ENDED - CONVERGENCE ON ENERGY      "
+                    "E(AU) -2.7528465266097E+02 CYCLES   7"
+                ),
+                (
+                    " TOTAL ENERGY(DFT)(AU)(  7) -2.7528465266097E+02 "
+                    "DE-3.8E-10 tester 3.5E-12"
+                ),
+                " TOTAL ENERGY + DISP (AU) -2.7530622804827E+02",
+                " THE CENTRAL POINT",
+                (
+                    " CENTRAL POINT -2.753062280483E+02    7 "
+                    "0.0000E+00     6"
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    reader = CrystalPhononReader()
+    total = reader.set_energy(filename)
+    scf, provenance = reader._resolve_energy_provenance(filename, total)
+
+    assert total == pytest.approx(-275.3062280483)
+    assert scf == pytest.approx(-275.28465266097)
+    assert provenance["matched_scf_state"] is True
+    assert provenance["corrections"] == ["DISP"]
+    assert provenance["resolved_total_source_marker"] == "TOTAL ENERGY + DISP (AU)"
