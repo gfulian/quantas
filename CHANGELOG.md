@@ -5,7 +5,10 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
-## [2.0.0b10] - Unreleased
+## [2.0.0b11] - Unreleased
+
+
+## [2.0.0b10] - 2026-09-09
 
 - Accept CRYSTAL dispersion q-points labelled ``R`` when they print only ``MODES IN PHASE`` while continuing to require anti-phase components for explicitly complex ``C`` q-points.
 
