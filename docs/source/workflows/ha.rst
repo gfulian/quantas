@@ -19,6 +19,21 @@ This distinction is operationally important:
 The HA workflow is therefore both a complete calculation in its own right and
 the first numerical stage of a QHA calculation.
 
+Optional Kieffer acoustic contribution
+--------------------------------------
+
+The Python API accepts one direct ``KiefferVolumeSeries`` for a single-volume,
+primitive Gamma calculation.  The CLI obtains the same contract from an
+enriched YAML input when ``quantas ha run ... --kieffer`` is selected.  The
+model supplies three continuous acoustic branches in addition to the phonons
+calculated at Gamma.  It does not replace the three translational frequencies
+and does not modify the input frequency array.
+
+Elastic outputs are read only by ``add-kieffer``.  HA execution consumes the
+already validated cutoff contract, so a run is reproducible without reparsing
+or recomputing elastic states.  The YAML block is inactive when ``--kieffer`` is
+omitted, allowing phonon-only and enriched calculations from the same file.
+
 Computational pipeline
 ----------------------
 
@@ -29,6 +44,7 @@ The workflow follows the sequence
    phonon YAML
        │
        ├─ validate volumes, static energies, frequencies, and q-point weights
+       ├─ optionally validate and activate embedded Kieffer cutoffs
        ├─ normalize q-point weights
        ├─ convert temperature to K and frequencies to Hz
        ├─ evaluate harmonic oscillator sums on the complete T × V grid

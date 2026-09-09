@@ -21,6 +21,7 @@ from quantas.io.hdf5 import (
     write_array_dataset,
     write_mapping,
 )
+from quantas.models.kieffer import KiefferThermodynamicContribution
 from quantas.modules.ha.models import HAResult
 
 
@@ -61,6 +62,8 @@ def write_ha_payload(h5: h5py.File, result: HAResult) -> h5py.Group:
         value = getattr(result, attribute)
         if value is not None:
             write_array_dataset(group, attribute, value)
+    if result.kieffer_contribution is not None:
+        _write_kieffer_contribution(group, result.kieffer_contribution)
     return group
 
 
@@ -90,7 +93,57 @@ def read_current_ha_payload(group: h5py.Group) -> HAResult:
         vibrational_free_energy=_read_optional_array(group, "vibrational_free_energy"),
         free_energy=_read_optional_array(group, "free_energy"),
         isochoric_heat_capacity=_read_optional_array(group, "isochoric_heat_capacity"),
+        kieffer_contribution=_read_kieffer_contribution(group),
         metadata=_read_metadata_group(metadata_group),
+    )
+
+
+def _write_kieffer_contribution(
+    group: h5py.Group,
+    contribution: KiefferThermodynamicContribution,
+) -> None:
+    """Write the separately traceable acoustic contribution."""
+    acoustic = group.create_group("kieffer_contribution")
+    for name in (
+        "cutoff_frequencies_hz",
+        "effective_velocities_km_s",
+        "zero_point_energy",
+        "thermal_energy",
+        "entropy",
+        "vibrational_free_energy",
+        "isochoric_heat_capacity",
+    ):
+        write_array_dataset(acoustic, name, getattr(contribution, name))
+    metadata = acoustic.create_group("metadata")
+    write_mapping(metadata, contribution.metadata)
+
+
+def _read_kieffer_contribution(
+    group: h5py.Group,
+) -> KiefferThermodynamicContribution | None:
+    """Read an optional acoustic contribution from a native HA result."""
+    acoustic = group.get("kieffer_contribution")
+    if not isinstance(acoustic, h5py.Group):
+        return None
+    required = (
+        "cutoff_frequencies_hz",
+        "effective_velocities_km_s",
+        "zero_point_energy",
+        "thermal_energy",
+        "entropy",
+        "vibrational_free_energy",
+        "isochoric_heat_capacity",
+    )
+    values = {name: read_array_dataset(acoustic, name) for name in required}
+    return KiefferThermodynamicContribution(
+        cutoff_frequencies_hz=np.asarray(values["cutoff_frequencies_hz"]),
+        effective_velocities_km_s=np.asarray(values["effective_velocities_km_s"]),
+        zero_point_energy=np.asarray(values["zero_point_energy"]),
+        thermal_energy=np.asarray(values["thermal_energy"]),
+        entropy=np.asarray(values["entropy"]),
+        vibrational_free_energy=np.asarray(values["vibrational_free_energy"]),
+        isochoric_heat_capacity=np.asarray(values["isochoric_heat_capacity"]),
+        metadata=_read_metadata_group(acoustic.get("metadata")),
     )
 
 

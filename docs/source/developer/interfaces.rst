@@ -129,8 +129,8 @@ unit-norm eigenvectors.  It knows nothing about CRYSTAL markers, Phonopy YAML,
 or future VASP/QE syntax.  Conversely, the CRYSTAL parser does not know QHA
 failure policy or CLI rendering.
 
-For CRYSTAL, general-q vectors are reconstructed from in-phase and anti-phase
-components and converted to unit-norm mass-weighted directions before they
+For CRYSTAL, complex general-q vectors are reconstructed from in-phase and
+anti-phase components and converted to unit-norm mass-weighted directions before they
 leave the interface layer.  Degenerate-subspace matching, Hungarian assignment,
 ambiguity classification, and leave-one-out validation belong to the numerical
 tracking layer.
@@ -162,6 +162,186 @@ For CRYSTAL elasticity, for example, the ``PRESSURE`` keyword and reported
 elastic pressure are scientifically relevant because they establish whether
 the output contains the stress-corrected coefficients required under
 hydrostatic pre-stress.
+
+CRYSTAL static-energy semantics
+-------------------------------
+
+CRYSTAL distinguishes the converged electronic SCF energy from the physical
+total energy used when a-posteriori corrections are active.  Quantas preserves
+both quantities at the interface boundary:
+
+``SCF energy``
+   The electronic energy printed on ``SCF ENDED - CONVERGENCE ON ENERGY`` and
+   repeated by ``TOTAL ENERGY(DFT)(AU)``.
+
+``total energy``
+   The corrected energy printed by CRYSTAL when available.  Recognized forms
+   include ``TOTAL ENERGY + DISP (AU)``, ``TOTAL ENERGY + GCP (AU)``, and
+   ``TOTAL ENERGY + DISP + GCP (AU)``.  If CRYSTAL prints no corrected total,
+   the total energy is identical to the SCF energy.
+
+The generic :class:`quantas.interfaces.crystal.output.CrystalOutputParser`
+resolves these values state by state and does not attach a correction printed
+for one SCF calculation to a later state.  The corrected total printed by the
+backend is authoritative; Quantas does not reconstruct it by summing empirical
+components.  Correction labels and the difference between total and SCF
+energy are retained as provenance.
+
+Scientific workflows consume the resolved **total energy**.  In particular,
+CRYSTAL phonon input generation continues to use the ``CENTRAL POINT`` energy,
+which is the total energy attached by CRYSTAL to the undisplaced reference
+configuration.  When it can be matched to the preceding SCF state, the
+uncorrected SCF energy is additionally retained in input provenance.  CRYSTAL
+elastic readers likewise expose ``scf_energy`` and ``total_energy`` while the
+historical ``energy`` property is an alias for ``total_energy``.
+
+CRYSTAL elastic volume series
+-----------------------------
+
+:func:`quantas.interfaces.crystal.read_crystal_elastic_series` composes a set
+of completed ELASTCON or ELAPIEZO outputs into the backend-neutral
+:class:`quantas.models.elastic_states.ElasticStateSeries` contract.  This is
+the interface boundary used by Kieffer and available to other multi-volume
+elastic workflows; it does not create a Kieffer-specific elastic format.
+
+The importer requires finite volume, density, total static energy, and stiffness at
+every state.  It sorts the resulting states by increasing volume and selects
+the minimum-static-energy state as the reference.  Tensor axes remain in the
+CRYSTAL Cartesian frame.
+
+For each elastic output, the structural state is the unstrained reference used
+to generate the elastic distortions.  Quantas therefore restricts structure,
+static energy, density, and output-stress pressure collection to the part of
+the CRYSTAL output preceding the first ``STRAIN MATRIX``.  This distinction is
+important when ``COORPRT`` causes geometries from later strained or internally
+relaxed configurations to be printed.  The selected lattice must also agree
+with the primitive-cell volume reported by the elastic module before it can be
+attached to an :class:`~quantas.models.elastic_states.ElasticState`.
+
+Pressure selection is explicit:
+
+``auto``
+   Preserve tensors already corrected by CRYSTAL when the ``PRESSURE`` keyword
+   is present.  For raw tensors, use the pressure printed for the unstrained
+   stress tensor.
+
+``output_stress``
+   Require raw tensors and explicitly use their reported unstrained-stress
+   pressure.
+
+``manual``
+   Require one finite pressure in GPa per input file.  Values follow input-file
+   order before volume sorting.  Positive pressure denotes compression.
+
+``deferred``
+   Retain a raw tensor without attaching pressure. This adapter-level route
+   requires ``apply_prestress_correction=False`` and exists so a composing
+   workflow can attach independently derived pressure provenance before a
+   separate correction. It is not exposed as a user-facing ``add-kieffer``
+   pressure source.
+
+By default, raw CRYSTAL energy--strain tensors are converted once with the
+finite-pressure transformation implemented by CRYSTAL itself [Erba2014]_:
+
+.. math::
+
+   B_{ijkl}=C_{ijkl}+\frac{P}{2}
+   \left(2\delta_{ij}\delta_{kl}-\delta_{il}\delta_{jk}-\delta_{ik}\delta_{jl}\right).
+
+In CRYSTAL Voigt order this leaves ``C11``, ``C22``, and ``C33`` unchanged,
+adds ``+P`` to ``C12``, ``C13``, and ``C23``, and adds ``-P/2`` to the three
+shear diagonals.  This interface conversion is deliberately distinct from the
+Eulerian finite-strain Wallace term used internally by the QSA model.  The
+pressure value, source, method, source tensor kind, and software applying the
+correction are retained in each state. Passing a non-auto pressure policy for
+a tensor already corrected by CRYSTAL is an error, preventing an accidental
+second correction.
+
+.. [Erba2014] A. Erba, A. Mahmoud, D. Belmonte, and R. Dovesi,
+   *J. Chem. Phys.* **140**, 124703 (2014), doi:10.1063/1.4869144.
+
+.. code-block:: python
+
+   from quantas.interfaces.crystal import read_crystal_elastic_series
+
+   series = read_crystal_elastic_series(
+       ["state_01.out", "state_02.out", "state_03.out"],
+       pressure_policy="output_stress",
+   )
+
+If the structural block reconstructed from an output does not have the same
+volume as the final elastic scalar, the final elastic volume remains
+authoritative.  The inconsistent lattice is not attached to the state; its
+volume and the failed consistency check are recorded in metadata.  This avoids
+silently coupling a tensor to a stale geometry block while retaining the
+diagnostic needed to inspect the source output.
+
+Kieffer input enrichment
+------------------------
+
+The public HA and QHA APIs expose ``add_kieffer_input``.  Their shared
+implementation reads the phonon input and the CRYSTAL elastic volume series,
+builds the anisotropic acoustic averages, validates the appropriate HA or QHA
+applicability contract, and writes a new YAML file.  The corresponding command
+is registered under both workflows:
+
+.. code-block:: console
+
+   quantas ha add-kieffer ha.yaml state.out -o ha-kieffer.yaml
+   quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
+       --interface crystal -o qha-kieffer.yaml
+
+Paths inside ``elastic-files.txt`` are resolved relative to the list file. Blank
+lines and lines beginning with ``#`` are ignored. This makes the list portable
+when the complete calculation directory is moved.
+
+The default ``--pressure-source auto`` preserves tensors corrected by CRYSTAL's
+``PRESSURE`` keyword and otherwise uses pressure from the unstrained stress.
+Manual pressure values can be supplied in input-file order:
+
+.. code-block:: console
+
+   quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
+       --pressure-source manual \
+       --pressure 11.53 --pressure 8.718 --pressure 6.069 \
+       -o qha-kieffer.yaml
+
+For multi-volume QHA inputs, pressure may instead be evaluated from the static
+energy-volume arrays already present in the phonon input:
+
+.. code-block:: console
+
+   quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
+       --interface crystal --pressure-source energy-eos --eos BM3 \
+       -o qha-kieffer.yaml
+
+   quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
+       --interface crystal --pressure-source energy-polynomial --degree 3 \
+       -o qha-kieffer.yaml
+
+The reusable fit operations live in :mod:`quantas.core.physics.eos`; pressure
+assignment and hydrostatic correction remain separate operations in
+:mod:`quantas.core.physics.elasticity`. This boundary lets tests verify that
+``P(V)`` is attached to an unmodified raw tensor before the tensor is corrected
+exactly once.
+
+The destination defaults to ``<input-stem>-kieffer.yaml`` and must differ from
+the source path. An existing Kieffer block is never replaced silently.  The
+generated top-level ``kieffer`` mapping identifies the sine-wave method and its
+additive composition, declares canonical units, and stores one state per
+volume with:
+
+* cutoff frequencies in Hz;
+* effective slow-shear, fast-shear, and longitudinal velocities in km/s;
+* pressure and tensor convention;
+* elastic-state association;
+* spherical-quadrature diagnostics;
+* original phonon and elastic source paths.
+
+The public ``read_kieffer_input`` operation restores this block as a validated
+:class:`quantas.models.kieffer.KiefferVolumeSeries`.  It can therefore be
+passed explicitly to the HA/QHA calculation APIs without reconstructing the
+elastic calculation.
 
 Error handling
 --------------

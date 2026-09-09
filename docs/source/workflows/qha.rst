@@ -106,6 +106,82 @@ The frequency scheme depends on the public ``mode_continuity`` status:
 The thermodynamic ``td`` scheme does not require mode-by-mode continuity
 because it interpolates harmonic quantities after the mode summation.
 
+Kieffer acoustic enrichment
+---------------------------
+
+The Python API can add a volume-resolved ``KiefferVolumeSeries`` to primitive,
+Gamma-only QHA data.  Every sampled QHA volume must match exactly one direct
+cutoff state under the documented volume-tolerance policy.  File order is not
+used as a scientific association: Quantas records and applies an explicit
+one-to-one volume mapping.
+
+The three Kieffer branches are added to the calculated Gamma phonons.  No
+Gamma mode is removed or replaced.  The acoustic contribution is retained
+separately on the sampled temperature-volume grid and persisted in the native
+HDF5 result together with cutoff frequencies, effective velocities, and
+matching diagnostics.
+
+The CLI activates the embedded series explicitly with
+``quantas qha run INPUT --kieffer``.  Omitting the flag ignores the optional
+block and runs the normal phonon-only model.  This opt-in boundary separates
+input enrichment from scientific model selection and permits direct paired
+calculations from one immutable YAML file.
+
+Raw elastic tensors and hydrostatic pre-stress
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Elastic constants obtained from a CRYSTAL energy--strain calculation without
+an explicit finite-pressure correction cannot be passed directly to the
+Christoffel solver.  Once a hydrostatic pressure has been assigned to every
+state, the CRYSTAL interface converts the raw coefficients with the same
+finite-pressure relation used by CRYSTAL ``PRESSURE``/``PRESSEOS``
+(Erba *et al.*, *J. Chem. Phys.* **140**, 124703 (2014)):
+
+.. math::
+
+   B_{ijkl}(V_i)=C^{\mathrm{raw}}_{ijkl}(V_i)
+   +\frac{P_i}{2}\left(2\delta_{ij}\delta_{kl}
+   -\delta_{il}\delta_{jk}-\delta_{ik}\delta_{jl}\right).
+
+Pressure is positive in compression.  This CRYSTAL adapter rule is distinct
+from the finite-strain ``wallace_delta`` term used by the QSA equations.  The
+source of every :math:`P_i` is part of the data contract: it may come from the
+output stress, a manually supplied value, an integrated energy EOS, or a
+polynomial derivative of the QHA input's static :math:`E(V)` series. For the
+latter two routes, Quantas first imports the tensors as raw, matches elastic
+and phonon volumes explicitly, evaluates :math:`P(V)=-dE/dV`, and only then
+applies the CRYSTAL correction. The generated input records the selected EOS
+tag or polynomial degree, fit diagnostics, units,
+evaluated pressures, and volume associations. The correction produces a new
+elastic state and records the source and target tensor kinds, method, pressure
+source, and software applying it. An already incremental tensor is rejected,
+which prevents accidental double correction.
+
+The reusable Python operations are
+``hydrostatic_wallace_stiffness()``,
+``assign_hydrostatic_pressures()``,
+``correct_hydrostatic_elastic_state()``, and
+``correct_hydrostatic_elastic_series()`` in
+:mod:`quantas.core.physics.elasticity`.  The corrected series can be passed
+directly to ``build_kieffer_volume_series()``.
+
+Both QHA schemes include the acoustic contribution consistently.  With
+``scheme=td``, the combined harmonic-plus-acoustic properties are fitted and
+interpolated through the thermodynamic QHA path.  With ``scheme=freq``, Quantas
+fits each of the three cutoff frequencies against volume using
+``frequency_degree``.  Those fitted cutoffs are evaluated both during local
+free-energy minimization and at the final equilibrium volumes before the
+thermodynamic properties are recalculated.
+
+Kieffer-enriched frequency QHA does not currently support the
+``mode_gruneisen`` thermal-expansion route or the optional mode-Gruneisen
+analysis.  A phonon-only weighted average would omit the acoustic branches and
+is therefore rejected explicitly.  At the CLI, ``--kieffer`` automatically
+turns off the otherwise enabled-by-default mode-Gruneisen output and records
+that resolution in the options; an explicit ``--mode-gruneisen`` request is an
+error.  The default ``mixed_derivative`` route and the numerical
+thermal-expansion route remain available.
+
 .. warning::
 
    Do not change ``unknown`` or ``unreliable`` to ``assumed`` merely to make a
@@ -177,6 +253,11 @@ Limitations
 
 Use ``freq`` when the phonon branches are continuous and mode information is
 scientifically important.
+
+For Kieffer-enriched calculations, this scheme also requires a stable positive
+fit for every cutoff over the volumes reached by local minimization.  A
+non-positive or non-finite fitted cutoff invalidates that state rather than
+being silently discarded.
 
 ``td``: thermodynamic-property interpolation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

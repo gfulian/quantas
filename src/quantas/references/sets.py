@@ -67,6 +67,7 @@ METHOD_CITATION_KEYS: dict[str, tuple[str, ...]] = {
         "seismic_ulian_valdre_2024",
     ),
     "harmonic_statistical_thermodynamics": ("mcquarrie_simon_1997",),
+    "kieffer_sine_wave_acoustics": ("kieffer_1979",),
     "quasi_harmonic_approximation": (
         "anderson_1995",
         "anderson_masuda_isaak_1995",

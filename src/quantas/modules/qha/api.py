@@ -22,6 +22,7 @@ from quantas.models import (
     mapping_table,
 )
 from quantas.models.phonons import PhononInputData
+from quantas.models.kieffer import KiefferVolumeSeries
 from quantas.modules.qha.calculator import QHACalculator
 from quantas.modules.qha.io.hdf5 import read_qha_hdf5 as _read_qha_hdf5
 from quantas.modules.qha.io.reader import phonon_to_qha_input, read_qha_input
@@ -75,6 +76,7 @@ def build_qha_inspection_plots(
 def run_qha(
     input_data: QHAInput | PhononInputData | str | Path,
     options: QHAOptions | None = None,
+    kieffer_cutoffs: KiefferVolumeSeries | None = None,
     observer: Observer | None = None,
 ) -> ResultData:
     """Run a quasi-harmonic approximation calculation.
@@ -87,6 +89,8 @@ def run_qha(
     options : QHAOptions or None, optional
         Options controlling the QHA calculation. If ``None``, default options
         are used.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct cutoff states for additive thermodynamic-scheme enrichment.
     observer : Observer or None, optional
         Observer receiving workflow events. If ``None``, the calculation runs
         silently through the default null observer used by the calculator.
@@ -108,6 +112,7 @@ def run_qha(
     calculator = QHACalculator(
         qha_input=qha_input,
         options=options,
+        kieffer_cutoffs=kieffer_cutoffs,
         observer=observer,
     )
     return calculator.execute()

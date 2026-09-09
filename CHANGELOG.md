@@ -7,12 +7,84 @@ public contract; they must still be documented and validated.
 
 ## [2.0.0b10] - Unreleased
 
+- Accept CRYSTAL dispersion q-points labelled ``R`` when they print only ``MODES IN PHASE`` while continuing to require anti-phase components for explicitly complex ``C`` q-points.
+
+- Enrich HA/QHA ``inpgen`` terminal summaries with q-point coordinate previews and explicit selected-energy/correction provenance while leaving generated YAML unchanged.
+
 ### Added
 
+- Added a frontend-neutral Kieffer sine-wave acoustic-thermodynamics core with
+  zero-point energy, thermal energy, Helmholtz energy, entropy, and isochoric
+  heat capacity for single- and multi-volume cutoff series.
+- Added legacy characterization, analytical-limit, thermodynamic-identity,
+  high-temperature, zero-temperature, shape, precision, and input-validation
+  tests for the Kieffer model.
+- Added arbitrary-direction batched phase solving, inverse-cube spherical
+  acoustic velocity averages, quadrature-refinement diagnostics, and conversion
+  from effective velocities and primitive-cell volume to Kieffer cutoff
+  frequencies in rad/s, Hz, and cm^-1.
+- Added backend-neutral elastic-state, pressure/pre-stress provenance, Kieffer
+  cutoff-series, and explicit volume-matching contracts.  Incremental tensor
+  conventions are now distinguishable from raw energy-strain tensors before
+  any acoustic workflow is connected.
+- Added direct composition from an incremental elastic volume series to
+  volume-resolved Kieffer effective velocities and cutoffs, including per-state
+  quadrature and pressure provenance and workflow-level progress callbacks.
+- Added the first HA integration for Kieffer cutoffs through the Python API.
+  The integration is restricted to a single primitive Gamma point with an
+  identity phonon supercell, requires a direct volume match, preserves the
+  acoustic component separately in HDF5, and adds its three branches without
+  removing or replacing any calculated Gamma mode.
+- Added multi-volume Kieffer enrichment to the thermodynamic-property QHA
+  scheme.  Direct cutoff states are matched explicitly to primitive Gamma-only
+  input volumes, added before free-energy minimization, retained as a separate
+  sampled contribution, and preserved in native QHA HDF5 results.
+- Extended Kieffer QHA to the frequency scheme with volume-fitted cutoff
+  frequencies used consistently during minimization and equilibrium-property
+  reconstruction; incomplete mode-Gruneisen coupling is rejected explicitly.
+- Made the Windows documentation batch entry point retain the repository root
+  as its working directory so Git-aware documentation components remain
+  portable.
+- Added explicit hydrostatic Wallace correction for raw energy--strain
+  stiffness tensors and complete state/series provenance.  Corrected series
+  feed directly into the Kieffer acoustic workflow, while missing pressure and
+  repeated correction are rejected.
+- Added CRYSTAL ELASTCON/ELAPIEZO multi-volume import into the shared elastic
+  state contract.  The importer supports output-stress and manual pressures,
+  recognizes tensors already corrected through CRYSTAL's ``PRESSURE`` keyword,
+  sorts states by volume, and records every correction decision.
+- Added public HA/QHA input-enrichment APIs and the shared ``add-kieffer`` CLI
+  command.  The command accepts direct elastic outputs or a portable file list,
+  writes a separate YAML input, and stores cutoff, velocity, pressure,
+  quadrature, tensor-convention, and source provenance without replacing the
+  calculated Gamma frequencies.
+- Extended ``qha add-kieffer`` with the standard ``--interface`` selector and
+  pressure reconstruction from the static phonon-input energy-volume series.
+  ``--pressure-source energy-eos --eos MODEL`` and
+  ``--pressure-source energy-polynomial --degree N`` record the fitted model,
+  diagnostics, evaluated pressures, units, and elastic-to-phonon volume matches
+  before applying the Wallace correction exactly once.
+- Added explicit ``--kieffer`` activation to ``ha run`` and ``qha run``.  Both
+  commands read the cutoff series embedded by ``add-kieffer``, retain the
+  acoustic component separately in HDF5, record activation in reports, and add
+  the primary Kieffer reference.  Frequency QHA automatically disables only
+  the default mode-Gruneisen output and rejects an explicit incompatible modal
+  request.
+- Added a reproducible OHAp validation driver that rebuilds QHA inputs from
+  CRYSTAL outputs, compares all pressure routes and acoustic quadrature levels,
+  runs every QHA scheme/minimizer pair with and without Kieffer, checks HDF5
+  persistence, and records both tabular results and expected failure modes.
 - Added backend-neutral computational records for external-code run
   termination, energies, SCF convergence, and geometry-optimization history.
 - Added a shared CRYSTAL output document/parser foundation with centralized
   regular expressions for termination, SCF, energy, and optimization markers.
+- Added state-resolved CRYSTAL SCF/total-energy handling.  ``SCF ENDED`` is
+  retained as the uncorrected electronic energy, while ``TOTAL ENERGY + DISP``,
+  ``TOTAL ENERGY + GCP``, or ``TOTAL ENERGY + DISP + GCP`` is selected as the
+  physical total when present; otherwise total energy falls back to SCF/DFT.
+  Elastic E(V) workflows now consume this resolved total, and phonon inputs
+  retain SCF-versus-total provenance without changing ``CENTRAL POINT``
+  numerical behavior.
 - Added characterization tests against distributed CRYSTAL phonon, native-QHA,
   and elasticity outputs, including incomplete and failed synthetic cases.
 - Added CRYSTAL phonon-eigenvector parsing for real Gamma modes and complex
@@ -35,8 +107,51 @@ public contract; they must still be documented and validated.
   validation documentation, and real-data regression evidence for native MgO
   QHA and independent-volume dolomite phonons.
 
+### Fixed
+
+- Corrected CRYSTAL raw energy--strain pre-stress conversion to use the
+  finite-pressure stiffness transformation documented by Erba *et al.*
+  (J. Chem. Phys. 140, 124703, 2014) and CRYSTAL ``PRESSURE``/``PRESSEOS``.
+  The CRYSTAL adapter now leaves normal diagonal terms unchanged, adds ``+P``
+  to normal couplings, and adds ``-P/2`` to shear diagonals.  The distinct
+  Eulerian ``wallace_delta`` term used inside the QSA finite-strain model is
+  unchanged, and future non-CRYSTAL backends must define their own tensor
+  convention before any pressure correction is applied.
+- CRYSTAL elastic readers now bind structure, static energy, density, and
+  output-stress pressure to the unstrained reference state before the first
+  elastic ``STRAIN MATRIX``. Later ``COORPRT`` geometries from strained/internal
+  relaxations can no longer be mistaken for the lattice used to define the
+  reported elastic tensor. QSA input generation consumes only the lattice that
+  has been validated against the reported elastic reference volume.
+- Restored CI contracts for the generalized QSA pressure-source API by
+  documenting ``PressureSourcePolicy`` and updating the frozen public surface.
+  The OHAp QHA regression now keeps tight tolerances for primary thermodynamic
+  observables while allowing the observed supported-platform spread only for
+  the derivative-sensitive isothermal bulk modulus.
+- Made Kieffer YAML serialization explicitly narrow flexible ``ArrayLike`` and
+  string-or-enum constructor fields to canonical NumPy arrays and
+  ``CutoffVolumeSource`` values, restoring clean mypy validation without
+  changing serialized numbers or runtime behavior.
+
 ### Changed
 
+- Generalized CRYSTAL quasi-static thermoelastic input generation around an
+  explicit pressure-resolution contract. ``PRESSURE`` and ``PRESSEOS`` tensors
+  are preserved as backend-corrected Wallace coefficients; raw energy--strain
+  tensors can instead use output-stress, manual, energy-EOS, or
+  energy-polynomial pressures before one Barron--Klein/Wallace correction.
+  Energy-derived pressure may reuse the static ``E(V)`` dataset from an HA/QHA
+  YAML, independently of whether that thermodynamic input is Gamma-only,
+  Kieffer-enriched, or based on explicit phonon dispersion. Pressure and tensor
+  provenance are retained in the normalized YAML and propagated into native
+  thermoelastic HDF5 results.
+
+- Relaxed only the historical Kieffer reference-test tolerance to accommodate
+  platform-dependent adaptive-quadrature differences observed on Python 3.10;
+  analytical and thermodynamic-identity tolerances remain unchanged.
+- Corrected the historical Kieffer entropy integrand to use the published Bose
+  occupation denominator.  The legacy squared-denominator result is preserved
+  only as a characterization datum and is not available as a runtime mode.
 - CRYSTAL geometry parsing now preserves conventional atomic numbers as source
   metadata while exposing chemical atomic numbers through ``CrystalStructure``.
 - HA/QHA phonon input generation now writes explicit unit and provenance
@@ -59,6 +174,21 @@ public contract; they must still be documented and validated.
 
 ### Validation
 
+- Added QSA input-generation coverage for backend ``PRESSEOS`` provenance,
+  raw-tensor correction from output stress and static ``E(V)``, explicit failure
+  when raw pressure is unavailable, reuse of Kieffer-enriched QHA static energy,
+  and HDF5 round-trip persistence of pressure-resolution provenance.
+
+- Added a compact ten-volume OHAp regression derived from the checksummed QM
+  dataset.  It freezes the 132-mode spectrum and fine acoustic cutoffs, verifies
+  the low-to-classical acoustic/optical crossover, and reproduces selected
+  zero-pressure frequency-QHA properties through 1500 K.
+- Added end-to-end HA and QHA command-line tests from enriched YAML input to
+  native HDF5, together with opt-in forwarding, modal-option conflict, report,
+  and canonical-citation checks.
+- Added analytical and end-to-end tests for energy-derived pressure assignment,
+  including EOS and polynomial fit provenance, deferred raw-tensor import,
+  explicit volume association, and rejection of the single-volume HA case.
 - Characterized the CRYSTAL eigenvector parser on the distributed dolomite
   dispersion outputs (27 q-points, 30 modes, 10 atoms) and native MgO QHA
   output (11 volume-dependent 192-mode, 64-atom Gamma sets), including complex

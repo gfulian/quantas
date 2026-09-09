@@ -37,7 +37,9 @@ TOTAL_DFT_DELTA_RE = re.compile(
     re.IGNORECASE,
 )
 CORRECTED_TOTAL_ENERGY_RE = re.compile(
-    rf"^\s*TOTAL\s+ENERGY\s*\+.*?(?P<energy>{FLOAT})\s*$",
+    rf"^\s*(?P<marker>TOTAL\s+ENERGY\s*\+\s*"
+    rf"(?P<corrections>.+?)\s*\(AU\))\s*"
+    rf"(?P<energy>{FLOAT})\s*$",
     re.IGNORECASE,
 )
 CENTRAL_POINT_RE = re.compile(
@@ -83,5 +85,10 @@ PHONON_VECTOR_CONTINUATION_RE = re.compile(
 )
 DISPERSION_QPOINT_INDEX_RE = re.compile(
     r"DISPERSION\s+K\s+POINT\s+NUMBER\s+(?P<index>\d+)\b",
+    re.IGNORECASE,
+)
+DISPERSION_QPOINT_KIND_RE = re.compile(
+    r"DISPERSION\s+K\s+POINT\s+NUMBER\s+\d+.*?"
+    r"COORD:\s*(?P<kind>[RC])\(",
     re.IGNORECASE,
 )

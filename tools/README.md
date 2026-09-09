@@ -43,6 +43,9 @@ public Python API or the installed ``quantas`` command.
   reference data.
 - ``compare_qha_workflows.py`` compares selected QHA workflows during numerical
   maintenance.
+- ``validate_kieffer_ohap.py`` rebuilds a complete OHAp Gamma-only QHA input
+  from CRYSTAL outputs, exercises every Kieffer pressure route, compares normal
+  and acoustic-enriched QHA, and writes CSV, JSON, Markdown, and HDF5 evidence.
 
 ## Benchmarks
 

@@ -532,7 +532,7 @@ def test_thermoelasticity_workflow_page_is_complete() -> None:
     )
 
     for phrase in (
-        "Why CRYSTAL ``PRESSURE`` is required",
+        "CRYSTAL pressure resolution and Wallace tensors",
         "Reference point and frame normalization",
         "What is and is not fitted from the elastic outputs",
         "Cold reference EOS",

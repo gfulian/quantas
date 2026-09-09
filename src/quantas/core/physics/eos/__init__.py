@@ -4,6 +4,11 @@
 
 from .diagnostics import EOSStrainFamily, EOSStrainTransform, PressureEOSDiagnostics
 from .energy import EnergyEOS, EnergyEOSFitModel
+from .energy_pressure import (
+    PressureEstimate,
+    pressure_from_energy_eos,
+    pressure_from_energy_polynomial,
+)
 from .fitted import FittedEnergyEOS
 from .parameters import (
     EOSParameters,
@@ -65,6 +70,7 @@ __all__ = [
     "EOSStateUncertainty",
     "EnergyEOS",
     "EnergyEOSFitModel",
+    "PressureEstimate",
     "FittedEnergyEOS",
     "PressureEOS",
     "PressureEOSDiagnostics",
@@ -95,6 +101,8 @@ __all__ = [
     "implied_kp",
     "implied_kpp",
     "parse_eos_model",
+    "pressure_from_energy_eos",
+    "pressure_from_energy_polynomial",
     "parse_temperature_eos_model",
     "parse_thermal_pressure_model",
     "parse_pvt_coupling",

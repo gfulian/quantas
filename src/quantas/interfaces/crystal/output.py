@@ -130,6 +130,44 @@ class CrystalOutputParser:
         )
         return RunTermination(status=status)
 
+    def scf_energies(self) -> tuple[EnergyRecord, ...]:
+        """Return energies printed on CRYSTAL ``SCF ENDED`` records.
+
+        These values represent the converged electronic SCF energy before any
+        optional a-posteriori correction such as DFT-D or gCP.  The parser
+        reports every record in source order and leaves convergence policy to
+        the consuming workflow.
+
+        Returns
+        -------
+        tuple of EnergyRecord
+            SCF energies in hartree.  The record kind is
+            :attr:`~quantas.models.computation.EnergyKind.DFT` for historical
+            compatibility with Quantas' backend-neutral energy taxonomy.
+        """
+        records: list[EnergyRecord] = []
+        for index, line in enumerate(self.lines):
+            end_match = patterns.SCF_END_RE.search(line)
+            energy_match = patterns.SCF_END_ENERGY_RE.search(line)
+            if end_match is None or energy_match is None:
+                continue
+            reason = end_match.group("reason").strip()
+            records.append(
+                EnergyRecord(
+                    value=_as_float(energy_match.group("energy")),
+                    unit="Ha",
+                    kind=EnergyKind.DFT,
+                    metadata={
+                        "source_marker": "SCF ENDED",
+                        "line_index": index,
+                        "reported_cycles": int(energy_match.group("cycles")),
+                        "end_reason": reason,
+                        "converged": "CONVERGENCE" in reason.upper(),
+                    },
+                )
+            )
+        return tuple(records)
+
     def dft_energies(self) -> tuple[EnergyRecord, ...]:
         """Return all ``TOTAL ENERGY(DFT)(AU)`` records in source order.
 
@@ -175,18 +213,130 @@ class CrystalOutputParser:
             match = patterns.CORRECTED_TOTAL_ENERGY_RE.search(line)
             if match is None:
                 continue
+            marker = " ".join(match.group("marker").split())
+            corrections = tuple(
+                term.strip().upper()
+                for term in match.group("corrections").split("+")
+                if term.strip()
+            )
             records.append(
                 EnergyRecord(
                     value=_as_float(match.group("energy")),
                     unit="Ha",
                     kind=EnergyKind.TOTAL,
                     metadata={
-                        "source_marker": "TOTAL ENERGY +",
+                        "source_marker": marker,
                         "line_index": index,
+                        "corrections": corrections,
                     },
                 )
             )
         return tuple(records)
+
+    def total_energies(self) -> tuple[EnergyRecord, ...]:
+        """Resolve the physical total energy for each CRYSTAL SCF state.
+
+        CRYSTAL always reports the electronic SCF energy and may subsequently
+        print a corrected total such as ``TOTAL ENERGY + DISP (AU)``,
+        ``TOTAL ENERGY + GCP (AU)``, or
+        ``TOTAL ENERGY + DISP + GCP (AU)``.  Quantas treats the most complete
+        corrected total printed for the same SCF state as authoritative.  If
+        no corrected total is present, the SCF/DFT energy is also the total
+        energy.
+
+        State association is performed in source order.  ``SCF ENDED`` is the
+        preferred state anchor because it establishes the electronic energy of
+        one completed SCF calculation.  ``TOTAL ENERGY(DFT)(AU)`` and optional
+        corrected totals printed after that marker are considered only before
+        the next SCF state, preventing a correction from being attached to a
+        later calculation.  Older outputs without an ``SCF ENDED`` energy fall
+        back to ``TOTAL ENERGY(DFT)(AU)`` as the state anchor.
+
+        Returns
+        -------
+        tuple of EnergyRecord
+            One total-energy record per resolved SCF state, in source order.
+            Metadata retains the corresponding SCF energy, correction labels,
+            and source markers.
+        """
+        dft_records = list(self.dft_energies())
+        scf_records = list(self.scf_energies())
+        corrected_records = list(self.corrected_total_energies())
+
+        anchors = scf_records if scf_records else dft_records
+        if not anchors:
+            return ()
+
+        totals: list[EnergyRecord] = []
+        for position, anchor in enumerate(anchors):
+            anchor_line = int(anchor.metadata.get("line_index", -1))
+            next_anchor_line = (
+                int(anchors[position + 1].metadata.get("line_index", len(self.lines)))
+                if position + 1 < len(anchors)
+                else len(self.lines)
+            )
+
+            associated_scf = anchor
+            dft_candidates = [
+                record
+                for record in dft_records
+                if anchor_line <= int(record.metadata.get("line_index", -1)) < next_anchor_line
+            ]
+            dft = max(
+                dft_candidates,
+                key=lambda record: int(record.metadata.get("line_index", -1)),
+                default=None,
+            )
+            base_energy = dft if dft is not None else associated_scf
+
+            candidates = [
+                record
+                for record in corrected_records
+                if anchor_line < int(record.metadata.get("line_index", -1)) < next_anchor_line
+            ]
+            corrected = max(
+                candidates,
+                key=lambda record: (
+                    len(tuple(record.metadata.get("corrections", ()))),
+                    int(record.metadata.get("line_index", -1)),
+                ),
+                default=None,
+            )
+
+            if corrected is None:
+                value = float(base_energy.value)
+                source_marker = str(
+                    base_energy.metadata.get("source_marker", "SCF ENDED")
+                )
+                source_line = int(base_energy.metadata.get("line_index", anchor_line))
+                corrections: tuple[str, ...] = ()
+            else:
+                value = float(corrected.value)
+                source_marker = str(corrected.metadata.get("source_marker", "TOTAL ENERGY +"))
+                source_line = int(corrected.metadata.get("line_index", anchor_line))
+                corrections = tuple(corrected.metadata.get("corrections", ()))
+
+            scf_value = float(associated_scf.value)
+            totals.append(
+                EnergyRecord(
+                    value=value,
+                    unit="Ha",
+                    kind=EnergyKind.TOTAL,
+                    metadata={
+                        "source_marker": source_marker,
+                        "line_index": source_line,
+                        "corrections": corrections,
+                        "scf_energy": scf_value,
+                        "scf_energy_unit": "Ha",
+                        "scf_source_marker": associated_scf.metadata.get(
+                            "source_marker", "SCF ENDED"
+                        ),
+                        "scf_line_index": associated_scf.metadata.get("line_index"),
+                        "total_correction_energy": value - scf_value,
+                    },
+                )
+            )
+        return tuple(totals)
 
     def reference_energies(self) -> tuple[EnergyRecord, ...]:
         """Return CRYSTAL ``CENTRAL POINT`` reference energies.

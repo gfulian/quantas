@@ -22,6 +22,7 @@ from quantas.models import (
     input_data_table,
     mapping_table,
 )
+from quantas.models.kieffer import KiefferVolumeSeries
 from quantas.modules.ha.calculator import HACalculator
 from quantas.modules.ha.io.reader import (
     HAInputFileReader,
@@ -74,6 +75,7 @@ def read_ha_input(filename: str | Path) -> HAInput:
 def run_ha(
     input_data: HAInput | PhononInputData | str | Path,
     options: HAOptions | None = None,
+    kieffer_cutoffs: KiefferVolumeSeries | None = None,
     observer: Observer | None = None,
 ) -> ResultData:
     """
@@ -86,6 +88,8 @@ def run_ha(
     options : HAOptions or None, optional
         Options controlling the harmonic calculation. If ``None``, default
         options are used.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct acoustic cutoff state for additive Kieffer enrichment.
     observer : Observer or None, optional
         Observer receiving workflow events. If ``None``, the calculation runs
         silently through the default null observer used by the calculator.
@@ -106,6 +110,7 @@ def run_ha(
     calculator = HACalculator(
         ha_input=ha_input,
         options=options,
+        kieffer_cutoffs=kieffer_cutoffs,
         observer=observer,
     )
 

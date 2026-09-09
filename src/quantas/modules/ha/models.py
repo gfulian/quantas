@@ -8,8 +8,12 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from quantas.models.kieffer import KiefferThermodynamicContribution
 from quantas.models.phonons import PhononInputData
 from quantas.models.thermodynamics import HarmonicThermodynamicResult
+
+
+HAKiefferContribution = KiefferThermodynamicContribution
 
 
 @dataclass(slots=True)
@@ -84,3 +88,5 @@ class HAOptions:
 @dataclass(slots=True)
 class HAResult(HarmonicThermodynamicResult):
     """Results of a harmonic-approximation calculation."""
+
+    kieffer_contribution: HAKiefferContribution | None = None

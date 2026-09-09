@@ -12,6 +12,15 @@ from .harmonic import (
     vibrational_free_energy,
     zero_point_energy,
 )
+from .kieffer import (
+    entropy as kieffer_entropy,
+    isochoric_heat_capacity as kieffer_isochoric_heat_capacity,
+    thermal_energy as kieffer_thermal_energy,
+    thermal_free_energy as kieffer_thermal_free_energy,
+    validate_kieffer_inputs,
+    vibrational_free_energy as kieffer_vibrational_free_energy,
+    zero_point_energy as kieffer_zero_point_energy,
+)
 
 __all__ = [
     "validate_phonon_inputs",
@@ -22,4 +31,11 @@ __all__ = [
     "vibrational_free_energy",
     "free_energy",
     "isochoric_heat_capacity",
+    "validate_kieffer_inputs",
+    "kieffer_zero_point_energy",
+    "kieffer_thermal_energy",
+    "kieffer_entropy",
+    "kieffer_isochoric_heat_capacity",
+    "kieffer_thermal_free_energy",
+    "kieffer_vibrational_free_energy",
 ]

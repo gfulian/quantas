@@ -10,18 +10,23 @@ from typing import cast
 
 import click
 
-from quantas.cli.contracts import OUTPUT_GROUP
+from quantas.cli.contracts import NUMERICAL_GROUP, OUTPUT_GROUP, SCIENTIFIC_GROUP
 from quantas.cli.grouped_options import GroupedCommand, grouped_option
 from quantas.cli.messages import quantas_finish, quantas_title
 from quantas.cli.output import CLIOutput
 from quantas.cli.thermoelastic_common import require_output_replacement
 from quantas.models import ReportTable
+from quantas.api import qha as qha_api
 from quantas.api.thermoelasticity import (
     InputInterface,
+    PressureSourcePolicy,
     create_input as create_thermoelastic_input,
     read_input as read_thermoelastic_input,
     write_profile_template as write_thermoelastic_profile_template,
 )
+
+
+_ENERGY_EOS_CHOICES = qha_api.available_energy_eos()
 
 
 @click.command(name="inpgen", cls=GroupedCommand)
@@ -62,6 +67,53 @@ from quantas.api.thermoelasticity import (
     default="crystal",
     show_default=True,
     help="Electronic-structure output interface.",
+)
+@grouped_option(
+    "--pressure-source",
+    type=click.Choice(
+        ["auto", "output-stress", "manual", "energy-eos", "energy-polynomial"]
+    ),
+    default="auto",
+    show_default=True,
+    group=SCIENTIFIC_GROUP,
+    help=(
+        "Pressure source for raw CRYSTAL elastic tensors. PRESSURE/PRESSEOS "
+        "outputs are already corrected and are preserved by auto."
+    ),
+)
+@grouped_option(
+    "--pressure",
+    "manual_pressures",
+    type=float,
+    multiple=True,
+    group=SCIENTIFIC_GROUP,
+    help="Manual pressure in GPa; repeat once per elastic output.",
+)
+@grouped_option(
+    "--energy-input",
+    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    default=None,
+    group=SCIENTIFIC_GROUP,
+    help=(
+        "Optional HA/QHA YAML supplying static E(V) for energy-derived pressure."
+    ),
+)
+@grouped_option(
+    "--eos",
+    type=click.Choice(_ENERGY_EOS_CHOICES, case_sensitive=True),
+    default="BM3",
+    show_default=True,
+    group=SCIENTIFIC_GROUP,
+    help="Energy EOS used with --pressure-source energy-eos.",
+)
+@grouped_option(
+    "--degree",
+    "polynomial_degree",
+    type=click.IntRange(min=2),
+    default=3,
+    show_default=True,
+    group=NUMERICAL_GROUP,
+    help="E(V) polynomial degree used with energy-polynomial pressure.",
 )
 @grouped_option(
     "--jobname",
@@ -111,7 +163,7 @@ from quantas.api.thermoelasticity import (
     default=5.0e-2,
     show_default=True,
     help=(
-        "Maximum difference in GPa between PRESSURE and the corrected elastic pressure."
+        "Maximum difference in GPa between PRESSURE/PRESSEOS and the corrected elastic pressure."
     ),
 )
 @grouped_option(
@@ -131,6 +183,11 @@ def inpgen(
     force: bool,
     is_list: bool,
     interface: str,
+    pressure_source: str,
+    manual_pressures: tuple[float, ...],
+    energy_input: Path | None,
+    eos: str,
+    polynomial_degree: int,
     jobname: str,
     reference: int | None,
     symprec: float,
@@ -144,6 +201,15 @@ def inpgen(
         raise click.UsageError("provide at least one CRYSTAL output or one list file")
     if is_list and len(sources) != 1:
         raise click.UsageError("--list requires exactly one SOURCE list file")
+    policy = pressure_source.replace("-", "_")
+    if policy == "manual" and not manual_pressures:
+        raise click.UsageError("manual pressure source requires --pressure values")
+    if policy != "manual" and manual_pressures:
+        raise click.UsageError("--pressure requires --pressure-source manual")
+    if energy_input is not None and policy not in {"energy_eos", "energy_polynomial"}:
+        raise click.UsageError(
+            "--energy-input requires --pressure-source energy-eos or energy-polynomial"
+        )
     require_output_replacement(outfile, force)
     source_value: Path | Sequence[Path] = sources[0] if is_list else sources
     try:
@@ -159,6 +225,11 @@ def inpgen(
             elastic_tolerance=elastic_tolerance,
             pressure_tolerance=pressure_tolerance,
             structure_correspondence_tolerance=(structure_correspondence_tolerance),
+            pressure_source=cast(PressureSourcePolicy, policy),
+            manual_pressures_gpa=(manual_pressures if policy == "manual" else None),
+            eos=eos,
+            polynomial_degree=polynomial_degree,
+            energy_input=energy_input,
         )
         parsed = read_thermoelastic_input(destination)
     except Exception as exc:
@@ -178,7 +249,16 @@ def inpgen(
                 ["Reference index", series.reference_index],
                 ["Space group", series.symmetry.international_symbol],
                 ["Elastic symmetry", series.elastic_symmetry],
-                ["Pre-stress convention", "CRYSTAL PRESSURE / Wallace"],
+                [
+                    "Pre-stress convention",
+                    "Wallace hydrostatic (backend-preserved or Quantas-corrected)",
+                ],
+                [
+                    "Pressure resolution",
+                    series.metadata.get("pressure_resolution", {}).get(
+                        "requested_source", "unavailable"
+                    ),
+                ],
                 [
                     "Frame normalization",
                     series.metadata.get("frame_normalization", {}).get(

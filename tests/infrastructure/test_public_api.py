@@ -127,6 +127,14 @@ def test_registry_describes_multiple_named_operations() -> None:
         registry.get("qha").named_operation("build_inspection_plots")
         is qha.build_inspection_plots
     )
+    assert (
+        registry.get("ha").named_operation("add_kieffer_input")
+        is ha.add_kieffer_input
+    )
+    assert (
+        registry.get("qha").named_operation("add_kieffer_input")
+        is qha.add_kieffer_input
+    )
 
     eos_exports = registry.get("eos").operations_for(Capability.EXPORT)
     assert eos_exports == (eos.write_diagnostic_csv, eos.write_calculation_csv)

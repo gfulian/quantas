@@ -85,6 +85,12 @@ def create_thermoelastic_input(
     elastic_tolerance: float = 1.0e-3,
     pressure_tolerance: float = 5.0e-2,
     structure_correspondence_tolerance: float = 5.0e-1,
+    pressure_source: str = "auto",
+    manual_pressures_gpa: Sequence[float] | None = None,
+    eos: str = "BM3",
+    polynomial_degree: int = 3,
+    maxfev: int | None = None,
+    energy_input: str | Path | None = None,
 ) -> Path:
     """Generate a thermoelastic YAML input from CRYSTAL SOEC outputs.
 
@@ -111,11 +117,24 @@ def create_thermoelastic_input(
     elastic_tolerance : float, optional
         Elastic symmetry tolerance in GPa.
     pressure_tolerance : float, optional
-        Maximum permitted difference, in GPa, between the CRYSTAL ``PRESSURE``
-        keyword and the pressure reported for the corrected elastic tensor.
+        Maximum permitted difference, in GPa, between CRYSTAL
+        ``PRESSURE``/``PRESSEOS`` and the pressure reported for the corrected
+        elastic tensor.
     structure_correspondence_tolerance : float, optional
         Maximum ordered-atom displacement in angstrom along the sampled
         structural path.
+    pressure_source : str, optional
+        Hydrostatic pressure source for raw CRYSTAL tensors.
+    manual_pressures_gpa : sequence of float or None, optional
+        Manual pressures in source-file order.
+    eos : str, optional
+        Energy EOS used for energy-derived pressure.
+    polynomial_degree : int, optional
+        Polynomial degree used for energy-derived pressure.
+    maxfev : int or None, optional
+        Optional energy-EOS fitting iteration limit.
+    energy_input : str, Path, or None, optional
+        Optional HA/QHA YAML providing the static energy-volume series.
 
     Returns
     -------
@@ -134,6 +153,12 @@ def create_thermoelastic_input(
         elastic_tolerance=elastic_tolerance,
         pressure_tolerance=pressure_tolerance,
         structure_correspondence_tolerance=structure_correspondence_tolerance,
+        pressure_source=pressure_source,
+        manual_pressures_gpa=manual_pressures_gpa,
+        eos=eos,
+        polynomial_degree=polynomial_degree,
+        maxfev=maxfev,
+        energy_input=energy_input,
     )
 
 

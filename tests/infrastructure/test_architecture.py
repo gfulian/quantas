@@ -251,6 +251,7 @@ def test_elasticity_core_has_separated_scientific_responsibilities() -> None:
         "conventions.py",
         "directional.py",
         "extrema.py",
+        "prestress.py",
         "quasistatic.py",
         "sampling.py",
         "validation.py",

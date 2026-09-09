@@ -17,10 +17,12 @@ from dataclasses import asdict
 
 from quantas.core.events import EventLevel, Observer
 from quantas.models import BasicCalculator, InputData, ResultData, ResultMetadata
+from quantas.models.kieffer import KiefferVolumeSeries
 from quantas.modules.ha.analysis import (
     calculate_thermodynamic_properties,
     validate_input,
 )
+from quantas.modules.ha.kieffer import validate_kieffer_ha_applicability
 from quantas.modules.ha.models import HAInput, HAOptions, HAResult
 
 
@@ -35,6 +37,8 @@ class HACalculator(BasicCalculator):
     options : HAOptions or None, optional
         Options controlling the calculation. If ``None``, default HA options
         are used.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct acoustic cutoff state for additive Gamma-only enrichment.
     observer : Observer or None, optional
         Observer receiving workflow events. If ``None``, a null observer is
         used by the base calculator.
@@ -47,6 +51,7 @@ class HACalculator(BasicCalculator):
         self,
         ha_input: HAInput,
         options: HAOptions | None = None,
+        kieffer_cutoffs: KiefferVolumeSeries | None = None,
         observer: Observer | None = None,
     ) -> None:
         """
@@ -54,6 +59,7 @@ class HACalculator(BasicCalculator):
         """
         self.ha_input = ha_input
         self.ha_options = options if options is not None else HAOptions()
+        self.kieffer_cutoffs = kieffer_cutoffs
         self._timing_records: list[dict[str, float | str]] = []
 
         input_data = InputData(
@@ -93,6 +99,20 @@ class HACalculator(BasicCalculator):
         """
         self.emit("Preparing HA calculation", level=EventLevel.DEBUG)
         validate_input(self.ha_input)
+        if self.kieffer_cutoffs is not None:
+            validate_kieffer_ha_applicability(
+                self.ha_input,
+                self.kieffer_cutoffs,
+            )
+            self.emit(
+                "Kieffer sine-wave acoustic contribution enabled",
+                level=EventLevel.INFO,
+                data={
+                    "kind": "kieffer_configuration",
+                    "composition": "additional-acoustic-branches",
+                    "cutoff_states": len(self.kieffer_cutoffs.states),
+                },
+            )
 
         self.emit(
             "HA input summary",
@@ -151,6 +171,7 @@ class HACalculator(BasicCalculator):
         ha_result = calculate_thermodynamic_properties(
             self.ha_input,
             self.ha_options,
+            kieffer_cutoffs=self.kieffer_cutoffs,
             progress_callback=self._thermodynamic_progress,
             step_callback=self._thermodynamic_step,
             result_callback=self._thermodynamic_result,

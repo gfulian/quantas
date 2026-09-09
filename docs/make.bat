@@ -6,7 +6,8 @@ rem Usage from the repository root:
 rem     docs\make.bat html
 rem If no target is provided, HTML is built by default.
 
-pushd "%~dp0"
+set "ROOT_DIR=%~dp0.."
+pushd "%ROOT_DIR%"
 
 if "%PYTHON%"=="" set "PYTHON=python"
 if "%~1"=="" (
@@ -27,18 +28,18 @@ if errorlevel 1 (
 )
 
 if /I "%TARGET%"=="assets" (
-    %PYTHON% tools\generate_elasticity_assets.py
+    %PYTHON% docs\tools\generate_elasticity_assets.py
     set "EXITCODE=%ERRORLEVEL%"
     goto :finish
 )
 
-%PYTHON% -m sphinx -M "%TARGET%" source _build -W --keep-going %SPHINXOPTS%
+%PYTHON% -m sphinx -M "%TARGET%" "docs\source" "docs\_build" -W --keep-going %SPHINXOPTS%
 set "EXITCODE=%ERRORLEVEL%"
 
 if "%EXITCODE%"=="0" if /I "%TARGET%"=="html" (
     echo.
     echo Documentation written to:
-    echo     %CD%\_build\html\index.html
+    echo     %CD%\docs\_build\html\index.html
 )
 
 :finish

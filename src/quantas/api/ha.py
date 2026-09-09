@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 
 from quantas.core.events import Observer
@@ -24,6 +25,11 @@ from quantas.modules.ha.models import (
     HAOptions as Options,
     HAResult as Result,
 )
+from quantas.modules.ha.io.kieffer import (
+    add_kieffer_to_phonon_input as _add_kieffer_to_input,
+    read_kieffer_from_phonon_input as _read_kieffer_input,
+)
+from quantas.models.kieffer import KiefferVolumeSeries
 from quantas.modules.ha.io.export import HATableExport
 from quantas.modules.ha.plot import HACurveAxis as CurveAxis
 from quantas.modules.ha.plot import HAPlotOptions as PlotOptions
@@ -99,6 +105,65 @@ def create_input(
     )
 
 
+def add_kieffer_input(
+    source: str | Path,
+    destination: str | Path,
+    elastic_outputs: Sequence[str | Path],
+    *,
+    interface: str = "crystal",
+    pressure_policy: str = "auto",
+    manual_pressures_gpa: Sequence[float] | None = None,
+    mu_order: int = 12,
+    phi_order: int = 24,
+    refinement_factor: int = 2,
+    batch_size: int = 512,
+) -> Path:
+    """Create a new HA input enriched with Kieffer acoustic cutoffs.
+
+    Raw elastic tensors are corrected using explicitly selected hydrostatic
+    pressures. Energy-derived pressure sources are reserved for multi-volume
+    QHA inputs. The source phonon input is never overwritten.
+
+    Parameters
+    ----------
+    source, destination : str or Path
+        Existing HA YAML input and distinct enriched output path.
+    elastic_outputs : sequence of str or Path
+        Elastic-output files containing the state at the HA volume.
+    interface : str, optional
+        Elastic-output reader identifier.
+    pressure_policy : str, optional
+        ``"auto"``, ``"output_stress"``, or ``"manual"``.
+    manual_pressures_gpa : sequence of float or None, optional
+        One pressure per elastic output when the manual policy is selected.
+    mu_order, phi_order, refinement_factor, batch_size : int, optional
+        Directional quadrature and batched Christoffel controls.
+
+    Returns
+    -------
+    Path
+        Written Kieffer-enriched YAML input.
+    """
+    return _add_kieffer_to_input(
+        source,
+        destination,
+        elastic_outputs,
+        workflow="ha",
+        interface=interface,
+        pressure_policy=pressure_policy,
+        manual_pressures_gpa=manual_pressures_gpa,
+        mu_order=mu_order,
+        phi_order=phi_order,
+        refinement_factor=refinement_factor,
+        batch_size=batch_size,
+    )
+
+
+def read_kieffer_input(source: str | Path) -> KiefferVolumeSeries:
+    """Read the Kieffer cutoff series embedded in an HA YAML input."""
+    return _read_kieffer_input(source)
+
+
 def read_input(source: str | Path) -> Input:
     """Read one Quantas HA input file.
 
@@ -146,6 +211,7 @@ def normalize_input(source: Input | PhononInputData | str | Path) -> Input:
 def run(
     input_data: Input | PhononInputData | str | Path,
     options: Options | None = None,
+    kieffer_cutoffs: KiefferVolumeSeries | None = None,
     observer: Observer | None = None,
 ) -> ResultData:
     """Run a harmonic thermodynamic workflow.
@@ -156,6 +222,8 @@ def run(
         Harmonic input contract, neutral phonon data, or YAML path.
     options : Options or None, optional
         Temperature grid, units, and scientific calculation controls.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct cutoff state used to add the three Kieffer acoustic branches.
     observer : Observer or None, optional
         Frontend-neutral event observer.
 
@@ -169,7 +237,12 @@ def run(
     ValueError
         If the input or selected temperature domain is invalid.
     """
-    return _run(input_data, options=options, observer=observer)
+    return _run(
+        input_data,
+        options=options,
+        kieffer_cutoffs=kieffer_cutoffs,
+        observer=observer,
+    )
 
 
 def get_result(result: ResultData) -> Result:
@@ -374,11 +447,13 @@ def __dir__() -> list[str]:
 __all__ = [
     "CurveAxis",
     "Input",
+    "KiefferVolumeSeries",
     "Options",
     "PlotOptions",
     "PhononInterface",
     "Result",
     "StructureVolumeSeries",
+    "add_kieffer_input",
     "build_plots",
     "build_report",
     "describe_plots",
@@ -386,6 +461,7 @@ __all__ = [
     "get_result",
     "normalize_input",
     "read_input",
+    "read_kieffer_input",
     "read_result",
     "run",
     "write_result",

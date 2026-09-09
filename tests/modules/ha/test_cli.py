@@ -21,6 +21,53 @@ def test_ha_run_help_is_available():
     )
     assert "--eunit" in result.output
     assert "--funit" in result.output
+    assert "--kieffer" in result.output
+
+
+def test_ha_run_activates_embedded_kieffer_cutoffs(tmp_path, monkeypatch) -> None:
+    """The HA execution flag reads and forwards the embedded cutoff state."""
+    filename = tmp_path / "ha-kieffer.yaml"
+    filename.write_text("job: Kieffer CLI\n", encoding="utf-8")
+    destination = tmp_path / "result.hdf5"
+    cutoffs = object()
+    captured = {}
+
+    monkeypatch.setattr(
+        "quantas.cli.ha.read_ha_kieffer_input",
+        lambda path: cutoffs,
+    )
+
+    def fake_run(input_data, *, options, kieffer_cutoffs, observer):
+        captured["input"] = input_data
+        captured["options"] = options
+        captured["cutoffs"] = kieffer_cutoffs
+        captured["observer"] = observer
+        return object()
+
+    monkeypatch.setattr("quantas.cli.ha.run_ha", fake_run)
+    monkeypatch.setattr(
+        "quantas.cli.ha.write_ha_hdf5",
+        lambda *args, **kwargs: destination,
+    )
+
+    result = CliRunner().invoke(
+        ha,
+        [
+            "run",
+            str(filename),
+            "--kieffer",
+            "--output",
+            str(destination),
+            "--quiet",
+            "--no-progress",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["input"] == filename
+    assert captured["cutoffs"] is cutoffs
+    report = filename.with_suffix(".log").read_text(encoding="utf-8")
+    assert "Susan Werner Kieffer" in report
 
 
 def test_ha_export_help_is_available():
@@ -57,6 +104,77 @@ def test_ha_and_qha_register_the_same_phonon_input_command():
     from quantas.cli.qha import qha
 
     assert ha.commands["inpgen"] is qha.commands["inpgen"]
+
+
+def test_ha_and_qha_register_the_same_kieffer_input_command():
+    """HA and QHA share one frontend adapter for Kieffer enrichment."""
+    from quantas.cli.qha import qha
+
+    assert ha.commands["add-kieffer"] is qha.commands["add-kieffer"]
+
+
+def test_add_kieffer_help_exposes_pressure_and_quadrature_controls():
+    """The enrichment CLI documents its scientific and numerical choices."""
+    result = CliRunner().invoke(ha, ["add-kieffer", "--help"])
+
+    assert result.exit_code == 0
+    assert "--interface" in result.output
+    assert "--elastic-list" in result.output
+    assert "--pressure-source" in result.output
+    assert "energy-eos" in result.output
+    assert "energy-polynomial" in result.output
+    assert "--pressure" in result.output
+    assert "--eos" in result.output
+    assert "--degree" in result.output
+    assert "--mu-order" in result.output
+    assert "--phi-order" in result.output
+
+
+def test_qha_add_kieffer_forwards_interface_and_energy_fit_options(
+    tmp_path, monkeypatch
+) -> None:
+    """The shared command preserves established interface/EOS option names."""
+    from quantas.cli.qha import qha
+
+    source = tmp_path / "qha.yaml"
+    source.write_text("job: test\n", encoding="utf-8")
+    elastic = tmp_path / "elastic.out"
+    elastic.write_text("test\n", encoding="utf-8")
+    destination = tmp_path / "qha-kieffer.yaml"
+    captured = {}
+
+    def fake_add(source, destination, outputs, **kwargs):
+        captured.update(kwargs)
+        return destination
+
+    monkeypatch.setattr(
+        "quantas.cli.kieffer_input.qha_api.add_kieffer_input",
+        fake_add,
+    )
+    result = CliRunner().invoke(
+        qha,
+        [
+            "add-kieffer",
+            str(source),
+            str(elastic),
+            "--interface",
+            "crystal",
+            "--pressure-source",
+            "energy-polynomial",
+            "--degree",
+            "4",
+            "--eos",
+            "V3",
+            "--output",
+            str(destination),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["interface"] == "crystal"
+    assert captured["pressure_policy"] == "energy_polynomial"
+    assert captured["polynomial_degree"] == 4
+    assert captured["eos"] == "V3"
 
 
 def test_generated_structure_summary_does_not_require_new_reader_property(

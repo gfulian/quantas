@@ -76,6 +76,7 @@ def test_developer_tools_use_public_human_readable_names() -> None:
         "update_examples_manifest.py",
         "update_scientific_reference.py",
         "update_seismic_reference.py",
+        "validate_kieffer_ohap.py",
     }
     assert names == expected
 
@@ -122,6 +123,16 @@ def test_repository_configuration_files_are_present() -> None:
     for name in (".gitignore", ".gitattributes", ".editorconfig"):
         assert (project_root / name).is_file(), f"missing repository file: {name}"
     assert not (project_root / "uv.lock").exists()
+
+
+def test_windows_docs_build_starts_from_repository_root() -> None:
+    """The Windows Sphinx entry point keeps Git discovery at repository root."""
+    project_root = _TEST_ROOT.parent
+    batch = (project_root / "docs" / "make.bat").read_text(encoding="utf-8")
+    assert 'set "ROOT_DIR=%~dp0.."' in batch
+    assert 'pushd "%ROOT_DIR%"' in batch
+    assert '"docs\\source" "docs\\_build"' in batch
+    assert 'pushd "%~dp0"' not in batch
 
 
 def test_public_source_objects_have_docstrings() -> None:

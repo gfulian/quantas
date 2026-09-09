@@ -55,7 +55,8 @@ The complete workflow is intentionally staged:
 
    CRYSTAL elastic outputs
        │
-       ├─ require PRESSURE-corrected Wallace coefficients
+       ├─ resolve hydrostatic pressure and Wallace tensor provenance
+       ├─ preserve PRESSURE/PRESSEOS tensors or correct raw tensors once
        ├─ validate phase, symmetry, atom order, volumes, and pressures
        ├─ co-rotate all tensors into one reference Cartesian frame
        └─ write a normalized thermoelastic YAML
@@ -120,26 +121,66 @@ It does not calculate:
 Input normalization
 -------------------
 
-Why CRYSTAL ``PRESSURE`` is required
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CRYSTAL pressure resolution and Wallace tensors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The elastic tensors must be the stress--strain coefficients appropriate to a
-hydrostatically pre-stressed solid.  Quantas therefore requires CRYSTAL
-elastic calculations performed with the ``PRESSURE`` keyword.  The input
-creator checks that:
+The elastic tensors supplied to QSA must be the incremental stress--strain
+coefficients appropriate to each hydrostatically pre-stressed state.  The
+CRYSTAL interface can establish that condition in several explicit ways.
 
-- the keyword was present;
-- its value agrees with the pressure reported for the corrected elastic
-  properties within 0.05 GPa by default;
-- every sampled point contains a finite symmetric stiffness matrix.
+``PRESSURE`` or ``PRESSEOS``
+   CRYSTAL has already evaluated the elastic coefficients with the requested
+   hydrostatic finite-stress correction.  Quantas preserves the reported
+   tensor and records the keyword, pressure, and backend correction provenance.
+   No second correction is applied.  When the corrected elastic pressure is
+   printed, its value is checked against the keyword value within 0.05 GPa by
+   default.
 
-The pressure-dependent term in the cold finite-strain formula is part of the
-constitutive expansion.  It is **not** a second pressure correction applied to
-input data.  Quantas fits the already corrected Wallace coefficients directly.
+``output-stress``
+   For a raw CRYSTAL energy--strain tensor, Quantas uses the pressure of the
+   final unstrained stress tensor and applies the CRYSTAL finite-pressure
+   transformation of Erba *et al.* (2014), Eq. 6--7, exactly once.  In Voigt
+   notation the normal diagonals are unchanged, the normal off-diagonal terms
+   receive ``+P``, and the shear diagonals receive ``-P/2``.  This is the
+   default fallback selected by ``--pressure-source auto`` when no CRYSTAL
+   pre-stress keyword is present.
 
-Passing uncorrected energy Hessians can produce smooth fits and apparently
-reasonable values while remaining inconsistent with finite-pressure wave
-propagation and mechanical-stability analysis.
+``manual``
+   One pressure is supplied explicitly for each elastic output.  This route is
+   useful when the pressure is known independently but is not recoverable from
+   the native output.
+
+``energy-eos`` or ``energy-polynomial``
+   Quantas evaluates :math:`P(V)=-dE/dV` from a multi-volume static energy
+   series, assigns the resulting pressures to the raw tensors, and then applies
+   the same CRYSTAL finite-pressure transformation exactly once.  The
+   energy-volume data may come
+   from the elastic outputs themselves or from ``--energy-input`` pointing to
+   an HA/QHA YAML.  Only the static :math:`E(V)` arrays are consumed, so the
+   thermodynamic input may be Gamma-only, Gamma plus Kieffer, or based on an
+   explicit phonon dispersion without changing this pressure-resolution step.
+   For CRYSTAL elastic outputs, :math:`E(V)` is the resolved total energy: an
+   explicitly printed DFT-D and/or gCP corrected total is preferred over the
+   uncorrected SCF energy, with the latter used only when no correction is
+   present.
+
+For raw tensors, a pressure source is not optional.  If ``auto`` cannot find a
+finite output-stress pressure, input generation stops and asks for an explicit
+``output-stress``, ``manual``, ``energy-eos``, or ``energy-polynomial`` policy.
+Quantas never writes a QSA input whose tensor convention or finite-stress
+correction history is ambiguous.  The CRYSTAL adapter transformation must not
+be confused with ``wallace_delta`` in the QSA cold finite-strain equations:
+the latter belongs to the Stixrude--Lithgow-Bertelloni thermodynamic model and
+is not an external-code tensor-ingestion rule.
+
+The normalized YAML records the pressure source, tensor kind, correction
+method, software that applied the correction, source tensor convention, and
+energy-fit diagnostics when relevant.  This ``pressure_resolution`` provenance
+is propagated into the native thermoelastic HDF5 calibration result.
+
+The pressure-dependent term in the cold finite-strain formula remains part of
+the constitutive expansion.  It is **not** a second pressure correction applied
+to the sampled observations.
 
 Consistency of the elastic-volume series
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -182,7 +223,7 @@ The input-generation defaults are:
    * - Elastic-symmetry tolerance
      - :math:`10^{-3}` GPa
      - Detect one common elastic crystal-system pattern
-   * - PRESSURE consistency tolerance
+   * - Backend pre-stress consistency tolerance
      - 0.05 GPa
      - Compare the keyword and reported corrected-tensor pressures
    * - Ordered-atom path tolerance
@@ -1286,9 +1327,9 @@ Recommended production workflow
 
 A robust sequence is:
 
-1. calculate a consistent hydrostatic elastic-volume series with CRYSTAL
-   ``PRESSURE``;
-2. generate and inspect the normalized thermoelastic YAML;
+1. calculate a consistent hydrostatic elastic-volume series with CRYSTAL;
+2. resolve and inspect the pressure/tensor provenance in the normalized
+   thermoelastic YAML;
 3. calculate and validate QHA independently;
 4. confirm that the elastic volumes bracket the relevant QHA volume range;
 5. calibrate with BM3, third-order strain, and standard validation;
@@ -1312,8 +1353,10 @@ Common interpretation errors
    static energy EOS.
 
 **Applying a second pressure correction**
-   Input tensors must already be PRESSURE-corrected Wallace coefficients.  The
-   Wallace term in the finite-strain equation is not another correction of the
+   Input generation guarantees Wallace/incremental coefficients: CRYSTAL
+   ``PRESSURE``/``PRESSEOS`` tensors are preserved, while explicitly raw
+   tensors are corrected once from the selected pressure source.  The Wallace
+   term in the finite-strain equation is not another correction of the
    observations.
 
 **Interpreting a calibration archive as a completed P--T grid**

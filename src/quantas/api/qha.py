@@ -4,11 +4,13 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Literal
 
 from quantas.core.events import Observer
 from quantas.core.physics.eos import available_eos_tags
+from quantas.models.kieffer import KiefferVolumeSeries
 from quantas.modules.qha.formatting import QHATableFormat as TableFormat
 from quantas.modules.qha.io.export import QHATableExport
 from quantas.modules.qha.api import (
@@ -46,6 +48,10 @@ from quantas.modules.qha.validation import (
     QHAValidationSummary as ValidationSummary,
     compare_qha_results as compare_results,
     validate_qha_result as validate_result,
+)
+from quantas.modules.ha.io.kieffer import (
+    add_kieffer_to_phonon_input as _add_kieffer_to_input,
+    read_kieffer_from_phonon_input as _read_kieffer_input,
 )
 
 from .common import (
@@ -113,6 +119,79 @@ def create_input(
         formula_units=formula_units,
         observer=observer,
     )
+
+
+def add_kieffer_input(
+    source: str | Path,
+    destination: str | Path,
+    elastic_outputs: Sequence[str | Path],
+    *,
+    interface: str = "crystal",
+    pressure_policy: str = "auto",
+    manual_pressures_gpa: Sequence[float] | None = None,
+    eos: str = "BM3",
+    polynomial_degree: int = 3,
+    maxfev: int | None = None,
+    mu_order: int = 12,
+    phi_order: int = 24,
+    refinement_factor: int = 2,
+    batch_size: int = 512,
+) -> Path:
+    """Create a new QHA input enriched with Kieffer acoustic cutoffs.
+
+    Pressures for raw elastic tensors may come from the selected output
+    interface, explicit values, an energy EOS, or a polynomial representation
+    of the static energy-volume data already stored in ``source``.
+
+    Parameters
+    ----------
+    source, destination : str or Path
+        Existing QHA YAML input and distinct enriched output path.
+    elastic_outputs : sequence of str or Path
+        One elastic-output file per sampled QHA volume.
+    interface : str, optional
+        Elastic-output reader identifier.
+    pressure_policy : str, optional
+        Pressure source: ``"auto"``, ``"output_stress"``, ``"manual"``,
+        ``"energy_eos"``, or ``"energy_polynomial"``. Hyphenated forms are
+        also accepted.
+    manual_pressures_gpa : sequence of float or None, optional
+        One pressure per elastic output when the manual policy is selected.
+    eos : str, optional
+        Integrated energy EOS used by ``"energy_eos"``.
+    polynomial_degree : int, optional
+        Degree used by ``"energy_polynomial"``.
+    maxfev : int or None, optional
+        Optional maximum optimizer evaluations for the energy EOS fit.
+    mu_order, phi_order, refinement_factor, batch_size : int, optional
+        Directional quadrature and batched Christoffel controls.
+
+    Returns
+    -------
+    Path
+        Written Kieffer-enriched YAML input.
+    """
+    return _add_kieffer_to_input(
+        source,
+        destination,
+        elastic_outputs,
+        workflow="qha",
+        interface=interface,
+        pressure_policy=pressure_policy,
+        manual_pressures_gpa=manual_pressures_gpa,
+        eos=eos,
+        polynomial_degree=polynomial_degree,
+        maxfev=maxfev,
+        mu_order=mu_order,
+        phi_order=phi_order,
+        refinement_factor=refinement_factor,
+        batch_size=batch_size,
+    )
+
+
+def read_kieffer_input(source: str | Path) -> KiefferVolumeSeries:
+    """Read the Kieffer cutoff series embedded in a QHA YAML input."""
+    return _read_kieffer_input(source)
 
 
 def read_input(source: str | Path) -> Input:
@@ -255,6 +334,7 @@ def build_inspection_plots(
 def run(
     input_data: Input | PhononInputData | str | Path,
     options: Options | None = None,
+    kieffer_cutoffs: KiefferVolumeSeries | None = None,
     observer: Observer | None = None,
 ) -> ResultData:
     """Run a quasi-harmonic thermodynamic workflow.
@@ -265,6 +345,8 @@ def run(
         QHA input contract, neutral phonon data, or YAML path.
     options : Options or None, optional
         Thermodynamic domain, fitting, minimization, and unit controls.
+    kieffer_cutoffs : KiefferVolumeSeries or None, optional
+        Direct multi-volume acoustic cutoffs for either QHA scheme.
     observer : Observer or None, optional
         Frontend-neutral event observer.
 
@@ -278,7 +360,12 @@ def run(
     ValueError
         If the input, fits, or requested thermodynamic domain are invalid.
     """
-    return _run(input_data, options=options, observer=observer)
+    return _run(
+        input_data,
+        options=options,
+        kieffer_cutoffs=kieffer_cutoffs,
+        observer=observer,
+    )
 
 
 def get_result(result: ResultData) -> Result:
@@ -503,6 +590,7 @@ __all__ = [
     "CurveAxis",
     "FitFailurePolicy",
     "Input",
+    "KiefferVolumeSeries",
     "Minimization",
     "ModeContinuity",
     "Options",
@@ -518,6 +606,7 @@ __all__ = [
     "TableFormat",
     "ThermalExpansionMethod",
     "ValidationSummary",
+    "add_kieffer_input",
     "available_energy_eos",
     "build_inspection_plots",
     "build_inspection_report",
@@ -531,6 +620,7 @@ __all__ = [
     "inspect",
     "normalize_input",
     "read_input",
+    "read_kieffer_input",
     "read_result",
     "run",
     "validate_result",

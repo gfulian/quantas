@@ -27,6 +27,7 @@ class ElasticVolumePoint:
         GPa.
     stress_pressure : float
         Pressure calculated from the final unstrained stress tensor, in GPa.
+        ``NaN`` records that the backend did not provide this diagnostic.
     volume : float
         Primitive-cell volume in angstrom cubed.
     density : float
@@ -38,7 +39,9 @@ class ElasticVolumePoint:
     lattice : array_like
         Final primitive direct-lattice vectors, stored by rows in angstrom.
     prestress_applied : bool, optional
-        Whether the source explicitly used CRYSTAL's ``PRESSURE`` keyword.
+        Whether the stored stiffness includes the hydrostatic pre-stress terms
+        required by QSA.  The correction may have been applied by CRYSTAL or
+        by Quantas during input generation.
     metadata : dict, optional
         Frame-normalization diagnostics and source provenance.
 
@@ -75,8 +78,8 @@ class ElasticVolumePoint:
             raise ValueError("lattice must contain finite values")
         if not np.isfinite(self.pressure):
             raise ValueError("pressure must be finite")
-        if not np.isfinite(self.stress_pressure):
-            raise ValueError("stress_pressure must be finite")
+        if np.isinf(self.stress_pressure):
+            raise ValueError("stress_pressure must be finite or NaN when unavailable")
         if not np.isfinite(self.volume) or self.volume <= 0.0:
             raise ValueError("volume must be finite and positive")
         if not np.isfinite(self.density) or self.density <= 0.0:
@@ -164,7 +167,7 @@ class ElasticVolumeSeries:
             )
         if not all(point.prestress_applied for point in self.points):
             raise ValueError(
-                "all elastic points must include CRYSTAL hydrostatic pre-stress terms"
+                "all elastic points must include hydrostatic Wallace pre-stress terms"
             )
 
     @property
@@ -184,7 +187,7 @@ class ElasticVolumeSeries:
 
     @property
     def stress_pressures(self) -> FloatArray:
-        """Return final stress-tensor pressures in GPa."""
+        """Return final stress-tensor pressures in GPa, with NaN if unavailable."""
         return np.asarray(
             [point.stress_pressure for point in self.points],
             dtype=np.float64,

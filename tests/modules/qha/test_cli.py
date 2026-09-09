@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from click.testing import CliRunner
 
@@ -213,6 +214,89 @@ def test_qha_run_help_exposes_polynomial_derivative_options() -> None:
     assert "--mode-continuity" in result.output
     assert "--mode-gruneisen" in result.output
     assert "--gruneisen-min-cv-fraction" in result.output
+    assert "--kieffer" in result.output
+
+
+def test_qha_run_activates_embedded_kieffer_and_disables_modal_default(
+    tmp_path, monkeypatch
+) -> None:
+    """The opt-in flag forwards cutoffs and resolves the unsupported default."""
+    filename = tmp_path / "qha-kieffer.yaml"
+    filename.write_text("job: Kieffer CLI\n", encoding="utf-8")
+    destination = tmp_path / "result.hdf5"
+    cutoffs = object()
+    captured = {}
+
+    monkeypatch.setattr(
+        "quantas.cli.qha.read_qha_kieffer_input",
+        lambda path: cutoffs,
+    )
+
+    def fake_run(input_data, *, options, kieffer_cutoffs, observer):
+        captured["input"] = input_data
+        captured["options"] = options
+        captured["cutoffs"] = kieffer_cutoffs
+        captured["observer"] = observer
+        return object()
+
+    monkeypatch.setattr("quantas.cli.qha.run_qha", fake_run)
+    monkeypatch.setattr(
+        "quantas.cli.qha.write_qha_hdf5",
+        lambda *args, **kwargs: destination,
+    )
+
+    result = CliRunner().invoke(
+        qha,
+        [
+            "run",
+            str(filename),
+            "--kieffer",
+            "--output",
+            str(destination),
+            "--quiet",
+            "--no-progress",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["input"] == filename
+    assert captured["cutoffs"] is cutoffs
+    assert captured["options"].calculate_mode_gruneisen is False
+    assert captured["options"].metadata["kieffer_cli"] == {
+        "mode_gruneisen_default_disabled": True
+    }
+    report = filename.with_suffix(".log").read_text(encoding="utf-8")
+    assert "Mode-Gruneisen analysis disabled" in report
+    assert "Susan Werner Kieffer" in report
+
+
+@pytest.mark.parametrize(
+    ("modal_arguments", "message"),
+    [
+        (
+            ["--mode-gruneisen"],
+            "--mode-gruneisen cannot be combined with --kieffer",
+        ),
+        (
+            ["--thermal-expansion", "mode_gruneisen"],
+            "--thermal-expansion mode_gruneisen cannot be combined",
+        ),
+    ],
+)
+def test_qha_run_rejects_modal_analysis_with_kieffer(
+    tmp_path, modal_arguments: list[str], message: str
+) -> None:
+    """An explicit modal request must not omit the continuous branches."""
+    filename = tmp_path / "qha-kieffer.yaml"
+    filename.write_text("job: Kieffer CLI\n", encoding="utf-8")
+
+    result = CliRunner().invoke(
+        qha,
+        ["run", str(filename), "--kieffer", *modal_arguments],
+    )
+
+    assert result.exit_code != 0
+    assert message in result.output
 
 
 def test_qha_inspect_failure_reports_original_error_without_name_error(

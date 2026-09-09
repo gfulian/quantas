@@ -112,3 +112,77 @@ def test_crystal_calcite_reader_preserves_reported_source_components() -> None:
     assert reader.stiffness[0, 4] == pytest.approx(20.670)
     assert reader.stiffness[3, 5] == pytest.approx(-20.670)
     assert reader.stiffness[4, 5] == pytest.approx(0.0)
+
+
+def test_crystal_reader_uses_unstrained_elastic_reference(tmp_path: Path) -> None:
+    """Geometry, energy, and stress come from the state before elastic strains."""
+
+    def geometry_block(marker: str, a: float, density: float) -> list[str]:
+        volume = a**3
+        return [
+            marker,
+            "LATTICE PARAMETERS (ANGSTROMS AND DEGREES)",
+            (
+                "PRIMITIVE CELL - CENTRING CODE 1/0 "
+                f"VOLUME= {volume:.10f} - DENSITY {density:.6f} g/cm^3"
+            ),
+            "        A              B              C           ALPHA      BETA       GAMMA",
+            f" {a:.12f} {a:.12f} {a:.12f} 90.000000 90.000000 90.000000",
+            "ATOMS IN THE ASYMMETRIC UNIT    1 - ATOMS IN THE UNIT CELL:    1",
+            "     ATOM                 X/A                 Y/B                 Z/C",
+            "      1 T   8 O     0.000000000000E+00 0.000000000000E+00 0.000000000000E+00",
+            "DIRECT LATTICE VECTORS CARTESIAN COMPONENTS (ANGSTROM)",
+            "          X                    Y                    Z",
+            f" {a:.12f} 0.000000000000 0.000000000000",
+            f" 0.000000000000 {a:.12f} 0.000000000000",
+            f" 0.000000000000 0.000000000000 {a:.12f}",
+        ]
+
+    lines = ["ELAPIEZO OPTION", "COORPRT"]
+    lines.extend(geometry_block("GEOMETRY FOR WAVE FUNCTION - TEST", 4.2, 3.0))
+    lines.extend(
+        [
+            "PRESSURE IN GIGAPASCAL: 4.00000000",
+            "TOTAL ENERGY(DFT)(AU)(  3) -19.500000000000",
+        ]
+    )
+    lines.extend(geometry_block("FINAL OPTIMIZED GEOMETRY - TEST", 4.0, 3.2))
+    lines.extend(
+        [
+            "TOTAL ENERGY(DFT)(AU)(  2) -20.000000000000",
+            "PRESSURE IN GIGAPASCAL: 1.50000000",
+            "VOLUME OF THE CELL: 64.0000000000",
+            "DENSITY OF THE CRYSTAL = 3.20000000 g/cm^3",
+            "STRAIN MATRIX   1 :",
+        ]
+    )
+    lines.extend(geometry_block("FINAL OPTIMIZED GEOMETRY - TEST", 5.0, 4.0))
+    lines.extend(
+        [
+            "TOTAL ENERGY(DFT)(AU)(  2) -19.000000000000",
+            "PRESSURE IN GIGAPASCAL: 9.00000000",
+            "DENSITY OF THE CRYSTAL = 4.00000000 g/cm^3",
+            "FINAL RESULTS START",
+            "SYMMETRIZED ELASTIC CONSTANTS",
+            "header",
+            "200 80 70 0 0 0",
+            "190 65 0 0 0",
+            "180 0 0 0",
+            "60 0 0",
+            "55 0",
+            "50",
+        ]
+    )
+    output = tmp_path / "elastic-coorprt.out"
+    output.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    reader = CrystalElasticityReader(output)
+
+    assert reader.completed is True
+    assert reader.error is None
+    assert reader.structure is not None
+    assert reader.structure.volume == pytest.approx(64.0)
+    assert reader.volume == pytest.approx(64.0)
+    assert reader.density == pytest.approx(3200.0)
+    assert reader.energy == pytest.approx(-20.0)
+    assert reader.stress_pressure == pytest.approx(1.5)

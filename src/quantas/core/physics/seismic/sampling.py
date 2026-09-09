@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 import numpy as np
+from numpy.typing import ArrayLike
 from numpy.typing import NDArray
 
 from quantas.core.geometry import SphericalGrid
@@ -82,6 +83,61 @@ class SeismicFieldResult:
     def has_tracking(self) -> bool:
         """Return whether polarization tracking was requested."""
         return self.tracking is not None
+
+
+def solve_phase_directions(
+    solver: ChristoffelSolver,
+    directions: ArrayLike,
+    *,
+    batch_size: int = 512,
+    progress_callback: ProgressCallback | None = None,
+) -> PhaseFieldResult:
+    """Solve phase propagation for an arbitrary collection of directions.
+
+    Parameters
+    ----------
+    solver : ChristoffelSolver
+        Pointwise acoustic solver defining the material and tolerances.
+    directions : array_like
+        Non-zero Cartesian directions with shape ``(n, 3)``. Rows are
+        normalized internally.
+    batch_size : int, optional
+        Maximum number of directions evaluated in one NumPy batch.
+    progress_callback : callable or None, optional
+        Callback receiving ``(current, total)`` after each completed batch.
+
+    Returns
+    -------
+    PhaseFieldResult
+        Read-only phase velocities, polarizations, and diagnostics.
+
+    Raises
+    ------
+    TypeError
+        If ``solver`` is not a :class:`ChristoffelSolver`.
+    ValueError
+        If directions or ``batch_size`` are invalid.
+    """
+    if not isinstance(solver, ChristoffelSolver):
+        raise TypeError("solve_phase_directions requires a ChristoffelSolver.")
+    q = np.asarray(directions, dtype=np.float64)
+    if q.ndim != 2 or q.shape[1] != 3 or q.shape[0] == 0:
+        raise ValueError("directions must have shape (n, 3) with n > 0")
+    if not np.all(np.isfinite(q)):
+        raise ValueError("directions must contain only finite values")
+    norms = np.linalg.norm(q, axis=1)
+    if np.any(norms == 0.0):
+        raise ValueError("directions must be non-zero")
+    q = q / norms[:, None]
+    size = _validate_batch_size(batch_size)
+    arrays = _allocate_arrays(q.shape[0], SamplingLevel.PHASE)
+    for start in range(0, q.shape[0], size):
+        stop = min(start + size, q.shape[0])
+        batch = _solve_batch(solver, q[start:stop], SamplingLevel.PHASE)
+        _store_batch(arrays, batch, slice(start, stop), SamplingLevel.PHASE)
+        if progress_callback is not None:
+            progress_callback(stop, q.shape[0])
+    return _build_phase_field(q, arrays)
 
 
 def sample_seismic_field(

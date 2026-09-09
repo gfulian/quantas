@@ -196,6 +196,18 @@ def test_citation_sets_resolve_only_canonical_registry_keys() -> None:
             assert get_citation(key) is CITATIONS[key]
 
 
+def test_kieffer_method_reference_is_canonical() -> None:
+    """Kieffer-enabled reports cite the sine-wave model source."""
+    assert METHOD_CITATION_KEYS["kieffer_sine_wave_acoustics"] == (
+        "kieffer_1979",
+    )
+    citation = get_citation("kieffer_1979")
+    assert citation.year == 1979
+    assert citation.volume == "17"
+    assert citation.pages == "35-59"
+    assert citation.doi == "10.1029/RG017i001p00035"
+
+
 def test_docs_branding_assets_are_packaged() -> None:
     """The Sphinx logo, banner, and favicon PNG files are packaged."""
     manifest = Path("MANIFEST.in").read_text(encoding="utf-8")

@@ -25,6 +25,7 @@ from quantas.cli.contracts import (
     default_report_path,
     figure_preset_option,
     force_option,
+    kieffer_option,
     output_option,
     parse_verbosity,
     progress_option,
@@ -49,14 +50,17 @@ from quantas.api.ha import (
     PlotOptions as HAPlotOptions,
     Result as HAResult,
     build_plots as build_ha_plots,
+    read_kieffer_input as read_ha_kieffer_input,
     read_result as read_ha_hdf5,
     run as run_ha,
     write_result as write_ha_hdf5,
     write_table as write_ha_table,
 )
 from quantas.cli.ha_observer import HATextObserver
+from quantas.cli.kieffer_input import add_kieffer
 from quantas.cli.phonon_input import phonon_inpgen
 from quantas.references import (
+    method_citation_keys,
     module_citation_keys,
     render_citation_notice,
 )
@@ -70,6 +74,7 @@ def ha() -> None:
 
 
 ha.add_command(phonon_inpgen)
+ha.add_command(add_kieffer)
 
 
 @ha.command(name="run", cls=GroupedCommand)
@@ -127,6 +132,7 @@ ha.add_command(phonon_inpgen)
     default=False,
     help="Render backend timing events during the run.",
 )
+@kieffer_option()
 @grouped_option(
     "-p",
     "--plot",
@@ -183,6 +189,7 @@ def run(
     funit: str,
     tunit: str,
     benchmark: bool,
+    kieffer: bool,
     plot: bool,
     plot_property: str | None,
     plot_unit: str | None,
@@ -221,14 +228,25 @@ def run(
     )
 
     try:
-        result = run_ha(filename, options=options, observer=observer)
+        kieffer_cutoffs = (
+            read_ha_kieffer_input(filename) if kieffer else None
+        )
+        result = run_ha(
+            filename,
+            options=options,
+            kieffer_cutoffs=kieffer_cutoffs,
+            observer=observer,
+        )
     except Exception as exc:
         observer.close()
         echo_error(quantas_error(), bold=True)
         echo_error(str(exc))
         raise click.Abort() from exc
 
-    observer.output.text_block(render_citation_notice(module_citation_keys("ha")))
+    citation_keys = module_citation_keys("ha")
+    if kieffer:
+        citation_keys += method_citation_keys("kieffer_sine_wave_acoustics")
+    observer.output.text_block(render_citation_notice(citation_keys))
     observer.save()
 
     overwrite = not destination.exists() or force

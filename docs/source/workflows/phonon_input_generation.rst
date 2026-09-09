@@ -255,9 +255,12 @@ CRYSTAL eigenvector representation
 Real and complex modes
 ~~~~~~~~~~~~~~~~~~~~~~
 
-At Gamma, CRYSTAL prints real normal-mode displacement vectors.  At a general
-q-point it prints separate in-phase and anti-phase components.  Quantas
-reconstructs the complex displacement vector as
+At Gamma, CRYSTAL prints real normal-mode displacement vectors.  In dispersion
+calculations CRYSTAL distinguishes real (``R``) and complex (``C``) q-points.
+A real q-point may contain only ``MODES IN PHASE``; Quantas then uses that
+printed component as a real eigenvector.  A complex q-point contains separate
+in-phase and anti-phase components, and Quantas reconstructs the complex
+displacement vector as
 
 .. math::
 
@@ -265,8 +268,10 @@ reconstructs the complex displacement vector as
    = \mathbf u^{\mathrm{in}}_{qj}
    + i\,\mathbf u^{\mathrm{anti}}_{qj}.
 
-The in-phase and anti-phase blocks must contain the same frequencies and atom
-ordering.  Incomplete or inconsistent blocks are rejected.
+When an anti-phase block is present, the in-phase and anti-phase blocks must
+contain the same frequencies and atom ordering.  A ``C`` q-point with no
+anti-phase block is considered incomplete and is rejected; an ``R`` q-point
+with only the in-phase block is valid.
 
 Mass weighting and unit normalization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -757,6 +762,10 @@ Create a plain text file containing one output path per line, then run
        --output material_qha.yaml \
        --jobname "Material QHA phonons"
 
+The standard terminal summary reports the parsed source count, selected energy
+quantity and empirical corrections, q-point provenance, and a compact preview
+of q-point coordinates when they are available. Long q meshes are truncated in
+the terminal only; the complete sampling remains in the generated YAML file.
 Use ``--debug`` when the continuity diagnostics need to be inspected in detail.
 Use ``--quiet`` for successful batch generation with no normal terminal output.
 The two options are intentionally mutually exclusive.

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Literal, cast
 
 import click
+from click.core import ParameterSource
 
 from quantas.cli.reference_help import apply_reference_help
 
@@ -27,6 +28,7 @@ from quantas.cli.contracts import (
     default_report_path,
     figure_preset_option,
     force_option,
+    kieffer_option,
     output_option,
     parse_verbosity,
     progress_option,
@@ -45,7 +47,7 @@ from quantas.cli.messages import (
     quantas_finish,
     quantas_title,
 )
-from quantas.api.common import EventLevel
+from quantas.api.common import Event, EventLevel
 from quantas.api.qha import (
     CurveAxis as QHACurveAxis,
     FitFailurePolicy as QHAFitFailurePolicy,
@@ -61,6 +63,7 @@ from quantas.api.qha import (
     build_plots as build_qha_plots,
     inspect as inspect_qha_input,
     list_plot_properties as list_available_plot_properties,
+    read_kieffer_input as read_qha_kieffer_input,
     read_input as read_qha_input,
     read_result as read_qha_hdf5,
     run as run_qha,
@@ -68,12 +71,52 @@ from quantas.api.qha import (
     write_table as write_qha_table,
 )
 from quantas.cli.output import CLIOutput
+from quantas.cli.kieffer_input import add_kieffer
 from quantas.cli.qha_observer import QHATextObserver
 from quantas.cli.phonon_input import phonon_inpgen
 from quantas.renderers.plots import MatplotlibOptions, render_plot_collection
-from quantas.references import module_citation_keys, render_citation_notice
+from quantas.references import (
+    method_citation_keys,
+    module_citation_keys,
+    render_citation_notice,
+)
 
 _QHA_ENERGY_EOS_CHOICES = available_energy_eos()
+
+
+def _resolve_kieffer_mode_gruneisen(
+    ctx: click.Context,
+    *,
+    kieffer: bool,
+    scheme: str,
+    calculate_mode_gruneisen: bool,
+    thermal_expansion_method: str,
+) -> tuple[bool, bool]:
+    """Resolve the unsupported mode-Gruneisen/Kieffer combination.
+
+    Returns the effective mode-Gruneisen switch and whether its normal CLI
+    default was disabled automatically.  An explicit request is rejected so
+    that Quantas never presents a Gamma-only modal result as including the
+    three continuous Kieffer branches.
+    """
+    if not kieffer or scheme != "freq":
+        return calculate_mode_gruneisen, False
+    if thermal_expansion_method == "mode_gruneisen":
+        raise click.UsageError(
+            "--thermal-expansion mode_gruneisen cannot be combined with "
+            "--kieffer; use mixed_derivative or numerical"
+        )
+    if not calculate_mode_gruneisen:
+        return False, False
+    if (
+        ctx.get_parameter_source("calculate_mode_gruneisen")
+        is not ParameterSource.DEFAULT
+    ):
+        raise click.UsageError(
+            "--mode-gruneisen cannot be combined with --kieffer; use "
+            "--no-mode-gruneisen"
+        )
+    return False, True
 
 
 @click.group(name="qha")
@@ -83,6 +126,7 @@ def qha() -> None:
 
 
 qha.add_command(phonon_inpgen)
+qha.add_command(add_kieffer)
 
 
 @qha.command(name="inspect", cls=GroupedCommand)
@@ -225,6 +269,7 @@ def inspect(
     default=None,
     help="Override the phonon-mode continuity status stored in the input file.",
 )
+@kieffer_option()
 @grouped_option(
     "-N",
     "--minimization",
@@ -403,10 +448,13 @@ def inspect(
 @verbosity_option()
 @quiet_option()
 @progress_option()
+@click.pass_context
 def run(
+    ctx: click.Context,
     filename: Path,
     scheme: str,
     mode_continuity: str | None,
+    kieffer: bool,
     minimization: str,
     eos: str,
     calculate_gruneisen: bool,
@@ -435,6 +483,15 @@ def run(
     progress: bool,
 ) -> None:
     """Run a QHA calculation from a Quantas YAML input file."""
+    calculate_mode_gruneisen, disabled_default_mode_gruneisen = (
+        _resolve_kieffer_mode_gruneisen(
+            ctx,
+            kieffer=kieffer,
+            scheme=scheme,
+            calculate_mode_gruneisen=calculate_mode_gruneisen,
+            thermal_expansion_method=thermal_expansion_method,
+        )
+    )
     destination = default_hdf5_path(filename, output, suffix="_QHA")
     report = default_report_path(filename, report)
     report_verbosity = parse_verbosity(verbosity)
@@ -474,30 +531,59 @@ def run(
         max_consecutive_failures=max_failures,
         fit_failure_policy=cast(QHAFitFailurePolicy, failure_policy),
     )
+    if disabled_default_mode_gruneisen:
+        options.metadata["kieffer_cli"] = {
+            "mode_gruneisen_default_disabled": True,
+        }
     observer = QHATextObserver(
         report_file=report,
         silent=quiet,
         show_progress=progress,
         verbosity=report_verbosity,
     )
+    if disabled_default_mode_gruneisen:
+        observer(
+            Event(
+                "Mode-Gruneisen analysis disabled for Kieffer frequency QHA; "
+                "the continuous acoustic branches do not yet have a "
+                "mode-resolved weighting",
+                level=EventLevel.WARNING,
+            )
+        )
 
     try:
+        kieffer_cutoffs = (
+            read_qha_kieffer_input(filename) if kieffer else None
+        )
         calculation_input = filename
         if mode_continuity is not None:
             input_data = read_qha_input(filename)
             continuity = cast(QHAModeContinuity, mode_continuity)
             input_data.mode_continuity = continuity
             input_data.metadata["mode_continuity"] = continuity
-            result = run_qha(input_data, options=options, observer=observer)
+            result = run_qha(
+                input_data,
+                options=options,
+                kieffer_cutoffs=kieffer_cutoffs,
+                observer=observer,
+            )
         else:
-            result = run_qha(calculation_input, options=options, observer=observer)
+            result = run_qha(
+                calculation_input,
+                options=options,
+                kieffer_cutoffs=kieffer_cutoffs,
+                observer=observer,
+            )
     except Exception as exc:
         observer.close()
         echo_error(quantas_error(), bold=True)
         echo_error(str(exc))
         raise click.Abort() from exc
 
-    observer.output.text_block(render_citation_notice(module_citation_keys("qha")))
+    citation_keys = module_citation_keys("qha")
+    if kieffer:
+        citation_keys += method_citation_keys("kieffer_sine_wave_acoustics")
+    observer.output.text_block(render_citation_notice(citation_keys))
     observer.save()
 
     overwrite = not destination.exists() or force

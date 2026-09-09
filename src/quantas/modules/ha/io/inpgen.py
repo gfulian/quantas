@@ -371,6 +371,9 @@ class HAInputCreator:
         data["provenance"] = _provenance_dict(
             self.interface_flag, self.files, reference_index=reference
         )
+        energy_provenance = _energy_provenance_dict(self.phondata)
+        if energy_provenance:
+            data["provenance"]["energy"] = energy_provenance
         self._emit_input_summary(data)
         return data
 
@@ -396,6 +399,16 @@ class HAInputCreator:
                 "table": table,
             },
         )
+        qpoint_table = phonon_qpoint_sampling_table(data)
+        if qpoint_table is not None:
+            self.emit(
+                "Phonon q-point sampling assembled",
+                level=EventLevel.RESULT,
+                data={
+                    "kind": "phonon_qpoint_summary",
+                    "table": qpoint_table,
+                },
+            )
 
     def to_yaml_lines(
         self,
@@ -688,6 +701,9 @@ def _yaml_presentation_data(value: Any, *, path: tuple[str, ...] = ()) -> Any:
         "expansion",
         "equivalent_atoms",
         "origin_shift",
+        "cutoff_frequency",
+        "effective_velocity",
+        "source_elastic_indices",
     } or path[-2:] == ("volume_series", "volume")
     row_vector_container = key in {
         "lattice",
@@ -789,6 +805,9 @@ def format_quantas_yaml(data: dict[str, Any]) -> str:
     lines.append(f"qpoints: {int(data['qpoints'])}")
     lines.append(f"volume: {_format_float_sequence(data['volume'], precision=8)}")
     lines.append(f"energy: {_format_energy_sequence(data['energy'])}")
+    if "kieffer" in data:
+        kieffer_text = _dump_yaml_section("kieffer", data["kieffer"])
+        lines.extend(kieffer_text.splitlines())
     lines.append("phonon:")
 
     for qpoint in data["phonon"]:
@@ -1336,14 +1355,41 @@ def phonon_input_summary_table(
     else:
         eigenvectors = "available" if eigenvectors_available else "unavailable"
 
+    provenance = data.get("provenance", {})
+    energy_provenance = (
+        provenance.get("energy", {}) if isinstance(provenance, dict) else {}
+    )
+    selected_energy = (
+        str(energy_provenance.get("selected_quantity", "total_energy"))
+        if isinstance(energy_provenance, dict)
+        else "total_energy"
+    )
+    correction_labels: set[str] = set()
+    if isinstance(energy_provenance, dict):
+        states = energy_provenance.get("states", [])
+        if isinstance(states, list):
+            for state in states:
+                if not isinstance(state, dict):
+                    continue
+                corrections = state.get("corrections", [])
+                if isinstance(corrections, list):
+                    correction_labels.update(str(item) for item in corrections if item)
+
     rows: list[list[Any]] = [
         ["Interface", interface],
         ["Source files", int(source_count)],
         ["Atoms", int(data.get("natom", 0))],
+        ["Formula units", int(data.get("formula_units", 1))],
         ["Volumes", int(volumes.size)],
         ["Q-points", int(data.get("qpoints", 0))],
+        ["Q-position source", str(data.get("q_position_source", "unknown"))],
         ["Modes per q-point", int(modes)],
         ["Eigenvectors", eigenvectors],
+        ["Energy quantity", selected_energy],
+        [
+            "Energy corrections",
+            ", ".join(sorted(correction_labels)) if correction_labels else "none",
+        ],
     ]
     if volumes.size:
         rows.append(
@@ -1358,6 +1404,78 @@ def phonon_input_summary_table(
         title="Phonon input generation",
         columns=["Property", "Value"],
         rows=rows,
+    )
+
+
+def phonon_qpoint_sampling_table(
+    data: dict[str, Any],
+    *,
+    max_rows: int = 12,
+) -> ReportTable | None:
+    """Build a compact q-point coordinate preview for generated phonon input.
+
+    Parameters
+    ----------
+    data : dict
+        Generated HA/QHA input mapping.
+    max_rows : int, optional
+        Maximum number of q-points shown in the terminal preview. The complete
+        sampling remains stored in the generated YAML input.
+
+    Returns
+    -------
+    ReportTable or None
+        Frontend-neutral q-point table, or ``None`` when coordinates are not
+        scientifically available.
+
+    Raises
+    ------
+    ValueError
+        If ``max_rows`` is not positive.
+    """
+    if max_rows <= 0:
+        raise ValueError("max_rows must be positive")
+    phonon = data.get("phonon", [])
+    if not isinstance(phonon, list) or not phonon:
+        return None
+
+    available: list[tuple[int, np.ndarray, float]] = []
+    for index, qpoint in enumerate(phonon, start=1):
+        if not isinstance(qpoint, dict):
+            continue
+        position = qpoint.get("q-position")
+        if position is None:
+            continue
+        coords = np.asarray(position, dtype=np.float64)
+        if coords.shape != (3,):
+            continue
+        available.append((index, coords, float(qpoint.get("weight", np.nan))))
+
+    if not available:
+        return None
+
+    shown = available[:max_rows]
+    rows = [
+        [index, float(coords[0]), float(coords[1]), float(coords[2]), weight]
+        for index, coords, weight in shown
+    ]
+    notes = [
+        "Coordinates are fractional primitive reciprocal coordinates unless "
+        "the input provenance states otherwise."
+    ]
+    omitted = len(available) - len(shown)
+    if omitted > 0:
+        notes.append(
+            f"{omitted} additional q-point(s) are stored in the generated YAML input."
+        )
+    return ReportTable(
+        title="Phonon q-point sampling",
+        columns=["#", "q1", "q2", "q3", "Weight"],
+        rows=rows,
+        metadata={
+            "column_formats": ["integer", ".6f", ".6f", ".6f", ".6g"],
+            "notes": notes,
+        },
     )
 
 
@@ -1748,6 +1866,49 @@ def _provenance_dict(
         "interface": str(interface),
         "sources": [str(path) for path in files],
         "reference_index": int(reference_index),
+    }
+
+
+def _energy_provenance_dict(readers: list[Any]) -> dict[str, Any]:
+    """Return compact SCF/total-energy provenance for phonon source states.
+
+    Parameters
+    ----------
+    readers : list of object
+        Loaded per-volume interface readers.
+
+    Returns
+    -------
+    dict
+        Energy-selection policy and one compact record per source state.  An
+        empty mapping is returned when the interface readers do not expose
+        energy provenance.
+    """
+    states: list[dict[str, Any]] = []
+    for index, reader in enumerate(readers):
+        raw = getattr(reader, "energy_provenance", None)
+        if not isinstance(raw, dict) or not raw:
+            continue
+        state: dict[str, Any] = {
+            "source_index": index,
+            "total_energy": float(getattr(reader, "energy")),
+            "source_marker": raw.get("source_marker"),
+            "corrections": list(raw.get("corrections", ())),
+        }
+        scf_energy = float(getattr(reader, "scf_energy", np.nan))
+        if np.isfinite(scf_energy):
+            state["scf_energy"] = scf_energy
+        resolved_marker = raw.get("resolved_total_source_marker")
+        if resolved_marker is not None:
+            state["resolved_total_source_marker"] = resolved_marker
+        states.append(state)
+
+    if not states:
+        return {}
+    return {
+        "selected_quantity": "total_energy",
+        "unit": "Ha",
+        "states": states,
     }
 
 

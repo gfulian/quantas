@@ -94,6 +94,15 @@ The pressure term is therefore part of the thermodynamic definition of the
 finite-pressure stress--strain coefficients.  This distinction matters when
 elastic tensors are used for stability analysis or acoustic-wave propagation.
 
+.. important::
+
+   This QSA finite-strain term is **not** a generic post-processing rule for
+   elastic tensors read from an external code.  CRYSTAL raw energy--strain
+   coefficients use the code-specific finite-prestress transformation of Erba
+   *et al.* (2014), which is applied in :mod:`quantas.interfaces.crystal`.
+   Other electronic-structure backends require their own convention audit
+   before Quantas can classify or correct their finite-pressure tensors.
+
 Static and vibrational parts of the free energy
 -----------------------------------------------
 

@@ -206,6 +206,28 @@ def progress_option() -> Callable[[_F], _F]:
     )
 
 
+def kieffer_option() -> Callable[[_F], _F]:
+    """Return the shared opt-in Kieffer execution decorator.
+
+    The enriched YAML block is deliberately inactive unless this flag is
+    supplied.  This keeps calculations with and without the acoustic model
+    directly comparable from the same input file.
+    """
+    return cast(
+        Callable[[_F], _F],
+        grouped_option(
+            "--kieffer",
+            group=SCIENTIFIC_GROUP,
+            is_flag=True,
+            default=False,
+            help=(
+                "Add the embedded Kieffer sine-wave acoustic contribution. "
+                "The input must contain a validated 'kieffer' block."
+            ),
+        ),
+    )
+
+
 def figure_preset_option(
     *,
     option_name: str = "--preset",
@@ -278,6 +300,7 @@ __all__ = [
     "default_report_path",
     "figure_preset_option",
     "force_option",
+    "kieffer_option",
     "output_option",
     "parse_verbosity",
     "progress_option",

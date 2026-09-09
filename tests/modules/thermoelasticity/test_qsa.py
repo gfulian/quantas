@@ -97,6 +97,14 @@ def _synthetic_context() -> ThermoelasticContext:
         ),
         elastic_symmetry="cubic",
         reference_index=4,
+        metadata={
+            "pressure_resolution": {
+                "interface": "crystal",
+                "requested_source": "energy_eos",
+                "target_tensor_kind": "wallace_hydrostatic",
+                "correction_policy": "preserve-backend-or-apply-once",
+            }
+        },
     )
     temperature = np.asarray([300.0, 500.0, 700.0])
     pressure = np.asarray([0.0, 5.0])
@@ -209,6 +217,9 @@ def test_depth_profile_and_hdf5_round_trip_preserve_all_diagnostics(
     result_data = analyze_thermoelastic_result(calibration, profiles=[profile])
     path = tmp_path / "thermoelastic.hdf5"
     write_thermoelastic_hdf5(result_data, path)
+    with h5py.File(path, "r") as h5:
+        assert "input/data/pressure_resolution" in h5
+        assert "results/metadata/pressure_resolution" in h5
     loaded = read_thermoelastic_hdf5(path)
     result = loaded.results["thermoelasticity"]
     profile_result = result.profiles["lithosphere"]
@@ -233,6 +244,13 @@ def test_depth_profile_and_hdf5_round_trip_preserve_all_diagnostics(
     assert result.thermal_expansion_tensor is not None
     assert result.component_fits["C11"].quality is not None
     assert result.component_fits["C11"].quality.level == "supported"
+    assert loaded.input_data is not None
+    assert loaded.input_data.data["pressure_resolution"]["requested_source"] == (
+        "energy_eos"
+    )
+    assert result.metadata["pressure_resolution"]["correction_policy"] == (
+        "preserve-backend-or-apply-once"
+    )
 
 
 def test_report_levels_add_point_covariance_and_debug_tables() -> None:
