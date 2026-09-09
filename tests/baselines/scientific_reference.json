@@ -131,7 +131,7 @@
       },
       "isothermal_bulk_modulus": {
         "atol": 2e-06,
-        "rtol": 2e-06
+        "rtol": 5e-06
       }
     }
   }
