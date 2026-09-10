@@ -10,7 +10,12 @@ import re
 
 import numpy as np
 
-from quantas.core.physics.units import convert_length, convert_pressure, convert_volume
+from quantas.core.physics.units import (
+    convert_energy,
+    convert_length,
+    convert_pressure,
+    convert_volume,
+)
 
 from quantas.models import BasicReader
 from quantas.modules.eos.models import (
@@ -23,6 +28,8 @@ _DEFAULT_UNITS = {
     "pressure": "GPa",
     "sigma_pressure": "GPa",
     "temperature": "K",
+    "energy": "Ha",
+    "sigma_energy": "Ha",
     "sigma_temperature": "K",
     "volume": "angstrom^3",
     "sigma_volume": "angstrom^3",
@@ -139,6 +146,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
     ----------
     eos_input : str, Path or None, optional
         File loaded during construction.
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
+        Explicit input-unit overrides. Energy and matching ``sigma_energy``
+        values are normalized to Hartree; other physical quantities retain the
+        established EOS canonical units.
     """
 
     def __init__(
@@ -148,6 +159,7 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
         pressure_unit: str | None = None,
         length_unit: str | None = None,
         temperature_unit: str | None = None,
+        energy_unit: str | None = None,
     ) -> None:
         super().__init__()
         self.dataset: EOSDataset | None = None
@@ -158,6 +170,7 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
             if temperature_unit is None
             else _normalize_temperature_scale(temperature_unit)
         )
+        self.energy_unit = None if energy_unit is None else str(energy_unit)
         if eos_input is not None:
             self.load(eos_input)
 
@@ -327,6 +340,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
             raise ValueError("EOS input does not contain any numeric data rows.")
         if self.temperature_unit is not None:
             temperature_scale = self.temperature_unit
+        if self.energy_unit is not None:
+            for name in ("energy", "sigma_energy"):
+                if name in format_columns:
+                    column_units[name] = self.energy_unit
         if self.pressure_unit is not None:
             for name in ("pressure", "sigma_pressure"):
                 if name in format_columns:
@@ -405,6 +422,9 @@ def _build_dataset(
         volume_scale=volume_scale,
         linear_scale=linear_scale,
     )
+    for name in ("energy", "sigma_energy"):
+        if name in columns:
+            units[name] = "Ha"
     for name in ("pressure", "sigma_pressure"):
         if name in columns:
             units[name] = "GPa"
@@ -438,6 +458,7 @@ def _build_dataset(
             "group_column": "group" in format_columns,
         },
         "unit_overrides": {
+            "energy": raw_units.get("energy"),
             "pressure": raw_units.get("pressure"),
             "length": raw_units.get("a") or raw_units.get("b") or raw_units.get("c"),
             "temperature": temperature_scale if "temperature" in columns else None,
@@ -467,6 +488,7 @@ def read_eos_input(
     pressure_unit: str | None = None,
     length_unit: str | None = None,
     temperature_unit: str | None = None,
+    energy_unit: str | None = None,
 ) -> EOSDataset:
     """Read and normalize one keyword-directed EOS input file.
 
@@ -474,10 +496,11 @@ def read_eos_input(
     ----------
     filename : str or Path
         Input file path. File extensions are not used to select the parser.
-    pressure_unit, length_unit, temperature_unit : str or None, optional
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
         Explicit input-unit overrides. When omitted, declarations in the file
-        are used, followed by the EOS defaults GPa, Angstrom, and kelvin.
-        Normalized in-memory values always use GPa, Angstrom/Angstrom^3, and K.
+        are used, followed by the EOS defaults GPa, Angstrom, kelvin, and
+        Hartree. Normalized in-memory values always use GPa,
+        Angstrom/Angstrom^3, K, and Ha.
 
     Returns
     -------
@@ -495,6 +518,7 @@ def read_eos_input(
         pressure_unit=pressure_unit,
         length_unit=length_unit,
         temperature_unit=temperature_unit,
+        energy_unit=energy_unit,
     ).load(filename)
 
 
@@ -841,6 +865,14 @@ def _normalize_physical_units(
 ) -> None:
     """Convert supported physical input columns to EOS internal units."""
     _convert_temperature(columns, temperature_scale)
+    for name in ("energy", "sigma_energy"):
+        if name in columns:
+            source_unit = raw_units.get(name, "Ha")
+            if not _unit_is(source_unit, {"ha", "hartree"}):
+                columns[name] = np.asarray(
+                    convert_energy(columns[name], source_unit, "Ha"),
+                    dtype=np.float64,
+                )
     for name in ("pressure", "sigma_pressure"):
         if name in columns:
             source_unit = raw_units.get(name, "GPa")

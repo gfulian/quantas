@@ -195,6 +195,25 @@ uncorrected SCF energy is additionally retained in input provenance.  CRYSTAL
 elastic readers likewise expose ``scf_energy`` and ``total_energy`` while the
 historical ``energy`` property is an alias for ``total_energy``.
 
+CRYSTAL Energy EOS state series
+-------------------------------
+
+:class:`quantas.interfaces.crystal.energy_volume.CrystalEnergyVolumeReader`
+normalizes three CRYSTAL output shapes to one structure--energy contract: a
+static SCF result contributes one state, a completed ordinary geometry
+optimization contributes its final state, and a completed native ``EOS`` run
+contributes all states in the final sorted E(V) table.  The reader reuses
+:class:`quantas.interfaces.crystal.output.CrystalOutputParser` for authoritative
+total-energy resolution and :class:`quantas.interfaces.crystal.geometry.CrystalGeometryParser`
+for structures; it does not duplicate correction-specific regular expressions.
+
+For native EOS output, the sorted E(V) table is checked against independently
+parsed final optimized geometries and state-resolved total energies.  The
+interface returns :class:`quantas.models.computation.StructureEnergySeries`;
+source-list flattening and cross-file compatibility belong to the EOS workflow
+layer.  CRYSTALpytools may be used externally as an audit reference but is not a
+Quantas runtime dependency.
+
 CRYSTAL elastic volume series
 -----------------------------
 

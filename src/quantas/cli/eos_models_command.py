@@ -1,14 +1,32 @@
 # -*- coding: utf-8 -*-
 
-"""Discover equations of state available to Quantas workflows."""
+"""Discover models and capabilities available to Quantas EOS workflows."""
 
 from __future__ import annotations
 
 import click
 
 from quantas.cli.output import CLIOutput
-from quantas.core.physics.eos import EOSModel, available_eos_models
+from quantas.core.physics.eos import (
+    EOSModel,
+    PVTCouplingFamily,
+    TemperatureEOSFamily,
+    TemperatureEOSModel,
+    available_eos_models,
+    available_pvt_couplings,
+    available_temperature_eos_models,
+    thermal_pressure_model_contracts,
+)
 from quantas.models import ReportTable
+from quantas.modules.eos.contracts import EOS_DOMAIN_CAPABILITIES
+
+_DOMAIN_ORDER = ("pv", "ev", "vt", "pvt")
+_DOMAIN_NAMES = {
+    "pv": "P-V",
+    "ev": "E-V",
+    "vt": "V-T",
+    "pvt": "P-V-T",
+}
 
 
 @click.command(name="show-models")
@@ -16,59 +34,171 @@ from quantas.models import ReportTable
     "--domain",
     "domains",
     multiple=True,
-    type=click.Choice(["pv", "ev"], case_sensitive=False),
+    type=click.Choice(list(_DOMAIN_ORDER), case_sensitive=False),
     help=(
-        "Restrict the catalogue to a scientific domain. Repeat to require "
-        "support in every selected domain."
+        "Show only the requested EOS domain. Repeat to show several domains; "
+        "when omitted, all EOS domains are shown."
     ),
 )
 def show_models(domains: tuple[str, ...]) -> None:
-    """Show the isothermal EOS catalogue and workflow capabilities.
+    """Show EOS scientific domains and their available model catalogues.
 
-    With no filter, the command lists the union of direct pressure-volume and
-    integrated energy-volume models. Repeated ``--domain`` options select the
-    intersection of the requested capabilities, which is useful when choosing
-    one formulation for several interoperable workflows.
+    With no filter, the command reports all EOS domains: pressure-volume,
+    energy-volume, volume-temperature, and coupled pressure-volume-temperature.
+    Repeated ``--domain`` options reduce the output to the requested sections;
+    they do not require one model to span several unrelated domains.
     """
-    selected = {value.lower() for value in domains}
-    models = tuple(
-        model
-        for model in _catalog_models()
-        if ("pv" not in selected or model.supports_pressure_fit)
-        and ("ev" not in selected or model.supports_energy)
+    selected = _selected_domains(domains)
+    output = CLIOutput()
+    output.table(_domain_table(selected), persist=False)
+
+    if "pv" in selected:
+        output.table(_isothermal_table("pv"), persist=False)
+    if "ev" in selected:
+        output.table(_isothermal_table("ev"), persist=False)
+    if "vt" in selected:
+        output.table(_temperature_table(), persist=False)
+    if "pvt" in selected:
+        output.table(_pvt_coupling_table(), persist=False)
+        output.table(_thermal_pressure_table(), persist=False)
+
+    output.text_block(
+        "Canonical model tags are stored in normalized workflow metadata. "
+        "Common isothermal aliases include BM -> BM3, PT/NS -> PT3, "
+        "V -> V3, T -> T3, and SJEOS -> SJ; long family names are also "
+        "accepted. V-T and P-V-T models use their documented family/variant "
+        "or coupling tags.\n"
+        "EOS-valued CLI options provide model-aware completion after shell "
+        "completion has been registered. On PowerShell run "
+        "'quantas completion powershell | Out-String | Invoke-Expression' "
+        "for the current session.",
+        persist=False,
     )
-    title = _catalog_title(selected)
+    output.close()
+
+
+def _selected_domains(domains: tuple[str, ...]) -> tuple[str, ...]:
+    """Return requested domains in stable scientific order."""
+    if not domains:
+        return _DOMAIN_ORDER
+    selected = {value.lower() for value in domains}
+    return tuple(value for value in _DOMAIN_ORDER if value in selected)
+
+
+def _domain_table(domains: tuple[str, ...]) -> ReportTable:
+    """Return the public EOS domain-capability summary."""
+    capabilities = {
+        capability.domain.value: capability for capability in EOS_DOMAIN_CAPABILITIES
+    }
+    rows = []
+    for domain in domains:
+        capability = capabilities[domain]
+        rows.append(
+            [
+                domain,
+                _DOMAIN_NAMES[domain],
+                capability.status.value.replace("_", "-"),
+                _yes_no(capability.fitting),
+                _yes_no(capability.calculator),
+                _yes_no(capability.diagnostics),
+                _yes_no(capability.plotting),
+            ]
+        )
+    return ReportTable(
+        title="EOS scientific domains",
+        columns=["Domain", "Relationship", "Status", "Fit", "Calculate", "Diagnose", "Plot"],
+        rows=rows,
+    )
+
+
+def _isothermal_table(domain: str) -> ReportTable:
+    """Return one P-V or E-V isothermal-model table."""
+    if domain == "pv":
+        models = tuple(model for model in _catalog_models() if model.supports_pressure_fit)
+        title = "P-V isothermal models"
+    else:
+        models = tuple(model for model in _catalog_models() if model.supports_energy)
+        title = "E-V integrated energy models"
     rows = [
         [
             model.tag,
             model.family_name,
             "-" if model.order is None else model.order,
-            "yes" if model.supports_pressure_fit else "no",
-            "yes" if model.supports_energy else "no",
         ]
         for model in models
     ]
-    output = CLIOutput()
-    output.table(
-        ReportTable(
-            title=title,
-            columns=["Tag", "Formulation", "Order", "P-V fit", "E(V)"],
-            rows=rows,
+    return ReportTable(
+        title=title,
+        columns=["Tag", "Formulation", "Order"],
+        rows=rows,
+    )
+
+
+def _temperature_table() -> ReportTable:
+    """Return all V-T model family/variant combinations."""
+    rows = [
+        [model.tag, _temperature_family_name(model), model.variant.value]
+        for model in available_temperature_eos_models()
+        if model.variant is not None
+    ]
+    return ReportTable(
+        title="V-T thermal-expansion models",
+        columns=["Tag", "Formulation", "Variant"],
+        rows=rows,
+    )
+
+
+def _pvt_coupling_table() -> ReportTable:
+    """Return all P-V-T coupling prescriptions."""
+    descriptions = {
+        PVTCouplingFamily.LINEAR_BULK_MODULUS: (
+            "Linear bulk modulus",
+            "reference P-V EOS + V-T model",
         ),
-        persist=False,
+        PVTCouplingFamily.ANDERSON_GRUNEISEN: (
+            "Anderson-Gruneisen",
+            "reference P-V EOS + V-T model",
+        ),
+        PVTCouplingFamily.THERMAL_PRESSURE: (
+            "Thermal pressure",
+            "reference P-V EOS + thermal-pressure model",
+        ),
+    }
+    rows = [
+        [coupling.value, *descriptions[coupling]]
+        for coupling in available_pvt_couplings()
+    ]
+    return ReportTable(
+        title="P-V-T coupling models",
+        columns=["Tag", "Formulation", "Components"],
+        rows=rows,
     )
-    output.text_block(
-        "Canonical tags are stored in normalized workflow metadata. "
-        "Common aliases include BM -> BM3, PT/NS -> PT3, V -> V3, "
-        "T -> T3, and SJEOS -> SJ; long family names such as "
-        "birch-murnaghan and natural-strain are also accepted.\n"
-        "P-V fit means direct standalone pressure-volume fitting. A model may "
-        "still provide analytical P(V) as the derivative of an E(V) form.\n"
-        "EOS-valued CLI options support shell completion when Click completion "
-        "is enabled for the active shell.",
-        persist=False,
+
+
+def _thermal_pressure_table() -> ReportTable:
+    """Return thermal-pressure components available to P-V-T coupling."""
+    rows = []
+    for model in thermal_pressure_model_contracts():
+        family = model.family_name.value.replace("-", " ").title()
+        variant = "-" if model.mgd_variant is None else model.mgd_variant.value
+        rows.append([model.tag, family, variant])
+    return ReportTable(
+        title="P-V-T thermal-pressure components",
+        columns=["Tag", "Formulation", "Variant"],
+        rows=rows,
     )
-    output.close()
+
+
+def _temperature_family_name(model: TemperatureEOSModel) -> str:
+    """Return a compact human-readable V-T family name."""
+    names = {
+        TemperatureEOSFamily.BERMAN: "Berman",
+        TemperatureEOSFamily.FEI: "Fei",
+        TemperatureEOSFamily.MODIFIED_HOLLAND_POWELL: "Modified Holland-Powell",
+        TemperatureEOSFamily.SALJE: "Salje",
+        TemperatureEOSFamily.KROLL_HOLLAND_POWELL: "Kroll-Holland-Powell",
+    }
+    return names[model.family]
 
 
 def _catalog_models() -> tuple[EOSModel, ...]:
@@ -81,13 +211,9 @@ def _catalog_models() -> tuple[EOSModel, ...]:
     return tuple(models.values())
 
 
-def _catalog_title(domains: set[str]) -> str:
-    """Return a readable title for one domain-filtered catalogue."""
-    if not domains:
-        return "Available equations of state"
-    names = {"pv": "P-V", "ev": "E-V"}
-    selected = " and ".join(names[item] for item in ("pv", "ev") if item in domains)
-    return f"EOS models available for {selected}"
+def _yes_no(value: bool) -> str:
+    """Return a compact yes/no capability label."""
+    return "yes" if value else "no"
 
 
 __all__ = ["show_models"]

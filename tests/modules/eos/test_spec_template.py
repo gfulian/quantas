@@ -40,6 +40,7 @@ def test_template_is_complete_commented_and_resolvable() -> None:
     ):
         assert section in text
     for option in (
+        "energy_unit",
         "pressure_unit",
         "length_unit",
         "temperature_unit",

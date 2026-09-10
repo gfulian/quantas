@@ -13,14 +13,15 @@ standalone Energy EOS workflow.  Work proceeds in small validated steps:
 - retain and validate the newly added SJEOS Energy EOS in its physical
   equilibrium-parameter form, including derived P(V) inspection;
 - keep EOS model discovery centralized through the shared resolver, compact
-  historical tags, ``quantas eos show-models``, and shell completion;
-- complete canonical energy-unit handling while preserving all existing unit
-  aliases and conversions;
+  historical tags, all-domain ``quantas eos show-models``, and registered shell
+  completion including native PowerShell support;
+- keep canonical energy-unit handling in the shared EOS reader/spec contract,
+  with Hartree-normalized energy and uncertainty values plus raw provenance;
 - promote ``ev/energy`` from shared core capability to public fitting,
   diagnostics, persistence, reporting, and plotting;
 - expose derived ``P(V) = -dE/dV`` as an inspectable Energy EOS result;
-- add ``eos inpgen`` from backend output series, beginning with CRYSTAL and
-  then generalizing to VASP and future interfaces;
+- extend the now-available ``eos inpgen`` backend collection beyond CRYSTAL to
+  VASP and future interfaces after the standalone E-V workflow is public;
 - keep QHA and Thermoelasticity coupled to the shared numerical Energy EOS
   service, not to the standalone EOS workflow layer.
 

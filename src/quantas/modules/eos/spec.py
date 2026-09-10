@@ -66,13 +66,14 @@ class EOSSpecInputOptions:
 
     Parameters
     ----------
-    pressure_unit, length_unit, temperature_unit : str or None
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None
         Units passed to the EOS input reader before plan resolution.
     """
 
     pressure_unit: str | None = None
     length_unit: str | None = None
     temperature_unit: str | None = None
+    energy_unit: str | None = None
 
     def as_dict(self) -> dict[str, str | None]:
         """Return a serialization-ready mapping."""
@@ -80,6 +81,7 @@ class EOSSpecInputOptions:
             "pressure_unit": self.pressure_unit,
             "length_unit": self.length_unit,
             "temperature_unit": self.temperature_unit,
+            "energy_unit": self.energy_unit,
         }
 
 

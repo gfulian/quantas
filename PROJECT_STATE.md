@@ -14,7 +14,7 @@ state.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-09-09 |
+| Last updated | 2026-09-10 |
 | Current development version | `2.0.0b11` |
 | Stable development baseline | `2.0.0b10`, `dev/refactor` |
 | Active scientific branch | `dev/energyeos` |
@@ -108,12 +108,30 @@ registry; direct P--V fitting remains unchanged in this tranche.
 
 EOS model selection at CLI boundaries now uses the shared scientific resolver
 instead of duplicated large ``click.Choice`` catalogues.  The historical compact
-tags remain the canonical workflow representation, ``quantas eos show-models``
-provides domain-filtered discovery, and shell completion exposes concise model
-candidates without changing numerical or persistence contracts.
+tags remain the canonical workflow representation.  ``quantas eos show-models``
+now reports all P-V, E-V, V-T, and P-V-T domains and can restrict the display to
+one or more requested sections.  Bash/Zsh/Fish use Click completion and Quantas
+adds a native PowerShell completion backend so model discovery remains useful on
+the project's primary Windows development platform.
 
-The remaining b11 work is intentionally incremental: complete energy-unit
-normalization, promote the ``ev/energy`` domain through
+Energy and ``sigma_energy`` columns now participate in the same EOS unit
+normalization contract as pressure, length, and temperature.  Data-file
+``UNITS`` declarations, EOS spec ``[input] energy_unit``, and direct reader/CLI
+overrides are normalized to Hartree while raw values and source labels are
+retained.  ``sigma_energy`` is a completeness feature only; deterministic QM
+input generation is not expected to synthesize statistical energy errors.
+
+The Energy EOS input layer now exposes ``quantas eos inpgen`` and the same
+operation through ``quantas.api.eos.create_input``.  The initial CRYSTAL
+interface normalizes static, optimized, and native multi-volume EOS outputs to
+``StructureEnergySeries``.  List files may therefore combine a native CRYSTAL
+EOS run with additional single-volume calculations, provided atom counts,
+composition, total-energy correction semantics, and volumes are compatible.
+Generated EOS text retains V, a, b, c, alpha, beta, gamma, E, units, and source
+provenance.
+
+The remaining b11 work is intentionally incremental: promote the ``ev/energy``
+domain through
 fitting/diagnostics/HDF5/reporting, expose derived P(V) inspection, and only
 then add backend-specific ``eos inpgen`` starting with CRYSTAL and later VASP.
 

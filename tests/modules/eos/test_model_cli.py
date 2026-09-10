@@ -7,6 +7,8 @@ from click.testing import CliRunner
 import pytest
 
 from quantas.cli.eos import eos
+from quantas.cli.main import main
+from quantas.cli.shell_completion import PowerShellComplete
 from quantas.cli.eos_model_type import ENERGY_EOS_MODEL, EOSModelParamType
 from quantas.cli.qha import qha
 
@@ -46,27 +48,65 @@ def test_eos_type_completion_exposes_historical_aliases() -> None:
     assert all(item.help for item in ns_items + sj_items)
 
 
-def test_show_models_lists_capabilities_and_filters_domains() -> None:
-    """The EOS catalogue can be restricted to compatible scientific domains."""
+def test_show_models_lists_all_domains_and_selected_sections() -> None:
+    """EOS discovery shows every domain and can select several sections."""
     runner = CliRunner()
     full = runner.invoke(eos, ["show-models"])
     pv = runner.invoke(eos, ["show-models", "--domain", "pv"])
-    ev = runner.invoke(eos, ["show-models", "--domain", "ev"])
-    common = runner.invoke(
+    ev_vt = runner.invoke(
         eos,
-        ["show-models", "--domain", "pv", "--domain", "ev"],
+        ["show-models", "--domain", "ev", "--domain", "vt"],
     )
+    pvt = runner.invoke(eos, ["show-models", "--domain", "pvt"])
 
-    assert full.exit_code == pv.exit_code == ev.exit_code == common.exit_code == 0
-    assert "Available equations of state" in full.output
-    assert "P-V fit" in full.output
-    assert "Stabilized jellium (SJEOS)" in full.output
+    assert full.exit_code == pv.exit_code == ev_vt.exit_code == pvt.exit_code == 0
+    for domain in ("P-V", "E-V", "V-T", "P-V-T"):
+        assert domain in full.output
+    assert "E-V integrated energy models" in full.output
+    assert "V-T thermal-expansion models" in full.output
+    assert "P-V-T coupling models" in full.output
+    assert "P-V-T thermal-pressure components" in full.output
     assert " SJ " not in pv.output
-    assert " SJ " in ev.output
-    assert " SJ " not in common.output
-    assert " BM3 " in pv.output
-    assert " BM3 " in ev.output
-    assert " BM3 " in common.output
+    assert " SJ " in ev_vt.output
+    assert "BERMAN:linear" in ev_vt.output
+    assert "P-V isothermal models" not in ev_vt.output
+    assert "linear-bulk-modulus" in pvt.output
+    assert "mie-gruneisen-debye:full" in pvt.output
+
+
+def test_powershell_completion_backend_is_registered_and_rendered() -> None:
+    """PowerShell receives a native Click-backed argument completer."""
+    from click.shell_completion import get_completion_class
+
+    assert get_completion_class("powershell") is PowerShellComplete
+    result = CliRunner().invoke(main, ["completion", "powershell"])
+    assert result.exit_code == 0, result.output
+    assert "Register-ArgumentCompleter -Native -CommandName" in result.output
+    assert "powershell_complete" in result.output
+    assert "CompletionCompleters]::CompleteFilename" in result.output
+
+    completer = PowerShellComplete(main, {}, "quantas", "_QUANTAS_COMPLETE")
+    items = completer.get_completions(
+        ["qha", "run", "input.yaml", "--eos"],
+        "SJ",
+    )
+    assert [item.value for item in items] == ["SJ", "SJEOS"]
+
+    completion = CliRunner().invoke(
+        main,
+        [],
+        prog_name="quantas",
+        env={
+            "_QUANTAS_COMPLETE": "powershell_complete",
+            "QUANTAS_COMPLETE_ARGS": (
+                '["quantas","qha","run","input.yaml","--eos"]'
+            ),
+            "QUANTAS_COMPLETE_WORD": "SJ",
+        },
+    )
+    assert completion.exit_code == 0, completion.output
+    assert '"value":"SJ"' in completion.output
+    assert '"value":"SJEOS"' in completion.output
 
 
 def test_qha_eos_help_uses_compact_model_metavar() -> None:

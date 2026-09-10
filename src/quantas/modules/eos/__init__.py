@@ -41,7 +41,12 @@ from .domains.pv import (
     estimate_axial_parameters,
     estimate_pressure_parameters,
 )
-from .io import EOSInputFileReader, read_eos_input
+from .io import (
+    EOSEnergyInputCreator,
+    EOSInputFileReader,
+    create_eos_energy_input,
+    read_eos_input,
+)
 from .report import (
     EOSReportDetail,
     EOSReportOptions,
@@ -165,6 +170,7 @@ __all__ = [
     "EOSFitRequest",
     "EOSFitResult",
     "EOSFitter",
+    "EOSEnergyInputCreator",
     "EOSInputFileReader",
     "EOS_PLOT_TYPES",
     "EOSPlotOptions",
@@ -234,6 +240,7 @@ __all__ = [
     "calculate_eos",
     "describe_eos_plots",
     "diagnose_eos",
+    "create_eos_energy_input",
     "eos_domain_capability",
     "fit_eos",
     "open_eos_archive",

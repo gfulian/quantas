@@ -72,6 +72,30 @@ Option-rich commands organize their help under stable semantic headings:
    Controls paths, plain-text reports, terminal presentation, and overwrite
    policy.  These options do not alter the scientific model.
 
+Shell completion
+----------------
+
+Quantas delegates completion candidates to the Click command tree, so command,
+option, and scientific-model suggestions use the same resolver as normal CLI
+validation.  Bash, Zsh, and Fish use Click's built-in completion backends.
+Quantas additionally provides a native PowerShell backend because the supported
+Click 8.1 series does not ship one.
+
+For the current PowerShell session run:
+
+.. code-block:: powershell
+
+   quantas completion powershell | Out-String | Invoke-Expression
+
+To enable completion automatically, place that line in ``$PROFILE``.  After
+registration, for example, TAB after ``--eos SJ`` offers ``SJ`` and ``SJEOS``
+instead of falling back to filesystem completion.  File-valued options still
+delegate to PowerShell's filename completer.
+
+For other supported shells the analogous registration source is available as
+``quantas completion bash``, ``quantas completion zsh``, or
+``quantas completion fish``.
+
 Paths and overwrite policy
 --------------------------
 

@@ -9,13 +9,34 @@ public contract; they must still be documented and validated.
 
 ### Added
 
+- Added ``quantas eos inpgen`` and the matching ``quantas.api.eos.create_input``
+  operation for collecting Energy EOS structure--energy data.  The initial
+  CRYSTAL interface accepts static outputs, ordinary completed geometry
+  optimizations, and native multi-volume ``EOS`` runs; ``--list`` may combine
+  any compatible mixture of single-state and multi-state outputs.
+- Generated Energy EOS tables retain volume, all six cell parameters, total
+  energy, explicit units, and source provenance while leaving EOS formulation,
+  constraints, and solver choices to the later EOS request/specification.
+
 - Added ``quantas eos show-models`` as a compact, registry-backed catalogue of
-  isothermal EOS formulations.  ``--domain pv`` and ``--domain ev`` may be
-  repeated to restrict the table to models compatible with every requested
-  domain.
+  all EOS scientific domains. ``--domain pv``, ``ev``, ``vt``, and ``pvt`` may
+  be repeated to show only the requested model/coupling sections.
 - Added capability-aware shell completion for EOS-valued CLI options.  Compact
   canonical tags and selected historical aliases are proposed interactively
   without expanding normal ``--help`` output into a long ``click.Choice`` list.
+- Added a native PowerShell completion backend and ``quantas completion`` source
+  generator.  After shell registration, PowerShell TAB completion reuses
+  Click's command tree and Quantas model resolvers instead of falling back to
+  filesystem suggestions;
+  file-valued parameters still delegate to PowerShell filename completion.
+- Extended ``quantas eos show-models`` to report the complete EOS domain
+  capability matrix plus P-V, E-V, V-T, and coupled P-V-T model
+  catalogues.  Repeated ``--domain`` options now select the requested output
+  sections rather than intersecting unrelated model families.
+- Added EOS energy-unit normalization for ``energy`` and ``sigma_energy``
+  columns, including ``UNITS`` declarations, ``--energy-unit``/``--eunit`` CLI
+  overrides, and ``[input] energy_unit`` in EOS spec files.  Normalized values
+  use Hartree while original values and units remain available as provenance.
 
 - Added volume-integrated modified Tait energy equations for the existing T2,
   T3, and T4 EOS orders.  The implementation is an analytical integral of the
@@ -29,6 +50,11 @@ public contract; they must still be documented and validated.
   Energy EOS core for pressure reconstruction and later ``inspect`` use.
 
 ### Changed
+
+- Strengthened the backend-neutral ``StructureEnergySeries`` contract to reject
+  mixed atom counts and chemical compositions.  CRYSTAL Energy EOS collection
+  additionally requires one correction signature across sources and rejects
+  duplicate volumes without merging nearby but distinct states.
 
 - Replaced large energy-EOS ``click.Choice`` lists in QHA, Kieffer enrichment,
   and thermoelastic input/QHA adapters with the shared EOS resolver.  Existing
@@ -47,8 +73,28 @@ public contract; they must still be documented and validated.
   thermodynamic reconstruction, but SJEOS is not advertised as a direct
   experimental P-V fit model in this tranche.
 
+### Fixed
+
+- Documented the public EOS ``InputInterface`` and ``create_input`` symbols in
+  the API reference, restoring exact ``__all__`` documentation coverage for the
+  new Energy EOS input-generation surface.
+
+- Refreshed the curated-examples manifest after the distributed EOS specification
+  template gained the Energy EOS unit declaration, restoring the immutable-example
+  regression check without changing any example data or numerical result.
+
 ### Validation
 
+- Added CRYSTAL Energy EOS parser and input-generation tests covering static
+  outputs, native EOS state matching, state/summary consistency, mixed-source
+  ``1 + N`` list collection, composition and correction rejection, complete cell
+  metrics, and the public CLI/API path.  Real MgO static and urea D3/D3+gCP
+  outputs were also used to characterize single-state and native-EOS parsing.
+
+- Added reader/spec/CLI tests for Hartree, electronvolt, Rydberg, and Bohr
+  input combinations, energy-uncertainty conversion, unit-override precedence,
+  PowerShell completion registration, all-domain model discovery, and
+  preservation of model-aware completion candidates.
 - Added CLI tests for EOS alias normalization, unsupported-order diagnostics,
   E(V)-versus-direct-P-V capability checks, shell-completion candidates,
   ``show-models`` domain filtering, and compact QHA help rendering.

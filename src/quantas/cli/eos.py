@@ -12,6 +12,7 @@ import click
 
 from quantas.cli.reference_help import apply_reference_help
 
+from quantas.cli.eos_inpgen_command import inpgen
 from quantas.cli.eos_postfit_commands import calculate, diagnose, plot
 from quantas.cli.eos_run_command import run
 from quantas.cli.eos_models_command import show_models
@@ -25,6 +26,7 @@ def eos() -> None:
 
 
 eos.add_command(show_models)
+eos.add_command(inpgen)
 eos.add_command(spec_template)
 eos.add_command(run)
 eos.add_command(diagnose)

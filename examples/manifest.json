@@ -72,8 +72,8 @@
     },
     {
       "path": "eos/eos.spec",
-      "sha256": "55fe9ea03c48ca8035745e4f0663ed3d76ab356fe33000e90caa76fb77fc3a6c",
-      "size_bytes": 12098
+      "sha256": "0edfc6792e8fb585f3134e4ddd39f97255af08294db52cc3a95a11994841fe11",
+      "size_bytes": 12135
     },
     {
       "path": "eos/scripts/eos_diagnostics_calculator_api.py",

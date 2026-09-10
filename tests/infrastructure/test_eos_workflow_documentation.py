@@ -64,6 +64,8 @@ def test_eos_workflow_model_discovery() -> None:
         "quantas eos show-models",
         "--domain pv",
         "--domain ev",
+        "--domain vt",
+        "--domain pvt",
         "NS4",
         "canonical persisted identifiers",
     ):

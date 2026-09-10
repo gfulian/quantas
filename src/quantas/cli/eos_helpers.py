@@ -112,6 +112,7 @@ def _combine_pvt_coordinates(
 
 
 _SPEC_SCIENTIFIC_PARAMETERS = (
+    "energy_unit",
     "pressure_unit",
     "length_unit",
     "temperature_unit",

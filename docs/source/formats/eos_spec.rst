@@ -169,6 +169,12 @@ Metadata does not modify the numerical calculation.
 This optional section overrides input units before the data file is normalized.
 Recognized keys are:
 
+``energy_unit``
+   Energy unit accepted by the shared Quantas converter, for example ``Ha``,
+   ``eV``, or ``Ry``.  Both ``energy`` and ``sigma_energy`` are normalized to
+   Hartree.  ``sigma_energy`` is retained for completeness when supplied; QM
+   input generation does not invent a statistical energy uncertainty.
+
 ``pressure_unit``
    Pressure unit accepted by the Quantas unit converter.  The normalized unit
    is GPa.
@@ -184,6 +190,7 @@ Recognized keys are:
 .. code-block:: ini
 
    [input]
+   energy_unit = eV
    pressure_unit = kbar
    length_unit = bohr
    temperature_unit = C
@@ -609,6 +616,7 @@ Complete example
    description = Volume and axial fits with independent models
 
    [input]
+   energy_unit = Ha
    pressure_unit = GPa
    length_unit = angstrom
    temperature_unit = K

@@ -300,3 +300,58 @@ def test_original_quantas_topaz_file_retains_volume_and_axes() -> None:
     np.testing.assert_allclose(dataset.column("a")[[0, -1]], [4.6627, 4.360])
     np.testing.assert_allclose(dataset.column("b")[[0, -1]], [8.8343, 8.348])
     np.testing.assert_allclose(dataset.column("c")[[0, -1]], [8.3867, 7.739])
+
+
+def test_energy_units_and_uncertainties_are_normalized_to_hartree(
+    tmp_path: Path,
+) -> None:
+    """Energy and sigma-energy columns share one explicit unit conversion."""
+    path = _write(
+        tmp_path,
+        """
+        UNITS V=bohr^3 E=eV SIGE=eV
+        FORMAT V E SIGE
+        125.0 -27.211386245988 0.027211386246
+        128.0 -27.184174859742 0.054422772492
+        """,
+    )
+
+    dataset = read_eos_input(path)
+
+    np.testing.assert_allclose(dataset.column("energy"), [-1.0, -0.999], rtol=2e-12)
+    np.testing.assert_allclose(
+        dataset.column("sigma_energy"), [0.001, 0.002], rtol=2e-12
+    )
+    assert dataset.units["energy"] == "Ha"
+    assert dataset.units["sigma_energy"] == "Ha"
+    assert dataset.raw_units["energy"] == "eV"
+    assert dataset.raw_units["sigma_energy"] == "eV"
+    assert dataset.units["volume"] == "angstrom^3"
+    np.testing.assert_allclose(
+        dataset.column("volume"),
+        [18.52308893402035, 18.96764306843684],
+        rtol=3.0e-9,
+    )
+
+
+def test_energy_unit_override_takes_precedence_over_file_declaration(
+    tmp_path: Path,
+) -> None:
+    """Explicit reader units override a conflicting file energy declaration."""
+    path = _write(
+        tmp_path,
+        """
+        UNITS E=eV SIGE=eV V=angstrom^3
+        FORMAT V E SIGE
+        10.0 1.0 0.1
+        11.0 2.0 0.2
+        """,
+    )
+
+    dataset = read_eos_input(path, energy_unit="Ry")
+
+    np.testing.assert_allclose(dataset.column("energy"), [0.5, 1.0])
+    np.testing.assert_allclose(dataset.column("sigma_energy"), [0.05, 0.1])
+    assert dataset.raw_units["energy"] == "Ry"
+    assert dataset.raw_units["sigma_energy"] == "Ry"
+    assert dataset.metadata["unit_overrides"]["energy"] == "Ry"

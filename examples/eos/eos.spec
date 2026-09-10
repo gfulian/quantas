@@ -37,11 +37,13 @@ title = EOS batch analysis
 
 [input]
 # Optional input-unit overrides.  When omitted, units declared in the data file
-# are used; otherwise Quantas defaults to GPa, angstrom/angstrom^3, and kelvin.
-# Internal calculations are normalized to GPa, angstrom, angstrom^3, and K.
+# are used; otherwise Quantas defaults to Ha, GPa, angstrom/angstrom^3, and
+# kelvin. Internal calculations are normalized to Ha, GPa, angstrom,
+# angstrom^3, and K.
 #
-# Supported temperature scales are K, C, and F.  Pressure and length units are
-# interpreted by the shared Quantas unit-conversion infrastructure.
+# Energy, pressure, and length units are interpreted by the shared Quantas
+# unit-conversion infrastructure. Supported temperature scales are K, C, and F.
+# energy_unit = Ha
 # pressure_unit = GPa
 # length_unit = angstrom
 # temperature_unit = K

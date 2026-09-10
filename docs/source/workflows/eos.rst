@@ -50,12 +50,54 @@ Quantas tags such as ``BM3``, ``PT4`` (or historical alias ``NS4``), ``V3``,
 aliases such as ``birch-murnaghan3`` and ``natural-strain4`` are accepted at
 CLI boundaries and resolve to the same scientific model.
 
-Use ``quantas eos show-models`` to inspect the catalogue.  ``--domain pv``
-selects models exposed for direct pressure-volume fitting, while ``--domain ev``
-selects models with an integrated energy-volume form.  Repeating the option
-returns the intersection of the requested capabilities.  This discovery layer
-is frontend-only: it does not alter EOS equations, parameters, fitting, or
-persistence semantics.
+Use ``quantas eos show-models`` to inspect the complete EOS catalogue and domain
+capability matrix.  ``quantas eos show-models --domain pv``,
+``quantas eos show-models --domain ev``, ``quantas eos show-models --domain vt``,
+and ``quantas eos show-models --domain pvt`` select the
+corresponding sections; repeat the option to show several requested domains.
+This discovery layer is frontend-only: it does not alter EOS equations,
+parameters, fitting, or persistence semantics.
+
+Energy-unit normalization
+-------------------------
+
+EOS text inputs may declare energy columns through ``E``/``ENERGY`` and
+``SIGMAE`` aliases.  ``UNITS E=... SIGE=...`` declarations, the EOS spec
+``[input] energy_unit`` override, and the CLI ``--energy-unit`` override all use
+the shared Quantas unit converter.  When no explicit energy unit is supplied,
+Hartree is assumed.  Normalized in-memory and HDF5 values use Hartree, while
+raw values and source units are retained as provenance.
+
+The precedence is the existing EOS input rule: an explicit frontend override
+wins over a data-file ``UNITS`` declaration, which in turn wins over the
+canonical default.  When ``--spec`` is used the specification remains the
+authority for scientific settings, so CLI unit overrides are rejected rather
+than silently taking precedence over the spec.
+
+``sigma_energy`` is supported and converted with the same linear factor as
+``energy`` for completeness.  Backend input generation from deterministic
+DFT/QM total energies will normally leave it absent; SCF thresholds, printing
+precision, and convergence criteria are not interpreted as statistical energy
+uncertainties.
+
+Backend Energy EOS collection
+-----------------------------
+
+Energy EOS input generation uses the backend-neutral
+:class:`~quantas.models.computation.StructureEnergySeries` contract.  An
+interface may return one or several states from each source file; the EOS input
+generator then flattens compatible sources before writing the ordinary EOS text
+format.  CRYSTAL is the first supported backend because one native ``EOS`` run
+can contain a complete volume series, while an additional single-volume output
+can be appended through the same ``--list`` workflow.
+
+For CRYSTAL native EOS output, the final sorted volume--energy table defines
+which states belong to the curve.  Quantas independently matches those volumes
+to ``FINAL OPTIMIZED GEOMETRY`` blocks and to the authoritative state-resolved
+total energy, including printed DFT-D/gCP corrections when present.  A mismatch
+is rejected rather than resolved heuristically.  Sources with different atom
+counts, compositions, correction signatures, or duplicate volumes are likewise
+rejected.  Nearby but distinct volumes are preserved.
 
 Why EOS uses a different command-line workflow
 ----------------------------------------------

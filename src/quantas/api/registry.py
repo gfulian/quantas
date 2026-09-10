@@ -516,6 +516,7 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
         result_key=None,
         capabilities=frozenset(
             {
+                Capability.CREATE_INPUT,
                 Capability.READ_INPUT,
                 Capability.NORMALIZE_INPUT,
                 Capability.FIT,
@@ -530,6 +531,7 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             }
         ),
         operations=(
+            (Capability.CREATE_INPUT, "create_input"),
             (Capability.READ_INPUT, "read_input"),
             (Capability.NORMALIZE_INPUT, "normalize_input"),
             (Capability.FIT, "fit"),
@@ -542,6 +544,13 @@ _DESCRIPTORS: tuple[ModuleDescriptor, ...] = (
             (Capability.TEMPLATE, "write_spec_template"),
         ),
         operation_catalog=(
+            OperationDescriptor(
+                key="create_input",
+                capability=Capability.CREATE_INPUT,
+                function_name="create_input",
+                name="Create Energy EOS input",
+                description="Collect backend structure-energy states into an EOS dataset.",
+            ),
             OperationDescriptor(
                 key="write_spec_template",
                 capability=Capability.TEMPLATE,

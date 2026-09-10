@@ -9,11 +9,12 @@ namespace intentionally exposes a richer lifecycle than single-shot modules.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Sequence
+from typing import Literal, Sequence
 
 import numpy as np
 
 from quantas.core.events import Observer
+from quantas.io.path import ensure_suffix
 from quantas.core.math.fitting import (
     CovarianceScaling,
     EffectiveVarianceOptions,
@@ -95,6 +96,7 @@ from quantas.modules.eos import (
     write_eos_calculation_csv as write_calculation_csv,
     write_eos_diagnostic_csv as write_diagnostic_csv,
     write_eos_spec_template as write_spec_template,
+    create_eos_energy_input as _create_input,
 )
 from quantas.modules.eos.api import EOSFitter
 from quantas.modules.eos.batch import EOSBatchWorkflow
@@ -114,12 +116,68 @@ from .common import _public_dir
 from .plotting import PlotCollection
 
 
+
+InputInterface = Literal["crystal"]
+
+
+def create_input(
+    source: str | Path | Sequence[str | Path],
+    destination: str | Path,
+    *,
+    interface: InputInterface = "crystal",
+    is_list: bool = False,
+    jobname: str = "Quantas Energy EOS input",
+    observer: Observer | None = None,
+) -> Path:
+    """Create a Quantas Energy EOS input from electronic-structure outputs.
+
+    Parameters
+    ----------
+    source : str, Path, or sequence of path-like
+        One backend output, a direct sequence of outputs, or a list-file path
+        when ``is_list`` is true. One CRYSTAL output may contribute either one
+        state or a complete native EOS volume series.
+    destination : str or Path
+        Destination EOS text path. The ``.dat`` suffix is applied when absent.
+    interface : {"crystal"}, optional
+        Electronic-structure interface used to interpret the source files.
+    is_list : bool, optional
+        Interpret a scalar source as a text file listing backend outputs.
+    jobname : str, optional
+        Human-readable dataset title.
+    observer : Observer or None, optional
+        Frontend-neutral input-generation observer.
+
+    Returns
+    -------
+    Path
+        Written EOS input path.
+
+    Raises
+    ------
+    ValueError
+        If source files are incomplete, incompatible, or cannot be parsed
+        unambiguously.
+    OSError
+        If source or destination files cannot be read or written.
+    """
+    output = ensure_suffix(destination, ".dat")
+    return _create_input(
+        source,
+        output,
+        interface=interface,
+        is_list=is_list,
+        jobname=jobname,
+        observer=observer,
+    )
+
 def read_input(
     source: str | Path,
     *,
     pressure_unit: str | None = None,
     length_unit: str | None = None,
     temperature_unit: str | None = None,
+    energy_unit: str | None = None,
 ) -> Dataset:
     """Read and normalize one EOS dataset.
 
@@ -127,7 +185,7 @@ def read_input(
     ----------
     source : str or Path
         Keyword-directed EOS input table.
-    pressure_unit, length_unit, temperature_unit : str or None, optional
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
         Explicit unit overrides. File declarations and documented defaults are
         used when omitted.
 
@@ -146,6 +204,7 @@ def read_input(
         pressure_unit=pressure_unit,
         length_unit=length_unit,
         temperature_unit=temperature_unit,
+        energy_unit=energy_unit,
     )
 
 
@@ -155,6 +214,7 @@ def normalize_input(
     pressure_unit: str | None = None,
     length_unit: str | None = None,
     temperature_unit: str | None = None,
+    energy_unit: str | None = None,
 ) -> Dataset:
     """Return a normalized EOS dataset.
 
@@ -162,7 +222,7 @@ def normalize_input(
     ----------
     source : Dataset, str, or Path
         Existing dataset contract or input path.
-    pressure_unit, length_unit, temperature_unit : str or None, optional
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
         Explicit unit overrides used only when reading a path.
 
     Returns
@@ -183,6 +243,7 @@ def normalize_input(
             pressure_unit=pressure_unit,
             length_unit=length_unit,
             temperature_unit=temperature_unit,
+            energy_unit=energy_unit,
         )
     raise TypeError("source must be an EOS Dataset object or path")
 
@@ -194,6 +255,7 @@ def fit(
     pressure_unit: str | None = None,
     length_unit: str | None = None,
     temperature_unit: str | None = None,
+    energy_unit: str | None = None,
 ) -> FitResult:
     """Fit one EOS request.
 
@@ -204,7 +266,7 @@ def fit(
     request : FitRequest
         Model, scientific domain, target, parameter constraints, and solver
         options.
-    pressure_unit, length_unit, temperature_unit : str or None, optional
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
         Unit overrides used when ``input_data`` is a path.
 
     Returns
@@ -224,6 +286,7 @@ def fit(
         pressure_unit=pressure_unit,
         length_unit=length_unit,
         temperature_unit=temperature_unit,
+        energy_unit=energy_unit,
     )
 
 
@@ -238,6 +301,7 @@ def run_batch(
     pressure_unit: str | None = None,
     length_unit: str | None = None,
     temperature_unit: str | None = None,
+    energy_unit: str | None = None,
 ) -> BatchResult:
     """Run and persist an EOS batch plan.
 
@@ -255,7 +319,7 @@ def run_batch(
         Replace an existing archive.
     creator : str, optional
         Provenance identifier written to archive metadata.
-    pressure_unit, length_unit, temperature_unit : str or None, optional
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
         Unit overrides used when reading a path.
 
     Returns
@@ -280,6 +344,7 @@ def run_batch(
         pressure_unit=pressure_unit,
         length_unit=length_unit,
         temperature_unit=temperature_unit,
+        energy_unit=energy_unit,
     )
 
 
@@ -586,6 +651,7 @@ __all__ = [
     "FitOptions",
     "FitRequest",
     "FitResult",
+    "InputInterface",
     "MGDNormalization",
     "MGDVolumeBasis",
     "ODRDifferenceScheme",
@@ -627,6 +693,7 @@ __all__ = [
     "build_batch_report",
     "build_plots",
     "calculate",
+    "create_input",
     "describe_plots",
     "diagnose",
     "domain_capability",

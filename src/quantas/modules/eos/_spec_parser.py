@@ -28,7 +28,7 @@ _ALLOWED_SECTIONS = {
     "defaults.pvt",
     "presentation",
 }
-_INPUT_KEYS = {"pressure_unit", "length_unit", "temperature_unit"}
+_INPUT_KEYS = {"pressure_unit", "length_unit", "temperature_unit", "energy_unit"}
 _BATCH_KEYS = {"failure_policy"}
 _PRESENTATION_KEYS = {"detail", "show_uncertainties", "max_data_rows"}
 _SELECTION_KEYS = {
@@ -338,4 +338,7 @@ def _parse_input_options(
         if values.get("length_unit") is None
         else values["length_unit"].value,
         temperature_unit=None if temperature is None else temperature.value.upper(),
+        energy_unit=None
+        if values.get("energy_unit") is None
+        else values["energy_unit"].value,
     )

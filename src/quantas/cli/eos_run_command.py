@@ -67,6 +67,14 @@ from quantas.references import module_citation_keys, render_citation_notice
     help="Strict QUANTAS EOS SPEC 1 batch specification. File suffix is irrelevant.",
 )
 @grouped_option(
+    "--energy-unit",
+    "--eunit",
+    group=UNITS_GROUP,
+    default=None,
+    metavar="UNIT",
+    help="Input energy unit override. File declaration or Ha is used when omitted.",
+)
+@grouped_option(
     "--pressure-unit",
     "--punit",
     group=UNITS_GROUP,
@@ -330,6 +338,7 @@ def run(
     ctx: click.Context,
     filename: Path,
     spec_path: Path | None,
+    energy_unit: str | None,
     pressure_unit: str | None,
     length_unit: str | None,
     temperature_unit: str | None,
@@ -386,6 +395,7 @@ def run(
             dataset = read_eos_input(
                 filename,
                 pressure_unit=input_options.pressure_unit,
+                energy_unit=input_options.energy_unit,
                 length_unit=input_options.length_unit,
                 temperature_unit=input_options.temperature_unit,
             )
@@ -405,6 +415,7 @@ def run(
                 filename,
                 pressure_unit=pressure_unit,
                 length_unit=length_unit,
+                energy_unit=energy_unit,
                 temperature_unit=temperature_unit,
             )
             resolved_targets = _resolve_targets(

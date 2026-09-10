@@ -33,6 +33,7 @@ def test_eos_run_help_groups_options_by_responsibility() -> None:
     ):
         assert heading in result.output
     assert "--specfile" not in result.output
+    assert "--energy-unit, --eunit UNIT" in result.output
     assert "-v, --verbosity" in result.output
     assert "--debug" not in result.output
 

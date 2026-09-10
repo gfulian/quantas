@@ -6,8 +6,15 @@ scientific request, executes the selected regression strategy, and returns an
 in-memory fit result.  It does not mutate an archive unless the caller later
 adds the result through a batch or session.
 
-Input
------
+Input generation
+----------------
+
+.. autodata:: quantas.api.eos.InputInterface
+
+.. autofunction:: quantas.api.eos.create_input
+
+Input reading and normalization
+-------------------------------
 
 .. autofunction:: quantas.api.eos.read_input
 
