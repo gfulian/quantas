@@ -99,12 +99,15 @@ that the structural response depends on the analytical E(V) derivatives rather
 than on availability of a direct experimental P--V fitting surface.
 
 The curated MgO series is stored in both primitive and crystallographic
-normalizations.  Multiplying primitive-cell energy and volume by four while
-transforming the FCC primitive lattice to the conventional cubic cell changes
-``E0`` and ``V0`` by exactly the same factor but leaves ``K0``, ``KP``, and the
-axial response invariant.  The crystallographic regression target is
-approximately ``a0 = 4.22221`` angstrom and ``M_a = 536.28`` GPa, with
-``M_a = 3 K0`` to numerical precision.
+normalizations.  The input data verify the extensive normalization exactly:
+primitive-cell energy and volume are multiplied by four while the FCC
+primitive lattice is transformed to the conventional cubic cell.  Independent
+nonlinear fits preserve the corresponding ``E0``/``V0`` scaling and the
+intensive ``K0``/``KP`` response within a tight cross-platform solver tolerance.
+This distinction avoids treating platform-dependent least-squares termination
+at the last few digits as a scientific regression.  The crystallographic
+response remains approximately ``a0 = 4.22221`` angstrom and
+``M_a = 536.28`` GPa, with ``M_a = 3 K0`` to numerical precision.
 
 Optional secondary pressure-form axial EOS fits are characterized separately.
 A primary SJEOS E(V) fit may feed a BM3 :math:`P(a^3)` fit; the full covariance
