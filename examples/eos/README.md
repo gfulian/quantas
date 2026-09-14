@@ -23,7 +23,7 @@ plans and representative E--V, P--V, V--T, and P--V--T fits.  These scripts impo
 only `quantas.api` and are used by the documentation as executable examples.
 `ev_fit_api.py` reproduces the MgO BM3 Energy EOS reference fit.
 `ev_structural_response_api.py` demonstrates an SJEOS primary E--V fit, the
-shared structural response, and an optional BM3 Angel-style axial
+shared structural response, and an optional secondary BM3 pressure-form axial EOS
 parameterization.
 
 Run a batch from the command line, for example, with:

@@ -236,7 +236,7 @@ def test_energy_cli_runs_without_explicit_fit_target(tmp_path: Path) -> None:
             str(source),
             "--domain",
             "ev",
-            "--eos",
+            "--ev-eos",
             "BM3",
             "--output",
             str(archive),
@@ -248,9 +248,12 @@ def test_energy_cli_runs_without_explicit_fit_target(tmp_path: Path) -> None:
 
     assert result.exit_code == 0, result.output
     assert archive.exists()
-    assert "Energy–volume" in result.output
+    assert "Energy-volume" in result.output
     assert "Energy" in result.output
-    assert "energy" in report.read_text(encoding="utf-8").lower()
+    report_text = report.read_text(encoding="utf-8")
+    assert "Ab initio energy" in report_text
+    assert "EOS energy" in report_text
+    assert "EOS pressure" in report_text
 
 
 def test_energy_spec_defaults_resolve_all_to_energy() -> None:
@@ -302,17 +305,30 @@ def test_energy_extended_report_data(
     by_title = {table.title: table for table in tables}
 
     assert by_title["EOS input data"].columns == ["Volume", "Energy"]
-    assert by_title["EOS input standard uncertainties"].columns == ["σ(Energy)"]
+    assert by_title["EOS input standard uncertainties"].columns == ["sigma(Energy)"]
     observed = by_title["Observed and calculated EOS data"]
     assert observed.columns == [
         "Volume",
-        "Energy observed",
-        "Energy calculated",
+        "Ab initio energy",
+        "EOS energy",
         "Residual",
+        "EOS pressure",
     ]
     assert observed.metadata["column_formats"] == [
         "eos_structural",
         "energy_ha",
         "energy_ha",
         "eos_residual",
+        "eos_pressure",
     ]
+    assert observed.metadata["column_units"] == [
+        "angstrom^3",
+        "Ha",
+        "Ha",
+        "Ha",
+        "GPa",
+    ]
+    assert len(observed.rows) == dataset.npoints
+    assert observed.rows[0][4] == pytest.approx(
+        result.jobs[0].result.predictions["pressure"][0]
+    )

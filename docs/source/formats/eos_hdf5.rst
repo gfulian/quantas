@@ -175,7 +175,8 @@ uncertainties, and the covariance/provenance of the shared structural path.
 The input dataset retains ``crystal_reference``, ``cell_multiplicity``, crystal
 system, and reference space-group metadata.
 
-When an optional ``axial_model`` is requested, its Angel-style secondary fits
+When an optional ``axial_model`` is requested, its secondary pressure-form axial
+EOS fits
 are stored in result metadata together with the complete covariance matrix of
 the Energy-EOS-derived pressure vector.  The stored method label states that
 the current secondary WLS fit uses only marginal pressure uncertainties; this

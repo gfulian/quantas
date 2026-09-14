@@ -106,9 +106,9 @@ axial response invariant.  The crystallographic regression target is
 approximately ``a0 = 4.222212485`` angstrom and ``M_a = 536.2844`` GPa, with
 ``M_a = 3 K0`` to numerical precision.
 
-Optional secondary Angel-style fits are characterized separately.  A primary
-SJEOS E(V) fit may feed a BM3 :math:`P(a^3)` fit; the full covariance of the
-derived pressure vector survives the HDF5 round trip, while the current WLS
+Optional secondary pressure-form axial EOS fits are characterized separately.
+A primary SJEOS E(V) fit may feed a BM3 :math:`P(a^3)` fit; the full covariance
+of the derived pressure vector survives the HDF5 round trip, while the current WLS
 fit is explicitly labelled as a diagonal marginal-uncertainty approximation.
 The primary ``a0``, ``eta_a``, and ``M_a`` results do not depend on requesting
 this secondary parameterization.

@@ -195,7 +195,7 @@ def _model_tag(value: Any) -> str:
 
 def _display_name(name: str) -> str:
     replacements = {
-        "sigma_": "σ(",
+        "sigma_": "sigma(",
         "bulk_modulus": "Bulk modulus",
         "linear_modulus": "Linear modulus",
         "expansion_coefficient": "Expansion coefficient",
@@ -208,7 +208,7 @@ def _display_name(name: str) -> str:
         "included": "Included",
     }
     if name.startswith("sigma_"):
-        return f"σ({name[6:].replace('_', ' ')})"
+        return f"sigma({name[6:].replace('_', ' ')})"
     if name in replacements:
         return replacements[name]
     return name.replace("_", " ").title()

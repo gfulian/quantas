@@ -29,7 +29,7 @@ with ``--spec``:
 
 The specification becomes the authority for scientific settings.  Therefore
 it cannot be mixed with scientific command-line options such as ``--domain``,
-``--fit``, ``--solver``, ``--eos``, ``--pv-eos``, ``--fix``, or input-unit overrides.
+``--fit``, ``--solver``, ``--ev-eos``, ``--pv-eos``, ``--fix``, or input-unit overrides.
 Operational and presentation options remain available:
 
 .. code-block:: console
@@ -318,7 +318,7 @@ The subordinate ``thermal_pressure_model`` key selects
 ``holland-powell-einstein`` (the default), ``mgd``, or
 ``mgd:q-compromise``.  ``mgd`` is the full model and exposes refinable
 ``theta_d0``, ``gamma0``, and ``q``.  ``mgd:q-compromise`` is the distinct
-EosFit-style compromise approximation: it omits ``q`` rather than assigning a
+q-compromise approximation: it omits ``q`` rather than assigning a
 hidden numerical value, and therefore should be selected explicitly when
 reproducing a q-compromise reference fit.  A cell-volume MGD fit requires
 either ``atoms_per_cell`` or the pair ``formula`` and

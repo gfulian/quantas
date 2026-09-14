@@ -119,7 +119,7 @@ from quantas.references import module_citation_keys, render_citation_notice
     help="Target to fit. Repeat the option or use 'all' for all available targets.",
 )
 @grouped_option(
-    "--eos",
+    "--ev-eos",
     "ev_eos",
     group="E-V model",
     type=ENERGY_EOS_MODEL,
@@ -134,8 +134,8 @@ from quantas.references import module_citation_keys, render_citation_notice
     default=None,
     metavar="MODEL",
     help=(
-        "Optional pressure-form EOS for secondary Angel-style fits to "
-        "derived axial data."
+        "Optional pressure-form EOS for secondary axial P(l^3) fits to "
+        "derived pressures."
     ),
 )
 @grouped_option(
@@ -287,7 +287,7 @@ from quantas.references import module_citation_keys, render_citation_notice
         ["absolute", "reduced-chi-square", "inflate-only"], case_sensitive=False
     ),
     default=None,
-    help="Covariance policy. Weighted EOS fits default to EosFit-like inflate-only scaling.",
+    help="Covariance policy. Weighted EOS fits default to inflate-only scaling.",
 )
 @grouped_option(
     "--inner-max-iterations",
@@ -452,7 +452,7 @@ def run(
             if fit_domain is not EOSFitDomain.ENERGY_VOLUME and (
                 ctx.get_parameter_source("ev_eos") is not ParameterSource.DEFAULT
             ):
-                raise click.UsageError("--eos is valid only with --domain ev")
+                raise click.UsageError("--ev-eos is valid only with --domain ev")
             if (
                 fit_domain is not EOSFitDomain.ENERGY_VOLUME
                 and axial_eos is not None
@@ -463,7 +463,7 @@ def run(
                 or ctx.get_parameter_source("pv_order") is not ParameterSource.DEFAULT
             ):
                 raise click.UsageError(
-                    "--pv-eos/--pv-order are not valid for --domain ev; use --eos"
+                    "--pv-eos/--pv-order are not valid for --domain ev; use --ev-eos"
                 )
             resolved_targets = _resolve_targets(
                 dataset, fit_domain, resolved_target_args

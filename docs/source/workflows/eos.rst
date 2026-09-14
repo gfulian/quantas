@@ -330,7 +330,9 @@ numerical core; the core equations themselves are unchanged.
 
 The fitted E--V record stores calculated energy and, at every observed volume,
 the analytically derived pressure, bulk modulus, and its first and second
-pressure derivatives.  Pressure is defined by
+pressure derivatives.  The standard report places observed ab initio energy,
+EOS-calculated energy, their residual, and EOS-derived pressure side by side at
+the sampled volumes.  Pressure is defined by
 
 .. math::
 
@@ -364,9 +366,9 @@ and structural-path covariances are propagated separately, with their assumed
 zero cross-covariance recorded in result metadata.
 
 ``--axial-eos`` (or ``axial_model`` in a specfile) requests an additional
-Angel-style pressure-form fit to the *derived* pressure versus the observed
-axis cube.  The secondary model is independent of the primary Energy EOS.  The
-full covariance of the derived pressure vector is persisted; the present WLS
+secondary pressure-form axial EOS fit to the *derived* pressure versus the
+observed axis cube.  The secondary model is independent of the primary Energy
+EOS.  The full covariance of the derived pressure vector is persisted; the present WLS
 solver uses its diagonal marginal uncertainties and records that approximation.
 
 Crystal-reference normalization
@@ -387,7 +389,7 @@ P--V implementation choices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 P--V fitting supports volumetric and linear targets.  For a linear target,
-Quantas applies the established EOSFit convention internally: the length is
+Quantas applies the standard linear-EOS construction internally: the length is
 mapped to an auxiliary cubic quantity for evaluation by a volumetric EOS, then
 reported using linear physical parameters.  The auxiliary cube is not treated
 as a crystallographic volume.
@@ -574,7 +576,7 @@ The available policies are:
 
 ``inflate-only``
    Apply reduced-chi-square scaling only when it increases the covariance.
-   Weighted EOS fits use this EosFit-like policy by default.
+   Weighted EOS fits use this inflate-only policy by default.
 
 ``inflate-only`` avoids shrinking parameter uncertainty merely because a small
 dataset happens to produce a reduced chi-square below unity.  It does not prove
@@ -870,7 +872,7 @@ The direct command provides conservative, inspectable defaults:
      - Prevents later jobs from obscuring the first failed required step.
    * - Covariance scaling for weighted fits
      - ``inflate-only``
-     - EosFit-like policy that does not shrink covariance below supplied uncertainty scale.
+     - Inflate-only policy that does not shrink covariance below supplied uncertainty scale.
    * - Accepted result
      - yes for a successful direct job
      - Makes a simple one-job archive immediately usable while retaining the immutable record.

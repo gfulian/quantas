@@ -131,7 +131,7 @@ def build_lattice_volume_series(
         maximum = float(np.max(np.abs(lattice_volumes - volumes)))
         raise ValueError(
             "EOS lattice parameters are inconsistent with the declared cell "
-            f"volumes; maximum |det(A)-V|={maximum:.6g} Å^3"
+            f"volumes; maximum |det(A)-V|={maximum:.6g} angstrom^3"
         )
 
     symmetry = None

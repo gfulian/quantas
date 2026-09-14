@@ -275,8 +275,14 @@ def test_structural_response_report_tables_are_explicit() -> None:
     primary = eos_energy_structural_response_table(result)
     secondary = eos_secondary_axial_table(result)
     assert primary is not None
-    assert primary.title == "EnergyEOS structural response"
+    assert primary.title == "E-V structural response"
+    assert primary.title.isascii()
+    assert all(str(row[0]).isascii() for row in primary.rows)
+    assert any(row[0] == "a0" for row in primary.rows)
+    assert any(row[0] == "eta_a" for row in primary.rows)
     assert any(row[0] == "M_a" for row in primary.rows)
+    assert any(row[3] == "angstrom" for row in primary.rows)
+    assert any(row[3] == "-" for row in primary.rows)
     assert secondary is not None
     assert secondary.title == "Secondary axial EOS fits"
     assert any(row[0] == "a" and row[1] == "M0" for row in secondary.rows)
@@ -329,7 +335,7 @@ def test_cli_secondary_axial_fit_persists_requested_model(tmp_path: Path) -> Non
             str(source),
             "--domain",
             "ev",
-            "--eos",
+            "--ev-eos",
             "SJ",
             "--axial-eos",
             "BM3",
@@ -349,7 +355,7 @@ def test_cli_secondary_axial_fit_persists_requested_model(tmp_path: Path) -> Non
         assert record.request.axial_model.tag == "BM3"
         assert record.result.metadata["secondary_axial_fits"]["model"]["tag"] == "BM3"
     report = report_path.read_text(encoding="utf-8")
-    assert "EnergyEOS structural response" in report
+    assert "E-V structural response" in report
     assert "Secondary axial EOS fits" in report
 
 

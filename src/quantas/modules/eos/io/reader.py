@@ -137,10 +137,10 @@ class _ParsedDataRow:
 
 
 class EOSInputFileReader(BasicReader[EOSDataset]):
-    """Read a keyword-directed Quantas- or EosFit-style EOS text file.
+    """Read a keyword-directed Quantas or EosFit-compatible EOS text file.
 
     The reader accepts both the historical Quantas layout, in which ``FORMAT``
-    and ``DATA`` occur on separate lines, and EosFit-style layouts in which
+    and ``DATA`` occur on separate lines, and EosFit-compatible layouts in which
     column names follow ``FORMAT`` and the numeric table starts immediately.
     Keyword matching is case-insensitive and an optional trailing colon is
     accepted, for example ``FORMAT: T, V``.

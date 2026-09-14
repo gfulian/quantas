@@ -75,9 +75,9 @@ For a static Energy EOS generated from electronic-structure outputs:
 .. code-block:: console
 
    quantas eos inpgen crystal-files.txt --interface crystal --list -o mgo_ev.dat
-   quantas eos run mgo_ev.dat --domain ev --eos BM3 -o mgo_ev.hdf5
+   quantas eos run mgo_ev.dat --domain ev --ev-eos BM3 -o mgo_ev.hdf5
    # Optional pressure-form parameterization of the derived axial path:
-   quantas eos run mgo_ev.dat --domain ev --eos SJ --axial-eos BM3 \
+   quantas eos run mgo_ev.dat --domain ev --ev-eos SJ --axial-eos BM3 \
       -o mgo_ev_axial.hdf5 --force
    quantas eos diagnose mgo_ev.hdf5 --slot ev/energy
    quantas eos calculate mgo_ev.hdf5 --slot ev/energy --pressure-range 0:20:2
@@ -114,6 +114,16 @@ command exits unsuccessfully.
 ``diagnose``, ``plot``, and ``calculate`` select an accepted slot or an explicit
 immutable record.  They do not refit the data.  The latest record is not
 necessarily the accepted record.
+
+Portable text notation
+----------------------
+
+Terminal output and deterministic plain-text reports use ASCII scientific
+notation deliberately.  Examples include ``angstrom^3``, ``GPa^-1``, ``K'``,
+``K''``, ``alpha0``, and ``eta_a``.  This convention avoids dependence on
+terminal fonts or Unicode rendering and does not alter machine-readable names,
+stored units, numerical values, or the typographic notation used in plots and
+scientific documentation.
 
 Important option families
 -------------------------

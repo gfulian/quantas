@@ -24,12 +24,13 @@ public contract; they must still be documented and validated.
   ``eta_i = d ln(l_i) / d ln(V)``, and axial moduli ``M_i = K/eta_i`` with
   propagated EnergyEOS and structural-path uncertainty.
 - Added optional ``--axial-eos`` / ``axial_model`` analysis for comparison with
-  the Angel/EosFit axial parameterization.  The secondary fit uses pressures
+  a secondary pressure-form axial EOS parameterization.  The secondary fit uses
+  pressures
   derived from the primary EnergyEOS and the original sampled lattice axes; the
   full derived-pressure covariance is persisted while the current WLS solver is
   explicitly identified as using marginal pressure uncertainties only.
 - Promoted ``ev/energy`` to a public standalone EOS domain.  Static total-energy
-  datasets can now be fitted through ``quantas eos run --domain ev --eos`` and
+  datasets can now be fitted through ``quantas eos run --domain ev --ev-eos`` and
   the matching public API, persisted in the native EOS HDF5 archive, and reused
   by the common diagnostics, calculator, reporting, and plotting surfaces.
 - Added the public Energy EOS parameter boundary ``E0`` [Ha], ``V0``
@@ -75,7 +76,7 @@ public contract; they must still be documented and validated.
 
 - Added volume-integrated modified Tait energy equations for the existing T2,
   T3, and T4 EOS orders.  The implementation is an analytical integral of the
-  canonical Quantas/EosFit pressure form and preserves
+  canonical modified-Tait pressure form and preserves
   ``P(V) = -dE/dV`` for every order.
 - Added a shared modified-Tait coefficient resolver so pressure and energy
   representations use one parameterization and one singularity check.

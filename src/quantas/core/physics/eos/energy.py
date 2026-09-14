@@ -429,7 +429,7 @@ class EnergyEOS:
     ) -> np.ndarray:
         r"""Return the third-order volume-integrated modified Tait energy.
 
-        With the EosFit auxiliary coefficients :math:`a`, :math:`b`, and
+        With the modified-Tait auxiliary coefficients :math:`a`, :math:`b`, and
         :math:`c`, define
 
         .. math::

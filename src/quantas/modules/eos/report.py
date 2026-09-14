@@ -16,7 +16,7 @@ from .batch import EOSBatchJob, EOSBatchJobResult, EOSBatchPlan, EOSBatchResult
 from .models import EOSDataset, EOSFitResult
 from .presentation import (
     domain_label,
-    format_unit,
+    format_text_unit,
     model_label,
     parameter_label,
     solver_label,
@@ -164,7 +164,7 @@ def eos_batch_fit_summary_table(result: EOSBatchResult) -> ReportTable:
             "Points",
             "Free",
             "RMSE",
-            "Reduced χ²",
+            "Reduced chi^2",
             "Max residual",
             "Condition number",
         ],
@@ -225,7 +225,7 @@ def eos_batch_parameter_summary_table(result: EOSBatchResult) -> ReportTable:
             continue
         definitions = fit.metadata.get("parameter_map", {}).get("definitions", [])
         units = {
-            item.get("name"): format_unit(item.get("unit"))
+            item.get("name"): format_text_unit(item.get("unit"))
             for item in definitions
             if isinstance(item, dict)
         }
@@ -253,7 +253,7 @@ def eos_batch_parameter_summary_table(result: EOSBatchResult) -> ReportTable:
                     state,
                     float(fit.parameters[index]),
                     esd,
-                    units.get(name) or "—",
+                    units.get(name) or "-",
                 ]
             )
     return ReportTable(
@@ -402,7 +402,7 @@ def eos_data_table(dataset: EOSDataset, *, max_rows: int | None = None) -> Repor
     }
     formats: list[str | None] = [format_by_name[name] for name in available]
     alignments = ["right"] * len(available)
-    units = [format_unit(dataset.units.get(name, "")) or "" for name in available]
+    units = [format_text_unit(dataset.units.get(name, "")) or "" for name in available]
     if include_selection:
         formats.extend([None, None])
         alignments.extend(["right", "center"])
@@ -483,11 +483,11 @@ def eos_uncertainty_table(
     ]
     return ReportTable(
         "EOS input standard uncertainties",
-        [f"σ({target_label(name)})" for name in available],
+        [f"sigma({target_label(name)})" for name in available],
         rows,
         metadata={
             "column_units": [
-                format_unit(dataset.units.get(f"sigma_{name}", "")) or ""
+                format_text_unit(dataset.units.get(f"sigma_{name}", "")) or ""
                 for name in available
             ],
             "column_formats": formats,
@@ -571,19 +571,28 @@ def eos_requested_fit_table(job: EOSBatchJob, index: int) -> ReportTable:
         ["Domain", domain_label(request.domain)],
         ["Quantity", target_label(request.target)],
         ["Formulation", model_label(request.model)],
-        [
-            "Secondary axial formulation",
-            "none" if request.axial_model is None else model_label(request.axial_model),
-        ],
-        ["Solver", solver_label(_solver_method(request))],
-        ["Solver options", _compact_mapping(solver_options)],
-        ["Parameter constraints", constraint_text],
-        ["Data selection", _compact_mapping(request.metadata.get("selection", {}))],
-        ["Accept successful result", job.accept],
-        ["Replace accepted result", job.replace_accepted],
     ]
+    if request.domain.value == "ev":
+        rows.append(
+            [
+                "Secondary axial formulation",
+                "none"
+                if request.axial_model is None
+                else model_label(request.axial_model),
+            ]
+        )
+    rows.extend(
+        [
+            ["Solver", solver_label(_solver_method(request))],
+            ["Solver options", _compact_mapping(solver_options)],
+            ["Parameter constraints", constraint_text],
+            ["Data selection", _compact_mapping(request.metadata.get("selection", {}))],
+            ["Accept successful result", job.accept],
+            ["Replace accepted result", job.replace_accepted],
+        ]
+    )
     return ReportTable(
-        f"EOS requested fit — {job.job_id or index}",
+        f"EOS requested fit - {job.job_id or index}",
         ["Property", "Value"],
         rows,
     )
@@ -607,11 +616,14 @@ def eos_job_tables(
     secondary = eos_secondary_axial_table(job.result)
     if secondary is not None:
         tables.append(secondary)
+    if job.request.domain.value == "ev" and job.result.fit.success:
+        tables.append(eos_observed_calculated_table(job.result, dataset))
     tables.append(eos_diagnostics_table(job, debug=debug))
     if debug:
         tables.extend(eos_solver_debug_tables(job))
     if EOSReportDetail(detail) is EOSReportDetail.EXTENDED and job.result.fit.success:
-        tables.append(eos_observed_calculated_table(job.result, dataset))
+        if job.request.domain.value != "ev":
+            tables.append(eos_observed_calculated_table(job.result, dataset))
         if job.result.fit.covariance is not None:
             tables.append(
                 _matrix_table(
@@ -642,21 +654,30 @@ def eos_job_configuration_table(job: EOSBatchJobResult) -> ReportTable:
         ["Domain", domain_label(request.domain)],
         ["Quantity", target_label(request.target)],
         ["Formulation", model_label(request.model)],
-        [
-            "Secondary axial formulation",
-            "none" if request.axial_model is None else model_label(request.axial_model),
-        ],
-        ["Solver", solver_label(_solver_method(request))],
-        [
-            "Selected observations",
-            "all" if request.mask is None else int(np.count_nonzero(request.mask)),
-        ],
-        ["Record ID", job.record_id],
-        ["Accepted", job.accepted],
-        ["Status", job.result.fit.status.value],
     ]
+    if request.domain.value == "ev":
+        rows.append(
+            [
+                "Secondary axial formulation",
+                "none"
+                if request.axial_model is None
+                else model_label(request.axial_model),
+            ]
+        )
+    rows.extend(
+        [
+            ["Solver", solver_label(_solver_method(request))],
+            [
+                "Selected observations",
+                "all" if request.mask is None else int(np.count_nonzero(request.mask)),
+            ],
+            ["Record ID", job.record_id],
+            ["Accepted", job.accepted],
+            ["Status", job.result.fit.status.value],
+        ]
+    )
     return ReportTable(
-        f"EOS fit configuration — {job.job_id}", ["Property", "Value"], rows
+        f"EOS fit configuration - {job.job_id}", ["Property", "Value"], rows
     )
 
 
@@ -695,16 +716,16 @@ def eos_energy_structural_response_table(
                 continue
             rows.append(
                 [
-                    quantity,
+                    parameter_label(quantity),
                     result.derived[key],
                     result.derived.get(sigma_key),
-                    unit,
+                    format_text_unit(unit) or "-",
                 ]
             )
     if not rows:
         return None
     return ReportTable(
-        "EnergyEOS structural response",
+        "E-V structural response",
         ["Quantity", "Value", "E.S.D.", "Unit"],
         rows,
         metadata={
@@ -719,7 +740,7 @@ def eos_energy_structural_response_table(
 
 
 def eos_secondary_axial_table(result: EOSFitResult) -> ReportTable | None:
-    """Return optional Angel-style secondary axial fits for an E-V result.
+    """Return optional secondary pressure-form axial EOS fits for an E-V result.
 
     Parameters
     ----------
@@ -758,7 +779,7 @@ def eos_secondary_axial_table(result: EOSFitResult) -> ReportTable | None:
                     parameter_label(str(name)),
                     float(value),
                     errors.get(name),
-                    unit,
+                    format_text_unit(unit) or "-",
                 ]
             )
     if not rows:
@@ -796,7 +817,7 @@ def eos_parameter_table(result: EOSFitResult) -> ReportTable:
         if isinstance(item, dict)
     }
     units = {
-        item.get("name"): format_unit(item.get("unit"))
+        item.get("name"): format_text_unit(item.get("unit"))
         for item in definitions
         if isinstance(item, dict)
     }
@@ -829,12 +850,12 @@ def eos_parameter_table(result: EOSFitResult) -> ReportTable:
                 value,
                 shift,
                 esd,
-                units.get(name) or "—",
+                units.get(name) or "-",
                 bounds.get(name),
             ]
         )
     if not rows:
-        rows.append(["—", "—", None, None, None, None, "—", None])
+        rows.append(["-", "-", None, None, None, None, "-", None])
     return ReportTable(
         "EOS parameters",
         [
@@ -909,7 +930,7 @@ def eos_diagnostics_table(
             else "Rerun the EOS batch with -v debug for detailed solver diagnostics."
         )
     return ReportTable(
-        f"EOS diagnostics — {job.job_id}",
+        f"EOS diagnostics - {job.job_id}",
         ["Metric", "Value"],
         values,
         metadata={
@@ -938,7 +959,7 @@ def eos_solver_debug_tables(job: EOSBatchJobResult) -> tuple[ReportTable, ...]:
     if diagnostics is None:
         return (
             ReportTable(
-                f"EOS solver debug — {job.job_id}",
+                f"EOS solver debug - {job.job_id}",
                 ["Property", "Value"],
                 [["Diagnostics", "No solver diagnostics were returned"]],
             ),
@@ -997,7 +1018,7 @@ def _solver_debug_summary_table(
         ["Last inner stop reason", metadata.get("last_inner_stop_reason")],
     ]
     return ReportTable(
-        f"EOS solver debug summary — {job.job_id}",
+        f"EOS solver debug summary - {job.job_id}",
         ["Property", "Value"],
         rows,
         metadata={"column_formats": [None, "eos_statistic"]},
@@ -1033,7 +1054,7 @@ def _solver_debug_ranges_table(
     if not rows:
         return None
     return ReportTable(
-        f"EOS solver numerical ranges — {job.job_id}",
+        f"EOS solver numerical ranges - {job.job_id}",
         ["Quantity", "Shape", "Minimum", "Maximum", "Median", "Norm", "Max/min"],
         rows,
         metadata={
@@ -1078,7 +1099,7 @@ def _solver_debug_parameter_table(
         shift = None if end is None else float(end) - float(start)
         rows.append([name, start, end, shift, lower_values[index], upper_values[index]])
     return ReportTable(
-        f"EOS solver parameter path — {job.job_id}",
+        f"EOS solver parameter path - {job.job_id}",
         ["Parameter", "Initial", "Last evaluated", "Shift", "Lower", "Upper"],
         rows,
         metadata={
@@ -1131,11 +1152,11 @@ def _effective_variance_history_table(
         if isinstance(item, dict)
     ]
     return ReportTable(
-        f"Effective-variance iteration history — {job.job_id}",
+        f"Effective-variance iteration history - {job.job_id}",
         [
             "Cycle",
-            "Δ parameters / tol",
-            "Δ sigma / tol",
+            "Delta parameters / tol",
+            "Delta sigma / tol",
             "Chi-square",
             "RMSE",
             "Max residual",
@@ -1180,7 +1201,7 @@ def _solver_evaluation_trace_table(
             "intermediate evaluations were truncated."
         )
     return ReportTable(
-        f"Solver model-evaluation trace — {job.job_id}",
+        f"Solver model-evaluation trace - {job.job_id}",
         ["Evaluation", "Objective", "RMSE", "Max residual", "Parameters"],
         rows,
         metadata={
@@ -1200,7 +1221,7 @@ def _solver_evaluation_trace_table(
 def _compact_vector(values: Any) -> str:
     """Return compact deterministic text for a parameter vector."""
     if not isinstance(values, list):
-        return "—"
+        return "-"
     return "[" + ", ".join(f"{float(value):.8g}" for value in values) + "]"
 
 
@@ -1219,15 +1240,25 @@ def eos_observed_calculated_table(
     if request.domain.value == "ev":
         volume = np.asarray(dataset.column("volume")[mask], dtype=float)
         observed = np.asarray(dataset.column("energy")[mask], dtype=float)
-        calculated = np.asarray(result.predictions.get("energy", fitted), dtype=float)[mask]
+        calculated = np.asarray(
+            result.predictions.get("energy", fitted), dtype=float
+        )[mask]
+        pressure = np.asarray(result.predictions["pressure"], dtype=float)[mask]
         columns = [
             "Volume",
-            "Energy observed",
-            "Energy calculated",
+            "Ab initio energy",
+            "EOS energy",
             "Residual",
+            "EOS pressure",
         ]
         rows = [
-            [volume[i], observed[i], calculated[i], observed[i] - calculated[i]]
+            [
+                volume[i],
+                observed[i],
+                calculated[i],
+                observed[i] - calculated[i],
+                pressure[i],
+            ]
             for i in range(volume.size)
         ]
         formats = [
@@ -1235,8 +1266,19 @@ def eos_observed_calculated_table(
             "energy_ha",
             "energy_ha",
             "eos_residual",
+            "eos_pressure",
         ]
+        units = [
+            format_text_unit(dataset.units.get("volume", "angstrom^3")) or "",
+            format_text_unit(dataset.units.get("energy", "Ha")) or "",
+            format_text_unit(dataset.units.get("energy", "Ha")) or "",
+            format_text_unit(dataset.units.get("energy", "Ha")) or "",
+            "GPa",
+        ]
+        notes = ["EOS pressure is derived from P(V) = -dE/dV."]
     elif request.domain.value == "pv":
+        units = []
+        notes = []
         coordinate = np.asarray(dataset.column(request.target)[mask], dtype=float)
         pressure = np.asarray(dataset.column("pressure")[mask], dtype=float)
         columns = [
@@ -1256,6 +1298,8 @@ def eos_observed_calculated_table(
             "eos_residual",
         ]
     elif request.domain.value == "vt":
+        units = []
+        notes = []
         temperature = np.asarray(dataset.column("temperature")[mask], dtype=float)
         observed = np.asarray(dataset.column(request.target)[mask], dtype=float)
         calculated = np.asarray(
@@ -1278,6 +1322,8 @@ def eos_observed_calculated_table(
             "eos_residual",
         ]
     else:
+        units = []
+        notes = []
         volume = np.asarray(dataset.column("volume")[mask], dtype=float)
         temperature = np.asarray(dataset.column("temperature")[mask], dtype=float)
         pressure = np.asarray(dataset.column("pressure")[mask], dtype=float)
@@ -1306,6 +1352,8 @@ def eos_observed_calculated_table(
         metadata={
             "column_formats": formats,
             "column_alignments": ["right"] * len(columns),
+            **({"column_units": units} if units else {}),
+            **({"notes": notes} if notes else {}),
         },
     )
 

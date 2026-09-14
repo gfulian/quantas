@@ -65,7 +65,7 @@ class EOSParameters:
 def _tait_coefficients(parameters: EOSParameters) -> tuple[float, float, float]:
     r"""Return the auxiliary coefficients of the modified Tait EOS.
 
-    The coefficients follow the EosFit parameterization,
+    The coefficients follow the modified-Tait parameterization,
 
     .. math::
 

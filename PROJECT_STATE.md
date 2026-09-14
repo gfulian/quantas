@@ -164,7 +164,8 @@ and therefore remains available for SJEOS as well as the integrated pressure
 families.
 
 An optional secondary ``axial_model``/``--axial-eos`` fit provides direct
-comparison with the Angel/EosFit ``P(l^3)`` parameterization.  Its pressures
+comparison with a secondary pressure-form axial ``P(l^3)`` EOS parameterization.
+Its pressures
 come from the accepted primary EnergyEOS, while the axes are the original
 sampled structural data.  Quantas retains the complete pressure covariance;
 the present WLS backend uses its marginal standard deviations and records that

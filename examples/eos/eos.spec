@@ -67,7 +67,7 @@ solver = ols
 # Covariance scaling:
 #   absolute
 #   reduced-chi-square
-#   inflate-only        EosFit-like: never reduce reported covariance
+#   inflate-only        never reduce reported covariance
 # covariance_scaling = inflate-only
 #
 # Generic positive solver controls.  Omit them to use typed solver defaults.
@@ -124,8 +124,9 @@ replace_accepted = no
 #
 # Full aliases are accepted where the shared EOS resolver defines them.
 model = BM3
-# Optional secondary Angel-style P(l^3) fit to pressures derived from E(V).
-# This does not change the primary structural response from StructuralPathModel.
+# Optional secondary pressure-form axial EOS fit of P against l^3.
+# Pressures are derived from E(V); this does not change the primary structural
+# response from StructuralPathModel.
 # axial_model = BM3
 # solver = ols
 # covariance_scaling = inflate-only
@@ -227,7 +228,7 @@ model = berman:quadratic
 # the individual job that selects that coupling. Its oscillator model is selected
 # with thermal_pressure_model = holland-powell-einstein, mgd, or
 # mgd:q-compromise. The plain mgd tag is the full theta_d0/gamma0/q model;
-# mgd:q-compromise is the distinct EosFit-style approximation and has no q
+# mgd:q-compromise is the distinct q-compromise approximation and has no q
 # parameter. MGD cell volumes require atoms_per_cell or formula +
 # formula_units_per_cell.
 # pv_model = BM3

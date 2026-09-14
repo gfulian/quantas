@@ -77,7 +77,7 @@ class EOSFitOptions:
     -----
     For weighted EOS methods, an unspecified covariance policy is normalized
     to :attr:`~quantas.api.eos.CovarianceScaling.INFLATE_ONLY`,
-    reproducing the EosFit7 uncertainty convention. A policy explicitly set
+    using inflate-only covariance scaling. A policy explicitly set
     on ``solver_options`` is always preserved.
 
     Raises

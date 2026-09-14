@@ -790,7 +790,7 @@ def _fit_secondary_energy_axes(
     prepared: _PreparedEVFit,
     structural: EnergyStructuralResponse,
 ) -> dict[str, Any]:
-    """Fit optional Angel-style axial EOS models to derived pressures.
+    """Fit optional pressure-form axial EOS models to derived pressures.
 
     The pressure observations are correlated because they are generated from
     the same E-V parameter vector.  The current WLS engine accepts marginal

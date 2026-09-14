@@ -143,5 +143,5 @@ def test_batch_summary_is_sorted_and_reports_human_units(tmp_path: Path) -> None
     ]
     assert "BM3" in fit_summary.rows[0][2]
     assert fit_summary.rows[0][3] == "Ordinary least squares"
-    assert any(row[-1] == "Å" for row in parameter_summary.rows)
+    assert any(row[-1] == "angstrom" for row in parameter_summary.rows)
     assert any(row[-1] == "GPa" for row in parameter_summary.rows)

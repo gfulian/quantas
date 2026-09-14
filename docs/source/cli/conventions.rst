@@ -88,7 +88,7 @@ For the current PowerShell session run:
    quantas completion powershell | Out-String | Invoke-Expression
 
 To enable completion automatically, place that line in ``$PROFILE``.  After
-registration, for example, TAB after ``--eos SJ`` offers ``SJ`` and ``SJEOS``
+registration, for example, TAB after ``--ev-eos SJ`` offers ``SJ`` and ``SJEOS``
 instead of falling back to filesystem completion.  File-valued options still
 delegate to PowerShell's filename completer.
 

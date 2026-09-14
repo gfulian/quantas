@@ -76,6 +76,9 @@ def test_template_is_complete_commented_and_resolvable() -> None:
     assert "[job static-energy]" in text
     assert "domain = ev" in text
     assert "targets = energy" in text
+    assert "secondary pressure-form axial EOS fit" in text
+    assert "Angel-style" not in text
+    assert "EosFit-style" not in text
 
     root = Path(__file__).parents[3]
     distributed = root / "examples" / "eos" / "eos.spec"

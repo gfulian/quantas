@@ -253,6 +253,7 @@ def _build_request(
 ) -> EOSFitRequest:
     model: Any
     axial_model = None
+    forbidden: list[str]
     try:
         if domain in {EOSFitDomain.PRESSURE_VOLUME, EOSFitDomain.ENERGY_VOLUME}:
             forbidden = [

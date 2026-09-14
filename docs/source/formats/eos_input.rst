@@ -10,7 +10,7 @@ parameter constraints, and numerical solver belong to an
 measurement table may carry only non-destructive data organization through
 ``GROUP`` and ``USE`` columns or a trailing ``*`` exclusion marker.
 
-The reader accepts both historical Quantas files and common EosFit-style files.
+The reader accepts both historical Quantas files and common EosFit-compatible files.
 Keyword matching is case-insensitive, commas and whitespace can both separate
 columns, and a trailing colon is accepted. Thus all of the following are
 valid::
@@ -43,7 +43,7 @@ and numerical method belong to the EOS request or specification file.  Quantas
 does not manufacture ``sigma_energy`` values for deterministic electronic-
 structure energies.  The ordinary public fit is then, for example::
 
-   quantas eos run energy.dat --domain ev --eos BM3
+   quantas eos run energy.dat --domain ev --ev-eos BM3
 
 The resulting accepted slot is ``ev/energy``.  Pressure, bulk modulus, and
 pressure derivatives are derived from the fitted energy EOS and are not written
@@ -65,7 +65,7 @@ backend-neutral workflow.
 Minimal examples
 ----------------
 
-EosFit-style P-V table:
+EosFit-compatible P-V table:
 
 .. code-block:: text
 
@@ -244,7 +244,7 @@ A dataset may identify experimental groups and its default fitting selection
 without deleting observations. ``GROUP`` values are positive integers. ``USE``
 accepts ``1``/``0``, ``yes``/``no``, or equivalent boolean words. A trailing
 ``*`` excludes a row regardless of the ``USE`` value and is convenient when
-editing an existing EosFit-style table:
+editing an existing EosFit-compatible table:
 
 .. code-block:: text
 
@@ -365,7 +365,7 @@ The test suite contains unchanged reference files in all currently supported
 layouts:
 
 ``PV_quartz.dat``
-   EosFit-style ``FORMAT 1 P V SigP SigV`` P-V data.
+   EosFit-compatible ``FORMAT 1 P V SigP SigV`` P-V data.
 
 ``PV_topaz.dat``
    Historical Quantas ``JOB``/``FORMAT``/``DATA`` P-V data with volume and

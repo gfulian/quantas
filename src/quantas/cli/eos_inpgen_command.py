@@ -124,8 +124,8 @@ def inpgen(
                 ["Output", str(written)],
                 ["Interface", interface.lower()],
                 ["States", dataset.npoints],
-                ["Volume minimum (Å³)", float(volume.min())],
-                ["Volume maximum (Å³)", float(volume.max())],
+                ["Volume minimum (angstrom^3)", float(volume.min())],
+                ["Volume maximum (angstrom^3)", float(volume.max())],
                 ["Energy unit", dataset.units.get("energy", "Ha")],
                 [
                     "Crystal reference",
@@ -135,7 +135,7 @@ def inpgen(
                     "Crystal system",
                     dataset.metadata.get("crystal_system", "unspecified"),
                 ],
-                ["Minimum-energy volume (Å³)", float(volume[int(energy.argmin())])],
+                ["Minimum-energy volume (angstrom^3)", float(volume[int(energy.argmin())])],
             ],
         )
     )

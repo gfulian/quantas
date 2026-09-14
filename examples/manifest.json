@@ -67,8 +67,8 @@
     },
     {
       "path": "eos/README.md",
-      "sha256": "507f099186ad74133460f8e0aa85fdd1d18d0a6bbc9692d1fde29fb73e99686e",
-      "size_bytes": 1718
+      "sha256": "47ab61eec72ebf10414e993a8b983634e7a512008bab6d0d76efae19d5785149",
+      "size_bytes": 1734
     },
     {
       "path": "eos/T_triclinic.dat",
@@ -82,8 +82,8 @@
     },
     {
       "path": "eos/eos.spec",
-      "sha256": "8e90ab743fc49ded5086eab3c330e0fc6d737b25110d073cb1b0b99fd65f59cd",
-      "size_bytes": 13497
+      "sha256": "2590a966f4c415638d44179eaf059c4de6af45213c5df020703421f6148680b2",
+      "size_bytes": 13510
     },
     {
       "path": "eos/scripts/eos_diagnostics_calculator_api.py",

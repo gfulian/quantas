@@ -38,7 +38,7 @@ Fit a third-order Birch--Murnaghan integrated EOS with ordinary least squares:
 
 .. code-block:: console
 
-   quantas eos run EV_mgo_pbe.dat --domain ev --eos BM3 \
+   quantas eos run EV_mgo_pbe.dat --domain ev --ev-eos BM3 \
       --output mgo_ev.hdf5 --report mgo_ev.log --force
 
 The public E--V parameter convention is:
@@ -77,6 +77,12 @@ For the bundled MgO dataset the BM3 fit gives approximately:
 The energy RMSE is about :math:`3.28\times10^{-6}` Ha.  These values are a
 regression target for the public workflow, not an experimental benchmark for
 MgO or a recommendation that BM3 is universally preferable to other models.
+
+The standard E--V report also lists every sampled volume together with the
+ab initio energy, the EOS-calculated energy, the energy residual, and the
+pressure reconstructed from :math:`-dE/dV`.  This makes the quality of the
+energy fit and the associated static pressure scale visible without requiring
+a separate diagnostics export.
 
 Model discovery and alternatives
 --------------------------------
@@ -122,15 +128,15 @@ with the required derivatives, including ``SJ``.  It is not obtained by fitting
 energy directly against :math:`a^3`; doing so would only be thermodynamically
 equivalent to E(V) for special geometries such as a cubic conventional cell.
 
-Optional Angel-style axial parameterization
--------------------------------------------
+Optional pressure-form axial EOS parameterization
+-------------------------------------------------
 
 For direct comparison with pressure-based axial EOS work, request a secondary
 pressure-form model independently of the Energy EOS:
 
 .. code-block:: console
 
-   quantas eos run EV_mgo_pbe_crystallographic.dat --domain ev --eos SJ \
+   quantas eos run EV_mgo_pbe_crystallographic.dat --domain ev --ev-eos SJ \
       --axial-eos BM3 --output mgo_ev_axial.hdf5 --report mgo_ev_axial.log --force
 
 Quantas first fits ``SJ`` to E(V), derives the pressure and its propagated

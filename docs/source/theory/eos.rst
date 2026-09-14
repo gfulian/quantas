@@ -393,7 +393,7 @@ Theoretical crystallographic response from E--V data
 When the E--V dataset also contains a complete lattice path, Quantas derives
 crystallographic response from the same fitted pressure relation instead of
 fitting a fictitious energy equation to :math:`a^3`, :math:`b^3`, or
-:math:`c^3`.  The shared The shared ``StructuralPathModel``
+:math:`c^3`.  The shared ``StructuralPathModel``
 represents crystal shape as a volume-constrained logarithmic stretch and
 provides
 
@@ -418,7 +418,7 @@ propagated independently by first-order delta methods and added under an
 explicit zero cross-covariance assumption.  The assumption is recorded in the
 result metadata rather than being hidden by the reporting layer.
 
-An optional secondary Angel-style axial parameterization can then fit the
+An optional secondary pressure-form axial EOS parameterization can then fit the
 derived pressures against :math:`l_i^3`.  This is a *secondary* representation
 of the theoretical path, not the definition of the primary axial response.  It
 is requested with a separate pressure-form EOS (for example BM3) and therefore
@@ -966,9 +966,8 @@ The Debye thermal term uses
    D_3(x)=\frac{3}{x^3}
    \int_0^x\frac{t^3}{\exp(t)-1}\,\mathrm dt.
 
-Quantas also represents the explicitly named EosFit ``q-compromise``
-approximation, in which :math:`\theta_D` and :math:`\gamma/V` are held
-constant.
+Quantas also represents the ``q-compromise`` MGD approximation, in which
+:math:`\theta_D` and :math:`\gamma/V` are held constant.
 
 **Advantages**
 

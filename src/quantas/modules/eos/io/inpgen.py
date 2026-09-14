@@ -424,7 +424,7 @@ class EOSEnergyInputCreator:
             ):
                 raise ValueError(
                     "Energy EOS source series contains duplicate volumes near "
-                    f"{_point_volume(left):.8g} Å^3"
+                    f"{_point_volume(left):.8g} angstrom^3"
                 )
 
 

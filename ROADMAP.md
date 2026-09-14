@@ -29,7 +29,7 @@ The standalone Energy EOS workflow is now functionally complete on
 - reused the QHA ``StructuralPathModel`` to derive equilibrium axes,
   ``d ln(l_i)/d ln(V)``, and axial moduli ``M_i = K/eta_i`` with propagated
   uncertainty rather than introducing a second EOS-specific lattice model;
-- added an optional, explicitly secondary Angel/EosFit-style axial refit from
+- added an optional, explicitly secondary pressure-form axial EOS refit from
   EnergyEOS-derived pressures, including retained pressure covariance and clear
   diagonal-WLS provenance;
 - kept QHA and Thermoelasticity coupled to the shared numerical Energy EOS

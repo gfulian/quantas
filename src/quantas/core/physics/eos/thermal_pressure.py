@@ -23,7 +23,7 @@ Two MGD variants are represented:
 
 ``q-compromise``
     The Debye temperature and :math:`\gamma/V` are both held constant.  This
-    is the explicitly named EosFit approximation; it is not represented by a
+    is the q-compromise approximation; it is not represented by a
     hidden numerical value of ``q`` because its two assumptions correspond to
     incompatible values of ``q`` in the full MGD law.
 
@@ -496,7 +496,7 @@ class MGDThermalPressure:
     r"""Evaluate Mie--Grüneisen--Debye thermal-pressure properties.
 
     The evaluator implements both the full volume-dependent MGD formulation
-    and the explicitly named EosFit ``q-compromise`` approximation.  It owns no
+    and the ``q-compromise`` approximation.  It owns no
     workflow state and emits no Quantas events.
     """
 
