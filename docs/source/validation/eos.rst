@@ -53,7 +53,7 @@ the complete public Energy EOS path.  The normalized dataset spans approximately
 17.11--20.50 angstrom cubed and is processed through the same text reader used
 by ordinary users.
 
-A BM3 OLS fit gives:
+A representative BM3 OLS fit in the reference environment gives:
 
 .. list-table:: MgO Energy EOS regression target
    :header-rows: 1
@@ -82,10 +82,14 @@ A BM3 OLS fit gives:
      - Ha
 
 The same MgO static surface had already been used independently while validating
-energy-derived pressure for thermoelastic input generation.  Reproducing the
-same equilibrium parameters through ``quantas eos run --domain ev`` therefore
-checks that the public workflow has not changed the underlying numerical Energy
-EOS service.
+energy-derived pressure for thermoelastic input generation.  The cross-platform
+regression gate therefore checks the numerically robust ``E0``, ``V0``, ``K0``,
+and energy-RMSE observables.  ``KP`` and the BM3-implied ``KPP`` are reported
+above as representative reference-environment values, but they are not used as
+tight real-data CI gates because higher pressure derivatives are more sensitive
+to nonlinear-solver termination across supported SciPy/BLAS combinations.
+Their formulas and parameter recovery are characterized independently by the
+synthetic Energy EOS and core-physics tests.
 
 Theoretical structural-response regression
 ------------------------------------------
@@ -103,7 +107,7 @@ normalizations.  The input data verify the extensive normalization exactly:
 primitive-cell energy and volume are multiplied by four while the FCC
 primitive lattice is transformed to the conventional cubic cell.  Independent
 nonlinear fits preserve the corresponding ``E0``/``V0`` scaling and the
-intensive ``K0``/``KP`` response within a tight cross-platform solver tolerance.
+intensive ``K0`` response within a tight cross-platform solver tolerance.
 This distinction avoids treating platform-dependent least-squares termination
 at the last few digits as a scientific regression.  The crystallographic
 response remains approximately ``a0 = 4.22221`` angstrom and
