@@ -37,7 +37,7 @@ _EOS_SPEC_TEMPLATE = """# QUANTAS EOS SPEC 1
 #
 #   Quantas internal defaults
 #       -> [defaults]
-#       -> [defaults.pv], [defaults.vt], or [defaults.pvt]
+#       -> [defaults.ev], [defaults.pv], [defaults.vt], or [defaults.pvt]
 #       -> [job NAME]
 #
 # Only the final [job volume-example] section is active by default.  The other
@@ -126,6 +126,40 @@ replace_accepted = no
 #
 # A fixed parameter cannot also declare initial or bound.  A bound for a free
 # parameter requires an explicit initial.PARAMETER value.
+
+
+[defaults.ev]
+# Default integrated E-V model for static total-energy jobs.
+#
+# Compact canonical models include:
+#   M
+#   BM2, BM3, BM4
+#   PT2, PT3, PT4       natural strain / Poirier-Tarantola
+#   V2, V3
+#   T2, T3, T4
+#   SJ                   stabilized-jellium energy EOS
+#
+# Full aliases are accepted where the shared EOS resolver defines them.
+model = BM3
+# Optional secondary Angel-style P(l^3) fit to pressures derived from E(V).
+# This does not change the primary structural response from StructuralPathModel.
+# axial_model = BM3
+# solver = ols
+# covariance_scaling = inflate-only
+# max_iterations = 200
+# ftol = 1.0e-10
+# xtol = 1.0e-10
+# gtol = 1.0e-10
+# accept = yes
+# replace_accepted = no
+#
+# E-V public parameters use E0 in Ha, V0 in angstrom^3, K0 in GPa,
+# KP dimensionless, and KPP in GPa^-1. Availability depends on the model order.
+# initial.E0 = -275.0
+# initial.V0 = 19.0
+# initial.K0 = 180.0
+# initial.KP = 4.0
+# bound.K0 = 1.0 : 500.0
 
 
 [defaults.pv]
@@ -295,6 +329,18 @@ targets = volume
 # bound.K0 = 1.0 : 500.0
 # accept = yes
 # replace_accepted = no
+
+
+# ---------------------------------------------------------------------------
+# COMMENTED EXAMPLE: static total-energy E-V fit
+# ---------------------------------------------------------------------------
+# [job static-energy]
+# domain = ev
+# targets = energy
+# model = BM3
+# Optional secondary axial parameterization; the primary model may be SJ.
+# axial_model = BM3
+# solver = ols
 
 
 # ---------------------------------------------------------------------------

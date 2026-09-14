@@ -7,6 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 import traceback
 import click
+from click.core import ParameterSource
 
 from quantas.cli.contracts import (
     OUTPUT_GROUP,
@@ -23,6 +24,7 @@ from quantas.cli.contracts import (
     verbosity_option,
 )
 from quantas.cli.grouped_options import GroupedCommand, grouped_option
+from quantas.cli.eos_model_type import ENERGY_EOS_MODEL
 from quantas.cli.eos_helpers import (
     _EOSCLIEventObserver,
     _build_request,
@@ -101,7 +103,7 @@ from quantas.references import module_citation_keys, render_citation_notice
 @grouped_option(
     "--domain",
     group="Fit selection",
-    type=click.Choice(["pv", "vt", "pvt"], case_sensitive=False),
+    type=click.Choice(["ev", "pv", "vt", "pvt"], case_sensitive=False),
     default="pv",
     show_default=True,
     help="Scientific relationship fitted by every generated job.",
@@ -111,10 +113,30 @@ from quantas.references import module_citation_keys, render_citation_notice
     "targets",
     group="Fit selection",
     multiple=True,
-    type=click.Choice(["volume", "a", "b", "c", "all"], case_sensitive=False),
+    type=click.Choice(["energy", "volume", "a", "b", "c", "all"], case_sensitive=False),
     default=("volume",),
     show_default=True,
     help="Target to fit. Repeat the option or use 'all' for all available targets.",
+)
+@grouped_option(
+    "--eos",
+    "ev_eos",
+    group="E-V model",
+    type=ENERGY_EOS_MODEL,
+    default="BM3",
+    show_default=True,
+    metavar="MODEL",
+    help="Integrated E-V EOS model, for example BM3, T3, V3, M, or SJ.",
+)
+@grouped_option(
+    "--axial-eos",
+    group="E-V model",
+    default=None,
+    metavar="MODEL",
+    help=(
+        "Optional pressure-form EOS for secondary Angel-style fits to "
+        "derived axial data."
+    ),
 )
 @grouped_option(
     "--pv-eos",
@@ -344,6 +366,8 @@ def run(
     temperature_unit: str | None,
     domain: str,
     targets: tuple[str, ...],
+    ev_eos: str,
+    axial_eos: str | None,
     pv_eos: str,
     pv_order: int,
     vt_eos: str,
@@ -418,8 +442,31 @@ def run(
                 energy_unit=energy_unit,
                 temperature_unit=temperature_unit,
             )
+            fit_domain = EOSFitDomain(domain.lower())
+            resolved_target_args = targets
+            if (
+                fit_domain is EOSFitDomain.ENERGY_VOLUME
+                and ctx.get_parameter_source("targets") is ParameterSource.DEFAULT
+            ):
+                resolved_target_args = ("energy",)
+            if fit_domain is not EOSFitDomain.ENERGY_VOLUME and (
+                ctx.get_parameter_source("ev_eos") is not ParameterSource.DEFAULT
+            ):
+                raise click.UsageError("--eos is valid only with --domain ev")
+            if (
+                fit_domain is not EOSFitDomain.ENERGY_VOLUME
+                and axial_eos is not None
+            ):
+                raise click.UsageError("--axial-eos is valid only with --domain ev")
+            if fit_domain is EOSFitDomain.ENERGY_VOLUME and (
+                ctx.get_parameter_source("pv_eos") is not ParameterSource.DEFAULT
+                or ctx.get_parameter_source("pv_order") is not ParameterSource.DEFAULT
+            ):
+                raise click.UsageError(
+                    "--pv-eos/--pv-order are not valid for --domain ev; use --eos"
+                )
             resolved_targets = _resolve_targets(
-                dataset, EOSFitDomain(domain.lower()), targets
+                dataset, fit_domain, resolved_target_args
             )
             solver_options = _build_solver_options(
                 solver,
@@ -441,7 +488,9 @@ def run(
                 EOSBatchJob(
                     request=_build_request(
                         target,
-                        EOSFitDomain(domain.lower()),
+                        fit_domain,
+                        ev_eos=ev_eos,
+                        axial_eos=axial_eos,
                         pv_eos=pv_eos,
                         pv_order=pv_order,
                         vt_eos=vt_eos,

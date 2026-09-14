@@ -118,6 +118,8 @@ _SPEC_SCIENTIFIC_PARAMETERS = (
     "temperature_unit",
     "domain",
     "targets",
+    "ev_eos",
+    "axial_eos",
     "pv_eos",
     "pv_order",
     "vt_eos",
@@ -243,12 +245,16 @@ def _resolve_targets(
         resolved = requested
     elif domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE:
         resolved = ("volume",)
+    elif domain is EOSFitDomain.ENERGY_VOLUME:
+        resolved = ("energy",) if dataset.has("energy") else ()
     else:
         resolved = tuple(
             name for name in ("volume", "a", "b", "c") if dataset.has(name)
         )
     if domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE and resolved != ("volume",):
         raise click.UsageError("P-V-T fitting currently supports only --fit volume")
+    if domain is EOSFitDomain.ENERGY_VOLUME and resolved != ("energy",):
+        raise click.UsageError("E-V fitting requires --fit energy")
     if not resolved:
         raise click.UsageError("no requested fit target is available in the dataset")
     missing = [name for name in resolved if not dataset.has(name)]
@@ -263,6 +269,8 @@ def _build_request(
     target: str,
     domain: EOSFitDomain,
     *,
+    ev_eos: str,
+    axial_eos: str | None,
     pv_eos: str,
     pv_order: int,
     vt_eos: str,
@@ -287,6 +295,8 @@ def _build_request(
         )
     if domain is EOSFitDomain.PRESSURE_VOLUME:
         model: Any = _parse_pressure_model(pv_eos, pv_order)
+    elif domain is EOSFitDomain.ENERGY_VOLUME:
+        model = parse_eos_model(ev_eos)
     elif domain is EOSFitDomain.VOLUME_TEMPERATURE:
         model = parse_temperature_eos_model(vt_eos, vt_variant)
     else:
@@ -335,6 +345,11 @@ def _build_request(
         options=EOSFitOptions(solver_options=solver_options),
         request_id=f"{domain.value}-{target}",
         metadata={"source": "cli"},
+        axial_model=(
+            parse_eos_model(axial_eos)
+            if domain is EOSFitDomain.ENERGY_VOLUME and axial_eos is not None
+            else None
+        ),
     )
 
 

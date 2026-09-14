@@ -122,6 +122,7 @@ from .inspection import (
     EOSSlotInspection,
 )
 from .models import (
+    CrystalReference,
     EOSCoordinateProfile,
     EOSCoordinateVariation,
     EOSCrystalSystem,
@@ -133,11 +134,14 @@ from .models import (
     EOSFitResult,
     EOSSeries,
     ParameterConstraint,
+    crystal_system_from_space_group_number,
+    parse_crystal_reference,
     parse_eos_crystal_system,
 )
 from .session import EOSSession
 
 __all__ = [
+    "CrystalReference",
     "MODULE_CONTRACT",
     "EOSCapabilityStatus",
     "EOSDomainCapability",
@@ -211,10 +215,12 @@ __all__ = [
     "build_pvt_parameter_map",
     "build_temperature_parameter_map",
     "canonical_eos_parameter_name",
+    "crystal_system_from_space_group_number",
     "estimate_axial_parameters",
     "estimate_pressure_parameters",
     "estimate_pvt_parameters",
     "estimate_temperature_parameters",
+    "parse_crystal_reference",
     "eos_calculation_summary_table",
     "eos_calculation_table",
     "eos_diagnostic_summary_table",

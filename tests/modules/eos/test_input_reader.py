@@ -355,3 +355,45 @@ def test_energy_unit_override_takes_precedence_over_file_declaration(
     assert dataset.raw_units["energy"] == "Ry"
     assert dataset.raw_units["sigma_energy"] == "Ry"
     assert dataset.metadata["unit_overrides"]["energy"] == "Ry"
+
+
+def test_reader_preserves_crystal_reference_and_space_group_metadata(
+    tmp_path: Path,
+) -> None:
+    path = _write(
+        tmp_path,
+        """
+        SYSTEM cubic
+        SPACE_GROUP_NUMBER 225
+        SPACE_GROUP_SYMBOL Fm-3m
+        CRYSTAL_REFERENCE crystallographic
+        CELL_MULTIPLICITY 4
+        FORMAT V A B C ALPHA BETA GAMMA E
+        75.2 4.22 4.22 4.22 90 90 90 -1100.0
+        76.0 4.23 4.23 4.23 90 90 90 -1100.1
+        """,
+    )
+
+    dataset = read_eos_input(path)
+
+    assert dataset.metadata["crystal_system"] == "cubic"
+    assert dataset.metadata["space_group_number"] == 225
+    assert dataset.metadata["space_group_symbol"] == "Fm-3m"
+    assert dataset.metadata["crystal_reference"] == "crystallographic"
+    assert dataset.metadata["cell_multiplicity"] == 4
+
+
+def test_reader_rejects_space_group_system_mismatch(tmp_path: Path) -> None:
+    path = _write(
+        tmp_path,
+        """
+        SYSTEM hexagonal
+        SPACE_GROUP_NUMBER 225
+        FORMAT V E
+        10 -1
+        11 -0.9
+        """,
+    )
+
+    with pytest.raises(ValueError, match="space group.*crystal system|SYSTEM"):
+        read_eos_input(path)

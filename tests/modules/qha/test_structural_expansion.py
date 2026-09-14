@@ -238,3 +238,21 @@ def test_qha_calculator_runs_structural_analysis_automatically() -> None:
     metadata = result.metadata["structural_thermal_expansion"]
     assert metadata["automatic"] is True
     assert metadata["full_anisotropic_qha"] is False
+
+
+def test_shared_structural_path_exposes_log_volume_response() -> None:
+    """EOS-facing log-volume response reuses the QHA structural backend."""
+    from quantas.core.geometry import StructuralPathModel
+
+    series = _cubic_series()
+    model = StructuralPathModel(series)
+    response = model.log_volume_response(series.volumes[1])
+
+    np.testing.assert_allclose(
+        response.logarithmic_length_response,
+        np.full(3, 1.0 / 3.0),
+        atol=1.0e-14,
+    )
+    assert response.covariance is not None
+    np.testing.assert_allclose(response.covariance, 0.0, atol=0.0)
+    assert response.metadata["calculation_branch"] == "cubic_exact"

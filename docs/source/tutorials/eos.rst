@@ -1,14 +1,16 @@
 EOS fitting tutorials
 =====================
 
-Equation-of-state analysis is not one single fit.  Quantas distinguishes three
+Equation-of-state analysis is not one single fit.  Quantas distinguishes four
 scientific domains that answer different questions:
 
+- **E--V**: how static total energy varies with volume and what pressure EOS is
+  implied by that energy surface;
 - **P--V**: how a structure compresses along an isotherm;
 - **V--T**: how a structure expands along an isobar;
 - **P--V--T**: how pressure and temperature act together.
 
-The tutorials below use curated experimental datasets and follow the same
+The tutorials below use curated experimental and electronic-structure datasets and follow the same
 sequence in every domain:
 
 #. inspect the input and its uncertainties;
@@ -31,6 +33,7 @@ Recommended order
    :maxdepth: 1
 
    eos_batch
+   eos_ev
    eos_pv
    eos_vt
    eos_pvt
@@ -39,4 +42,4 @@ Recommended order
    eos_mgd_fit_api
 
 The first page explains the common batch and solver concepts.  The following
-three pages apply them in P--V, V--T, and P--V--T order.
+four pages apply them to E--V, P--V, V--T, and P--V--T workflows.

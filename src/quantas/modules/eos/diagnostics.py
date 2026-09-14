@@ -235,6 +235,29 @@ class EOSDiagnostics:
                 "calculated_pressure",
                 units["observed_pressure"],
             )
+        if request.domain is EOSFitDomain.ENERGY_VOLUME:
+            observed = self.dataset.column("energy")
+            calculated = predictions["energy"]
+            columns["volume"] = self.dataset.column("volume")
+            columns["observed_energy"] = observed
+            columns["calculated_energy"] = calculated
+            columns["eos_pressure"] = predictions["pressure"]
+            units["volume"] = self.dataset.units.get("volume", "angstrom^3")
+            energy_unit = self.dataset.units.get("energy", "Ha")
+            units["observed_energy"] = energy_unit
+            units["calculated_energy"] = energy_unit
+            units["eos_pressure"] = "GPa"
+            if self.dataset.has("pressure"):
+                source_pressure = self.dataset.column("pressure")
+                columns["source_pressure"] = source_pressure
+                columns["pressure_difference"] = (
+                    source_pressure - predictions["pressure"]
+                )
+                units["source_pressure"] = self.dataset.units.get(
+                    "pressure", "GPa"
+                )
+                units["pressure_difference"] = "GPa"
+            return "observed_energy", "calculated_energy", energy_unit
         if request.domain is EOSFitDomain.VOLUME_TEMPERATURE:
             observed = self.dataset.column(request.target)
             calculated = predictions[request.target]

@@ -5,14 +5,15 @@ This tutorial starts from an existing native EOS archive produced by
 :command:`quantas eos run` or :class:`quantas.api.eos.Session`. The
 post-fit tools never refit the data. They resolve one immutable successful
 record, reconstruct its model and parameter covariance, and derive diagnostics
-or properties from that record.
+or properties from that record.  The same post-fit surface is used for E--V,
+P--V, V--T, and P--V--T records.
 
 Selecting a result
 ------------------
 
 When an archive contains exactly one accepted result, no explicit selector is
 required. With several accepted targets, use a stable result slot such as
-``pv/volume``, ``pv/a``, ``vt/volume``, or ``pvt/volume``. An immutable
+``ev/energy``, ``pv/volume``, ``pv/a``, ``vt/volume``, or ``pvt/volume``. An immutable
 ``record_id`` may be selected instead when a historical candidate or superseded
 fit must be inspected.
 
@@ -46,6 +47,19 @@ normalized-pressure intercept corresponds to the auxiliary modulus
 Property calculation
 --------------------
 
+For an accepted E--V record, pressure and volume are reciprocal state
+coordinates.  Supplying pressure solves the fitted ``P(V) = -dE/dV`` relation
+and returns volume, energy, bulk modulus, and its first and second pressure
+derivatives:
+
+.. code-block:: console
+
+   quantas eos calculate mgo_ev.hdf5 --slot ev/energy \
+      --pressure-range 0:20:2 --output mgo_ev_properties.csv
+
+A volume grid can instead be supplied with ``--coordinate`` or
+``--coordinate-range``.
+
 Evaluate a pressure grid from an accepted P--V record with
 
 .. code-block:: console
@@ -75,6 +89,8 @@ physical length for an axial P--V record.
 
 The calculator returns the properties available for the selected domain:
 
+* E--V: pressure, volume, energy, bulk modulus, and its first and second pressure
+  derivatives;
 * P--V: volume or axis, modulus, and its first and second pressure derivatives;
 * V--T: structural value, thermal-expansion coefficient, and temperature
   derivative;

@@ -16,6 +16,14 @@ removed during formatting or fixture reduction.
 
 ## Equations of state
 
+- `eos/EV_mgo_pbe.dat`: seven-volume MgO/periclase PBE static total-energy
+  series generated from CRYSTAL outputs during Quantas 2.0 Energy EOS
+  validation.  The file is normalized to the primitive cell and is used as a
+  software/scientific-regression example, not an experimental reference.
+- `eos/EV_mgo_pbe_crystallographic.dat`: the same MgO states transformed to
+  the conventional cubic cell. Energy and volume are both multiplied by the
+  FCC cell multiplicity four; no independent electronic-structure data are
+  introduced. It validates crystal-reference normalization and axial response.
 - `eos/PV_quartz.dat`: experimental quartz P-V dataset distributed as an EOS fitting
   example.
 - `eos/PV_topaz.dat`: topaz volume and axial compression data from Gatta et al.

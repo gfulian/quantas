@@ -19,7 +19,10 @@ from quantas.core.physics.units import (
 
 from quantas.models import BasicReader
 from quantas.modules.eos.models import (
+    CrystalReference,
     EOSDataset,
+    crystal_system_from_space_group_number,
+    parse_crystal_reference,
     parse_eos_crystal_system,
 )
 
@@ -104,6 +107,10 @@ _METADATA_KEYWORDS = frozenset(
         "TITLE",
         "COMMENT",
         "SYSTEM",
+        "CRYSTAL_REFERENCE",
+        "CELL_MULTIPLICITY",
+        "SPACE_GROUP_NUMBER",
+        "SPACE_GROUP_SYMBOL",
         "TSCALE",
         "VSCALE",
         "LSCALE",
@@ -213,6 +220,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
         """Parse text lines into an :class:`EOSDataset`."""
         jobname = "Unknown"
         system: str | None = None
+        crystal_reference: CrystalReference | None = None
+        cell_multiplicity: int | None = None
+        space_group_number: int | None = None
+        space_group_symbol: str | None = None
         provenance: str | None = None
         temperature_scale = "K"
         volume_scale = "absolute"
@@ -257,6 +268,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
                 "TITLE",
                 "COMMENT",
                 "SYSTEM",
+                "CRYSTAL_REFERENCE",
+                "CELL_MULTIPLICITY",
+                "SPACE_GROUP_NUMBER",
+                "SPACE_GROUP_SYMBOL",
                 "PROVENANCE",
                 "TSCALE",
                 "VSCALE",
@@ -275,6 +290,35 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
             elif keyword == "SYSTEM":
                 value, index = _keyword_value(lines, index, remainder, keyword)
                 system = parse_eos_crystal_system(value).value
+            elif keyword == "CRYSTAL_REFERENCE":
+                value, index = _keyword_value(lines, index, remainder, keyword)
+                crystal_reference = parse_crystal_reference(value)
+            elif keyword == "CELL_MULTIPLICITY":
+                value, index = _keyword_value(lines, index, remainder, keyword)
+                try:
+                    cell_multiplicity = int(value)
+                except ValueError as exc:
+                    raise ValueError(
+                        "EOS CELL_MULTIPLICITY must be a positive integer."
+                    ) from exc
+                if cell_multiplicity <= 0:
+                    raise ValueError(
+                        "EOS CELL_MULTIPLICITY must be a positive integer."
+                    )
+            elif keyword == "SPACE_GROUP_NUMBER":
+                value, index = _keyword_value(lines, index, remainder, keyword)
+                try:
+                    space_group_number = int(value)
+                except ValueError as exc:
+                    raise ValueError(
+                        "EOS SPACE_GROUP_NUMBER must be an integer in 1..230."
+                    ) from exc
+                crystal_system_from_space_group_number(space_group_number)
+            elif keyword == "SPACE_GROUP_SYMBOL":
+                value, index = _keyword_value(lines, index, remainder, keyword)
+                space_group_symbol = value.strip()
+                if not space_group_symbol:
+                    raise ValueError("EOS SPACE_GROUP_SYMBOL cannot be empty.")
             elif keyword == "PROVENANCE":
                 value, index = _keyword_value(lines, index, remainder, keyword)
                 provenance = value
@@ -360,6 +404,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
             source=source,
             jobname=jobname,
             system=system,
+            crystal_reference=crystal_reference,
+            cell_multiplicity=cell_multiplicity,
+            space_group_number=space_group_number,
+            space_group_symbol=space_group_symbol,
             provenance=provenance,
             temperature_scale=temperature_scale,
             volume_scale=volume_scale,
@@ -376,6 +424,10 @@ def _build_dataset(
     source: Path,
     jobname: str,
     system: str | None,
+    crystal_reference: CrystalReference | None,
+    cell_multiplicity: int | None,
+    space_group_number: int | None,
+    space_group_symbol: str | None,
     provenance: str | None,
     temperature_scale: str,
     volume_scale: str,
@@ -464,10 +516,33 @@ def _build_dataset(
             "temperature": temperature_scale if "temperature" in columns else None,
         },
     }
-    if system is not None:
+    crystal_system = None
+    if space_group_number is not None:
+        inferred = crystal_system_from_space_group_number(space_group_number)
+        if system is not None and parse_eos_crystal_system(system) is not inferred:
+            raise ValueError(
+                "EOS SYSTEM is inconsistent with SPACE_GROUP_NUMBER: "
+                f"{system!r} versus {space_group_number}."
+            )
+        crystal_system = inferred
+        metadata["space_group_number"] = int(space_group_number)
+    elif system is not None:
         crystal_system = parse_eos_crystal_system(system)
+    if crystal_system is not None:
         metadata["crystal_system"] = crystal_system.value
         metadata["independent_cell_axes"] = crystal_system.independent_axes
+    if space_group_symbol is not None:
+        metadata["space_group_symbol"] = space_group_symbol
+    if crystal_reference is not None:
+        metadata["crystal_reference"] = crystal_reference.value
+    if cell_multiplicity is not None:
+        metadata["cell_multiplicity"] = int(cell_multiplicity)
+    if (
+        crystal_reference is CrystalReference.CRYSTALLOGRAPHIC
+        and cell_multiplicity is not None
+        and cell_multiplicity < 1
+    ):
+        raise ValueError("crystallographic cell multiplicity must be positive")
     return EOSDataset(
         jobname=jobname,
         columns=columns,

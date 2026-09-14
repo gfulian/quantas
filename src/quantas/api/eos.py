@@ -77,6 +77,7 @@ from quantas.modules.eos import (
     EOSSlotStatus as SlotStatus,
     EOSStateEvent as StateEvent,
     EOSStateEventType as StateEventType,
+    CrystalReference,
     EOSSession as Session,
     EOSSpecDocument as SpecDocument,
     EOSSpecError as SpecError,
@@ -128,6 +129,7 @@ def create_input(
     is_list: bool = False,
     jobname: str = "Quantas Energy EOS input",
     observer: Observer | None = None,
+    crystal_reference: CrystalReference | str = CrystalReference.PRIMITIVE,
 ) -> Path:
     """Create a Quantas Energy EOS input from electronic-structure outputs.
 
@@ -147,6 +149,8 @@ def create_input(
         Human-readable dataset title.
     observer : Observer or None, optional
         Frontend-neutral input-generation observer.
+    crystal_reference : CrystalReference or str, optional
+        Cell reference used for the generated ``V, E, A, B, C`` data.
 
     Returns
     -------
@@ -169,6 +173,7 @@ def create_input(
         is_list=is_list,
         jobname=jobname,
         observer=observer,
+        crystal_reference=crystal_reference,
     )
 
 def read_input(
@@ -635,6 +640,7 @@ __all__ = [
     "BatchPlan",
     "BatchResult",
     "CalculationResult",
+    "CrystalReference",
     "CovarianceScaling",
     "CapabilityStatus",
     "DOMAIN_CAPABILITIES",

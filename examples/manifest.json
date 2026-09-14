@@ -2,13 +2,13 @@
   "files": [
     {
       "path": "PROVENANCE.md",
-      "sha256": "907af26de8189a000f96720031adcb2d642e6b7baf788f88619cc381697075e6",
-      "size_bytes": 4744
+      "sha256": "285b0bf254f9aaeaf9df729ea2286e3b6fd5f35e15495b4f1bef0a9d26573bae",
+      "size_bytes": 5345
     },
     {
       "path": "README.md",
-      "sha256": "29ea6ed2a59c7d1f19795248d75f48fc4b591e918d82918b251473d2705b155a",
-      "size_bytes": 1628
+      "sha256": "f16ee97c79e2b1a875e72e9302eb077faceb703a787a4a73f3abfc6d7d351b5e",
+      "size_bytes": 1644
     },
     {
       "path": "elasticity/README.md",
@@ -41,6 +41,16 @@
       "size_bytes": 2557
     },
     {
+      "path": "eos/EV_mgo_pbe.dat",
+      "sha256": "ac197f59c666713d36e150dc8576f27eb6f8e2590fa935c9085cfb53c47bdabd",
+      "size_bytes": 1100
+    },
+    {
+      "path": "eos/EV_mgo_pbe_crystallographic.dat",
+      "sha256": "c659e196e8f5865dfb5d4003ec8efde4d347d41868040b880a832f16f9bb3043",
+      "size_bytes": 1258
+    },
+    {
       "path": "eos/PVT_NaF.dat",
       "sha256": "91a9b16668b4cc67224ec76c4a21c28f8ee0d20b60995a80f48819033409c74a",
       "size_bytes": 2265
@@ -57,8 +67,8 @@
     },
     {
       "path": "eos/README.md",
-      "sha256": "5a5d9bd8b4def784924f9ab77bf9768c20cc5fb37104224b81b9bb3ee3519cc5",
-      "size_bytes": 1092
+      "sha256": "507f099186ad74133460f8e0aa85fdd1d18d0a6bbc9692d1fde29fb73e99686e",
+      "size_bytes": 1718
     },
     {
       "path": "eos/T_triclinic.dat",
@@ -72,18 +82,28 @@
     },
     {
       "path": "eos/eos.spec",
-      "sha256": "0edfc6792e8fb585f3134e4ddd39f97255af08294db52cc3a95a11994841fe11",
-      "size_bytes": 12135
+      "sha256": "8e90ab743fc49ded5086eab3c330e0fc6d737b25110d073cb1b0b99fd65f59cd",
+      "size_bytes": 13497
     },
     {
       "path": "eos/scripts/eos_diagnostics_calculator_api.py",
-      "sha256": "ccab87523175ce1761e8d8a0c9d978ecdf11d00023ace95982f84d31796f02d4",
-      "size_bytes": 2962
+      "sha256": "f9897e623e17413c6a4923170805903c02907c9dd33c9bb0007993b2369d41f7",
+      "size_bytes": 2970
     },
     {
       "path": "eos/scripts/eos_plot_api.py",
-      "sha256": "6ca5927de8eb3b699e44aadfba6d9d9ee8e138f43e0e80c366881faa7a1643d5",
-      "size_bytes": 2204
+      "sha256": "90d43e27ae6468bda2bd11e6159d0911f9b7b302a5264368e6e0001324676dc6",
+      "size_bytes": 2216
+    },
+    {
+      "path": "eos/scripts/ev_fit_api.py",
+      "sha256": "4a76c358531b3e9ddf937ed3c447a6f024ba7e32295edb11192ca8c42a827bb6",
+      "size_bytes": 1063
+    },
+    {
+      "path": "eos/scripts/ev_structural_response_api.py",
+      "sha256": "2bbd5806ceff1ca5e10d9373b51b3e7d6d0628375a1d9f2228654e9c3f869690",
+      "size_bytes": 1300
     },
     {
       "path": "eos/scripts/mgd_fit_api.py",

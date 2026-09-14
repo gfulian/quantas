@@ -252,23 +252,37 @@ def _build_request(
     dataset: EOSDataset,
 ) -> EOSFitRequest:
     model: Any
+    axial_model = None
     try:
-        if domain is EOSFitDomain.PRESSURE_VOLUME:
+        if domain in {EOSFitDomain.PRESSURE_VOLUME, EOSFitDomain.ENERGY_VOLUME}:
             forbidden = [
                 name for name in ("pv_model", "vt_model", "coupling") if name in entries
             ]
             if forbidden:
                 raise EOSSpecError(
-                    f"key(s) {', '.join(forbidden)} are not valid for a pv job",
+                    f"key(s) {', '.join(forbidden)} are not valid for a {domain.value} job",
                     source=source,
                     line=entries[forbidden[0]].line,
                     section=section,
                 )
             model_entry = entries.get("model")
             model = parse_eos_model("BM3" if model_entry is None else model_entry.value)
+            axial_entry = entries.get("axial_model")
+            if domain is EOSFitDomain.ENERGY_VOLUME:
+                if axial_entry is not None:
+                    axial_model = parse_eos_model(axial_entry.value)
+            elif axial_entry is not None:
+                raise EOSSpecError(
+                    "axial_model is valid only for an ev job",
+                    source=source,
+                    line=axial_entry.line,
+                    section=section,
+                )
         elif domain is EOSFitDomain.VOLUME_TEMPERATURE:
             forbidden = [
-                name for name in ("pv_model", "vt_model", "coupling") if name in entries
+                name
+                for name in ("pv_model", "vt_model", "coupling", "axial_model")
+                if name in entries
             ]
             if forbidden:
                 raise EOSSpecError(
@@ -282,6 +296,14 @@ def _build_request(
                 "berman:quadratic" if model_entry is None else model_entry.value
             )
         else:
+            if "axial_model" in entries:
+                entry = entries["axial_model"]
+                raise EOSSpecError(
+                    "axial_model is valid only for an ev job",
+                    source=source,
+                    line=entry.line,
+                    section=section,
+                )
             if "model" in entries:
                 raise EOSSpecError(
                     "P-V-T jobs use pv_model, vt_model, and coupling instead of model",
@@ -349,7 +371,8 @@ def _build_request(
         raise
     except (TypeError, ValueError) as exc:
         candidates = [
-            entries.get(name) for name in ("model", "pv_model", "vt_model", "coupling")
+            entries.get(name)
+            for name in ("model", "axial_model", "pv_model", "vt_model", "coupling")
         ]
         location = next((entry for entry in candidates if entry is not None), None)
         raise EOSSpecError(
@@ -385,6 +408,7 @@ def _build_request(
             "spec_sha256": spec_hash,
             "selection": selection_metadata,
         },
+        axial_model=axial_model,
     )
 
 __all__ = ["canonical_parameter_name", "resolve_eos_spec_document"]

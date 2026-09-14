@@ -14,11 +14,11 @@ state.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-09-10 |
+| Last updated | 2026-09-13 |
 | Current development version | `2.0.0b11` |
 | Stable development baseline | `2.0.0b10`, `dev/refactor` |
 | Active scientific branch | `dev/energyeos` |
-| Current focus | Standalone Energy EOS: integrated E(V) models, units, fitting, diagnostics, and backend input generation |
+| Current focus | Standalone Energy EOS closure: crystallographic structural response, CRYSTAL reference normalization, validation, and release documentation |
 | Development status | Pre-RC scientific closure and validation |
 | Numerical precision | `float64` for real calculations and native HDF5 values; `complex128` for complex quantities |
 | Persistence | Native HDF5 envelope retained; HA/QHA and Thermoelasticity payloads have been extended additively with Kieffer and pressure/provenance data |
@@ -130,10 +130,56 @@ composition, total-energy correction semantics, and volumes are compatible.
 Generated EOS text retains V, a, b, c, alpha, beta, gamma, E, units, and source
 provenance.
 
-The remaining b11 work is intentionally incremental: promote the ``ev/energy``
-domain through
-fitting/diagnostics/HDF5/reporting, expose derived P(V) inspection, and only
-then add backend-specific ``eos inpgen`` starting with CRYSTAL and later VASP.
+The ``ev/energy`` domain is now a public standalone EOS workflow.  Static total
+energies can be fitted through the common EOS batch/session machinery, persisted
+in the native HDF5 archive, diagnosed through observed/calculated energy and
+derived pressure, evaluated in both ``V -> P`` and ``P -> V`` directions, and
+rendered as E(V), P(V), and residual plots.  The public parameter boundary uses
+``E0`` in Ha, ``V0`` in angstrom cubed, ``K0`` in GPa, ``KP`` dimensionless,
+and ``KPP`` in GPa^-1, while conversion to core energy-density units remains
+confined to the E--V adapter.
+
+The strict EOS specification supports ``[defaults.ev]`` and ``targets =
+energy``/``all`` for the E--V domain.  The distributed template and examples
+include the same contract.  A seven-volume CRYSTAL/PBE MgO series provides the
+real-data public-workflow regression, reproducing approximately ``V0 =
+18.817428 A^3``, ``K0 = 178.761458 GPa``, and ``KP = 3.815504`` with BM3.
+
+Energy EOS datasets may now declare ``CRYSTAL_REFERENCE primitive`` or
+``crystallographic`` together with cell multiplicity, crystal system, and
+space-group metadata.  CRYSTAL input generation analyzes one reference
+structure, prefers the explicit CRYSTAL primitive-to-crystallographic
+transformation when present, and otherwise uses the shared spglib symmetry
+infrastructure.  Switching to the crystallographic reference scales energy and
+volume by the same integral multiplicity and transforms the lattice parameters;
+the primitive reference remains the default.
+
+When an E--V dataset contains the complete lattice path, the standalone EOS
+workflow reuses ``quantas.core.geometry.StructuralPathModel`` from QHA.  The
+primary theoretical structural response reports equilibrium cell axes,
+``eta_i = d ln(l_i)/d ln(V)``, and ``M_i = K/eta_i``.  EnergyEOS and structural
+path covariances are propagated separately and combined under an explicitly
+recorded zero cross-covariance assumption.  This route is model-independent
+and therefore remains available for SJEOS as well as the integrated pressure
+families.
+
+An optional secondary ``axial_model``/``--axial-eos`` fit provides direct
+comparison with the Angel/EosFit ``P(l^3)`` parameterization.  Its pressures
+come from the accepted primary EnergyEOS, while the axes are the original
+sampled structural data.  Quantas retains the complete pressure covariance;
+the present WLS backend uses its marginal standard deviations and records that
+approximation rather than claiming a full GLS treatment.
+
+The MgO regression is distributed in both primitive and crystallographic
+normalizations.  The two representations recover identical ``K0`` and ``KP``;
+``E0`` and ``V0`` scale by four, the conventional equilibrium axis is about
+``4.2222125 A``, and the cubic response satisfies ``M_a = 3 K0`` to numerical
+precision.
+
+Remaining b11 work is release-oriented rather than architectural: complete the
+combined validation matrix and manual, decide whether VASP Energy EOS ingestion
+is required before the release candidate or can follow behind the same
+``StructureEnergySeries`` contract, and perform the final schema/API freeze.
 
 ## What `2.0.0b10` / `dev/kieffer` added
 

@@ -160,6 +160,53 @@ def test_real_quartz_dataset_recovers_reference_bm3_fit() -> None:
     assert result.parameter_values["KP"] == pytest.approx(5.93351, rel=2.0e-4)
 
 
+def test_real_mgo_dataset_recovers_reference_energy_bm3_fit() -> None:
+    """The curated MgO E-V path must reproduce the characterized BM3 fit."""
+    dataset = eos.read_input(EXAMPLES / "eos" / "EV_mgo_pbe.dat")
+    request = eos.FitRequest(model="BM3", domain="ev", target="energy")
+    result = eos.fit(dataset, request)
+
+    assert result.fit.success
+    assert result.parameter_values["E0"] == pytest.approx(-275.173937178, abs=2.0e-9)
+    assert result.parameter_values["V0"] == pytest.approx(18.817428245, rel=2.0e-8)
+    assert result.parameter_values["K0"] == pytest.approx(178.761458, rel=2.0e-7)
+    assert result.parameter_values["KP"] == pytest.approx(3.815504, rel=2.0e-7)
+    assert result.parameter_values["KPP"] == pytest.approx(-0.02091296, rel=2.0e-6)
+    assert result.fit.rmse == pytest.approx(3.28080368e-6, rel=2.0e-7)
+    assert result.derived["eta_a"] == pytest.approx(1.0 / 3.0)
+    assert result.derived["M_a"] == pytest.approx(3.0 * result.parameter_values["K0"])
+
+
+def test_real_mgo_crystallographic_normalization_preserves_energy_eos() -> None:
+    """Cell normalization changes extensive E,V but not the EOS response."""
+    primitive = eos.read_input(EXAMPLES / "eos" / "EV_mgo_pbe.dat")
+    conventional = eos.read_input(
+        EXAMPLES / "eos" / "EV_mgo_pbe_crystallographic.dat"
+    )
+    request = eos.FitRequest(model="BM3", domain="ev", target="energy")
+    primitive_result = eos.fit(primitive, request)
+    conventional_result = eos.fit(conventional, request)
+
+    assert conventional_result.parameter_values["V0"] == pytest.approx(
+        4.0 * primitive_result.parameter_values["V0"], rel=1.0e-12
+    )
+    assert conventional_result.parameter_values["E0"] == pytest.approx(
+        4.0 * primitive_result.parameter_values["E0"], rel=1.0e-12
+    )
+    assert conventional_result.parameter_values["K0"] == pytest.approx(
+        primitive_result.parameter_values["K0"], rel=1.0e-12
+    )
+    assert conventional_result.derived["a0"] == pytest.approx(
+        4.222212485, rel=2.0e-8
+    )
+    assert conventional_result.derived["M_a"] == pytest.approx(
+        3.0 * conventional_result.parameter_values["K0"], rel=1.0e-12
+    )
+    assert conventional_result.metadata["structural_response"][
+        "independent_axes"
+    ] == ["a"]
+
+
 @pytest.mark.parametrize(
     ("relative", "nvolumes", "nqpoints", "nmodes"),
     [

@@ -9,8 +9,8 @@ an isolated formula, boundary condition, or failure mode must be tested directly
 
 - `elasticity/`: second-order elastic tensors for calcite and hydroxylapatite.
 - `seismic/`: public-API tutorial scripts using the curated hydroxylapatite tensor.
-- `eos/`: experimental P-V, V-T, and P-V-T datasets, strict batch
-  specifications, and public-API tutorial scripts.
+- `eos/`: static E-V plus experimental P-V, V-T, and P-V-T datasets, strict
+  batch specifications, and public-API tutorial scripts.
 - `ha/`: harmonic-approximation API example.
 - `qha/`: CRYSTAL phonon-series and native CRYSTAL QHA examples.
 - `thermoelasticity/`: quasi-static thermoelastic inputs, CRYSTAL SOEC outputs,

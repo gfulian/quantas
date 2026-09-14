@@ -35,7 +35,7 @@ Settings are resolved in a predictable order:
 
    Quantas defaults
        → [defaults]
-       → [defaults.pv], [defaults.vt], or [defaults.pvt]
+       → [defaults.ev], [defaults.pv], [defaults.vt], or [defaults.pvt]
        → [job NAME]
 
 A job-specific value therefore overrides a domain default, which overrides a

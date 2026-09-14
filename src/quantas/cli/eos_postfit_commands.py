@@ -31,6 +31,15 @@ from quantas.api.eos import (
     write_diagnostic_csv as write_eos_diagnostic_csv,
 )
 from quantas.renderers.plots import MatplotlibOptions, render_plot_collection
+from quantas.modules.eos.plot import EOS_PLOT_TYPES
+
+
+_EOS_PLOT_CHOICES = (
+    "all",
+    *EOS_PLOT_TYPES,
+    "standardized_residuals",
+    "normalized_pressure",
+)
 
 
 @click.command(name="diagnose", cls=GroupedCommand)
@@ -135,21 +144,7 @@ def diagnose(
     "--plot",
     "plot_types",
     group="Plot selection",
-    type=click.Choice(
-        [
-            "all",
-            "fit",
-            "residuals",
-            "standardized-residuals",
-            "standardized_residuals",
-            "normalized-pressure",
-            "normalized_pressure",
-            "coverage",
-            "isotherms",
-            "isobars",
-        ],
-        case_sensitive=False,
-    ),
+    type=click.Choice(_EOS_PLOT_CHOICES, case_sensitive=False),
     multiple=True,
     help="Plot type. Repeat for several types. Default: all available plots.",
 )

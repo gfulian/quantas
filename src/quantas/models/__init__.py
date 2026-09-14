@@ -67,6 +67,7 @@ from .reader import BasicReader
 from .structures import (
     CellNormalization,
     CrystalStructure,
+    LatticeVolumeSeries,
     StructureReconstructionDiagnostics,
     StructureVolumeSeries,
     SymmetryMetadata,
@@ -93,6 +94,7 @@ __all__ = [
     "ElasticStateSeries",
     "ElasticTensorKind",
     "HarmonicThermodynamicResult",
+    "LatticeVolumeSeries",
     "StructureReconstructionDiagnostics",
     "StructureVolumeSeries",
     "SymmetryMetadata",

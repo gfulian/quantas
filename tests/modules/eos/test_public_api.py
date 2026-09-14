@@ -24,15 +24,18 @@ from quantas.modules.eos.fitting import PressureEOSFitModel as FacadePVModel
 DATA = Path(__file__).with_name("data")
 
 
-def test_public_facade_declares_ev_as_core_only() -> None:
+def test_public_facade_declares_ev_as_public_workflow() -> None:
     assert MODULE_CONTRACT.name == "eos"
     assert MODULE_CONTRACT.archive_schema_version == "1.1"
     assert MODULE_CONTRACT.capability("pv").fitting
 
     energy = eos.domain_capability("ev")
-    assert energy.status is eos.CapabilityStatus.CORE_ONLY
-    assert not energy.fitting
-    assert "QHA" in energy.note
+    assert energy.status is eos.CapabilityStatus.PUBLIC
+    assert energy.fitting
+    assert energy.calculator
+    assert energy.diagnostics
+    assert energy.plotting
+    assert "energy-volume" in energy.note.lower()
 
 
 def test_public_reader_forwards_energy_unit_override(tmp_path: Path) -> None:

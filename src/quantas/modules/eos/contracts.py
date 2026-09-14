@@ -104,13 +104,12 @@ EOS_DOMAIN_CAPABILITIES: tuple[EOSDomainCapability, ...] = (
     ),
     EOSDomainCapability(
         EOSFitDomain.ENERGY_VOLUME,
-        EOSCapabilityStatus.CORE_ONLY,
-        False,
-        False,
-        False,
-        False,
-        "Integrated energy EOS remain stable numerical core functionality used "
-        "by QHA; no public EOS E-V fitting workflow is currently provided.",
+        EOSCapabilityStatus.PUBLIC,
+        True,
+        True,
+        True,
+        True,
+        "Integrated energy-volume EOS fitting for static total-energy data.",
     ),
 )
 

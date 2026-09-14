@@ -186,6 +186,10 @@ class EOSFitRequest:
         Stable batch or session identifier.
     metadata : dict, optional
         Passive provenance.
+    axial_model : EOSModel, str, or None, optional
+        Optional secondary pressure-form EOS used to parameterize derived
+        theoretical axial data after a successful E-V fit.  It is distinct
+        from ``model`` and is valid only for the E-V domain.
 
     Raises
     ------
@@ -201,6 +205,7 @@ class EOSFitRequest:
     mask: np.ndarray | None = None
     request_id: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+    axial_model: EOSModel | str | None = None
 
     def __post_init__(self) -> None:
         """Normalize and validate one frontend-neutral request."""
@@ -250,6 +255,15 @@ class EOSFitRequest:
                 raise ValueError("E-V requests require target='energy'")
             if not isinstance(self.model, EOSModel) or not self.model.supports_energy:
                 raise ValueError(f"{self.model.tag} has no integrated E-V form")
+        if self.axial_model is not None:
+            if self.domain is not EOSFitDomain.ENERGY_VOLUME:
+                raise ValueError("axial_model is valid only for E-V requests")
+            resolved_axial = parse_eos_model(self.axial_model)
+            if not resolved_axial.supports_pressure_fit:
+                raise ValueError(
+                    f"{resolved_axial.tag} is not exposed for axial pressure fitting"
+                )
+            self.axial_model = resolved_axial
         constraints = tuple(self.constraints)
         names = [constraint.name for constraint in constraints]
         if len(set(names)) != len(names):
@@ -290,6 +304,11 @@ class EOSFitRequest:
             "options": self.options.as_dict(),
             "mask": None if self.mask is None else self.mask.tolist(),
             "metadata": dict(self.metadata),
+            "axial_model": (
+                None
+                if self.axial_model is None
+                else parse_eos_model(self.axial_model).as_dict()
+            ),
         }
 
 

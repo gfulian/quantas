@@ -6,27 +6,38 @@ The ``2.0.0b10`` Kieffer, CRYSTAL phonon-continuity, and generalized QSA
 pressure/provenance tranche has been merged into ``dev/refactor`` with the CI
 matrix green.  Development has moved to ``2.0.0b11`` on ``dev/energyeos``.
 
-The remaining scientific feature before release-candidate closure is the
-standalone Energy EOS workflow.  Work proceeds in small validated steps:
+The standalone Energy EOS workflow is now functionally complete on
+``dev/energyeos``.  The b11 tranche has:
 
-- complete parity between P(V) and volume-integrated E(V) model families;
-- retain and validate the newly added SJEOS Energy EOS in its physical
-  equilibrium-parameter form, including derived P(V) inspection;
-- keep EOS model discovery centralized through the shared resolver, compact
-  historical tags, all-domain ``quantas eos show-models``, and registered shell
-  completion including native PowerShell support;
-- keep canonical energy-unit handling in the shared EOS reader/spec contract,
-  with Hartree-normalized energy and uncertainty values plus raw provenance;
-- promote ``ev/energy`` from shared core capability to public fitting,
-  diagnostics, persistence, reporting, and plotting;
-- expose derived ``P(V) = -dE/dV`` as an inspectable Energy EOS result;
-- extend the now-available ``eos inpgen`` backend collection beyond CRYSTAL to
-  VASP and future interfaces after the standalone E-V workflow is public;
-- keep QHA and Thermoelasticity coupled to the shared numerical Energy EOS
-  service, not to the standalone EOS workflow layer.
+- completed parity between the registered P(V) families and their integrated
+  E(V) forms where scientifically defined, including modified Tait;
+- added and validated SJEOS in its physical equilibrium-parameter form;
+- centralized EOS model discovery through the shared resolver, compact
+  historical tags, ``quantas eos show-models``, and shell completion including
+  native PowerShell support;
+- added canonical Hartree normalization for energy and ``sigma_energy`` while
+  retaining raw units and provenance;
+- promoted ``ev/energy`` to public fitting, diagnostics, HDF5 persistence,
+  reporting, plotting, and post-fit calculation;
+- exposed ``P(V) = -dE/dV`` together with ``K(V)``, ``K'(V)``, and ``K''(V)``
+  from accepted Energy EOS records;
+- added CRYSTAL ``eos inpgen`` support for static, optimized, and native
+  multi-volume EOS outputs through ``StructureEnergySeries``;
+- added explicit primitive/crystallographic reference-cell normalization,
+  symmetry provenance, and a shared structural-path response for theoretical
+  E--V datasets;
+- reused the QHA ``StructuralPathModel`` to derive equilibrium axes,
+  ``d ln(l_i)/d ln(V)``, and axial moduli ``M_i = K/eta_i`` with propagated
+  uncertainty rather than introducing a second EOS-specific lattice model;
+- added an optional, explicitly secondary Angel/EosFit-style axial refit from
+  EnergyEOS-derived pressures, including retained pressure covariance and clear
+  diagonal-WLS provenance;
+- kept QHA and Thermoelasticity coupled to the shared numerical Energy EOS
+  service rather than to the standalone workflow layer.
 
-The first b11 step completes the analytical integrated modified-Tait T2/T3/T4
-forms and validates them against the existing pressure equations.
+The remaining b11 decisions are deliberately narrow: complete the combined EOS
+validation/manual pass, decide the release timing of VASP Energy EOS ingestion,
+and freeze the public API and native archive contracts before ``2.0.0rc1``.
 
 ## Before 2.0.0rc1
 

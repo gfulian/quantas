@@ -27,6 +27,7 @@ from .labels import format_unit, normalized_pressure_labels, property_label
 
 EOS_PLOT_TYPES: tuple[str, ...] = (
     "fit",
+    "pressure",
     "residuals",
     "standardized-residuals",
     "normalized-pressure",
@@ -160,6 +161,11 @@ class EOSPlotter:
             ].get("available", False):
                 kinds.append("normalized-pressure")
             return tuple(kinds)
+        if domain is EOSFitDomain.ENERGY_VOLUME:
+            kinds = ["fit", "pressure", "residuals"]
+            if standardized_available:
+                kinds.append("standardized-residuals")
+            return tuple(kinds)
         if domain is EOSFitDomain.VOLUME_TEMPERATURE:
             kinds = ["fit", "residuals"]
             if standardized_available:
@@ -224,6 +230,8 @@ class EOSPlotter:
     ) -> list[LinePlotSpec]:
         if kind == "fit":
             return [self._build_fit_spec(diagnostic, options)]
+        if kind == "pressure":
+            return [self._build_energy_pressure_spec(diagnostic, options)]
         if kind == "residuals":
             return self._build_residual_specs(diagnostic, options, standardized=False)
         if kind == "standardized-residuals":
@@ -261,6 +269,24 @@ class EOSPlotter:
             curve_y = calculated.columns["pressure"]
             x_error = self._input_error(x_name)
             y_error = self._input_error("pressure")
+        elif request.domain is EOSFitDomain.ENERGY_VOLUME:
+            x_name = "volume"
+            y_name = "energy"
+            x = diagnostic.columns["volume"]
+            y = diagnostic.columns["observed_energy"]
+            curve_x = self._curve_grid(
+                x,
+                diagnostic.columns["included"],
+                positive=True,
+                points=options.curve_points,
+            )
+            calculated = self._calculator.calculate(
+                volume=curve_x,
+                propagate_uncertainty=False,
+            )
+            curve_y = calculated.columns["energy"]
+            x_error = self._input_error("volume")
+            y_error = self._input_error("energy")
         elif request.domain is EOSFitDomain.VOLUME_TEMPERATURE:
             x_name = "temperature"
             y_name = request.target
@@ -280,7 +306,7 @@ class EOSPlotter:
             x_error = self._input_error("temperature")
             y_error = self._input_error(request.target)
         else:
-            raise ValueError("the generic fit plot is available only for P-V and V-T")
+            raise ValueError("the generic fit plot is available only for E-V, P-V, and V-T")
 
         series = [self._fit_curve(curve_x, curve_y, options)]
         series.extend(
@@ -306,6 +332,60 @@ class EOSPlotter:
             options=options,
         )
 
+    def _build_energy_pressure_spec(
+        self,
+        diagnostic: EOSDiagnosticResult,
+        options: EOSPlotOptions,
+    ) -> LinePlotSpec:
+        """Build the pressure curve implied by an E-V fit."""
+        if self.record.request.domain is not EOSFitDomain.ENERGY_VOLUME:
+            raise ValueError("pressure reconstruction plot requires an E-V fit")
+        volume = diagnostic.columns["volume"]
+        curve_x = self._curve_grid(
+            volume,
+            diagnostic.columns["included"],
+            positive=True,
+            points=options.curve_points,
+        )
+        calculated = self._calculator.calculate(
+            volume=curve_x,
+            propagate_uncertainty=False,
+        )
+        series = [
+            PlotSeries(
+                key="eos_pressure",
+                label="EOS pressure",
+                x=curve_x,
+                y=calculated.columns["pressure"],
+                style=PlotSeriesStyle(
+                    color=options.curve_color,
+                    line_width=options.curve_width,
+                ),
+            )
+        ]
+        if "source_pressure" in diagnostic.columns:
+            series.extend(
+                self._observation_series(
+                    volume,
+                    diagnostic.columns["source_pressure"],
+                    diagnostic,
+                    options,
+                    x_error=self._input_error("volume"),
+                    y_error=self._input_error("pressure"),
+                )
+            )
+        return self._line_spec(
+            key="pressure",
+            title=f"{self._title_name()}: pressure from E(V)",
+            x_name="volume",
+            x_unit=diagnostic.units.get("volume"),
+            y_name="pressure",
+            y_unit="GPa",
+            series=series,
+            options=options,
+        )
+
+
     def _build_residual_specs(
         self,
         diagnostic: EOSDiagnosticResult,
@@ -320,6 +400,8 @@ class EOSPlotter:
             raise ValueError(f"{y_name.replace('_', ' ')} is unavailable")
         if request.domain is EOSFitDomain.PRESSURE_VOLUME:
             x_names = ["observed_pressure"]
+        elif request.domain is EOSFitDomain.ENERGY_VOLUME:
+            x_names = ["volume"]
         elif request.domain is EOSFitDomain.VOLUME_TEMPERATURE:
             x_names = ["temperature"]
         elif request.domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE:

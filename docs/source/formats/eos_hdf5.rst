@@ -76,12 +76,16 @@ Schema overview
            /provenance
        /state_events/000001
            /metadata
+       /current/ev/energy
        /current/pv/volume
        /current/pv/a
        /current/vt/volume
        ...
 
    /results
+       /accepted/ev/energy
+           /request
+           /result
        /accepted/pv/volume
            /request
            /result
@@ -157,6 +161,26 @@ request and result plus the source ``record_id``. This controlled duplication
 is intentional: readers and future calculators can access the current EOS
 without replaying the complete session history. The immutable source record
 remains authoritative.
+
+For an ``ev/energy`` record, the persisted result includes the fitted physical
+parameters and predictions for energy, EOS-derived pressure, bulk modulus, and
+its first and second pressure derivatives at the sampled volumes.  The metadata
+records ``P(V)=-dE/dV`` explicitly so downstream readers do not infer the
+pressure semantics from filenames or plot labels.
+
+If the source dataset contains a complete lattice path, the same result also
+persists the primary theoretical structural response: equilibrium cell lengths,
+``eta_i = d ln(l_i) / d ln(V)``, axial moduli ``M_i = K/eta_i``, propagated
+uncertainties, and the covariance/provenance of the shared structural path.
+The input dataset retains ``crystal_reference``, ``cell_multiplicity``, crystal
+system, and reference space-group metadata.
+
+When an optional ``axial_model`` is requested, its Angel-style secondary fits
+are stored in result metadata together with the complete covariance matrix of
+the Energy-EOS-derived pressure vector.  The stored method label states that
+the current secondary WLS fit uses only marginal pressure uncertainties; this
+prevents downstream code from mistaking the present diagonal approximation for
+a generalized least-squares fit.
 
 Python API
 ----------

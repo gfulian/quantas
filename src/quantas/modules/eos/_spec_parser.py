@@ -23,6 +23,7 @@ _ALLOWED_SECTIONS = {
     "input",
     "batch",
     "defaults",
+    "defaults.ev",
     "defaults.pv",
     "defaults.vt",
     "defaults.pvt",
@@ -66,6 +67,7 @@ _JOB_KEYS = (
         "domain",
         "targets",
         "model",
+        "axial_model",
         "pv_model",
         "vt_model",
         "coupling",
@@ -74,6 +76,7 @@ _JOB_KEYS = (
     | _MGD_MODEL_KEYS
 )
 _DOMAIN_KEYS = {
+    "defaults.ev": _COMMON_FIT_KEYS | {"model", "axial_model"},
     "defaults.pv": _COMMON_FIT_KEYS | {"model"},
     "defaults.vt": _COMMON_FIT_KEYS | {"model"},
     "defaults.pvt": (
@@ -297,6 +300,7 @@ def _validate_key(
     if key.lower().startswith(_PARAMETER_PREFIXES):
         if section in {
             "defaults",
+            "defaults.ev",
             "defaults.pv",
             "defaults.vt",
             "defaults.pvt",

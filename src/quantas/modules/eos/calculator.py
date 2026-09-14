@@ -12,6 +12,7 @@ from typing import Any, Callable
 import numpy as np
 from scipy.optimize import brentq
 
+from quantas.core.geometry import StructuralPathModel
 from quantas.core.physics.eos import (
     EOSModel,
     PressureEOS,
@@ -23,9 +24,11 @@ from quantas.core.physics.eos import (
 )
 
 from .archive import EOSArchive
+from .domains.ev import EnergyEOSFitModel
 from .domains.pv import axial_to_volume_parameters
 from .history import EOSFitRecord, EOSResultSlot
 from .models import EOSDataset, EOSFitDomain
+from .structural import build_lattice_volume_series
 from .domains.pvt import PVTEOSFitModel
 from .domains.vt import TemperatureEOSFitModel
 
@@ -151,6 +154,23 @@ class EOSCalculator:
             self._parameters.size,
         ):
             raise ValueError("EOS fit covariance does not match reported parameters")
+        self._ev_structural_path: StructuralPathModel | None = None
+        if (
+            self.record.request.domain is EOSFitDomain.ENERGY_VOLUME
+            and all(
+                self.dataset.has(name)
+                for name in ("volume", "a", "b", "c", "alpha", "beta", "gamma")
+            )
+        ):
+            series = build_lattice_volume_series(
+                self.dataset,
+                mask=self.record.request.mask,
+            )
+            self._ev_structural_path = StructuralPathModel(
+                series,
+                degree=3,
+                basis="sampled",
+            )
 
     @classmethod
     def from_archive(
@@ -231,6 +251,8 @@ class EOSCalculator:
         domain = self.record.request.domain
         if domain is EOSFitDomain.PRESSURE_VOLUME:
             evaluator = self._calculate_pv
+        elif domain is EOSFitDomain.ENERGY_VOLUME:
+            evaluator = self._calculate_ev
         elif domain is EOSFitDomain.VOLUME_TEMPERATURE:
             evaluator = self._calculate_vt
         elif domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE:
@@ -256,11 +278,22 @@ class EOSCalculator:
                 relative_step=relative_step,
             )
             warnings.extend(propagation_warnings)
+            if (
+                domain is EOSFitDomain.ENERGY_VOLUME
+                and self._ev_structural_path is not None
+            ):
+                self._add_ev_structural_fit_uncertainty(columns, uncertainties)
         metadata = {
             **metadata,
             "parameter_order": list(self._parameter_names),
             "uncertainty_method": (
-                "parameter-covariance-delta" if uncertainties else "none"
+                "parameter-covariance-delta+structural-path"
+                if (
+                    uncertainties
+                    and domain is EOSFitDomain.ENERGY_VOLUME
+                    and self._ev_structural_path is not None
+                )
+                else ("parameter-covariance-delta" if uncertainties else "none")
             ),
             "relative_parameter_step": float(relative_step),
             "source_dataset_id": self.record.dataset_id,
@@ -274,6 +307,106 @@ class EOSCalculator:
             uncertainties=uncertainties,
             metadata=metadata,
             warnings=tuple(dict.fromkeys(warnings)),
+        )
+
+    def _calculate_ev(
+        self,
+        parameters: np.ndarray,
+        *,
+        pressure: np.ndarray | float | None,
+        volume: np.ndarray | float | None,
+        temperature: np.ndarray | float | None,
+    ) -> tuple[dict[str, np.ndarray], dict[str, str], dict[str, Any], list[str]]:
+        """Evaluate an integrated E-V fit in forward or inverse form."""
+        if temperature is not None:
+            raise ValueError("temperature is not used by an E-V EOS record")
+        if (pressure is None) == (volume is None):
+            raise ValueError(
+                "E-V calculation requires exactly one of pressure or volume"
+            )
+        request = self.record.request
+        model = request.model
+        assert isinstance(model, EOSModel)
+        adapter = EnergyEOSFitModel(
+            model,
+            energy_unit=self.dataset.units.get("energy", "Ha"),
+            volume_unit=self.dataset.units.get("volume", "angstrom^3"),
+            pressure_unit="GPa",
+        )
+        if pressure is not None:
+            p = self._vector(pressure, "pressure")
+            v = np.asarray(
+                [
+                    self._ev_volume_at_pressure(
+                        adapter, parameters, float(item)
+                    )
+                    for item in p
+                ],
+                dtype=np.float64,
+            )
+            input_mode = "pressure"
+        else:
+            v = self._positive_vector(volume, "volume")
+            p = adapter.pressure(v, parameters)
+            input_mode = "volume"
+        energy = adapter.evaluate(v, parameters)
+        bulk = adapter.bulk_modulus(v, parameters)
+        kp = adapter.bulk_modulus_derivative(v, parameters)
+        kpp = adapter.bulk_modulus_second_derivative(v, parameters)
+        extrapolated = self._outside_sampled_range(v, "volume")
+        columns = {
+            "pressure": np.asarray(p, dtype=np.float64),
+            "volume": np.asarray(v, dtype=np.float64),
+            "energy": np.asarray(energy, dtype=np.float64),
+            "bulk_modulus": np.asarray(bulk, dtype=np.float64),
+            "bulk_modulus_derivative": np.asarray(kp, dtype=np.float64),
+            "bulk_modulus_second_derivative": np.asarray(kpp, dtype=np.float64),
+            "extrapolated": extrapolated.astype(np.float64),
+        }
+        units = {
+            "pressure": "GPa",
+            "volume": self.dataset.units.get("volume", "angstrom^3"),
+            "energy": self.dataset.units.get("energy", "Ha"),
+            "bulk_modulus": "GPa",
+            "bulk_modulus_derivative": "1",
+            "bulk_modulus_second_derivative": "GPa^-1",
+            "extrapolated": "1",
+        }
+        structural_metadata: dict[str, Any] | None = None
+        if self._ev_structural_path is not None:
+            response = self._ev_structural_path.log_volume_response(
+                v,
+                include_fit_uncertainty=False,
+            )
+            cell = np.asarray(response.lattice_parameters, dtype=np.float64).reshape(
+                v.size, 6
+            )
+            eta = np.asarray(
+                response.logarithmic_length_response,
+                dtype=np.float64,
+            ).reshape(v.size, 3)
+            axial_modulus = np.asarray(bulk, dtype=np.float64)[:, None] / eta
+            for index, axis in enumerate(("a", "b", "c")):
+                columns[f"structural_{axis}"] = cell[:, index]
+                columns[f"eta_{axis}"] = eta[:, index]
+                columns[f"M_{axis}"] = axial_modulus[:, index]
+                units[f"structural_{axis}"] = self.dataset.units.get(axis, "angstrom")
+                units[f"eta_{axis}"] = "1"
+                units[f"M_{axis}"] = "GPa"
+            structural_metadata = response.metadata
+        metadata: dict[str, Any] = {
+            "model": model.as_dict(),
+            "input_mode": input_mode,
+            "relationship": "energy(volume)",
+            "pressure_relation": "P(V)=-dE/dV",
+        }
+        if structural_metadata is not None:
+            metadata["structural_response"] = structural_metadata
+        return (
+            columns,
+            units,
+            metadata,
+            self._extrapolation_warnings(extrapolated),
         )
 
     def _calculate_pv(
@@ -599,7 +732,11 @@ class EOSCalculator:
         if pressure is not None:
             independent_columns.add("pressure")
         if volume is not None:
-            independent_columns.add(self.record.request.target)
+            independent_columns.add(
+                "volume"
+                if self.record.request.domain is EOSFitDomain.ENERGY_VOLUME
+                else self.record.request.target
+            )
         if temperature is not None:
             independent_columns.add("temperature")
         property_names = [
@@ -660,6 +797,61 @@ class EOSCalculator:
             variance = np.einsum("ij,jk,ik->i", jacobian, self._covariance, jacobian)
             uncertainties[name] = np.sqrt(np.clip(variance, 0.0, None))
         return uncertainties, warnings
+
+    def _add_ev_structural_fit_uncertainty(
+        self,
+        columns: dict[str, np.ndarray],
+        uncertainties: dict[str, np.ndarray],
+    ) -> None:
+        """Add independent structural-path covariance to E-V uncertainties.
+
+        Parameters
+        ----------
+        columns : dict
+            Evaluated E-V property columns, including volume and structural
+            response quantities.
+        uncertainties : dict
+            Mutable one-sigma uncertainty mapping already containing any
+            EnergyEOS parameter-covariance contribution.
+        """
+        if self._ev_structural_path is None:
+            return
+        volumes = np.asarray(columns["volume"], dtype=np.float64)
+        response = self._ev_structural_path.log_volume_response(
+            volumes,
+            include_fit_uncertainty=True,
+        )
+        covariance = response.covariance
+        if covariance is None:
+            return
+        covariance_array = np.asarray(covariance, dtype=np.float64).reshape(
+            volumes.size, 6, 6
+        )
+        if not np.all(np.isfinite(covariance_array)):
+            return
+        eta = np.asarray(
+            response.logarithmic_length_response, dtype=np.float64
+        ).reshape(volumes.size, 3)
+        bulk = np.asarray(columns["bulk_modulus"], dtype=np.float64)
+        for index, axis in enumerate(("a", "b", "c")):
+            axis_sigma = np.sqrt(np.clip(covariance_array[:, index, index], 0.0, None))
+            eta_sigma = np.sqrt(
+                np.clip(covariance_array[:, 3 + index, 3 + index], 0.0, None)
+            )
+            modulus_sigma = np.abs(bulk / eta[:, index] ** 2) * eta_sigma
+            for name, structural_sigma in (
+                (f"structural_{axis}", axis_sigma),
+                (f"eta_{axis}", eta_sigma),
+                (f"M_{axis}", modulus_sigma),
+            ):
+                current = uncertainties.get(name)
+                if current is None:
+                    uncertainties[name] = structural_sigma
+                else:
+                    uncertainties[name] = np.sqrt(
+                        np.asarray(current, dtype=np.float64) ** 2
+                        + structural_sigma**2
+                    )
 
     def _pvt_bulk_pressure_derivatives(
         self,
@@ -831,6 +1023,51 @@ class EOSCalculator:
             lower,
         )
         return (k_upper - k_lower) / (upper - lower)
+
+    @staticmethod
+    def _ev_volume_at_pressure(
+        adapter: EnergyEOSFitModel,
+        parameters: np.ndarray,
+        pressure: float,
+    ) -> float:
+        """Solve the E-V pressure derivative for volume at one pressure."""
+        values = dict(zip(adapter.parameter_names, parameters, strict=True))
+        centre = float(values["V0"])
+        target = float(pressure)
+
+        def residual(value: float) -> float:
+            result = adapter.pressure(
+                np.asarray([value], dtype=np.float64), parameters
+            )
+            return float(result[0]) - target
+
+        f_centre = residual(centre)
+        if np.isclose(f_centre, 0.0, atol=1.0e-12, rtol=0.0):
+            return centre
+        lower = upper = centre
+        f_lower = f_upper = f_centre
+        for _ in range(96):
+            candidate = max(lower / 1.25, np.nextafter(0.0, 1.0))
+            try:
+                f_candidate = residual(candidate)
+            except ValueError:
+                f_candidate = f_lower
+            if f_candidate * f_lower < 0.0:
+                return float(
+                    brentq(residual, candidate, lower, xtol=1.0e-12, rtol=1.0e-12)
+                )
+            lower, f_lower = candidate, f_candidate
+            candidate = upper * 1.25
+            try:
+                f_candidate = residual(candidate)
+            except ValueError:
+                f_candidate = f_upper
+            if f_upper * f_candidate < 0.0:
+                return float(
+                    brentq(residual, upper, candidate, xtol=1.0e-12, rtol=1.0e-12)
+                )
+            upper, f_upper = candidate, f_candidate
+        raise ValueError(f"could not bracket E-V EOS volume at pressure {pressure:g}")
 
     def _volume_at_pressure(
         self,

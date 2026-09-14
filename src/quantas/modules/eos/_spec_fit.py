@@ -369,6 +369,8 @@ def _allowed_parameter_names(
             if target == "volume"
             else ("M0", "MP", "MPP", "L0")
         )
+    if domain is EOSFitDomain.ENERGY_VOLUME:
+        return ("E0", "K0", "KP", "KPP", "V0")
     if domain is EOSFitDomain.VOLUME_TEMPERATURE:
         return temperature_parameter_names(
             model,

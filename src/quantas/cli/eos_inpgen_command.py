@@ -66,6 +66,17 @@ from quantas.models import ReportTable
     show_default=True,
     help="Human-readable dataset title.",
 )
+@grouped_option(
+    "--crystal-reference",
+    group="Metadata",
+    type=click.Choice(["primitive", "crystallographic"], case_sensitive=False),
+    default="primitive",
+    show_default=True,
+    help=(
+        "Normalize V, E, and lattice parameters to the primitive or "
+        "crystallographic cell."
+    ),
+)
 def inpgen(
     source: Path,
     outfile: Path,
@@ -73,6 +84,7 @@ def inpgen(
     interface: str,
     is_list: bool,
     jobname: str,
+    crystal_reference: str,
 ) -> None:
     """Generate an Energy EOS dataset from electronic-structure output.
 
@@ -94,6 +106,7 @@ def inpgen(
             interface=cast(eos_api.InputInterface, interface.lower()),
             is_list=is_list,
             jobname=jobname,
+            crystal_reference=crystal_reference,
         )
         dataset = eos_api.read_input(written)
     except Exception as exc:
@@ -114,6 +127,14 @@ def inpgen(
                 ["Volume minimum (Å³)", float(volume.min())],
                 ["Volume maximum (Å³)", float(volume.max())],
                 ["Energy unit", dataset.units.get("energy", "Ha")],
+                [
+                    "Crystal reference",
+                    dataset.metadata.get("crystal_reference", "unspecified"),
+                ],
+                [
+                    "Crystal system",
+                    dataset.metadata.get("crystal_system", "unspecified"),
+                ],
                 ["Minimum-energy volume (Å³)", float(volume[int(energy.argmin())])],
             ],
         )

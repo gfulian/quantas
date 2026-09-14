@@ -323,7 +323,7 @@ def eos_input_summary_table(dataset: EOSDataset, archive_path: Any) -> ReportTab
     """Return input identity, size, units, and uncertainty availability."""
     measured = [
         name
-        for name in ("pressure", "temperature", "volume", "a", "b", "c")
+        for name in ("pressure", "temperature", "volume", "energy", "a", "b", "c")
         if dataset.has(name)
     ]
     uncertain = [name for name in measured if dataset.has(f"sigma_{name}")]
@@ -340,6 +340,17 @@ def eos_input_summary_table(dataset: EOSDataset, archive_path: Any) -> ReportTab
             if dataset.crystal_system is None
             else dataset.crystal_system.value,
         ],
+        ["Crystal reference", dataset.metadata.get("crystal_reference", "unspecified")],
+        [
+            "Space group",
+            (
+                "unknown"
+                if dataset.metadata.get("space_group_number") is None
+                else f"{dataset.metadata.get('space_group_symbol', '')} "
+                f"({dataset.metadata['space_group_number']})".strip()
+            ),
+        ],
+        ["Cell multiplicity", dataset.metadata.get("cell_multiplicity", "unspecified")],
         ["Available quantities", ", ".join(measured) or "none"],
         ["Standard uncertainties", ", ".join(uncertain) or "none"],
         ["Output archive", str(archive_path)],
@@ -351,7 +362,7 @@ def eos_data_table(dataset: EOSDataset, *, max_rows: int | None = None) -> Repor
     """Return only input quantities actually present in the dataset."""
     available = [
         name
-        for name in ("pressure", "temperature", "volume", "a", "b", "c")
+        for name in ("pressure", "temperature", "volume", "energy", "a", "b", "c")
         if dataset.has(name)
     ]
     count = dataset.npoints if max_rows is None else min(dataset.npoints, max_rows)
@@ -384,6 +395,7 @@ def eos_data_table(dataset: EOSDataset, *, max_rows: int | None = None) -> Repor
         "pressure": "eos_pressure",
         "temperature": "eos_temperature",
         "volume": "eos_structural",
+        "energy": "energy_ha",
         "a": "eos_structural",
         "b": "eos_structural",
         "c": "eos_structural",
@@ -450,7 +462,7 @@ def eos_uncertainty_table(
     """Return standard uncertainties for measured quantities that exist."""
     available = [
         name
-        for name in ("pressure", "temperature", "volume", "a", "b", "c")
+        for name in ("pressure", "temperature", "volume", "energy", "a", "b", "c")
         if dataset.has(f"sigma_{name}")
     ]
     count = dataset.npoints if max_rows is None else min(dataset.npoints, max_rows)
@@ -559,6 +571,10 @@ def eos_requested_fit_table(job: EOSBatchJob, index: int) -> ReportTable:
         ["Domain", domain_label(request.domain)],
         ["Quantity", target_label(request.target)],
         ["Formulation", model_label(request.model)],
+        [
+            "Secondary axial formulation",
+            "none" if request.axial_model is None else model_label(request.axial_model),
+        ],
         ["Solver", solver_label(_solver_method(request))],
         ["Solver options", _compact_mapping(solver_options)],
         ["Parameter constraints", constraint_text],
@@ -584,8 +600,14 @@ def eos_job_tables(
     tables: list[ReportTable] = [
         eos_job_configuration_table(job),
         eos_parameter_table(job.result),
-        eos_diagnostics_table(job, debug=debug),
     ]
+    structural = eos_energy_structural_response_table(job.result)
+    if structural is not None:
+        tables.append(structural)
+    secondary = eos_secondary_axial_table(job.result)
+    if secondary is not None:
+        tables.append(secondary)
+    tables.append(eos_diagnostics_table(job, debug=debug))
     if debug:
         tables.extend(eos_solver_debug_tables(job))
     if EOSReportDetail(detail) is EOSReportDetail.EXTENDED and job.result.fit.success:
@@ -620,6 +642,10 @@ def eos_job_configuration_table(job: EOSBatchJobResult) -> ReportTable:
         ["Domain", domain_label(request.domain)],
         ["Quantity", target_label(request.target)],
         ["Formulation", model_label(request.model)],
+        [
+            "Secondary axial formulation",
+            "none" if request.axial_model is None else model_label(request.axial_model),
+        ],
         ["Solver", solver_label(_solver_method(request))],
         [
             "Selected observations",
@@ -631,6 +657,124 @@ def eos_job_configuration_table(job: EOSBatchJobResult) -> ReportTable:
     ]
     return ReportTable(
         f"EOS fit configuration — {job.job_id}", ["Property", "Value"], rows
+    )
+
+
+def eos_energy_structural_response_table(
+    result: EOSFitResult,
+) -> ReportTable | None:
+    """Return primary theoretical axial response derived from an E-V fit.
+
+    Parameters
+    ----------
+    result : EOSFitResult
+        Completed EOS result.
+
+    Returns
+    -------
+    ReportTable or None
+        Equilibrium length, logarithmic volume response, and axial modulus for
+        each independent crystallographic axis, or ``None`` when no structural
+        response is available.
+    """
+    metadata = result.metadata.get("structural_response")
+    if not isinstance(metadata, dict):
+        return None
+    axes = metadata.get("independent_axes")
+    if not isinstance(axes, list) or not axes:
+        return None
+    rows: list[list[Any]] = []
+    for axis in axes:
+        name = str(axis)
+        for quantity, key, sigma_key, unit in (
+            (f"{name}0", f"{name}0", f"sigma_{name}0", "angstrom"),
+            (f"eta_{name}", f"eta_{name}", f"sigma_eta_{name}", "1"),
+            (f"M_{name}", f"M_{name}", f"sigma_M_{name}", "GPa"),
+        ):
+            if key not in result.derived:
+                continue
+            rows.append(
+                [
+                    quantity,
+                    result.derived[key],
+                    result.derived.get(sigma_key),
+                    unit,
+                ]
+            )
+    if not rows:
+        return None
+    return ReportTable(
+        "EnergyEOS structural response",
+        ["Quantity", "Value", "E.S.D.", "Unit"],
+        rows,
+        metadata={
+            "column_formats": [None, "eos_parameter", "eos_uncertainty", None],
+            "column_alignments": ["left", "right", "right", "left"],
+            "notes": [
+                "M_i = K/(d ln l_i / d ln V) from the shared StructuralPathModel.",
+                str(metadata.get("uncertainty_assumption", "")),
+            ],
+        },
+    )
+
+
+def eos_secondary_axial_table(result: EOSFitResult) -> ReportTable | None:
+    """Return optional Angel-style secondary axial fits for an E-V result.
+
+    Parameters
+    ----------
+    result : EOSFitResult
+        Completed EnergyEOS result.
+
+    Returns
+    -------
+    ReportTable or None
+        One row per reported secondary axial parameter, or ``None`` when the
+        optional analysis was not requested.
+    """
+    metadata = result.metadata.get("secondary_axial_fits")
+    if not isinstance(metadata, dict):
+        return None
+    fits = metadata.get("fits")
+    if not isinstance(fits, dict):
+        return None
+    rows: list[list[Any]] = []
+    for axis, payload in fits.items():
+        if not isinstance(payload, dict):
+            continue
+        values = payload.get("parameter_values", {})
+        errors = payload.get("parameter_errors", {})
+        if not isinstance(values, dict) or not isinstance(errors, dict):
+            continue
+        for name, value in values.items():
+            unit = {
+                "M0": "GPa",
+                "MPP": "GPa^-1",
+                "L0": "angstrom",
+            }.get(name, "1")
+            rows.append(
+                [
+                    str(axis),
+                    parameter_label(str(name)),
+                    float(value),
+                    errors.get(name),
+                    unit,
+                ]
+            )
+    if not rows:
+        return None
+    return ReportTable(
+        "Secondary axial EOS fits",
+        ["Axis", "Parameter", "Value", "E.S.D.", "Unit"],
+        rows,
+        metadata={
+            "column_formats": [None, None, "eos_parameter", "eos_uncertainty", None],
+            "column_alignments": ["left", "left", "right", "right", "left"],
+            "notes": [
+                "Pressures are derived from the primary EnergyEOS fit.",
+                str(metadata.get("covariance_note", "")),
+            ],
+        },
     )
 
 
@@ -1072,7 +1216,27 @@ def eos_observed_calculated_table(
     )
     request = result.request
     mask = dataset.selection_mask(request.mask)
-    if request.domain.value == "pv":
+    if request.domain.value == "ev":
+        volume = np.asarray(dataset.column("volume")[mask], dtype=float)
+        observed = np.asarray(dataset.column("energy")[mask], dtype=float)
+        calculated = np.asarray(result.predictions.get("energy", fitted), dtype=float)[mask]
+        columns = [
+            "Volume",
+            "Energy observed",
+            "Energy calculated",
+            "Residual",
+        ]
+        rows = [
+            [volume[i], observed[i], calculated[i], observed[i] - calculated[i]]
+            for i in range(volume.size)
+        ]
+        formats = [
+            "eos_structural",
+            "energy_ha",
+            "energy_ha",
+            "eos_residual",
+        ]
+    elif request.domain.value == "pv":
         coordinate = np.asarray(dataset.column(request.target)[mask], dtype=float)
         pressure = np.asarray(dataset.column("pressure")[mask], dtype=float)
         columns = [

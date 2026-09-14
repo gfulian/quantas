@@ -8,6 +8,11 @@ historical import modules ``quantas.modules.eos.fitting``,
 ``quantas.modules.eos.pvt_fitting`` as compatibility facades.
 """
 
+from .ev import (
+    EnergyEOSFitModel,
+    build_energy_parameter_map,
+    estimate_energy_parameters,
+)
 from .pv import (
     AxialEOSFitModel,
     PressureEOSFitModel,
@@ -32,15 +37,18 @@ from .vt import (
 
 __all__ = [
     "AxialEOSFitModel",
+    "EnergyEOSFitModel",
     "PressureEOSFitModel",
     "PVTEOSFitModel",
     "TemperatureEOSFitModel",
     "axial_to_volume_parameters",
     "build_axial_parameter_map",
+    "build_energy_parameter_map",
     "build_pressure_parameter_map",
     "build_pvt_parameter_map",
     "build_temperature_parameter_map",
     "estimate_axial_parameters",
+    "estimate_energy_parameters",
     "estimate_pressure_parameters",
     "estimate_pvt_parameters",
     "estimate_temperature_parameters",

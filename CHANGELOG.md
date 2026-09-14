@@ -9,6 +9,41 @@ public contract; they must still be documented and validated.
 
 ### Added
 
+- Added crystallographic-reference metadata to theoretical Energy EOS datasets.
+  ``CRYSTAL_REFERENCE`` distinguishes primitive and crystallographic cell
+  normalization, while ``CELL_MULTIPLICITY``, ``SYSTEM``, and optional space-group
+  metadata make the structural basis explicit.  CRYSTAL input generation can now
+  write either reference and scales energy and volume together when the
+  crystallographic cell is requested.
+- Added a shared lattice-only structural-path contract and logarithmic volume
+  response to ``StructuralPathModel``.  Energy EOS and QHA therefore reuse the
+  same volume-constrained lattice reconstruction instead of maintaining
+  workflow-specific axis interpolators.
+- Added theoretical axial response to accepted E--V fits.  Where a complete
+  lattice path is available, Quantas reports equilibrium crystallographic axes,
+  ``eta_i = d ln(l_i) / d ln(V)``, and axial moduli ``M_i = K/eta_i`` with
+  propagated EnergyEOS and structural-path uncertainty.
+- Added optional ``--axial-eos`` / ``axial_model`` analysis for comparison with
+  the Angel/EosFit axial parameterization.  The secondary fit uses pressures
+  derived from the primary EnergyEOS and the original sampled lattice axes; the
+  full derived-pressure covariance is persisted while the current WLS solver is
+  explicitly identified as using marginal pressure uncertainties only.
+- Promoted ``ev/energy`` to a public standalone EOS domain.  Static total-energy
+  datasets can now be fitted through ``quantas eos run --domain ev --eos`` and
+  the matching public API, persisted in the native EOS HDF5 archive, and reused
+  by the common diagnostics, calculator, reporting, and plotting surfaces.
+- Added the public Energy EOS parameter boundary ``E0`` [Ha], ``V0``
+  [angstrom^3], ``K0`` [GPa], ``KP`` [1], and ``KPP`` [GPa^-1].  Conversion to
+  the energy-density units used by the numerical core remains isolated in the
+  E--V domain adapter.
+- Added E--V post-fit pressure reconstruction and bulk properties.  Accepted
+  Energy EOS records expose analytical ``P(V) = -dE/dV``, ``K(V)``, ``K'(V)``,
+  and ``K''(V)``, support both volume-driven and pressure-driven calculation,
+  and provide fit, pressure, and residual plot inventories.
+- Added ``[defaults.ev]`` and ``targets = energy``/``all`` to the strict EOS
+  specification workflow, plus synchronized Energy EOS template, tutorial,
+  MgO example data, and public-API example material.
+
 - Added ``quantas eos inpgen`` and the matching ``quantas.api.eos.create_input``
   operation for collecting Energy EOS structure--energy data.  The initial
   CRYSTAL interface accepts static outputs, ordinary completed geometry
@@ -51,6 +86,10 @@ public contract; they must still be documented and validated.
 
 ### Changed
 
+- Updated EOS workflow, CLI, input/specification, archive, tutorial, validation,
+  project-state, and roadmap documentation to treat E--V as a first-class
+  public domain alongside P--V, V--T, and P--V--T.
+
 - Strengthened the backend-neutral ``StructureEnergySeries`` contract to reject
   mixed atom counts and chemical compositions.  CRYSTAL Energy EOS collection
   additionally requires one correction signature across sources and rejects
@@ -75,6 +114,11 @@ public contract; they must still be documented and validated.
 
 ### Fixed
 
+- Narrowed the resolved E--V ``E0`` invariant explicitly before converting it
+  to ``float`` and annotated EOS spec target resolution as ``tuple[str, ...]``.
+  These changes align static typing with runtime invariants and remove the four
+  mypy errors introduced while promoting the public Energy EOS workflow.
+
 - Documented the public EOS ``InputInterface`` and ``create_input`` symbols in
   the API reference, restoring exact ``__all__`` documentation coverage for the
   new Energy EOS input-generation surface.
@@ -84,6 +128,25 @@ public contract; they must still be documented and validated.
   regression check without changing any example data or numerical result.
 
 ### Validation
+
+- Added cubic and tetragonal structural-response characterization, including the
+  exact cubic identity ``eta_a = 1/3`` and ``M_a = 3 K`` and an SJEOS primary fit
+  followed by an independent BM3 axial refit.
+- Added a crystallographic normalization of the seven-volume MgO/PBE regression.
+  Primitive and crystallographic E--V fits recover identical intensive EOS
+  parameters, while ``E0`` and ``V0`` scale by four and the crystallographic
+  equilibrium axis is approximately ``a0 = 4.2222125 A``.
+- Added HDF5, calculator, report, spec, CLI, and CRYSTAL input-generation
+  characterization for the structural-response and secondary axial-EOS
+  contracts, including pressure-covariance provenance.
+- Added public Energy EOS workflow characterization for BM3, T3, and SJEOS on
+  DFT-scale absolute energies, WLS with explicit ``sigma_energy``, HDF5
+  round-trips, diagnostics, calculator inversion, plot inventory, CLI execution,
+  and specification resolution.
+- Added a seven-volume CRYSTAL/PBE MgO end-to-end regression.  Public BM3 E--V
+  fitting recovers approximately ``E0 = -275.173937178 Ha``, ``V0 =
+  18.817428245 A^3``, ``K0 = 178.761458 GPa``, ``KP = 3.815504``, and ``KPP =
+  -0.02091296 GPa^-1`` with an energy RMSE of about ``3.28e-6 Ha``.
 
 - Added CRYSTAL Energy EOS parser and input-generation tests covering static
   outputs, native EOS state matching, state/summary consistency, mixed-source

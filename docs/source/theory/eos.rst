@@ -382,9 +382,51 @@ energy--volume curve.
 At the current ``2.0.0b11`` checkpoint, the numerical core provides integrated
 forms for Murnaghan, Birch--Murnaghan orders 2--4, natural-strain
 Poirier--Tarantola orders 2--4, Vinet orders 2--3, modified Tait orders 2--4,
-and SJEOS.  The standalone public E--V workflow is being completed separately
-from these shared core equations; QHA and Thermoelasticity continue to consume the
-common numerical implementation rather than a frontend workflow.
+and SJEOS.  The standalone ``ev/energy`` workflow exposes these integrated
+models through the ordinary EOS fitting, HDF5, diagnostics, calculator, and
+plotting surfaces.  QHA and Thermoelasticity continue to consume the common
+numerical implementation rather than depending on the standalone workflow.
+
+Theoretical crystallographic response from E--V data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the E--V dataset also contains a complete lattice path, Quantas derives
+crystallographic response from the same fitted pressure relation instead of
+fitting a fictitious energy equation to :math:`a^3`, :math:`b^3`, or
+:math:`c^3`.  The shared The shared ``StructuralPathModel``
+represents crystal shape as a volume-constrained logarithmic stretch and
+provides
+
+.. math::
+
+   \eta_i(V)=\frac{\partial\ln l_i}{\partial\ln V},
+
+for :math:`l_i=a,b,c`.  Combining this geometrical response with the bulk
+modulus of the Energy EOS gives the axial modulus
+
+.. math::
+
+   M_i(V)=\frac{K(V)}{\eta_i(V)}.
+
+For a cubic crystal :math:`\eta_a=1/3`, so :math:`M_a=3K` exactly.  This route
+is model-independent at the workflow level: any integrated Energy EOS with an
+analytical pressure and bulk-modulus derivative, including SJEOS, can provide
+the primary axial response.
+
+The E--V parameter covariance and the structural-path fit covariance are
+propagated independently by first-order delta methods and added under an
+explicit zero cross-covariance assumption.  The assumption is recorded in the
+result metadata rather than being hidden by the reporting layer.
+
+An optional secondary Angel-style axial parameterization can then fit the
+derived pressures against :math:`l_i^3`.  This is a *secondary* representation
+of the theoretical path, not the definition of the primary axial response.  It
+is requested with a separate pressure-form EOS (for example BM3) and therefore
+can be combined with an Energy EOS such as SJEOS.  Because all derived pressure
+points share the covariance of the same E--V parameter vector, Quantas stores
+the complete pressure covariance matrix.  The current WLS solver consumes its
+marginal standard uncertainties only; this diagonal approximation is recorded
+explicitly until a full generalized least-squares backend is available.
 
 Integrated modified Tait equation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1047,6 +1089,8 @@ What Quantas provides
 
 Within the standalone EOS workflow, Quantas evaluates and analyzes:
 
+- integrated E--V forms of Murnaghan, Birch--Murnaghan, natural strain, Vinet,
+  modified Tait, and SJEOS where registered;
 - Murnaghan P--V;
 - Birch--Murnaghan P--V, orders 2--4;
 - natural-strain/Poirier--Tarantola P--V, orders 2--4;

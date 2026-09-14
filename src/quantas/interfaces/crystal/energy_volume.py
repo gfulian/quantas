@@ -43,11 +43,19 @@ class CrystalEnergyVolumeParseResult:
         ``"native_eos"``.
     corrections : tuple of str
         Canonical correction signature shared by all returned states.
+    primitive_to_crystallographic : ndarray or None
+        Constant CRYSTAL primitive-to-crystallographic transformation when
+        printed by the source output.
+    space_group_number : int or None
+        Explicit international space-group number printed by CRYSTAL, when
+        available.
     """
 
     series: StructureEnergySeries
     run_kind: str
     corrections: tuple[str, ...]
+    primitive_to_crystallographic: np.ndarray | None = None
+    space_group_number: int | None = None
 
 
 class CrystalEnergyVolumeReader:
@@ -126,6 +134,8 @@ class CrystalEnergyVolumeReader:
             series=series,
             run_kind=run_kind,
             corrections=corrections,
+            primitive_to_crystallographic=self.geometry.primitive_to_crystallographic(),
+            space_group_number=self.geometry.space_group_number(),
         )
 
     def _read_static(self) -> list[StructureEnergyPoint]:

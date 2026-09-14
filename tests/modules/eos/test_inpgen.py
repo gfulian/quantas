@@ -127,3 +127,60 @@ def test_cli_inpgen_writes_energy_dataset(tmp_path: Path) -> None:
     dataset = eos.read_input(target)
     assert dataset.npoints == 1
     assert dataset.column("volume")[0] == pytest.approx(18.8)
+
+
+def test_inpgen_crystal_reference_scales_energy_volume_and_lattice(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Primitive and crystallographic outputs use one consistent normalization."""
+    import numpy as np
+
+    from quantas.models.structures import SymmetryMetadata
+
+    symmetry = SymmetryMetadata(
+        space_group_number=123,
+        international_symbol="P4/mmm",
+        transformation_matrix=np.diag([0.5, 0.5, 1.0]),
+    )
+    monkeypatch.setattr(
+        "quantas.modules.eos.io.inpgen.analyze_symmetry",
+        lambda structure, symprec=1.0e-5: symmetry,
+    )
+    source = tmp_path / "single.out"
+    source.write_text(_static(18.8, -275.17, (12, 8)), encoding="utf-8")
+
+    primitive_path = eos.create_input(
+        source,
+        tmp_path / "primitive.dat",
+        crystal_reference="primitive",
+    )
+    crystallographic_path = eos.create_input(
+        source,
+        tmp_path / "crystallographic.dat",
+        crystal_reference="crystallographic",
+    )
+    primitive = eos.read_input(primitive_path)
+    crystallographic = eos.read_input(crystallographic_path)
+
+    assert primitive.metadata["crystal_reference"] == "primitive"
+    assert crystallographic.metadata["crystal_reference"] == "crystallographic"
+    assert primitive.metadata["cell_multiplicity"] == 4
+    assert crystallographic.metadata["cell_multiplicity"] == 4
+    assert crystallographic.metadata["crystal_system"] == "tetragonal"
+    assert crystallographic.metadata["space_group_number"] == 123
+    assert crystallographic.column("volume")[0] == pytest.approx(
+        4.0 * primitive.column("volume")[0]
+    )
+    assert crystallographic.column("energy")[0] == pytest.approx(
+        4.0 * primitive.column("energy")[0]
+    )
+    assert crystallographic.column("a")[0] == pytest.approx(
+        2.0 * primitive.column("a")[0]
+    )
+    assert crystallographic.column("b")[0] == pytest.approx(
+        2.0 * primitive.column("b")[0]
+    )
+    assert crystallographic.column("c")[0] == pytest.approx(
+        primitive.column("c")[0]
+    )

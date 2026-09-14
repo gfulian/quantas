@@ -12,7 +12,7 @@ import numpy as np
 from .models import EOSDataset, EOSFitDomain
 from .spec import EOSSpecError, _Entry
 
-_TARGETS = ("volume", "a", "b", "c")
+_TARGETS = ("volume", "energy", "a", "b", "c")
 
 
 def _resolve_targets(
@@ -46,17 +46,28 @@ def _resolve_targets(
             line=entry.line,
             section=section,
         )
+    resolved: tuple[str, ...]
     if parts == ("all",):
-        resolved = (
-            ("volume",)
-            if domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE
-            else tuple(name for name in _TARGETS if dataset.has(name))
-        )
+        if domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE:
+            resolved = ("volume",)
+        elif domain is EOSFitDomain.ENERGY_VOLUME:
+            resolved = ("energy",) if dataset.has("energy") else ()
+        else:
+            resolved = tuple(
+                name for name in _TARGETS if name != "energy" and dataset.has(name)
+            )
     else:
         resolved = parts
     if domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE and resolved != ("volume",):
         raise EOSSpecError(
             "P-V-T fitting currently supports only targets = volume",
+            source=source,
+            line=entry.line,
+            section=section,
+        )
+    if domain is EOSFitDomain.ENERGY_VOLUME and resolved != ("energy",):
+        raise EOSSpecError(
+            "E-V fitting requires targets = energy",
             source=source,
             line=entry.line,
             section=section,

@@ -71,6 +71,7 @@ EXPECTED_PUBLIC_SYMBOLS = {
         "BatchResult",
         "CalculationResult",
         "CovarianceScaling",
+        "CrystalReference",
         "CapabilityStatus",
         "DOMAIN_CAPABILITIES",
         "Dataset",

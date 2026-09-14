@@ -61,12 +61,29 @@ and sorted by volume.  This supports extending a native CRYSTAL EOS series with
 additional independently calculated compressed or expanded points.
 
 The generated table contains ``V A B C ALPHA BETA GAMMA E`` and explicit units.
-It remains independent of the later model, solver, constraints, and specfile.
+It also records ``SYSTEM``, the reference space group, ``CRYSTAL_REFERENCE``,
+and ``CELL_MULTIPLICITY``.  The default reference is ``primitive``.  Use
+``--crystal-reference crystallographic`` to apply one constant conventional-cell
+transformation and scale energy and volume by the same cell multiplicity.  The
+table remains independent of the later model, solver, constraints, and specfile.
 
 Recommended sequence
 --------------------
 
-For one homogeneous fit:
+For a static Energy EOS generated from electronic-structure outputs:
+
+.. code-block:: console
+
+   quantas eos inpgen crystal-files.txt --interface crystal --list -o mgo_ev.dat
+   quantas eos run mgo_ev.dat --domain ev --eos BM3 -o mgo_ev.hdf5
+   # Optional pressure-form parameterization of the derived axial path:
+   quantas eos run mgo_ev.dat --domain ev --eos SJ --axial-eos BM3 \
+      -o mgo_ev_axial.hdf5 --force
+   quantas eos diagnose mgo_ev.hdf5 --slot ev/energy
+   quantas eos calculate mgo_ev.hdf5 --slot ev/energy --pressure-range 0:20:2
+   quantas eos plot mgo_ev.hdf5 --slot ev/energy
+
+For one homogeneous P--V fit:
 
 .. code-block:: console
 
@@ -102,7 +119,9 @@ Important option families
 -------------------------
 
 * domain and target options define the scientific slot;
-* P--V, V--T, and P--V--T options define the model rather than solver behavior;
+* E--V, P--V, V--T, and P--V--T options define the model rather than solver behavior;
+* ``--axial-eos`` is an optional secondary pressure-form parameterization for
+  an E--V structural path; it does not replace the primary Energy EOS;
 * MGD normalization is part of the physical model and must match the volume
   basis;
 * ``--fix``, ``--initial``, and ``--bound`` have different scientific meanings;
@@ -113,7 +132,7 @@ Important option families
   make the batch successful.
 
 See :doc:`../workflows/eos` for implementation and record semantics,
-:doc:`../tutorials/eos` for the P--V/V--T/P--V--T course, and
+:doc:`../tutorials/eos` for the E--V/P--V/V--T/P--V--T course, and
 :doc:`../formats/eos_spec` plus :doc:`../formats/eos_hdf5` for persistence.
 
 Generated command reference

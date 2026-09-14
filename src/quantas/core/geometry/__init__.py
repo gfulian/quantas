@@ -38,6 +38,7 @@ from .spherical import (
 )
 
 from .thermal_expansion import (
+    StructuralLogVolumeResponse,
     StructuralPathEvaluation,
     StructuralPathModel,
     axial_expansion,
@@ -45,6 +46,7 @@ from .thermal_expansion import (
 )
 
 __all__ = [
+    "StructuralLogVolumeResponse",
     "StructuralPathEvaluation",
     "StructuralPathModel",
     "axial_expansion",

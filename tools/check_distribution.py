@@ -186,7 +186,7 @@ capabilities = {
     item.domain.value: item.status.value for item in eos.DOMAIN_CAPABILITIES
 }
 assert capabilities["pv"] == "public"
-assert capabilities["ev"] == "core_only"
+assert capabilities["ev"] == "public"
 assert callable(thermoelasticity.run_context)
 assert callable(thermoelasticity.write_result)
 assert thermoelasticity.Options(report_level="debug").solver_debug
