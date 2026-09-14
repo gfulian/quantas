@@ -183,7 +183,7 @@ Axial thermal expansion
 -----------------------
 
 The specification also fits the tetragonal ``a`` and ``c`` axes.  Quantas uses
-the same cubed-length convention as EosFit and converts results back to physical
+the standard cubed-length linear-EOS convention and converts results back to physical
 lengths and linear expansion coefficients.
 
 .. code-block:: text

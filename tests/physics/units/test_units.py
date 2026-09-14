@@ -71,3 +71,10 @@ def test_energy_per_temperature_interval_conversion():
         "J/mol/Fahrenheit",
     )
     np.testing.assert_allclose(result, 5.0 / 9.0)
+
+
+def test_plural_qm_unit_aliases_are_supported():
+    np.testing.assert_allclose(convert_energy(1.0, "hartrees", "Ha"), 1.0)
+    np.testing.assert_allclose(convert_energy(1.0, "electronVolts", "eV"), 1.0)
+    np.testing.assert_allclose(convert_energy(1.0, "Rydbergs", "Ry"), 1.0)
+    np.testing.assert_allclose(convert_length(1.0, "bohrs", "bohr"), 1.0)

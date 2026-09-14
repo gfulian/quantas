@@ -24,15 +24,33 @@ from quantas.modules.eos.fitting import PressureEOSFitModel as FacadePVModel
 DATA = Path(__file__).with_name("data")
 
 
-def test_public_facade_declares_ev_as_core_only() -> None:
+def test_public_facade_declares_ev_as_public_workflow() -> None:
     assert MODULE_CONTRACT.name == "eos"
     assert MODULE_CONTRACT.archive_schema_version == "1.1"
     assert MODULE_CONTRACT.capability("pv").fitting
 
     energy = eos.domain_capability("ev")
-    assert energy.status is eos.CapabilityStatus.CORE_ONLY
-    assert not energy.fitting
-    assert "QHA" in energy.note
+    assert energy.status is eos.CapabilityStatus.PUBLIC
+    assert energy.fitting
+    assert energy.calculator
+    assert energy.diagnostics
+    assert energy.plotting
+    assert "energy-volume" in energy.note.lower()
+
+
+def test_public_reader_forwards_energy_unit_override(tmp_path: Path) -> None:
+    """The public EOS facade preserves energy-unit normalization."""
+    source = tmp_path / "energy.dat"
+    source.write_text(
+        "UNITS E=eV V=angstrom^3\nFORMAT V E\n10.0 2.0\n11.0 4.0\n",
+        encoding="utf-8",
+    )
+
+    dataset = eos.read_input(source, energy_unit="Ry")
+
+    assert dataset.units["energy"] == "Ha"
+    assert dataset.raw_units["energy"] == "Ry"
+    assert dataset.column("energy").tolist() == pytest.approx([1.0, 2.0])
 
 
 def test_public_eos_namespace_is_the_single_application_facade() -> None:
@@ -125,5 +143,5 @@ def test_batch_summary_is_sorted_and_reports_human_units(tmp_path: Path) -> None
     ]
     assert "BM3" in fit_summary.rows[0][2]
     assert fit_summary.rows[0][3] == "Ordinary least squares"
-    assert any(row[-1] == "Å" for row in parameter_summary.rows)
+    assert any(row[-1] == "angstrom" for row in parameter_summary.rows)
     assert any(row[-1] == "GPa" for row in parameter_summary.rows)

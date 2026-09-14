@@ -5,7 +5,7 @@ import pytest
 
 from quantas.core.physics.eos import EOSState, EnergyEOS, FittedEnergyEOS
 
-EOS_NAMES = ["murnaghan", "birchmurnaghan", "poirier-tarantola", "vinet"]
+EOS_NAMES = ["murnaghan", "birchmurnaghan", "poirier-tarantola", "vinet", "sjeos"]
 PARAMETERS = np.array([-100.0, 0.55, 4.2, 72.0], dtype=np.float64)
 SAMPLED_VOLUMES = np.linspace(66.0, 78.0, 13)
 
@@ -167,6 +167,7 @@ def test_fitted_bm2_exposes_complete_parameter_uncertainties() -> None:
         ("PT4", [-100.0, 0.55, 4.2, -0.04, 72.0], 4.2),
         ("V2", [-100.0, 0.55, 72.0], 1.0),
         ("V3", [-100.0, 0.55, 4.2, 72.0], 4.2),
+        ("SJ", [-100.0, 0.55, 4.2, 72.0], 4.2),
     ],
 )
 def test_integrated_and_pressure_eos_share_the_same_reference_state(
@@ -195,6 +196,7 @@ def test_integrated_and_pressure_eos_share_the_same_reference_state(
         ("PT4", [-100.0, 0.55, 4.2, -0.04, 72.0]),
         ("V2", [-100.0, 0.55, 72.0]),
         ("V3", [-100.0, 0.55, 4.2, 72.0]),
+        ("SJ", [-100.0, 0.55, 4.2, 72.0]),
     ],
 )
 def test_pressure_solution_matches_direct_enthalpy_minimization(tag, parameters):

@@ -32,6 +32,7 @@ def test_template_is_complete_commented_and_resolvable() -> None:
         "[input]",
         "[batch]",
         "[defaults]",
+        "[defaults.ev]",
         "[defaults.pv]",
         "[defaults.vt]",
         "[defaults.pvt]",
@@ -40,6 +41,7 @@ def test_template_is_complete_commented_and_resolvable() -> None:
     ):
         assert section in text
     for option in (
+        "energy_unit",
         "pressure_unit",
         "length_unit",
         "temperature_unit",
@@ -70,6 +72,13 @@ def test_template_is_complete_commented_and_resolvable() -> None:
         "max_data_rows",
     ):
         assert option in text
+
+    assert "[job static-energy]" in text
+    assert "domain = ev" in text
+    assert "targets = energy" in text
+    assert "secondary pressure-form axial EOS fit" in text
+    assert "Angel-style" not in text
+    assert "EosFit-style" not in text
 
     root = Path(__file__).parents[3]
     distributed = root / "examples" / "eos" / "eos.spec"

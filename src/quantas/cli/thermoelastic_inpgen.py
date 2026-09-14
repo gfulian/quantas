@@ -13,10 +13,10 @@ import click
 from quantas.cli.contracts import NUMERICAL_GROUP, OUTPUT_GROUP, SCIENTIFIC_GROUP
 from quantas.cli.grouped_options import GroupedCommand, grouped_option
 from quantas.cli.messages import quantas_finish, quantas_title
+from quantas.cli.eos_model_type import ENERGY_EOS_MODEL
 from quantas.cli.output import CLIOutput
 from quantas.cli.thermoelastic_common import require_output_replacement
 from quantas.models import ReportTable
-from quantas.api import qha as qha_api
 from quantas.api.thermoelasticity import (
     InputInterface,
     PressureSourcePolicy,
@@ -25,8 +25,6 @@ from quantas.api.thermoelasticity import (
     write_profile_template as write_thermoelastic_profile_template,
 )
 
-
-_ENERGY_EOS_CHOICES = qha_api.available_energy_eos()
 
 
 @click.command(name="inpgen", cls=GroupedCommand)
@@ -100,11 +98,12 @@ _ENERGY_EOS_CHOICES = qha_api.available_energy_eos()
 )
 @grouped_option(
     "--eos",
-    type=click.Choice(_ENERGY_EOS_CHOICES, case_sensitive=True),
+    type=ENERGY_EOS_MODEL,
     default="BM3",
     show_default=True,
     group=SCIENTIFIC_GROUP,
-    help="Energy EOS used with --pressure-source energy-eos.",
+    help=("Energy EOS used with --pressure-source energy-eos. Run "
+        "'quantas eos show-models --domain ev' to list compatible models."),
 )
 @grouped_option(
     "--degree",

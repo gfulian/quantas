@@ -14,7 +14,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("archive", type=Path, help="Quantas EOS HDF5 archive")
     parser.add_argument(
         "--slot",
-        help="Accepted EOS slot, for example pv/volume or pvt/volume",
+        help="Accepted EOS slot, for example ev/energy, pv/volume, or pvt/volume",
     )
     parser.add_argument(
         "--record-id",
@@ -41,30 +41,15 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     """Build neutral plot specifications and render them with Matplotlib."""
     args = parse_args()
-    inventory = eos.describe_plots(
+    available = eos.available_plot_types(
         args.archive,
         slot=args.slot,
         record_id=args.record_id,
-    )
-    for warning in inventory.warnings:
-        print(f"Warning: {warning}")
-    if inventory.selected_plots is None:
-        print("No unique EOS fit record is selected. Available slots:")
-        for slot in inventory.slots:
-            print(
-                f"  {slot.key}: status={slot.status.value}; "
-                f"accepted={slot.accepted_record_id}; "
-                f"plottable={slot.plottable_record_ids}"
-            )
-        return
-    available = tuple(
-        item.key for item in inventory.selected_plots.representations
     )
     print("Available plot types:", ", ".join(available))
 
     collection = eos.build_plots(
         args.archive,
-        available,
         slot=args.slot,
         record_id=args.record_id,
         options=eos.PlotOptions(

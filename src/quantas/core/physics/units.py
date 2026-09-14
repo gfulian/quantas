@@ -82,11 +82,15 @@ _ENERGY_TO_J = {
     "joule": 1.0,
     "joules": 1.0,
     "hartree": Ha,
+    "hartrees": Ha,
     "ha": Ha,
     "electron volt": eV,
+    "electron volts": eV,
     "electronvolt": eV,
+    "electronvolts": eV,
     "ev": eV,
     "rydberg": Ry,
+    "rydbergs": Ry,
     "ry": Ry,
     "mha": milli * Ha,
     "millihartree": milli * Ha,
@@ -147,6 +151,7 @@ _LENGTH_TO_M = {
     "a": Angstrom,
     "å": Angstrom,
     "bohr": Bohr,
+    "bohrs": Bohr,
     "bohr radius": Bohr,
 }
 

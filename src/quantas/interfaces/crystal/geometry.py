@@ -291,14 +291,20 @@ class CrystalGeometryParser:
         lattice = self._direct_lattice_after(last_atom_index)
         if lattice is None:
             lattice = lattice_from_parameters(*parameters)
+        volume_match = patterns.CELL_VOLUME_RE.search(self.lines[index])
         metadata = {
             "geometry_source": label,
             "cell_parameters": np.asarray(parameters, dtype=np.float64),
             "coorprt_present": self.has_coorprt,
+            "source_marker_line_index": int(index),
             "crystal_conventional_atomic_numbers": np.asarray(
                 conventional_numbers, dtype=np.int64
             ),
         }
+        if volume_match is not None:
+            metadata["reported_volume_angstrom3"] = float(
+                volume_match.group("volume").replace("D", "E").replace("d", "e")
+            )
         return CrystalStructure(
             lattice=lattice,
             fractional_positions=np.asarray(positions, dtype=np.float64),

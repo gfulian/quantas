@@ -43,9 +43,11 @@ geophysical analysis.
 EOS
 ^^^
 
-The equation-of-state workflow fits and evaluates models in the P--V, V--T,
-and P--V--T domains.  Quantas supports OLS, WLS, effective variance, and ODR,
-with native HDF5 archives, diagnostics, and plotting.
+The equation-of-state workflow fits and evaluates models in the E--V, P--V,
+V--T, and P--V--T domains.  Static Energy EOS datasets can be generated from
+CRYSTAL output and fitted through the same HDF5, diagnostics, calculator, and
+plotting lifecycle.  Quantas supports OLS, WLS, effective variance, and ODR
+where the selected domain and uncertainty model permit them.
 
 Thermoelasticity
 ^^^^^^^^^^^^^^^^

@@ -14,7 +14,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("archive", type=Path, help="Quantas EOS HDF5 archive")
     parser.add_argument(
         "--slot",
-        help="Accepted EOS slot, for example pv/volume or pvt/volume",
+        help="Accepted EOS slot, for example ev/energy, pv/volume, or pvt/volume",
     )
     parser.add_argument(
         "--record-id",

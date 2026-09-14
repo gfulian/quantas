@@ -5,11 +5,174 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
-## [2.0.0b10] - Unreleased
+## [2.0.0b11] - Unreleased
 
-- Accept CRYSTAL dispersion q-points labelled ``R`` when they print only ``MODES IN PHASE`` while continuing to require anti-phase components for explicitly complex ``C`` q-points.
+### Added
 
-- Enrich HA/QHA ``inpgen`` terminal summaries with q-point coordinate previews and explicit selected-energy/correction provenance while leaving generated YAML unchanged.
+- Added crystallographic-reference metadata to theoretical Energy EOS datasets.
+  ``CRYSTAL_REFERENCE`` distinguishes primitive and crystallographic cell
+  normalization, while ``CELL_MULTIPLICITY``, ``SYSTEM``, and optional space-group
+  metadata make the structural basis explicit.  CRYSTAL input generation can now
+  write either reference and scales energy and volume together when the
+  crystallographic cell is requested.
+- Added a shared lattice-only structural-path contract and logarithmic volume
+  response to ``StructuralPathModel``.  Energy EOS and QHA therefore reuse the
+  same volume-constrained lattice reconstruction instead of maintaining
+  workflow-specific axis interpolators.
+- Added theoretical axial response to accepted E--V fits.  Where a complete
+  lattice path is available, Quantas reports equilibrium crystallographic axes,
+  ``eta_i = d ln(l_i) / d ln(V)``, and axial moduli ``M_i = K/eta_i`` with
+  propagated EnergyEOS and structural-path uncertainty.
+- Added optional ``--axial-eos`` / ``axial_model`` analysis for comparison with
+  a secondary pressure-form axial EOS parameterization.  The secondary fit uses
+  pressures
+  derived from the primary EnergyEOS and the original sampled lattice axes; the
+  full derived-pressure covariance is persisted while the current WLS solver is
+  explicitly identified as using marginal pressure uncertainties only.
+- Promoted ``ev/energy`` to a public standalone EOS domain.  Static total-energy
+  datasets can now be fitted through ``quantas eos run --domain ev --ev-eos`` and
+  the matching public API, persisted in the native EOS HDF5 archive, and reused
+  by the common diagnostics, calculator, reporting, and plotting surfaces.
+- Added the public Energy EOS parameter boundary ``E0`` [Ha], ``V0``
+  [angstrom^3], ``K0`` [GPa], ``KP`` [1], and ``KPP`` [GPa^-1].  Conversion to
+  the energy-density units used by the numerical core remains isolated in the
+  E--V domain adapter.
+- Added E--V post-fit pressure reconstruction and bulk properties.  Accepted
+  Energy EOS records expose analytical ``P(V) = -dE/dV``, ``K(V)``, ``K'(V)``,
+  and ``K''(V)``, support both volume-driven and pressure-driven calculation,
+  and provide fit, pressure, and residual plot inventories.
+- Added ``[defaults.ev]`` and ``targets = energy``/``all`` to the strict EOS
+  specification workflow, plus synchronized Energy EOS template, tutorial,
+  MgO example data, and public-API example material.
+
+- Added ``quantas eos inpgen`` and the matching ``quantas.api.eos.create_input``
+  operation for collecting Energy EOS structure--energy data.  The initial
+  CRYSTAL interface accepts static outputs, ordinary completed geometry
+  optimizations, and native multi-volume ``EOS`` runs; ``--list`` may combine
+  any compatible mixture of single-state and multi-state outputs.
+- Generated Energy EOS tables retain volume, all six cell parameters, total
+  energy, explicit units, and source provenance while leaving EOS formulation,
+  constraints, and solver choices to the later EOS request/specification.
+
+- Added ``quantas eos show-models`` as a compact, registry-backed catalogue of
+  all EOS scientific domains. ``--domain pv``, ``ev``, ``vt``, and ``pvt`` may
+  be repeated to show only the requested model/coupling sections.
+- Added capability-aware shell completion for EOS-valued CLI options.  Compact
+  canonical tags and selected historical aliases are proposed interactively
+  without expanding normal ``--help`` output into a long ``click.Choice`` list.
+- Added a native PowerShell completion backend and ``quantas completion`` source
+  generator.  After shell registration, PowerShell TAB completion reuses
+  Click's command tree and Quantas model resolvers instead of falling back to
+  filesystem suggestions;
+  file-valued parameters still delegate to PowerShell filename completion.
+- Extended ``quantas eos show-models`` to report the complete EOS domain
+  capability matrix plus P-V, E-V, V-T, and coupled P-V-T model
+  catalogues.  Repeated ``--domain`` options now select the requested output
+  sections rather than intersecting unrelated model families.
+- Added EOS energy-unit normalization for ``energy`` and ``sigma_energy``
+  columns, including ``UNITS`` declarations, ``--energy-unit``/``--eunit`` CLI
+  overrides, and ``[input] energy_unit`` in EOS spec files.  Normalized values
+  use Hartree while original values and units remain available as provenance.
+
+- Added volume-integrated modified Tait energy equations for the existing T2,
+  T3, and T4 EOS orders.  The implementation is an analytical integral of the
+  canonical modified-Tait pressure form and preserves
+  ``P(V) = -dE/dV`` for every order.
+- Added a shared modified-Tait coefficient resolver so pressure and energy
+  representations use one parameterization and one singularity check.
+- Added the stabilized-jellium energy EOS (SJEOS) of Alchagirov *et al.* using
+  the physical equilibrium parameters ``E0``, ``V0``, ``K0``, and ``KP``.
+  Its analytical pressure and bulk-modulus derivatives are available to the
+  Energy EOS core for pressure reconstruction and later ``inspect`` use.
+
+### Changed
+
+- Updated EOS workflow, CLI, input/specification, archive, tutorial, validation,
+  project-state, and roadmap documentation to treat E--V as a first-class
+  public domain alongside P--V, V--T, and P--V--T.
+
+- Strengthened the backend-neutral ``StructureEnergySeries`` contract to reject
+  mixed atom counts and chemical compositions.  CRYSTAL Energy EOS collection
+  additionally requires one correction signature across sources and rejects
+  duplicate volumes without merging nearby but distinct states.
+
+- Replaced large energy-EOS ``click.Choice`` lists in QHA, Kieffer enrichment,
+  and thermoelastic input/QHA adapters with the shared EOS resolver.  Existing
+  compact tags remain valid, long aliases are normalized to canonical tags, and
+  invalid family/order combinations now report actionable model-specific errors.
+
+- Promoted Tait models to the integrated-energy EOS registry, making T2, T3,
+  and T4 available to the common ``EnergyEOS`` fitting core alongside
+  Murnaghan, Birch--Murnaghan, natural strain, and Vinet forms.
+- Updated the EOS theory, workflow notes, citation guidance, roadmap, and
+  project-state documentation for the new ``2.0.0b11`` Energy EOS tranche.
+- Kept SJEOS scoped to energy-volume fitting in the standalone EOS model
+  registry.  Its inverse-polynomial form is used only to obtain a stable linear
+  initial estimate; the final fit remains in the physical ``E0``, ``V0``,
+  ``K0``, and ``KP`` parameters.  The derived P(V) relation is implemented for
+  thermodynamic reconstruction, but SJEOS is not advertised as a direct
+  experimental P-V fit model in this tranche.
+
+### Fixed
+
+- Narrowed the resolved E--V ``E0`` invariant explicitly before converting it
+  to ``float`` and annotated EOS spec target resolution as ``tuple[str, ...]``.
+  These changes align static typing with runtime invariants and remove the four
+  mypy errors introduced while promoting the public Energy EOS workflow.
+
+- Documented the public EOS ``InputInterface`` and ``create_input`` symbols in
+  the API reference, restoring exact ``__all__`` documentation coverage for the
+  new Energy EOS input-generation surface.
+
+- Refreshed the curated-examples manifest after the distributed EOS specification
+  template gained the Energy EOS unit declaration, restoring the immutable-example
+  regression check without changing any example data or numerical result.
+
+### Validation
+
+- Added cubic and tetragonal structural-response characterization, including the
+  exact cubic identity ``eta_a = 1/3`` and ``M_a = 3 K`` and an SJEOS primary fit
+  followed by an independent BM3 axial refit.
+- Added a crystallographic normalization of the seven-volume MgO/PBE regression.
+  Primitive and crystallographic E--V fits recover identical intensive EOS
+  parameters, while ``E0`` and ``V0`` scale by four and the crystallographic
+  equilibrium axis is approximately ``a0 = 4.2222125 A``.
+- Added HDF5, calculator, report, spec, CLI, and CRYSTAL input-generation
+  characterization for the structural-response and secondary axial-EOS
+  contracts, including pressure-covariance provenance.
+- Added public Energy EOS workflow characterization for BM3, T3, and SJEOS on
+  DFT-scale absolute energies, WLS with explicit ``sigma_energy``, HDF5
+  round-trips, diagnostics, calculator inversion, plot inventory, CLI execution,
+  and specification resolution.
+- Added a seven-volume CRYSTAL/PBE MgO end-to-end regression.  Public BM3 E--V
+  fitting recovers approximately ``E0 = -275.173937178 Ha``, ``V0 =
+  18.817428245 A^3``, ``K0 = 178.761458 GPa``, ``KP = 3.815504``, and ``KPP =
+  -0.02091296 GPa^-1`` with an energy RMSE of about ``3.28e-6 Ha``.
+
+- Added CRYSTAL Energy EOS parser and input-generation tests covering static
+  outputs, native EOS state matching, state/summary consistency, mixed-source
+  ``1 + N`` list collection, composition and correction rejection, complete cell
+  metrics, and the public CLI/API path.  Real MgO static and urea D3/D3+gCP
+  outputs were also used to characterize single-state and native-EOS parsing.
+
+- Added reader/spec/CLI tests for Hartree, electronvolt, Rydberg, and Bohr
+  input combinations, energy-uncertainty conversion, unit-override precedence,
+  PowerShell completion registration, all-domain model discovery, and
+  preservation of model-aware completion candidates.
+- Added CLI tests for EOS alias normalization, unsupported-order diagnostics,
+  E(V)-versus-direct-P-V capability checks, shell-completion candidates,
+  ``show-models`` domain filtering, and compact QHA help rendering.
+
+- Added analytical/numerical consistency tests for integrated Tait energies,
+  including direct numerical integration of the pressure form, the removable
+  ``c = 1`` logarithmic limit, exact synthetic-parameter recovery, and pressure
+  reconstruction from fitted E(V) data.
+- Added SJEOS reference-value, derivative, equilibrium-parameter, synthetic-fit,
+  pressure/enthalpy round-trip, model-registry, citation, and standalone-domain
+  tests.  Updated the b11 version expectation and shortened one Tait test node
+  identifier without changing scientific tolerances.
+
+## [2.0.0b10] - 2026-09-09
 
 ### Added
 
@@ -109,6 +272,10 @@ public contract; they must still be documented and validated.
 
 ### Fixed
 
+- Accepted CRYSTAL dispersion q-points labelled ``R`` when they print only
+  ``MODES IN PHASE``, while continuing to require anti-phase components for
+  explicitly complex ``C`` q-points.
+
 - Corrected CRYSTAL raw energy--strain pre-stress conversion to use the
   finite-pressure stiffness transformation documented by Erba *et al.*
   (J. Chem. Phys. 140, 124703, 2014) and CRYSTAL ``PRESSURE``/``PRESSEOS``.
@@ -134,6 +301,10 @@ public contract; they must still be documented and validated.
   changing serialized numbers or runtime behavior.
 
 ### Changed
+
+- Enriched HA/QHA ``inpgen`` terminal summaries with q-point coordinate previews
+  and explicit selected-energy/correction provenance while leaving generated
+  YAML unchanged.
 
 - Generalized CRYSTAL quasi-static thermoelastic input generation around an
   explicit pressure-resolution contract. ``PRESSURE`` and ``PRESSEOS`` tensors
@@ -578,6 +749,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b11]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b11
 [2.0.0b10]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b10
 [2.0.0b9]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b9
 [2.0.0b8]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b8

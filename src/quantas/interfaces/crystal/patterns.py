@@ -11,6 +11,7 @@ FLOAT = r"[-+]?(?:\d+\.\d*|\.\d+|\d+)(?:[EeDd][-+]?\d+)?"
 FLOAT_RE = re.compile(FLOAT)
 ATOM_COUNT_RE = re.compile(r"ATOMS IN THE UNIT CELL:\s*(?P<count>\d+)")
 SPACE_GROUP_RE = re.compile(r"SPACE\s+GROUP\s+N\.\s*:\s*(?P<number>\d+)")
+CELL_VOLUME_RE = re.compile(rf"\bVOLUME\s*=\s*(?P<volume>{FLOAT})", re.IGNORECASE)
 
 NORMAL_TERMINATION_RE = re.compile(r"^\s*E{10}\s+TERMINATION\b", re.IGNORECASE)
 

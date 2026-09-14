@@ -17,7 +17,7 @@ stored in a persistent archive.  The workflow is designed to answer questions
 such as:
 
 - which observations and physical target are being fitted?;
-- which P--V, V--T, or P--V--T formulation is being tested?;
+- which E--V, P--V, V--T, or P--V--T formulation is being tested?;
 - which statistical interpretation is appropriate for the available
   uncertainties?;
 - are fixed parameters, bounds, or initial values scientifically justified?;
@@ -32,6 +32,79 @@ The equations and their physical assumptions are described in
 :doc:`../tutorials/eos`.  This page focuses on the implementation choices,
 workflow semantics, diagnostics, and reasons why the EOS command line differs
 from the other Quantas modules.
+
+
+The ``2.0.0b11`` Energy EOS tranche promotes the integrated E--V service to a
+public standalone workflow.  Static total energies can now be fitted directly
+through the ``ev/energy`` slot, persisted in the ordinary EOS archive, inspected
+with diagnostics and plots, and evaluated through the common post-fit
+calculator.  The public parameter convention is ``E0`` in Hartree, ``V0`` in
+angstrom cubed, ``K0`` in GPa, ``KP`` dimensionless, and ``KPP`` in GPa
+:math:`^{-1}`.  Conversion to the natural energy-density units used by the
+numerical core occurs only at the E--V adapter boundary.
+
+SJEOS is registered as an E--V model with physical parameters ``E0``, ``V0``,
+``K0``, and ``KP``.  Its analytical ``P(V) = -dE/dV`` relation is available for
+pressure reconstruction, while direct experimental P--V fitting remains
+unchanged.
+
+Model naming and discovery
+--------------------------
+
+Isothermal EOS selection is normalized by one shared model resolver.  Compact
+Quantas tags such as ``BM3``, ``PT4`` (or historical alias ``NS4``), ``V3``,
+``T3``, and ``SJ`` remain the canonical persisted identifiers.  Descriptive
+aliases such as ``birch-murnaghan3`` and ``natural-strain4`` are accepted at
+CLI boundaries and resolve to the same scientific model.
+
+Use ``quantas eos show-models`` to inspect the complete EOS catalogue and domain
+capability matrix.  ``quantas eos show-models --domain pv``,
+``quantas eos show-models --domain ev``, ``quantas eos show-models --domain vt``,
+and ``quantas eos show-models --domain pvt`` select the
+corresponding sections; repeat the option to show several requested domains.
+This discovery layer is frontend-only: it does not alter EOS equations,
+parameters, fitting, or persistence semantics.
+
+Energy-unit normalization
+-------------------------
+
+EOS text inputs may declare energy columns through ``E``/``ENERGY`` and
+``SIGMAE`` aliases.  ``UNITS E=... SIGE=...`` declarations, the EOS spec
+``[input] energy_unit`` override, and the CLI ``--energy-unit`` override all use
+the shared Quantas unit converter.  When no explicit energy unit is supplied,
+Hartree is assumed.  Normalized in-memory and HDF5 values use Hartree, while
+raw values and source units are retained as provenance.
+
+The precedence is the existing EOS input rule: an explicit frontend override
+wins over a data-file ``UNITS`` declaration, which in turn wins over the
+canonical default.  When ``--spec`` is used the specification remains the
+authority for scientific settings, so CLI unit overrides are rejected rather
+than silently taking precedence over the spec.
+
+``sigma_energy`` is supported and converted with the same linear factor as
+``energy`` for completeness.  Backend input generation from deterministic
+DFT/QM total energies will normally leave it absent; SCF thresholds, printing
+precision, and convergence criteria are not interpreted as statistical energy
+uncertainties.
+
+Backend Energy EOS collection
+-----------------------------
+
+Energy EOS input generation uses the backend-neutral
+:class:`~quantas.models.computation.StructureEnergySeries` contract.  An
+interface may return one or several states from each source file; the EOS input
+generator then flattens compatible sources before writing the ordinary EOS text
+format.  CRYSTAL is the first supported backend because one native ``EOS`` run
+can contain a complete volume series, while an additional single-volume output
+can be appended through the same ``--list`` workflow.
+
+For CRYSTAL native EOS output, the final sorted volume--energy table defines
+which states belong to the curve.  Quantas independently matches those volumes
+to ``FINAL OPTIMIZED GEOMETRY`` blocks and to the authoritative state-resolved
+total energy, including printed DFT-D/gCP corrections when present.  A mismatch
+is rejected rather than resolved heuristically.  Sources with different atom
+counts, compositions, correction signatures, or duplicate volumes are likewise
+rejected.  Nearby but distinct volumes are preserved.
 
 Why EOS uses a different command-line workflow
 ----------------------------------------------
@@ -126,6 +199,11 @@ Scientific domains and result slots
 
 The public fitting domains are:
 
+``ev``
+   Static energy--volume analysis.  The only target is ``energy``.  Integrated
+   Murnaghan, Birch--Murnaghan, natural-strain, Vinet, modified Tait, and SJEOS
+   models are exposed according to their registered capabilities.
+
 ``pv``
    Isothermal pressure--volume analysis for volume or a linear cell parameter.
 
@@ -136,14 +214,16 @@ The public fitting domains are:
    Coupled pressure--volume--temperature analysis.  At the current checkpoint,
    the public P--V--T fitting workflow accepts the volume target only.
 
-Energy--volume formulations are shared numerical core functionality used by
-QHA, but there is no public standalone E--V fitting workflow in the EOS
-subsystem.
+The integrated E--V forms remain shared numerical core functionality used by
+QHA and Thermoelasticity.  Promoting ``ev/energy`` to a public EOS slot does not
+make those modules depend on the standalone EOS workflow; all three consumers
+reuse the same lower-level Energy EOS service.
 
 A result slot is identified by domain and target, for example:
 
 .. code-block:: text
 
+   ev/energy
    pv/volume
    pv/a
    vt/volume
@@ -168,8 +248,8 @@ Unit precedence is:
 #. declaration in the data file;
 #. EOS default units.
 
-Internally, Quantas uses GPa, angstrom or cubic angstrom where appropriate, and
-kelvin.  Relative quantities such as ``V/V0`` and ``L/L0`` remain
+Internally, Quantas uses Hartree, GPa, angstrom or cubic angstrom where
+appropriate, and kelvin.  Relative quantities such as ``V/V0`` and ``L/L0`` remain
 dimensionless.  Standard uncertainties are converted with the same scale as
 their corresponding observations.
 
@@ -184,8 +264,10 @@ the representation supplied by the user.
 Targets, groups, and non-destructive data selection
 ---------------------------------------------------
 
-``volume``, ``a``, ``b``, and ``c`` are separate scientific targets.  ``all``
-expands only to targets that are valid and non-constant in the dataset.
+``energy``, ``volume``, ``a``, ``b``, and ``c`` are separate scientific
+targets.  The E--V domain accepts only ``energy``; ``all`` therefore resolves to
+that target for an E--V dataset.  In the structural domains, ``all`` expands
+only to targets that are valid and non-constant in the dataset.
 Missing columns, constant independent coordinates, or unsupported target/domain
 combinations are rejected during preflight.
 
@@ -212,8 +294,8 @@ Model construction
 Model selection is separated into three layers.
 
 Scientific domain
-   P--V, V--T, or P--V--T determines the coordinates and response used by the
-   fit.
+   E--V, P--V, V--T, or P--V--T determines the coordinates and response used by
+   the fit.
 
 Analytical formulation
    The request identifies one implemented family, order, and optional variant.
@@ -232,13 +314,82 @@ initial-value override.
 
 The equations themselves are not repeated here; see :doc:`../theory/eos` for
 scientific definitions and :doc:`../tutorials/eos_pv`,
-:doc:`../tutorials/eos_vt`, and :doc:`../tutorials/eos_pvt` for comparisons.
+:doc:`../tutorials/eos_ev`, :doc:`../tutorials/eos_vt`, and
+:doc:`../tutorials/eos_pvt` for comparisons.
+
+E--V implementation choices
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+E--V fitting uses static total energy as the dependent response and absolute
+volume as the independent coordinate.  The public fitting boundary uses
+Hartree and angstrom cubed for energy and volume, while equilibrium elastic
+parameters are reported in the ordinary EOS convention: ``K0`` in GPa, ``KP``
+dimensionless, and ``KPP`` in GPa :math:`^{-1}`.  The adapter converts these
+parameters to and from the energy-density units required by the shared
+numerical core; the core equations themselves are unchanged.
+
+The fitted E--V record stores calculated energy and, at every observed volume,
+the analytically derived pressure, bulk modulus, and its first and second
+pressure derivatives.  The standard report places observed ab initio energy,
+EOS-calculated energy, their residual, and EOS-derived pressure side by side at
+the sampled volumes.  Pressure is defined by
+
+.. math::
+
+   P(V) = -\frac{dE}{dV}.
+
+If a source dataset also supplies an independently meaningful pressure column,
+E--V diagnostics retain it as ``source_pressure`` and report the difference
+from the EOS-derived pressure.  ``quantas eos inpgen`` does not invent such a
+column for constrained-volume electronic-structure optimizations, where an
+intermediate stress tensor need not represent a hydrostatic pressure.
+
+OLS is the natural default for deterministic electronic-structure energies.
+WLS is available when a genuine ``sigma_energy`` is supplied; Quantas does not
+turn SCF thresholds or output precision into statistical energy uncertainties.
+
+When the dataset contains ``a, b, c, alpha, beta, gamma`` at the same sampled
+volumes, the E--V workflow also evaluates a shared
+:class:`~quantas.core.geometry.StructuralPathModel`.  This is the same
+volume-constrained structural backend used by QHA; EOS does not maintain a
+second lattice interpolator.  At equilibrium the model supplies
+``a0/b0/c0`` and :math:`\eta_i=d\ln l_i/d\ln V`; Quantas combines the latter
+with the Energy-EOS bulk modulus as
+
+.. math::
+
+   M_i = K / \eta_i.
+
+The primary structural response is therefore available even when the Energy
+EOS has no direct experimental P--V fitting surface, as for SJEOS.  Parameter
+and structural-path covariances are propagated separately, with their assumed
+zero cross-covariance recorded in result metadata.
+
+``--axial-eos`` (or ``axial_model`` in a specfile) requests an additional
+secondary pressure-form axial EOS fit to the *derived* pressure versus the
+observed axis cube.  The secondary model is independent of the primary Energy
+EOS.  The full covariance of the derived pressure vector is persisted; the present WLS
+solver uses its diagonal marginal uncertainties and records that approximation.
+
+Crystal-reference normalization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Generated theoretical datasets identify a ``CRYSTAL_REFERENCE``.  ``primitive``
+preserves the electronic-structure cell.  ``crystallographic`` applies one
+constant primitive-to-standard transformation determined at a reference
+structure and scales energy and volume by the same positive integer
+``CELL_MULTIPLICITY``.  This leaves pressure and intensive EOS parameters
+unchanged.  ``SYSTEM`` and the reference space group are recorded alongside the
+cell reference.  The transformation is not recomputed independently at every
+volume, avoiding setting or axis permutations along an otherwise continuous
+structural path.
+
 
 P--V implementation choices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 P--V fitting supports volumetric and linear targets.  For a linear target,
-Quantas applies the established EOSFit convention internally: the length is
+Quantas applies the standard linear-EOS construction internally: the length is
 mapped to an auxiliary cubic quantity for evaluation by a volumetric EOS, then
 reported using linear physical parameters.  The auxiliary cube is not treated
 as a crystallographic volume.
@@ -425,7 +576,7 @@ The available policies are:
 
 ``inflate-only``
    Apply reduced-chi-square scaling only when it increases the covariance.
-   Weighted EOS fits use this EosFit-like policy by default.
+   Weighted EOS fits use this inflate-only policy by default.
 
 ``inflate-only`` avoids shrinking parameter uncertainty merely because a small
 dataset happens to produce a reduced chi-square below unity.  It does not prove
@@ -491,8 +642,8 @@ Ordered replacement
    specification itself encodes that decision.
 
 Independent targets
-   Accept volume, ``a``, ``b``, and ``c`` fits in separate slots within one
-   archive.
+   Accept ``energy``, volume, ``a``, ``b``, and ``c`` fits in separate
+   domain/target slots within one archive when the dataset supports them.
 
 A failed job can never be accepted.  Its last finite iterate, if available, is
 stored only as diagnostic information.
@@ -629,7 +780,8 @@ explicit record ID.  It can report and export:
 - selected and excluded observations;
 - predicted response and physical residual;
 - standardized residual where defined;
-- model-specific finite-strain quantities;
+- EOS-derived pressure for E--V records and model-specific finite-strain quantities
+  for pressure EOS records;
 - normalized pressure where applicable;
 - grouping and selection provenance.
 
@@ -644,6 +796,8 @@ Property calculation
 The post-fit calculator evaluates a stored model without refitting.  Depending
 on the domain it can calculate:
 
+- energy, pressure, volume, bulk modulus, and pressure derivatives along E--V
+  states;
 - pressure or volume along P--V states;
 - volume, length, or expansion quantities along V--T states;
 - coupled P--V--T states, isotherms, or isobars;
@@ -665,6 +819,7 @@ specifications from the selected fit record; Matplotlib is only the renderer.
 Available plots depend on the domain and model:
 
 - observed data with fitted curve;
+- derived P(V) for E--V records;
 - physical residuals;
 - standardized residuals;
 - normalized-pressure diagnostic;
@@ -693,10 +848,13 @@ The direct command provides conservative, inspectable defaults:
      - Rationale
    * - Domain
      - ``pv``
-     - Most common standalone EOS use; must be changed explicitly for V--T or P--V--T.
+     - Historical standalone default; change it explicitly for E--V, V--T, or P--V--T.
    * - Target
      - ``volume``
      - Unambiguous volumetric baseline.
+   * - E--V model
+     - Birch--Murnaghan order 3
+     - Common equilibrium Energy EOS baseline; SJEOS and other integrated models remain explicit choices.
    * - P--V model
      - Birch--Murnaghan order 3
      - Widely applicable balance between flexibility and parameter count.
@@ -714,7 +872,7 @@ The direct command provides conservative, inspectable defaults:
      - Prevents later jobs from obscuring the first failed required step.
    * - Covariance scaling for weighted fits
      - ``inflate-only``
-     - EosFit-like policy that does not shrink covariance below supplied uncertainty scale.
+     - Inflate-only policy that does not shrink covariance below supplied uncertainty scale.
    * - Accepted result
      - yes for a successful direct job
      - Makes a simple one-job archive immediately usable while retaining the immutable record.
@@ -889,7 +1047,7 @@ Further reading
 ---------------
 
 - :doc:`../theory/eos` -- equations, assumptions, strengths, and limitations;
-- :doc:`../tutorials/eos` -- complete P--V, V--T, and P--V--T worked examples;
+- :doc:`../tutorials/eos` -- E--V, P--V, V--T, and P--V--T worked examples;
 - :doc:`../formats/eos_input` -- keyword-directed dataset format;
 - :doc:`../formats/eos_spec` -- strict batch specification;
 - :doc:`../formats/eos_hdf5` -- archive organization and history;

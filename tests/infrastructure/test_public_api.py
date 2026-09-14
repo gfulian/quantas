@@ -94,6 +94,7 @@ def test_registry_declares_all_scientific_modules_and_types() -> None:
     assert registry.get("qha").has(Capability.CREATE_INPUT)
     assert registry.get("qha").has(Capability.EXPORT)
     assert registry.get("seismic").has(Capability.CREATE_INPUT)
+    assert registry.get("eos").has(Capability.CREATE_INPUT)
     assert registry.get("eos").has(Capability.FIT)
     assert registry.get("eos").has(Capability.PLOT_INVENTORY)
     assert (
@@ -135,6 +136,8 @@ def test_registry_describes_multiple_named_operations() -> None:
         registry.get("qha").named_operation("add_kieffer_input")
         is qha.add_kieffer_input
     )
+
+    assert registry.get("eos").named_operation("create_input") is eos.create_input
 
     eos_exports = registry.get("eos").operations_for(Capability.EXPORT)
     assert eos_exports == (eos.write_diagnostic_csv, eos.write_calculation_csv)

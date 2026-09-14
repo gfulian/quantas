@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from .dataset_models import (
+    CrystalReference,
     EOS_COLUMN_NAMES,
     EOS_TARGET_NAMES,
     EOSCoordinateProfile,
@@ -13,6 +14,8 @@ from .dataset_models import (
     EOSDataset,
     EOSDatasetClassification,
     EOSSeries,
+    crystal_system_from_space_group_number,
+    parse_crystal_reference,
     parse_eos_crystal_system,
 )
 from .fit_models import (
@@ -24,6 +27,7 @@ from .fit_models import (
 )
 
 __all__ = [
+    "CrystalReference",
     "EOS_COLUMN_NAMES",
     "EOS_TARGET_NAMES",
     "EOSCoordinateProfile",
@@ -37,5 +41,7 @@ __all__ = [
     "EOSFitResult",
     "EOSSeries",
     "ParameterConstraint",
+    "crystal_system_from_space_group_number",
+    "parse_crystal_reference",
     "parse_eos_crystal_system",
 ]

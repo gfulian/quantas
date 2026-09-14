@@ -19,6 +19,7 @@ from quantas.modules.eos import (
     EOSFitRequest,
     EOSFitResult,
     ParameterConstraint,
+    PressureEOSFitModel,
 )
 
 
@@ -78,19 +79,26 @@ def test_eos_fit_request_rejects_angles_as_pressure_eos_targets():
         EOSFitRequest(model="BM3", target="alpha")
 
 
-def test_eos_energy_request_requires_integrated_model_and_energy_target():
+def test_eos_energy_request_requires_energy_target():
     with pytest.raises(ValueError, match="target='energy'"):
         EOSFitRequest(
             model="BM3",
             target="volume",
             domain=EOSFitDomain.ENERGY_VOLUME,
         )
-    with pytest.raises(ValueError, match="no integrated"):
-        EOSFitRequest(
-            model="T3",
-            target="energy",
-            domain=EOSFitDomain.ENERGY_VOLUME,
-        )
+
+
+def test_sjeos_is_energy_only_in_standalone_fit_requests():
+    request = EOSFitRequest(
+        model="SJ",
+        target="energy",
+        domain=EOSFitDomain.ENERGY_VOLUME,
+    )
+    assert request.model.tag == "SJ"
+    with pytest.raises(ValueError, match="not exposed for direct P-V fitting"):
+        EOSFitRequest(model="SJ", target="volume")
+    with pytest.raises(ValueError, match="not exposed for direct P-V fitting"):
+        PressureEOSFitModel("SJ")
 
 
 def test_eos_request_does_not_infer_weighting_from_dataset_uncertainties():

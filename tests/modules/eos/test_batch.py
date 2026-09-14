@@ -155,7 +155,7 @@ def test_reports_separate_data_uncertainties_and_extended_diagnostics(
     by_title = {table.title: table for table in tables}
     assert by_title["EOS input data"].columns == ["Pressure", "Volume"]
     assert len(by_title["EOS input data"].rows) == 3
-    assert by_title["EOS input standard uncertainties"].columns[0] == "σ(Pressure)"
+    assert by_title["EOS input standard uncertainties"].columns[0] == "sigma(Pressure)"
     assert "Observed and calculated EOS data" in by_title
     assert "Parameter covariance" in by_title
     assert "Parameter correlation" in by_title

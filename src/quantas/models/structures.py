@@ -518,3 +518,111 @@ class StructureVolumeSeries:
                 "fractional_positions": [item.copy() for item in source_positions],
             }
         return data
+
+
+@dataclass(slots=True)
+class LatticeVolumeSeries:
+    """Lattice-only structural path sampled as a function of volume.
+
+    The contract is intended for workflows that know the complete lattice
+    evolution but do not need atom-resolved coordinates.  It deliberately
+    mirrors the subset of :class:`StructureVolumeSeries` consumed by the
+    shared structural-path interpolation engine, so EOS and QHA can use the
+    same geometrical implementation without manufacturing dummy atoms.
+
+    Parameters
+    ----------
+    lattices : array_like
+        Direct lattice matrices with shape ``(nvol, 3, 3)`` and lattice
+        vectors stored by rows.
+    volumes : array_like
+        Positive cell volumes with shape ``(nvol,)`` in the same reference
+        cell as ``lattices``.
+    symmetry : SymmetryMetadata or None, optional
+        Symmetry metadata determined from one reference structure.
+    primitive_to_crystallographic : array_like or None, optional
+        Optional constant transformation from a primitive source basis to a
+        crystallographic basis.
+    orientation : str, optional
+        Description of the lattice orientation convention.
+    reference_index : int, optional
+        Index of the reference lattice within the sampled path.
+    metadata : dict, optional
+        Additional provenance and workflow metadata.
+
+    Raises
+    ------
+    ValueError
+        If lattice/volume shapes are inconsistent, volumes are invalid, or a
+        supplied transformation does not have shape ``(3, 3)``.
+    """
+
+    lattices: FloatArray
+    volumes: FloatArray
+    symmetry: SymmetryMetadata | None = None
+    primitive_to_crystallographic: FloatArray | None = None
+    orientation: str = "source"
+    reference_index: int = 0
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        """Normalize arrays and validate the lattice-only path."""
+        self.lattices = np.asarray(self.lattices, dtype=np.float64)
+        self.volumes = np.asarray(self.volumes, dtype=np.float64)
+        if self.lattices.ndim != 3 or self.lattices.shape[1:] != (3, 3):
+            raise ValueError("lattices must have shape (nvol, 3, 3)")
+        if self.volumes.ndim != 1 or self.volumes.size != self.lattices.shape[0]:
+            raise ValueError("volumes must match the lattice-series length")
+        if self.volumes.size < 1:
+            raise ValueError("lattice volume series cannot be empty")
+        if not np.all(np.isfinite(self.volumes)) or np.any(self.volumes <= 0.0):
+            raise ValueError("lattice volumes must be finite and positive")
+        if not np.all(np.isfinite(self.lattices)):
+            raise ValueError("lattice matrices must be finite")
+        if self.reference_index < 0 or self.reference_index >= self.volumes.size:
+            raise ValueError("reference_index is outside the lattice series")
+        if self.primitive_to_crystallographic is not None:
+            self.primitive_to_crystallographic = np.asarray(
+                self.primitive_to_crystallographic,
+                dtype=np.float64,
+            )
+            if self.primitive_to_crystallographic.shape != (3, 3):
+                raise ValueError(
+                    "primitive_to_crystallographic must have shape (3, 3)"
+                )
+        self.orientation = str(self.orientation)
+        self.metadata = dict(self.metadata)
+
+    @property
+    def nvol(self) -> int:
+        """Return the number of sampled lattice states.
+
+        Returns
+        -------
+        int
+            Number of sampled volumes.
+        """
+        return int(self.volumes.size)
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a recursively serializable lattice-series mapping.
+
+        Returns
+        -------
+        dict
+            Lattices, volumes, symmetry, transformation, and provenance.
+        """
+        data: dict[str, Any] = {
+            "orientation": self.orientation,
+            "reference_index": int(self.reference_index),
+            "volume": self.volumes.copy(),
+            "lattice": self.lattices.copy(),
+            "metadata": dict(self.metadata),
+        }
+        if self.symmetry is not None:
+            data["symmetry"] = self.symmetry.as_dict()
+        if self.primitive_to_crystallographic is not None:
+            data["primitive_to_crystallographic"] = (
+                self.primitive_to_crystallographic.copy()
+            )
+        return data

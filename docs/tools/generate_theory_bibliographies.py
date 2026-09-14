@@ -34,6 +34,8 @@ THEORY_REFERENCE_KEYS: dict[str, tuple[str, ...]] = {
     ),
     "eos": (
         "eosfit7_angel_gonzalez_platas_alvaro_2014",
+        "sjeos_alchagirov_perdew_boettger_albers_fiolhais_2001",
+        "staroverov_scuseria_tao_perdew_2004",
         "anderson_1995",
         "stixrude_lithgow_bertelloni_2005",
     ),

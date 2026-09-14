@@ -391,8 +391,9 @@ class StructureEnergySeries:
     Raises
     ------
     ValueError
-        If the series is empty, the reference index is invalid, or energies
-        use inconsistent units or semantic kinds.
+        If the series is empty, the reference index is invalid, energies use
+        inconsistent units or semantic kinds, or structures have inconsistent
+        atom counts or chemical compositions.
     """
 
     points: tuple[StructureEnergyPoint, ...]
@@ -410,11 +411,24 @@ class StructureEnergySeries:
 
         unit = self.points[0].energy.unit.casefold()
         kind = self.points[0].energy.kind
+        reference_numbers = np.sort(self.points[0].structure.atomic_numbers)
+        reference_natoms = self.points[0].structure.natoms
         for point in self.points[1:]:
             if point.energy.unit.casefold() != unit:
                 raise ValueError("structure-energy series uses inconsistent energy units")
             if point.energy.kind is not kind:
                 raise ValueError("structure-energy series uses inconsistent energy kinds")
+            if point.structure.natoms != reference_natoms:
+                raise ValueError(
+                    "structure-energy series uses inconsistent atom counts"
+                )
+            if not np.array_equal(
+                np.sort(point.structure.atomic_numbers),
+                reference_numbers,
+            ):
+                raise ValueError(
+                    "structure-energy series uses inconsistent chemical compositions"
+                )
 
     @property
     def npoints(self) -> int:

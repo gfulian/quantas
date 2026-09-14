@@ -17,9 +17,10 @@ floating-point roundoff.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, TypeAlias
+from typing import Any, Literal, TypeAlias
 
 import numpy as np
+from numpy.polynomial import Polynomial
 from numpy.typing import NDArray
 from scipy.linalg import polar
 
@@ -27,9 +28,10 @@ from quantas.core.geometry.cells import lattice_parameters
 from quantas.core.math import matrix_exponential_frechet
 from quantas.core.math.fitting import FitResult
 from quantas.core.math.polynomials import FittedPolynomial, fit_polynomial
-from quantas.models.structures import StructureVolumeSeries
+from quantas.models.structures import LatticeVolumeSeries, StructureVolumeSeries
 
 FloatArray: TypeAlias = NDArray[np.float64]
+StructuralSeries: TypeAlias = StructureVolumeSeries | LatticeVolumeSeries
 
 
 @dataclass(slots=True)
@@ -79,6 +81,45 @@ class StructuralPathEvaluation:
     metadata: dict[str, Any]
 
 
+@dataclass(slots=True)
+class StructuralLogVolumeResponse:
+    r"""Crystallographic response to logarithmic volume change.
+
+    The response coefficients are
+
+    .. math::
+
+        \eta_i = \frac{\partial \ln l_i}{\partial \ln V},
+
+    for the three lattice-vector lengths ``a``, ``b``, and ``c``.  They are
+    the geometrical factors connecting a volumetric response to an axial one,
+    and can therefore be reused by EOS and QHA workflows.
+
+    Parameters
+    ----------
+    lattice_parameters : ndarray
+        Cell parameters ``a, b, c, alpha, beta, gamma`` with shape
+        ``target_shape + (6,)``.
+    logarithmic_length_response : ndarray
+        ``eta_a, eta_b, eta_c`` with shape ``target_shape + (3,)``.
+    covariance : ndarray or None
+        First-order covariance of ``a, b, c, eta_a, eta_b, eta_c`` due to the
+        fitted structural path only.  The shape is
+        ``target_shape + (6, 6)``.  It is exactly zero for the cubic analytic
+        branch and ``None`` when fit-covariance propagation is disabled.
+    extrapolation_mask : ndarray
+        Boolean mask identifying target volumes outside the sampled path.
+    metadata : dict
+        Method and uncertainty provenance.
+    """
+
+    lattice_parameters: FloatArray
+    logarithmic_length_response: FloatArray
+    covariance: FloatArray | None
+    extrapolation_mask: NDArray[np.bool_]
+    metadata: dict[str, Any]
+
+
 class StructuralPathModel:
     r"""Interpolate crystal shape as a function of volume.
 
@@ -92,11 +133,18 @@ class StructuralPathModel:
 
     Parameters
     ----------
-    series : StructureVolumeSeries
-        Primitive structural volume series with a continuous orientation.
+    series : StructureVolumeSeries or LatticeVolumeSeries
+        Structural volume series with a continuous orientation.
     degree : int, optional
         Polynomial degree used for the five deviatoric logarithmic-strain
         components. The effective degree is limited to ``nvol - 1``.
+    basis : {"crystallographic", "sampled"}, optional
+        Basis used for interpolation. ``"crystallographic"`` preserves the
+        historical QHA behaviour and applies a constant primitive-to-standard
+        transformation when available. ``"sampled"`` uses the supplied
+        lattice matrices exactly as stored, which is required when a workflow
+        explicitly declares its crystal reference as primitive or already
+        crystallographic.
 
     Raises
     ------
@@ -106,7 +154,13 @@ class StructuralPathModel:
 
     _COMPONENTS = ((0, 0), (1, 1), (0, 1), (0, 2), (1, 2))
 
-    def __init__(self, series: StructureVolumeSeries, degree: int = 3) -> None:
+    def __init__(
+        self,
+        series: StructuralSeries,
+        degree: int = 3,
+        *,
+        basis: Literal["crystallographic", "sampled"] = "crystallographic",
+    ) -> None:
         """Build the structural-path interpolation model."""
         if series.nvol < 2:
             raise ValueError("at least two structures are required")
@@ -117,9 +171,20 @@ class StructuralPathModel:
 
         self.series = series
         self.degree = min(int(degree), series.nvol - 1)
+        if basis not in {"crystallographic", "sampled"}:
+            raise ValueError(
+                "structural-path basis must be 'crystallographic' or 'sampled'"
+            )
+        self.basis = basis
         self.reference_index = int(series.reference_index)
         self.reference_volume = float(series.volumes[self.reference_index])
-        self.basis_matrix, self.basis_source = _crystallographic_basis_matrix(series)
+        if basis == "sampled":
+            self.basis_matrix = np.eye(3, dtype=np.float64)
+            self.basis_source = "sampled"
+        else:
+            self.basis_matrix, self.basis_source = _crystallographic_basis_matrix(
+                series
+            )
         self.sampled_lattices = np.einsum(
             "ij,vjk->vik",
             self.basis_matrix,
@@ -168,7 +233,7 @@ class StructuralPathModel:
         Parameters
         ----------
         volume : array-like or float
-            Target primitive-cell volumes in the same volume unit as the
+            Target cell volumes in the same reference and volume unit as the
             sampled structural series.
         volumetric_expansion : array-like, float, or None, optional
             Volumetric thermal-expansion coefficient at every target point.
@@ -413,6 +478,191 @@ class StructuralPathModel:
             metadata=metadata,
         )
 
+    def log_volume_response(
+        self,
+        volume: FloatArray | float,
+        *,
+        include_fit_uncertainty: bool = True,
+    ) -> StructuralLogVolumeResponse:
+        r"""Evaluate lattice lengths and their logarithmic volume response.
+
+        Parameters
+        ----------
+        volume : array-like or float
+            Target volumes in the same reference cell and unit as the sampled
+            structural series.
+        include_fit_uncertainty : bool, optional
+            Propagate covariance from the independent deviatoric structural
+            fits.  The exact cubic branch has zero structural-fit covariance.
+
+        Returns
+        -------
+        StructuralLogVolumeResponse
+            Cell parameters, :math:`d\ln l_i/d\ln V`, optional covariance,
+            extrapolation mask, and provenance.
+
+        Raises
+        ------
+        ValueError
+            If finite target volumes are non-positive.
+        """
+        target = np.asarray(volume, dtype=np.float64)
+        finite = np.isfinite(target)
+        if np.any(target[finite] <= 0.0):
+            raise ValueError("finite target volumes must be positive")
+        shape = target.shape
+        flat = target.reshape(-1)
+        parameters = np.full((flat.size, 6), np.nan, dtype=np.float64)
+        response = np.full((flat.size, 3), np.nan, dtype=np.float64)
+        covariance: FloatArray | None = None
+        if include_fit_uncertainty:
+            covariance = np.full((flat.size, 6, 6), np.nan, dtype=np.float64)
+
+        for index, value in enumerate(flat):
+            if not np.isfinite(value):
+                continue
+            x_value = float(np.log(value / self.reference_volume))
+            local_parameters, local_response = self._state_at_x(x_value)
+            parameters[index] = local_parameters
+            response[index] = local_response
+            if covariance is not None:
+                local_covariance = self._structural_response_covariance(x_value)
+                if local_covariance is None:
+                    covariance[index].fill(np.nan)
+                else:
+                    covariance[index] = local_covariance
+
+        minimum = float(np.min(self.series.volumes))
+        maximum = float(np.max(self.series.volumes))
+        extrapolation = finite & ((target < minimum) | (target > maximum))
+        metadata = {
+            "method": "volume_constrained_structural_path",
+            "response": "dln(length)/dln(volume)",
+            "basis": self.basis,
+            "crystallographic_basis_source": self.basis_source,
+            "polynomial_degree": int(self.degree),
+            "reference_index": int(self.reference_index),
+            "reference_volume": float(self.reference_volume),
+            "calculation_branch": (
+                "cubic_exact" if self.is_cubic else "general_anisotropic_path"
+            ),
+            "uncertainty_method": (
+                "first_order_delta_method_structural_fit"
+                if include_fit_uncertainty
+                else "none"
+            ),
+            "cross_covariance_between_deviatoric_fits": False,
+        }
+        return StructuralLogVolumeResponse(
+            lattice_parameters=parameters.reshape(shape + (6,)),
+            logarithmic_length_response=response.reshape(shape + (3,)),
+            covariance=(
+                None if covariance is None else covariance.reshape(shape + (6, 6))
+            ),
+            extrapolation_mask=np.asarray(extrapolation, dtype=bool),
+            metadata=metadata,
+        )
+
+    def _state_at_x(
+        self,
+        x_value: float,
+        coefficient_sets: list[FloatArray] | None = None,
+    ) -> tuple[FloatArray, FloatArray]:
+        """Return cell parameters and ``dln(length)/dln(volume)`` at ``x``."""
+        if coefficient_sets is None:
+            log_stretch, derivative = self._log_stretch(x_value)
+        else:
+            log_stretch, derivative = self._log_stretch_from_coefficients(
+                x_value,
+                coefficient_sets,
+            )
+        if self.is_cubic:
+            scale = float(np.exp(x_value / 3.0))
+            current_lattice = self.reference_lattice * scale
+            return (
+                lattice_parameters(current_lattice),
+                np.full(3, 1.0 / 3.0, dtype=np.float64),
+            )
+        stretch = _symmetric_exponential(log_stretch)
+        dstretch_dx = matrix_exponential_frechet(log_stretch, derivative)
+        current_lattice = self.reference_lattice @ stretch
+        dlattice_dx = self.reference_lattice @ dstretch_dx
+        return (
+            lattice_parameters(current_lattice),
+            axial_expansion(current_lattice, dlattice_dx),
+        )
+
+    def _structural_response_covariance(
+        self,
+        x_value: float,
+    ) -> FloatArray | None:
+        """Return covariance of ``a,b,c,eta_a,eta_b,eta_c`` at ``x``."""
+        if self.is_cubic:
+            return np.zeros((6, 6), dtype=np.float64)
+        coefficient_sets = [model.parameters.copy() for model in self._models]
+        total = np.zeros((6, 6), dtype=np.float64)
+        available = False
+        for model_index, fit in enumerate(self.fit_results):
+            if fit.covariance is None:
+                continue
+            local_covariance = np.asarray(fit.covariance, dtype=np.float64)
+            coefficients = coefficient_sets[model_index]
+            if local_covariance.shape != (coefficients.size, coefficients.size):
+                continue
+            jacobian = np.zeros((6, coefficients.size), dtype=np.float64)
+            for parameter_index, coefficient in enumerate(coefficients):
+                scale = max(abs(float(coefficient)), 1.0)
+                step = max(
+                    1.0e-6 * scale,
+                    np.sqrt(np.finfo(np.float64).eps) * scale,
+                )
+                plus_sets = [values.copy() for values in coefficient_sets]
+                minus_sets = [values.copy() for values in coefficient_sets]
+                plus_sets[model_index][parameter_index] += step
+                minus_sets[model_index][parameter_index] -= step
+                plus_parameters, plus_response = self._state_at_x(
+                    x_value,
+                    plus_sets,
+                )
+                minus_parameters, minus_response = self._state_at_x(
+                    x_value,
+                    minus_sets,
+                )
+                plus = np.concatenate((plus_parameters[:3], plus_response))
+                minus = np.concatenate((minus_parameters[:3], minus_response))
+                jacobian[:, parameter_index] = (plus - minus) / (2.0 * step)
+            total += jacobian @ local_covariance @ jacobian.T
+            available = True
+        return total if available else None
+
+    def _log_stretch_from_coefficients(
+        self,
+        x_value: float,
+        coefficient_sets: list[FloatArray],
+    ) -> tuple[FloatArray, FloatArray]:
+        """Return log stretch using explicit polynomial coefficient vectors."""
+        if self.is_cubic:
+            identity = np.eye(3, dtype=np.float64)
+            return identity * (x_value / 3.0), identity / 3.0
+        if len(coefficient_sets) != len(self._models):
+            raise ValueError("coefficient set count does not match structural fits")
+        values: list[float] = []
+        derivatives: list[float] = []
+        for model, coefficients in zip(self._models, coefficient_sets, strict=True):
+            scaled = (x_value - model.center) / model.scale
+            polynomial = Polynomial(coefficients)
+            values.append(float(polynomial(scaled)))
+            derivatives.append(float(polynomial.deriv()(scaled) / model.scale))
+        identity = np.eye(3, dtype=np.float64)
+        deviatoric = _deviatoric_matrix(np.asarray(values, dtype=np.float64))
+        ddeviatoric = _deviatoric_matrix(
+            np.asarray(derivatives, dtype=np.float64)
+        )
+        return (
+            identity * (x_value / 3.0) + deviatoric,
+            identity / 3.0 + ddeviatoric,
+        )
+
     def _sampled_deviatoric_log_strain(self) -> tuple[FloatArray, FloatArray]:
         """Return independent deviatoric log strains and removed rotations."""
         inverse_reference_transpose = np.linalg.inv(self.reference_lattice.T)
@@ -542,7 +792,7 @@ def lattice_parameter_derivatives(
 
 
 def _crystallographic_basis_matrix(
-    series: StructureVolumeSeries,
+    series: StructuralSeries,
 ) -> tuple[FloatArray, str]:
     """Return a constant primitive-to-crystallographic row-basis transform."""
     if series.primitive_to_crystallographic is not None:
@@ -568,7 +818,7 @@ def _crystallographic_basis_matrix(
 
 
 def _is_cubic_series(
-    series: StructureVolumeSeries,
+    series: StructuralSeries,
     lattices: FloatArray,
 ) -> bool:
     """Return whether symmetry and metrics define a cubic structural path."""

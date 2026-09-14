@@ -20,7 +20,7 @@
 #
 #   Quantas internal defaults
 #       -> [defaults]
-#       -> [defaults.pv], [defaults.vt], or [defaults.pvt]
+#       -> [defaults.ev], [defaults.pv], [defaults.vt], or [defaults.pvt]
 #       -> [job NAME]
 #
 # Only the final [job volume-example] section is active by default.  The other
@@ -37,11 +37,13 @@ title = EOS batch analysis
 
 [input]
 # Optional input-unit overrides.  When omitted, units declared in the data file
-# are used; otherwise Quantas defaults to GPa, angstrom/angstrom^3, and kelvin.
-# Internal calculations are normalized to GPa, angstrom, angstrom^3, and K.
+# are used; otherwise Quantas defaults to Ha, GPa, angstrom/angstrom^3, and
+# kelvin. Internal calculations are normalized to Ha, GPa, angstrom,
+# angstrom^3, and K.
 #
-# Supported temperature scales are K, C, and F.  Pressure and length units are
-# interpreted by the shared Quantas unit-conversion infrastructure.
+# Energy, pressure, and length units are interpreted by the shared Quantas
+# unit-conversion infrastructure. Supported temperature scales are K, C, and F.
+# energy_unit = Ha
 # pressure_unit = GPa
 # length_unit = angstrom
 # temperature_unit = K
@@ -65,7 +67,7 @@ solver = ols
 # Covariance scaling:
 #   absolute
 #   reduced-chi-square
-#   inflate-only        EosFit-like: never reduce reported covariance
+#   inflate-only        never reduce reported covariance
 # covariance_scaling = inflate-only
 #
 # Generic positive solver controls.  Omit them to use typed solver defaults.
@@ -107,6 +109,41 @@ replace_accepted = no
 #
 # A fixed parameter cannot also declare initial or bound.  A bound for a free
 # parameter requires an explicit initial.PARAMETER value.
+
+
+[defaults.ev]
+# Default integrated E-V model for static total-energy jobs.
+#
+# Compact canonical models include:
+#   M
+#   BM2, BM3, BM4
+#   PT2, PT3, PT4       natural strain / Poirier-Tarantola
+#   V2, V3
+#   T2, T3, T4
+#   SJ                   stabilized-jellium energy EOS
+#
+# Full aliases are accepted where the shared EOS resolver defines them.
+model = BM3
+# Optional secondary pressure-form axial EOS fit of P against l^3.
+# Pressures are derived from E(V); this does not change the primary structural
+# response from StructuralPathModel.
+# axial_model = BM3
+# solver = ols
+# covariance_scaling = inflate-only
+# max_iterations = 200
+# ftol = 1.0e-10
+# xtol = 1.0e-10
+# gtol = 1.0e-10
+# accept = yes
+# replace_accepted = no
+#
+# E-V public parameters use E0 in Ha, V0 in angstrom^3, K0 in GPa,
+# KP dimensionless, and KPP in GPa^-1. Availability depends on the model order.
+# initial.E0 = -275.0
+# initial.V0 = 19.0
+# initial.K0 = 180.0
+# initial.KP = 4.0
+# bound.K0 = 1.0 : 500.0
 
 
 [defaults.pv]
@@ -191,7 +228,7 @@ model = berman:quadratic
 # the individual job that selects that coupling. Its oscillator model is selected
 # with thermal_pressure_model = holland-powell-einstein, mgd, or
 # mgd:q-compromise. The plain mgd tag is the full theta_d0/gamma0/q model;
-# mgd:q-compromise is the distinct EosFit-style approximation and has no q
+# mgd:q-compromise is the distinct q-compromise approximation and has no q
 # parameter. MGD cell volumes require atoms_per_cell or formula +
 # formula_units_per_cell.
 # pv_model = BM3
@@ -276,6 +313,18 @@ targets = volume
 # bound.K0 = 1.0 : 500.0
 # accept = yes
 # replace_accepted = no
+
+
+# ---------------------------------------------------------------------------
+# COMMENTED EXAMPLE: static total-energy E-V fit
+# ---------------------------------------------------------------------------
+# [job static-energy]
+# domain = ev
+# targets = energy
+# model = BM3
+# Optional secondary axial parameterization; the primary model may be SJ.
+# axial_model = BM3
+# solver = ols
 
 
 # ---------------------------------------------------------------------------

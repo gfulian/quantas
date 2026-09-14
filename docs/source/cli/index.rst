@@ -50,7 +50,7 @@ Command groups
      - Christoffel phase/group fields, polarization, and enhancement
      - SEISMIC HDF5 archive
    * - ``eos``
-     - P--V, V--T, and P--V--T candidate fitting and record management
+     - E--V, P--V, V--T, and P--V--T candidate fitting and record management
      - Persistent EOS archive
    * - ``thermoelasticity``
      - Cold finite-strain calibration and QSA evaluation

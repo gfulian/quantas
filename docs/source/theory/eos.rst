@@ -361,6 +361,178 @@ whether the dataset genuinely resolves higher derivatives.
      - Good behavior at high compression
      - Lower-order truncation has limited theoretical basis
 
+Volume-integrated energy equations of state
+-------------------------------------------
+
+Static electronic-structure calculations naturally provide total energies at a
+set of cell volumes.  Quantas represents the corresponding integrated EOS by
+introducing a reference energy :math:`E_0=E(V_0)` and requiring
+
+.. math::
+
+   P(V)=-\frac{\mathrm dE}{\mathrm dV}.
+
+The physical pressure parameters :math:`V_0`, :math:`K_0`, :math:`K'_0`, and,
+where applicable, :math:`K''_0` therefore retain the same meaning as in the
+matching P--V equation.  Lower-order integrated models use the same implied
+parameter rules as their pressure counterparts.  The EOS implementation uses
+this identity directly when reconstructing pressure from a fitted static
+energy--volume curve.
+
+At the current ``2.0.0b11`` checkpoint, the numerical core provides integrated
+forms for Murnaghan, Birch--Murnaghan orders 2--4, natural-strain
+Poirier--Tarantola orders 2--4, Vinet orders 2--3, modified Tait orders 2--4,
+and SJEOS.  The standalone ``ev/energy`` workflow exposes these integrated
+models through the ordinary EOS fitting, HDF5, diagnostics, calculator, and
+plotting surfaces.  QHA and Thermoelasticity continue to consume the common
+numerical implementation rather than depending on the standalone workflow.
+
+Theoretical crystallographic response from E--V data
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When the E--V dataset also contains a complete lattice path, Quantas derives
+crystallographic response from the same fitted pressure relation instead of
+fitting a fictitious energy equation to :math:`a^3`, :math:`b^3`, or
+:math:`c^3`.  The shared ``StructuralPathModel``
+represents crystal shape as a volume-constrained logarithmic stretch and
+provides
+
+.. math::
+
+   \eta_i(V)=\frac{\partial\ln l_i}{\partial\ln V},
+
+for :math:`l_i=a,b,c`.  Combining this geometrical response with the bulk
+modulus of the Energy EOS gives the axial modulus
+
+.. math::
+
+   M_i(V)=\frac{K(V)}{\eta_i(V)}.
+
+For a cubic crystal :math:`\eta_a=1/3`, so :math:`M_a=3K` exactly.  This route
+is model-independent at the workflow level: any integrated Energy EOS with an
+analytical pressure and bulk-modulus derivative, including SJEOS, can provide
+the primary axial response.
+
+The E--V parameter covariance and the structural-path fit covariance are
+propagated independently by first-order delta methods and added under an
+explicit zero cross-covariance assumption.  The assumption is recorded in the
+result metadata rather than being hidden by the reporting layer.
+
+An optional secondary pressure-form axial EOS parameterization can then fit the
+derived pressures against :math:`l_i^3`.  This is a *secondary* representation
+of the theoretical path, not the definition of the primary axial response.  It
+is requested with a separate pressure-form EOS (for example BM3) and therefore
+can be combined with an Energy EOS such as SJEOS.  Because all derived pressure
+points share the covariance of the same E--V parameter vector, Quantas stores
+the complete pressure covariance matrix.  The current WLS solver consumes its
+marginal standard uncertainties only; this diagonal approximation is recorded
+explicitly until a full generalized least-squares backend is available.
+
+Integrated modified Tait equation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The modified Tait pressure form and auxiliary coefficients follow Angel
+*et al.* (2014) [#eosfit7_angel_gonzalez_platas_alvaro_2014]_.  Define
+
+.. math::
+
+   y=\frac{V/V_0+a-1}{a},
+
+so that :math:`y=1` at :math:`V=V_0`.  Because
+:math:`\mathrm dV=aV_0\,\mathrm dy`, direct integration of the canonical Tait
+pressure equation gives, for :math:`c\neq1`,
+
+.. math::
+
+   E(V)=E_0+\frac{aV_0}{b}
+   \left[
+   (y-1)-\frac{c}{c-1}
+   \left(y^{(c-1)/c}-1\right)
+   \right].
+
+The apparent singularity at :math:`c=1` is removable.  Quantas evaluates the
+analytic limit
+
+.. math::
+
+   E(V)=E_0+\frac{aV_0}{b}\left[y-1-\ln y\right].
+
+The implementation evaluates the power term through ``expm1`` and ``log`` to
+avoid unnecessary cancellation when :math:`c` is close to one.  T2, T3, and T4
+use exactly the same implied/fitted :math:`K'_0` and :math:`K''_0` conventions
+as the corresponding Tait P--V models.
+
+Two identities are used as scientific regression tests:
+
+.. math::
+
+   E(V_0)=E_0,
+
+and
+
+.. math::
+
+   -\frac{\mathrm dE}{\mathrm dV}=P_{\mathrm{Tait}}(V).
+
+The second identity is checked both by finite differentiation and by direct
+numerical integration of the independently evaluated pressure equation.  This
+is important because an apparently accurate E--V fit can still yield poor
+pressure or bulk-modulus derivatives if the integrated and pressure forms are
+not mathematically consistent.
+
+
+Stabilized-jellium energy EOS
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Quantas also implements the stabilized-jellium equation of state (SJEOS) of
+Alchagirov *et al.* (2001) [#sjeos_alchagirov_perdew_boettger_albers_fiolhais_2001]_.
+The model was motivated by the stabilized-jellium description of simple metals,
+but its compact E--V form has also been used as an interpolation model for
+first-principles total-energy data across chemically diverse crystalline solids
+[#staroverov_scuseria_tao_perdew_2004]_.  Quantas therefore treats it as an
+Energy EOS option rather than as a universal high-pressure extrapolation law.
+
+Define
+
+.. math::
+
+   x=\left(\frac{V}{V_0}\right)^{1/3}.
+
+The SJEOS energy is a third-degree inverse-power polynomial in
+:math:`x`, or equivalently a cubic polynomial in :math:`V^{-1/3}`.  Quantas
+uses the equivalent physical equilibrium parameterization
+
+.. math::
+
+   E(V)=E_0+\frac{9}{2}K_0V_0\left[
+   (K'_0-3)(x^{-3}-1)
+   +(10-3K'_0)(x^{-2}-1)
+   +(3K'_0-11)(x^{-1}-1)\right].
+
+The polynomial coefficients therefore remain implementation details rather than
+public fit parameters.  This keeps SJEOS compatible with the common Energy EOS
+fitting contract in terms of :math:`E_0`, :math:`V_0`, :math:`K_0`, and
+:math:`K'_0`, including initial values and future fixed-parameter constraints.
+The inverse-polynomial representation is used internally to obtain a robust
+linear initial estimate before the standard physical-parameter fit.  The second
+bulk-modulus derivative is implied by the functional form,
+
+.. math::
+
+   K''_0=-\frac{9(K'_0)^2-45K'_0+74}{9K_0}.
+
+The analytical derivative :math:`P(V)=-\mathrm dE/\mathrm dV` is implemented
+alongside :math:`K(V)`, :math:`K'(V)`, and :math:`K''(V)`.  This allows a fitted
+SJEOS curve to reconstruct the static pressure associated with each sampled
+volume without fitting pressure as an independent observable.
+
+SJEOS is most naturally used to interpolate first-principles E--V data around
+an equilibrium minimum and through moderate compression/expansion within one
+structural and electronic state.  As with any fitted EOS, extrapolation beyond
+the sampled range requires model comparison and physical judgement.  Quantas
+does not present SJEOS as a preferred strong-compression or dissociation-limit
+model, and the augmented ASJEOS form is not implemented.
+
 Volume--temperature equations of state
 --------------------------------------
 
@@ -794,9 +966,8 @@ The Debye thermal term uses
    D_3(x)=\frac{3}{x^3}
    \int_0^x\frac{t^3}{\exp(t)-1}\,\mathrm dt.
 
-Quantas also represents the explicitly named EosFit ``q-compromise``
-approximation, in which :math:`\theta_D` and :math:`\gamma/V` are held
-constant.
+Quantas also represents the ``q-compromise`` MGD approximation, in which
+:math:`\theta_D` and :math:`\gamma/V` are held constant.
 
 **Advantages**
 
@@ -917,6 +1088,8 @@ What Quantas provides
 
 Within the standalone EOS workflow, Quantas evaluates and analyzes:
 
+- integrated E--V forms of Murnaghan, Birch--Murnaghan, natural strain, Vinet,
+  modified Tait, and SJEOS where registered;
 - Murnaghan P--V;
 - Birch--Murnaghan P--V, orders 2--4;
 - natural-strain/Poirier--Tarantola P--V, orders 2--4;

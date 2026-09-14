@@ -198,6 +198,7 @@ class EOSBatchWorkflow:
         pressure_unit: str | None = None,
         length_unit: str | None = None,
         temperature_unit: str | None = None,
+        energy_unit: str | None = None,
     ) -> EOSBatchResult:
         """Execute the plan and return structured results.
 
@@ -213,7 +214,7 @@ class EOSBatchWorkflow:
             Replace an existing destination.
         creator : str, optional
             Archive creator provenance.
-        pressure_unit, length_unit, temperature_unit : str or None, optional
+        pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
             Input-unit overrides applied only while reading a text source.
 
         Returns
@@ -227,6 +228,7 @@ class EOSBatchWorkflow:
             pressure_unit=pressure_unit,
             length_unit=length_unit,
             temperature_unit=temperature_unit,
+            energy_unit=energy_unit,
         )
         self._emit(
             f"Read EOS dataset '{dataset.jobname}' with {dataset.npoints} observations "

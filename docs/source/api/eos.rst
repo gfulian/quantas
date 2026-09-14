@@ -23,6 +23,26 @@ Typical direct fit
    eos.validate_request(dataset, request)
    result = eos.fit(dataset, request)
 
+Typical Energy EOS fit
+----------------------
+
+.. code-block:: python
+
+   from quantas.api import eos
+
+   dataset = eos.read_input("EV_mgo_pbe.dat")
+   request = eos.FitRequest(
+       model="BM3",
+       domain=eos.FitDomain.ENERGY_VOLUME,
+       target="energy",
+       options=eos.FitOptions(solver_options=eos.OLSOptions()),
+   )
+   result = eos.fit(dataset, request)
+   print(result.parameter_values["V0"], result.parameter_values["K0"])
+
+The public E--V adapter reports ``E0`` in Ha, ``V0`` in angstrom cubed, ``K0``
+in GPa, ``KP`` dimensionless, and ``KPP`` in GPa :math:`^{-1}`.
+
 Typical persistent batch
 ------------------------
 

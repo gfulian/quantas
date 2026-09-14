@@ -62,6 +62,45 @@ class EOSParameters:
         }
 
 
+def _tait_coefficients(parameters: EOSParameters) -> tuple[float, float, float]:
+    r"""Return the auxiliary coefficients of the modified Tait EOS.
+
+    The coefficients follow the modified-Tait parameterization,
+
+    .. math::
+
+        a=\frac{1+K'_0}{1+K'_0+K_0K''_0},
+
+        b=\frac{K'_0}{K_0}-\frac{K''_0}{1+K'_0},
+
+        c=\frac{1+K'_0+K_0K''_0}
+        {(K'_0)^2+K'_0-K_0K''_0}.
+
+    Parameters
+    ----------
+    parameters : EOSParameters
+        Resolved physical EOS parameters.
+
+    Returns
+    -------
+    tuple of float
+        The ``(a, b, c)`` Tait coefficients.
+
+    Raises
+    ------
+    ValueError
+        If the parameters make the Tait representation singular.
+    """
+    pars = parameters
+    denominator = 1.0 + pars.KP + pars.K0 * pars.KPP
+    a = (1.0 + pars.KP) / denominator
+    b = pars.KP / pars.K0 - pars.KPP / (1.0 + pars.KP)
+    c = denominator / (pars.KP**2 + pars.KP - pars.K0 * pars.KPP)
+    if not np.all(np.isfinite([a, b, c])) or a == 0.0 or b == 0.0 or c == 0.0:
+        raise ValueError("Tait parameters produce a singular equation")
+    return float(a), float(b), float(c)
+
+
 def implied_kp(model: EOSModel) -> float | None:
     r"""Return the first bulk-modulus derivative implied by EOS order.
 
@@ -117,7 +156,11 @@ def implied_kpp(model: EOSModel, K0: float, KP: float) -> float:
         +\frac{K'_0}{2}-\frac{19}{36}\right],
 
     while the truncated Tait form uses :math:`K''_0=-K'_0/K_0`.
-    Murnaghan assumes :math:`K''_0=0`.
+    Murnaghan assumes :math:`K''_0=0`.  For SJEOS,
+
+    .. math::
+
+        K''_0 = -\frac{9(K'_0)^2-45K'_0+74}{9K_0}.
 
     Parameters
     ----------
@@ -141,6 +184,8 @@ def implied_kpp(model: EOSModel, K0: float, KP: float) -> float:
     """
     if model.family is EOSFamily.MURNAGHAN:
         return 0.0
+    if model.family is EOSFamily.STABILIZED_JELLIUM:
+        return -(9.0 * KP**2 - 45.0 * KP + 74.0) / (9.0 * K0)
     if model.family is EOSFamily.BIRCH_MURNAGHAN:
         return -(((3.0 - KP) * (4.0 - KP)) + 35.0 / 9.0) / K0
     if model.family is EOSFamily.NATURAL_STRAIN:
@@ -312,6 +357,8 @@ def resolved_energy_parameter_jacobian(
                 derivative = -(resolved.KP + 1.0) / (2.0 * resolved.K0)
             elif model.family is EOSFamily.TAIT:
                 derivative = -1.0 / resolved.K0
+            elif model.family is EOSFamily.STABILIZED_JELLIUM:
+                derivative = (5.0 - 2.0 * resolved.KP) / resolved.K0
             else:
                 derivative = 0.0
             jacobian[kpp_row, kp_column] = derivative

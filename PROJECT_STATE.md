@@ -14,11 +14,11 @@ state.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-09-09 |
-| Current development version | `2.0.0b10` |
-| Stable development baseline | `2.0.0b9`, `dev/refactor` |
-| Active scientific branch | `dev/kieffer` |
-| Current focus | Kieffer acoustic thermodynamics, CRYSTAL phonon continuity, and quasi-static thermoelastic validation |
+| Last updated | 2026-09-13 |
+| Current development version | `2.0.0b11` |
+| Stable development baseline | `2.0.0b10`, `dev/refactor` |
+| Active scientific branch | `dev/energyeos` |
+| Current focus | Standalone Energy EOS closure: crystallographic structural response, CRYSTAL reference normalization, validation, and release documentation |
 | Development status | Pre-RC scientific closure and validation |
 | Numerical precision | `float64` for real calculations and native HDF5 values; `complex128` for complex quantities |
 | Persistence | Native HDF5 envelope retained; HA/QHA and Thermoelasticity payloads have been extended additively with Kieffer and pressure/provenance data |
@@ -86,7 +86,103 @@ The `2.0.0b9` baseline already provides:
 Python support remains 3.10 through 3.13 until the complete scientific
 stack is validated on Python 3.14.
 
-## What `2.0.0b10` / `dev/kieffer` adds
+## Current `2.0.0b11` / `dev/energyeos` tranche
+
+The Kieffer/QSA branch has been merged into ``dev/refactor`` with the complete
+CI matrix green.  The current branch promotes the already shared Energy EOS
+numerical core into a complete standalone EOS workflow without making QHA or
+Thermoelasticity depend on a frontend module.
+
+The first scientific step is model parity between pressure and integrated
+energy representations.  Modified Tait T2/T3/T4 now have analytical E(V) forms
+that use the same auxiliary coefficients and implied-parameter rules as the
+existing P(V) implementation.  Their pressure derivative is validated against
+the canonical Tait pressure equation.
+
+The same step adds the stabilized-jellium energy EOS (SJEOS) in the physical
+``E0, V0, K0, KP`` parameterization.  The inverse-volume polynomial
+coefficients remain internal, while analytical ``P(V)``, ``K(V)``, ``K'(V)``,
+and ``K''(V)`` are available to the shared numerical Energy EOS service.  SJEOS
+is deliberately exposed as an E--V model only in the standalone fitting
+registry; direct P--V fitting remains unchanged in this tranche.
+
+EOS model selection at CLI boundaries now uses the shared scientific resolver
+instead of duplicated large ``click.Choice`` catalogues.  The historical compact
+tags remain the canonical workflow representation.  ``quantas eos show-models``
+now reports all P-V, E-V, V-T, and P-V-T domains and can restrict the display to
+one or more requested sections.  Bash/Zsh/Fish use Click completion and Quantas
+adds a native PowerShell completion backend so model discovery remains useful on
+the project's primary Windows development platform.
+
+Energy and ``sigma_energy`` columns now participate in the same EOS unit
+normalization contract as pressure, length, and temperature.  Data-file
+``UNITS`` declarations, EOS spec ``[input] energy_unit``, and direct reader/CLI
+overrides are normalized to Hartree while raw values and source labels are
+retained.  ``sigma_energy`` is a completeness feature only; deterministic QM
+input generation is not expected to synthesize statistical energy errors.
+
+The Energy EOS input layer now exposes ``quantas eos inpgen`` and the same
+operation through ``quantas.api.eos.create_input``.  The initial CRYSTAL
+interface normalizes static, optimized, and native multi-volume EOS outputs to
+``StructureEnergySeries``.  List files may therefore combine a native CRYSTAL
+EOS run with additional single-volume calculations, provided atom counts,
+composition, total-energy correction semantics, and volumes are compatible.
+Generated EOS text retains V, a, b, c, alpha, beta, gamma, E, units, and source
+provenance.
+
+The ``ev/energy`` domain is now a public standalone EOS workflow.  Static total
+energies can be fitted through the common EOS batch/session machinery, persisted
+in the native HDF5 archive, diagnosed through observed/calculated energy and
+derived pressure, evaluated in both ``V -> P`` and ``P -> V`` directions, and
+rendered as E(V), P(V), and residual plots.  The public parameter boundary uses
+``E0`` in Ha, ``V0`` in angstrom cubed, ``K0`` in GPa, ``KP`` dimensionless,
+and ``KPP`` in GPa^-1, while conversion to core energy-density units remains
+confined to the E--V adapter.
+
+The strict EOS specification supports ``[defaults.ev]`` and ``targets =
+energy``/``all`` for the E--V domain.  The distributed template and examples
+include the same contract.  A seven-volume CRYSTAL/PBE MgO series provides the
+real-data public-workflow regression, reproducing approximately ``V0 =
+18.817428 A^3``, ``K0 = 178.761458 GPa``, and ``KP = 3.815504`` with BM3.
+
+Energy EOS datasets may now declare ``CRYSTAL_REFERENCE primitive`` or
+``crystallographic`` together with cell multiplicity, crystal system, and
+space-group metadata.  CRYSTAL input generation analyzes one reference
+structure, prefers the explicit CRYSTAL primitive-to-crystallographic
+transformation when present, and otherwise uses the shared spglib symmetry
+infrastructure.  Switching to the crystallographic reference scales energy and
+volume by the same integral multiplicity and transforms the lattice parameters;
+the primitive reference remains the default.
+
+When an E--V dataset contains the complete lattice path, the standalone EOS
+workflow reuses ``quantas.core.geometry.StructuralPathModel`` from QHA.  The
+primary theoretical structural response reports equilibrium cell axes,
+``eta_i = d ln(l_i)/d ln(V)``, and ``M_i = K/eta_i``.  EnergyEOS and structural
+path covariances are propagated separately and combined under an explicitly
+recorded zero cross-covariance assumption.  This route is model-independent
+and therefore remains available for SJEOS as well as the integrated pressure
+families.
+
+An optional secondary ``axial_model``/``--axial-eos`` fit provides direct
+comparison with a secondary pressure-form axial ``P(l^3)`` EOS parameterization.
+Its pressures
+come from the accepted primary EnergyEOS, while the axes are the original
+sampled structural data.  Quantas retains the complete pressure covariance;
+the present WLS backend uses its marginal standard deviations and records that
+approximation rather than claiming a full GLS treatment.
+
+The MgO regression is distributed in both primitive and crystallographic
+normalizations.  The two representations recover identical ``K0`` and ``KP``;
+``E0`` and ``V0`` scale by four, the conventional equilibrium axis is about
+``4.2222125 A``, and the cubic response satisfies ``M_a = 3 K0`` to numerical
+precision.
+
+Remaining b11 work is release-oriented rather than architectural: complete the
+combined validation matrix and manual, decide whether VASP Energy EOS ingestion
+is required before the release candidate or can follow behind the same
+``StructureEnergySeries`` contract, and perform the final schema/API freeze.
+
+## What `2.0.0b10` / `dev/kieffer` added
 
 The current branch is substantially larger than the original
 `dev/crystal-parser` task.  Kieffer acoustic thermodynamics was intentionally

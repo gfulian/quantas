@@ -472,6 +472,12 @@ def eos_fit_request_from_mapping(values: Mapping[str, Any]) -> EOSFitRequest:
     )
     mask_values = values.get("mask")
     mask = None if mask_values is None else np.asarray(mask_values, dtype=np.bool_)
+    axial_model_values = values.get("axial_model")
+    axial_model = (
+        None
+        if axial_model_values is None
+        else str(_mapping(axial_model_values)["tag"])
+    )
     return EOSFitRequest(
         model=model,
         target=str(values.get("target", "volume")),
@@ -481,6 +487,7 @@ def eos_fit_request_from_mapping(values: Mapping[str, Any]) -> EOSFitRequest:
         mask=mask,
         request_id=_optional_str(values.get("request_id")),
         metadata=dict(_mapping(values.get("metadata", {}))),
+        axial_model=axial_model,
     )
 
 

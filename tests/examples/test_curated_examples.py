@@ -160,6 +160,77 @@ def test_real_quartz_dataset_recovers_reference_bm3_fit() -> None:
     assert result.parameter_values["KP"] == pytest.approx(5.93351, rel=2.0e-4)
 
 
+def test_real_mgo_dataset_recovers_reference_energy_bm3_fit() -> None:
+    """The curated MgO E-V path must preserve robust BM3 observables."""
+    dataset = eos.read_input(EXAMPLES / "eos" / "EV_mgo_pbe.dat")
+    request = eos.FitRequest(model="BM3", domain="ev", target="energy")
+    result = eos.fit(dataset, request)
+
+    assert result.fit.success
+    # Keep the real-data regression on numerically robust observables.  Higher
+    # pressure derivatives (KP and the BM3-implied KPP) are appreciably more
+    # sensitive to nonlinear-solver termination across supported SciPy/BLAS
+    # combinations and are characterized by dedicated synthetic/core tests.
+    assert result.parameter_values["E0"] == pytest.approx(-275.173937178, abs=5.0e-7)
+    assert result.parameter_values["V0"] == pytest.approx(18.817428245, abs=1.0e-4)
+    assert result.parameter_values["K0"] == pytest.approx(178.761458, abs=2.0e-2)
+    assert np.isfinite(result.parameter_values["KP"])
+    assert np.isfinite(result.parameter_values["KPP"])
+    assert result.fit.rmse < 5.0e-6
+    assert result.derived["eta_a"] == pytest.approx(1.0 / 3.0)
+    assert result.derived["M_a"] == pytest.approx(3.0 * result.parameter_values["K0"])
+
+
+def test_real_mgo_crystallographic_normalization_preserves_energy_eos() -> None:
+    """Cell normalization changes extensive E,V but not the EOS response."""
+    primitive = eos.read_input(EXAMPLES / "eos" / "EV_mgo_pbe.dat")
+    conventional = eos.read_input(
+        EXAMPLES / "eos" / "EV_mgo_pbe_crystallographic.dat"
+    )
+    request = eos.FitRequest(model="BM3", domain="ev", target="energy")
+    primitive_result = eos.fit(primitive, request)
+    conventional_result = eos.fit(conventional, request)
+
+    np.testing.assert_allclose(
+        conventional.column("volume"),
+        4.0 * primitive.column("volume"),
+        rtol=0.0,
+        atol=1.0e-12,
+    )
+    np.testing.assert_allclose(
+        conventional.column("energy"),
+        4.0 * primitive.column("energy"),
+        rtol=0.0,
+        atol=5.0e-12,
+    )
+    assert conventional_result.parameter_values["V0"] == pytest.approx(
+        4.0 * primitive_result.parameter_values["V0"], rel=1.0e-5
+    )
+    assert conventional_result.parameter_values["E0"] == pytest.approx(
+        4.0 * primitive_result.parameter_values["E0"], abs=5.0e-6
+    )
+    assert conventional_result.parameter_values["K0"] == pytest.approx(
+        primitive_result.parameter_values["K0"], rel=1.0e-5
+    )
+    volumes = conventional.column("volume")
+    energies = conventional.column("energy")
+    a_values = conventional.column("a")
+    reference_index = int(np.argmin(energies))
+    expected_a0 = float(a_values[reference_index]) * (
+        conventional_result.parameter_values["V0"]
+        / float(volumes[reference_index])
+    ) ** (1.0 / 3.0)
+    assert conventional_result.derived["a0"] == pytest.approx(
+        expected_a0, rel=1.0e-12
+    )
+    assert conventional_result.derived["M_a"] == pytest.approx(
+        3.0 * conventional_result.parameter_values["K0"], rel=1.0e-12
+    )
+    assert conventional_result.metadata["structural_response"][
+        "independent_axes"
+    ] == ["a"]
+
+
 @pytest.mark.parametrize(
     ("relative", "nvolumes", "nqpoints", "nmodes"),
     [

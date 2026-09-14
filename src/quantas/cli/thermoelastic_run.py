@@ -30,6 +30,7 @@ from quantas.cli.contracts import (
     verbosity_option,
 )
 from quantas.cli.grouped_options import GroupedCommand, grouped_option
+from quantas.cli.eos_model_type import ENERGY_EOS_MODEL
 from quantas.cli.messages import quantas_finish, quantas_title
 from quantas.cli.thermoelastic_common import (
     require_output_replacement,
@@ -336,9 +337,11 @@ from quantas.api.thermoelasticity import (
 @grouped_option(
     "--qha-eos",
     group=DOMAIN_GROUP,
+    type=ENERGY_EOS_MODEL,
     default="BM3",
     show_default=True,
-    help="QHA energy EOS used when --qha-minimization=eos.",
+    help=("QHA energy EOS used when --qha-minimization=eos. Run "
+        "'quantas eos show-models --domain ev' to list compatible models."),
 )
 @grouped_option(
     "--qha-degree",

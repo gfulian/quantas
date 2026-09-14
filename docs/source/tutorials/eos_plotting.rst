@@ -38,12 +38,15 @@ The list depends on the scientific domain and on the information actually
 stored by the solver. Standardized residuals, for example, are offered only
 when they exist.
 
-P--V plots include observed data and the fitted curve, residuals, standardized
-residuals when available, and finite-strain normalized-pressure diagrams for
-Birch--Murnaghan, Natural Strain, and Vinet models. V--T plots include the
-fitted thermal-expansion curve and residuals. P--V--T records provide the
-sampled pressure-temperature coverage, calculated isotherms, calculated
-isobars, and residuals against both pressure and temperature.
+E--V plots include the observed total energies and fitted energy curve, the
+derived ``P(V) = -dE/dV`` relation, energy residuals, and standardized residuals
+when available. P--V plots include observed data and the fitted curve,
+residuals, standardized residuals when available, and finite-strain
+normalized-pressure diagrams for Birch--Murnaghan, Natural Strain, and Vinet
+models. V--T plots include the fitted thermal-expansion curve and residuals.
+P--V--T records provide the sampled pressure-temperature coverage, calculated
+isotherms, calculated isobars, and residuals against both pressure and
+temperature.
 
 Input uncertainty bars can be hidden with ``--no-uncertainties``. Excluded
 observations remain visible by default with a distinct marker and can be hidden
@@ -65,6 +68,18 @@ carry little information about EOS order and can force the horizontal range
 towards the origin because ``F`` contains division by finite strain. This is a
 plot-only choice: the observation remains in the fit, diagnostics table, and
 HDF5 archive. Use ``--zero-pressure-point`` to display it when desired.
+
+For an Energy EOS archive, inspect and render the dedicated pressure
+representation with:
+
+.. code-block:: console
+
+   quantas eos plot mgo_ev.hdf5 --slot ev/energy --list-plots
+   quantas eos plot mgo_ev.hdf5 --slot ev/energy \
+      --plot fit --plot pressure --plot residuals
+
+The pressure representation is derived analytically from the fitted energy EOS;
+it is not a separate fit to a pressure dataset.
 
 For P--V--T plots, explicit curves can be requested:
 

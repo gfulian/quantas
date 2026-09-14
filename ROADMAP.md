@@ -1,38 +1,43 @@
 # Quantas 2 roadmap
 
-## Source-freeze status
+## Current pre-RC development
 
-The `2.0.0b9` public lifecycle baseline, SEISMIC input-generation work, and
-frontend-neutral QHA inspection presentation are merged into `dev/refactor`.
-The backend has returned to release-candidate freeze. A temporary
-`dev/crystal-parser` branch carries the `2.0.0b10` CRYSTAL parser hardening,
-phonon-eigenvector parsing, and QHA mode-continuity work.  It will be merged
-only after focused scientific, documentation, and regression validation.
+The ``2.0.0b10`` Kieffer, CRYSTAL phonon-continuity, and generalized QSA
+pressure/provenance tranche has been merged into ``dev/refactor`` with the CI
+matrix green.  Development has moved to ``2.0.0b11`` on ``dev/energyeos``.
 
-The completed stabilization covers:
+The standalone Energy EOS workflow is now functionally complete on
+``dev/energyeos``.  The b11 tranche has:
 
-- public input, execution, persistence, report, plot, and export lifecycles;
-- typed public contracts and capability discovery;
-- result-aware plot inventories;
-- workflow-owned Elasticity and SEISMIC input generation;
-- CLI/API equivalence;
-- VASP density extraction for SEISMIC;
-- rejection of unstable native SEISMIC results.
-- public QHA inspection tables and sampled energy-volume plot specifications
-  derived from the existing inspection result without repeating the fit;
-- CRYSTAL phonon input normalization and independent-volume mode-continuity
-  validation on `dev/crystal-parser`, pending merge after final branch checks.
+- completed parity between the registered P(V) families and their integrated
+  E(V) forms where scientifically defined, including modified Tait;
+- added and validated SJEOS in its physical equilibrium-parameter form;
+- centralized EOS model discovery through the shared resolver, compact
+  historical tags, ``quantas eos show-models``, and shell completion including
+  native PowerShell support;
+- added canonical Hartree normalization for energy and ``sigma_energy`` while
+  retaining raw units and provenance;
+- promoted ``ev/energy`` to public fitting, diagnostics, HDF5 persistence,
+  reporting, plotting, and post-fit calculation;
+- exposed ``P(V) = -dE/dV`` together with ``K(V)``, ``K'(V)``, and ``K''(V)``
+  from accepted Energy EOS records;
+- added CRYSTAL ``eos inpgen`` support for static, optimized, and native
+  multi-volume EOS outputs through ``StructureEnergySeries``;
+- added explicit primitive/crystallographic reference-cell normalization,
+  symmetry provenance, and a shared structural-path response for theoretical
+  E--V datasets;
+- reused the QHA ``StructuralPathModel`` to derive equilibrium axes,
+  ``d ln(l_i)/d ln(V)``, and axial moduli ``M_i = K/eta_i`` with propagated
+  uncertainty rather than introducing a second EOS-specific lattice model;
+- added an optional, explicitly secondary pressure-form axial EOS refit from
+  EnergyEOS-derived pressures, including retained pressure covariance and clear
+  diagonal-WLS provenance;
+- kept QHA and Thermoelasticity coupled to the shared numerical Energy EOS
+  service rather than to the standalone workflow layer.
 
-It did not intentionally change approved numerical baselines, physical
-conventions, scientific array layouts, or HDF5 schemas.
-
-Before the first release candidate, changes are limited to:
-
-- corrections demonstrated by final validation;
-- validation and manual-style documentation;
-- release metadata and publishing configuration;
-- narrowly scoped compatibility fixes that preserve approved scientific
-  behavior.
+The remaining b11 decisions are deliberately narrow: complete the combined EOS
+validation/manual pass, decide the release timing of VASP Energy EOS ingestion,
+and freeze the public API and native archive contracts before ``2.0.0rc1``.
 
 ## Before 2.0.0rc1
 
@@ -73,8 +78,6 @@ an existing public result incorrect or unusable.
 
 ## After Quantas 2.0
 
-- Add Kieffer acoustic thermodynamics to HA/QHA after a dedicated formula audit.
-- Extend the standalone EOS workflow, including coupled P--V--T diagnostics.
 - Evaluate additional non-empirical Elasticity observables in a dedicated
   change.
 - Develop additional code interfaces and scientific modules behind the same

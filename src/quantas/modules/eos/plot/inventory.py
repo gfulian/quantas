@@ -241,7 +241,8 @@ class EOSArchivePlotInventory:
 
 
 _REPRESENTATION_DESCRIPTIONS = {
-    "fit": "Observed data and the fitted P-V or V-T relation.",
+    "fit": "Observed data and the fitted E-V, P-V, or V-T relation.",
+    "pressure": "Pressure-volume relation derived from an integrated E-V fit.",
     "residuals": "Physical fit residuals against the natural control coordinate.",
     "standardized_residuals": (
         "Dimensionless residuals normalized by the effective observation uncertainty."
@@ -601,6 +602,9 @@ def _representation_descriptor(
             if record.request.domain is EOSFitDomain.PRESSURE_VOLUME
             else _target_property_key(record.request.target),
         )
+    elif key == "pressure":
+        property_keys = ("pressure",)
+        constraints = ("Derived from the integrated E-V relation P(V)=-dE/dV.",)
     elif key == "residuals":
         property_keys = ("residual",)
     elif key == "standardized_residuals":
@@ -652,13 +656,30 @@ def _property_descriptor(
         if key in _representation_property_keys(representation, record)
     )
     if key == "pressure":
+        pressure_unit = (
+            dataset.units.get("pressure")
+            or diagnostic_units.get("eos_pressure")
+            or diagnostic_units.get("observed_pressure")
+            or "GPa"
+        )
         return PlotPropertyDescriptor(
             key=key,
             name="Pressure",
             symbol_math="P",
             symbol_plain="P",
-            unit=dataset.units.get("pressure"),
+            unit=pressure_unit,
             description="Observed or model-calculated pressure.",
+            category="state_variable",
+            representations=compatible,
+        )
+    if key == "energy":
+        return PlotPropertyDescriptor(
+            key=key,
+            name="Energy",
+            symbol_math="E",
+            symbol_plain="E",
+            unit=dataset.units.get("energy") or diagnostic_units.get("observed_energy"),
+            description="Observed or model-calculated static total energy.",
             category="state_variable",
             representations=compatible,
         )
@@ -690,7 +711,7 @@ def _property_descriptor(
             key=key,
             name="Fit residual",
             symbol_math=r"\Delta y",
-            symbol_plain="Δy",
+            symbol_plain="Delta y",
             unit=diagnostic_units.get("residual"),
             description="Observed minus calculated response in physical units.",
             category="diagnostic",
@@ -726,7 +747,7 @@ def _property_descriptor(
             key=key,
             name="Pressure-temperature sampling coverage",
             symbol_math="(P,T)",
-            symbol_plain="P–T",
+            symbol_plain="P-T",
             unit=None,
             description="Locations of included and excluded observations in P-T space.",
             category="sampling",
@@ -747,6 +768,7 @@ def _representation_property_keys(
             else _target_property_key(record.request.target),
         )
     return {
+        "pressure": ("pressure",),
         "residuals": ("residual",),
         "standardized_residuals": ("standardized_residual",),
         "normalized_pressure": ("normalized_pressure",),
@@ -761,6 +783,8 @@ def _target_property_key(target: str) -> str:
     normalized = str(target).strip().lower()
     if normalized == "volume":
         return "volume"
+    if normalized == "energy":
+        return "energy"
     if normalized in {"a", "b", "c"}:
         return f"axis_{normalized}"
     raise ValueError(f"unsupported EOS plot target {target!r}")
@@ -770,6 +794,7 @@ def _ordered_property_keys(keys: set[str]) -> tuple[str, ...]:
     """Return deterministic scientific property ordering."""
     order = (
         "pressure",
+        "energy",
         "volume",
         "axis_a",
         "axis_b",

@@ -54,7 +54,7 @@ def main() -> None:
         record_id=args.record_id,
     ).value
     calculation_kwargs: dict[str, list[float]]
-    if domain == "pv":
+    if domain in {"ev", "pv"}:
         calculation_kwargs = {"pressure": [0.0, 5.0, 10.0]}
     elif domain == "vt":
         calculation_kwargs = {"temperature": [300.0, 600.0, 900.0]}

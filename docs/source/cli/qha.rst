@@ -1,6 +1,10 @@
 ``quantas qha``
 ===============
 
+Energy-EOS options accept the compact Quantas model tags and aliases.
+Use ``quantas eos show-models --domain ev`` for the current integrated
+model catalogue and capability summary.
+
 The QHA frontend builds a volume-dependent free-energy representation and
 minimizes it at every requested pressure-temperature state.  Its command line
 therefore exposes scientific choices that are absent from HA: interpolation

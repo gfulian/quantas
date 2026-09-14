@@ -26,7 +26,7 @@ from .contracts import (
 )
 from .diagnostics import EOSDiagnosticResult, EOSDiagnostics
 from .history import EOSResultSlot
-from .io import read_eos_input
+from .io import create_eos_energy_input, read_eos_input
 from .models import EOSDataset, EOSFitRequest, EOSFitResult
 from .plot import EOSPlotOptions, EOSPlotter, describe_eos_plots
 
@@ -38,6 +38,7 @@ def fit_eos(
     pressure_unit: str | None = None,
     length_unit: str | None = None,
     temperature_unit: str | None = None,
+    energy_unit: str | None = None,
     fitter: EOSFitter | None = None,
 ) -> EOSFitResult:
     """Fit one EOS request through the stable Python facade.
@@ -48,7 +49,7 @@ def fit_eos(
         Normalized dataset or keyword-directed EOS input file.
     request : EOSFitRequest
         Complete model, target, constraints, and solver request.
-    pressure_unit, length_unit, temperature_unit : str or None, optional
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
         Unit overrides applied only when ``input_data`` is a path.
     fitter : EOSFitter or None, optional
         Optional reusable fitting service.
@@ -64,6 +65,7 @@ def fit_eos(
             pressure_unit=pressure_unit,
             length_unit=length_unit,
             temperature_unit=temperature_unit,
+            energy_unit=energy_unit,
         )
         if isinstance(input_data, (str, Path))
         else input_data
@@ -162,6 +164,7 @@ MODULE_CONTRACT = EOSModuleContract(
         sorted(EOS_SUPPORTED_ARCHIVE_SCHEMA_VERSIONS)
     ),
     capabilities=EOS_DOMAIN_CAPABILITIES,
+    create_input=create_eos_energy_input,
     read_input=read_eos_input,
     fit=fit_eos,
     run_batch=run_eos_batch,
@@ -177,6 +180,7 @@ __all__ = [
     "MODULE_CONTRACT",
     "build_eos_plots",
     "calculate_eos",
+    "create_eos_energy_input",
     "describe_eos_plots",
     "diagnose_eos",
     "fit_eos",

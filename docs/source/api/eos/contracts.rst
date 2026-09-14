@@ -17,6 +17,10 @@ Dataset and domain capabilities
    :members:
    :show-inheritance:
 
+.. autoclass:: quantas.api.eos.CrystalReference
+   :members:
+   :show-inheritance:
+
 .. autoclass:: quantas.api.eos.CapabilityStatus
    :members:
    :show-inheritance:

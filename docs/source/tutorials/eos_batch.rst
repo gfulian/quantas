@@ -35,7 +35,7 @@ Settings are resolved in a predictable order:
 
    Quantas defaults
        → [defaults]
-       → [defaults.pv], [defaults.vt], or [defaults.pvt]
+       → [defaults.ev], [defaults.pv], [defaults.vt], or [defaults.pvt]
        → [job NAME]
 
 A job-specific value therefore overrides a domain default, which overrides a
@@ -112,7 +112,7 @@ variance.  In a V--T fit, both structural and temperature uncertainties can
 contribute.  In P--V--T, both volume and temperature coordinate terms are
 projected into pressure.
 
-This method is often a practical EosFit-like choice when complete standard
+This method is often a practical choice when complete standard
 uncertainties are available and the explicit EOS form is retained.
 
 Orthogonal distance regression: ``odr``
@@ -152,7 +152,7 @@ Weighted fits in these tutorials use
 
 When the reduced chi-square is greater than one, parameter covariance is
 inflated.  When it is less than one, the reported covariance is not reduced.
-This EosFit-like policy avoids making parameter errors artificially smaller
+This inflate-only policy avoids making parameter errors artificially smaller
 because the supplied experimental uncertainties were conservative.
 
 Candidate records and accepted results

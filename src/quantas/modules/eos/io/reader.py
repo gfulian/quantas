@@ -10,11 +10,19 @@ import re
 
 import numpy as np
 
-from quantas.core.physics.units import convert_length, convert_pressure, convert_volume
+from quantas.core.physics.units import (
+    convert_energy,
+    convert_length,
+    convert_pressure,
+    convert_volume,
+)
 
 from quantas.models import BasicReader
 from quantas.modules.eos.models import (
+    CrystalReference,
     EOSDataset,
+    crystal_system_from_space_group_number,
+    parse_crystal_reference,
     parse_eos_crystal_system,
 )
 
@@ -23,6 +31,8 @@ _DEFAULT_UNITS = {
     "pressure": "GPa",
     "sigma_pressure": "GPa",
     "temperature": "K",
+    "energy": "Ha",
+    "sigma_energy": "Ha",
     "sigma_temperature": "K",
     "volume": "angstrom^3",
     "sigma_volume": "angstrom^3",
@@ -97,6 +107,10 @@ _METADATA_KEYWORDS = frozenset(
         "TITLE",
         "COMMENT",
         "SYSTEM",
+        "CRYSTAL_REFERENCE",
+        "CELL_MULTIPLICITY",
+        "SPACE_GROUP_NUMBER",
+        "SPACE_GROUP_SYMBOL",
         "TSCALE",
         "VSCALE",
         "LSCALE",
@@ -123,10 +137,10 @@ class _ParsedDataRow:
 
 
 class EOSInputFileReader(BasicReader[EOSDataset]):
-    """Read a keyword-directed Quantas- or EosFit-style EOS text file.
+    """Read a keyword-directed Quantas or EosFit-compatible EOS text file.
 
     The reader accepts both the historical Quantas layout, in which ``FORMAT``
-    and ``DATA`` occur on separate lines, and EosFit-style layouts in which
+    and ``DATA`` occur on separate lines, and EosFit-compatible layouts in which
     column names follow ``FORMAT`` and the numeric table starts immediately.
     Keyword matching is case-insensitive and an optional trailing colon is
     accepted, for example ``FORMAT: T, V``.
@@ -139,6 +153,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
     ----------
     eos_input : str, Path or None, optional
         File loaded during construction.
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
+        Explicit input-unit overrides. Energy and matching ``sigma_energy``
+        values are normalized to Hartree; other physical quantities retain the
+        established EOS canonical units.
     """
 
     def __init__(
@@ -148,6 +166,7 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
         pressure_unit: str | None = None,
         length_unit: str | None = None,
         temperature_unit: str | None = None,
+        energy_unit: str | None = None,
     ) -> None:
         super().__init__()
         self.dataset: EOSDataset | None = None
@@ -158,6 +177,7 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
             if temperature_unit is None
             else _normalize_temperature_scale(temperature_unit)
         )
+        self.energy_unit = None if energy_unit is None else str(energy_unit)
         if eos_input is not None:
             self.load(eos_input)
 
@@ -200,6 +220,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
         """Parse text lines into an :class:`EOSDataset`."""
         jobname = "Unknown"
         system: str | None = None
+        crystal_reference: CrystalReference | None = None
+        cell_multiplicity: int | None = None
+        space_group_number: int | None = None
+        space_group_symbol: str | None = None
         provenance: str | None = None
         temperature_scale = "K"
         volume_scale = "absolute"
@@ -244,6 +268,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
                 "TITLE",
                 "COMMENT",
                 "SYSTEM",
+                "CRYSTAL_REFERENCE",
+                "CELL_MULTIPLICITY",
+                "SPACE_GROUP_NUMBER",
+                "SPACE_GROUP_SYMBOL",
                 "PROVENANCE",
                 "TSCALE",
                 "VSCALE",
@@ -262,6 +290,35 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
             elif keyword == "SYSTEM":
                 value, index = _keyword_value(lines, index, remainder, keyword)
                 system = parse_eos_crystal_system(value).value
+            elif keyword == "CRYSTAL_REFERENCE":
+                value, index = _keyword_value(lines, index, remainder, keyword)
+                crystal_reference = parse_crystal_reference(value)
+            elif keyword == "CELL_MULTIPLICITY":
+                value, index = _keyword_value(lines, index, remainder, keyword)
+                try:
+                    cell_multiplicity = int(value)
+                except ValueError as exc:
+                    raise ValueError(
+                        "EOS CELL_MULTIPLICITY must be a positive integer."
+                    ) from exc
+                if cell_multiplicity <= 0:
+                    raise ValueError(
+                        "EOS CELL_MULTIPLICITY must be a positive integer."
+                    )
+            elif keyword == "SPACE_GROUP_NUMBER":
+                value, index = _keyword_value(lines, index, remainder, keyword)
+                try:
+                    space_group_number = int(value)
+                except ValueError as exc:
+                    raise ValueError(
+                        "EOS SPACE_GROUP_NUMBER must be an integer in 1..230."
+                    ) from exc
+                crystal_system_from_space_group_number(space_group_number)
+            elif keyword == "SPACE_GROUP_SYMBOL":
+                value, index = _keyword_value(lines, index, remainder, keyword)
+                space_group_symbol = value.strip()
+                if not space_group_symbol:
+                    raise ValueError("EOS SPACE_GROUP_SYMBOL cannot be empty.")
             elif keyword == "PROVENANCE":
                 value, index = _keyword_value(lines, index, remainder, keyword)
                 provenance = value
@@ -327,6 +384,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
             raise ValueError("EOS input does not contain any numeric data rows.")
         if self.temperature_unit is not None:
             temperature_scale = self.temperature_unit
+        if self.energy_unit is not None:
+            for name in ("energy", "sigma_energy"):
+                if name in format_columns:
+                    column_units[name] = self.energy_unit
         if self.pressure_unit is not None:
             for name in ("pressure", "sigma_pressure"):
                 if name in format_columns:
@@ -343,6 +404,10 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
             source=source,
             jobname=jobname,
             system=system,
+            crystal_reference=crystal_reference,
+            cell_multiplicity=cell_multiplicity,
+            space_group_number=space_group_number,
+            space_group_symbol=space_group_symbol,
             provenance=provenance,
             temperature_scale=temperature_scale,
             volume_scale=volume_scale,
@@ -359,6 +424,10 @@ def _build_dataset(
     source: Path,
     jobname: str,
     system: str | None,
+    crystal_reference: CrystalReference | None,
+    cell_multiplicity: int | None,
+    space_group_number: int | None,
+    space_group_symbol: str | None,
     provenance: str | None,
     temperature_scale: str,
     volume_scale: str,
@@ -405,6 +474,9 @@ def _build_dataset(
         volume_scale=volume_scale,
         linear_scale=linear_scale,
     )
+    for name in ("energy", "sigma_energy"):
+        if name in columns:
+            units[name] = "Ha"
     for name in ("pressure", "sigma_pressure"):
         if name in columns:
             units[name] = "GPa"
@@ -438,15 +510,39 @@ def _build_dataset(
             "group_column": "group" in format_columns,
         },
         "unit_overrides": {
+            "energy": raw_units.get("energy"),
             "pressure": raw_units.get("pressure"),
             "length": raw_units.get("a") or raw_units.get("b") or raw_units.get("c"),
             "temperature": temperature_scale if "temperature" in columns else None,
         },
     }
-    if system is not None:
+    crystal_system = None
+    if space_group_number is not None:
+        inferred = crystal_system_from_space_group_number(space_group_number)
+        if system is not None and parse_eos_crystal_system(system) is not inferred:
+            raise ValueError(
+                "EOS SYSTEM is inconsistent with SPACE_GROUP_NUMBER: "
+                f"{system!r} versus {space_group_number}."
+            )
+        crystal_system = inferred
+        metadata["space_group_number"] = int(space_group_number)
+    elif system is not None:
         crystal_system = parse_eos_crystal_system(system)
+    if crystal_system is not None:
         metadata["crystal_system"] = crystal_system.value
         metadata["independent_cell_axes"] = crystal_system.independent_axes
+    if space_group_symbol is not None:
+        metadata["space_group_symbol"] = space_group_symbol
+    if crystal_reference is not None:
+        metadata["crystal_reference"] = crystal_reference.value
+    if cell_multiplicity is not None:
+        metadata["cell_multiplicity"] = int(cell_multiplicity)
+    if (
+        crystal_reference is CrystalReference.CRYSTALLOGRAPHIC
+        and cell_multiplicity is not None
+        and cell_multiplicity < 1
+    ):
+        raise ValueError("crystallographic cell multiplicity must be positive")
     return EOSDataset(
         jobname=jobname,
         columns=columns,
@@ -467,6 +563,7 @@ def read_eos_input(
     pressure_unit: str | None = None,
     length_unit: str | None = None,
     temperature_unit: str | None = None,
+    energy_unit: str | None = None,
 ) -> EOSDataset:
     """Read and normalize one keyword-directed EOS input file.
 
@@ -474,10 +571,11 @@ def read_eos_input(
     ----------
     filename : str or Path
         Input file path. File extensions are not used to select the parser.
-    pressure_unit, length_unit, temperature_unit : str or None, optional
+    pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
         Explicit input-unit overrides. When omitted, declarations in the file
-        are used, followed by the EOS defaults GPa, Angstrom, and kelvin.
-        Normalized in-memory values always use GPa, Angstrom/Angstrom^3, and K.
+        are used, followed by the EOS defaults GPa, Angstrom, kelvin, and
+        Hartree. Normalized in-memory values always use GPa,
+        Angstrom/Angstrom^3, K, and Ha.
 
     Returns
     -------
@@ -495,6 +593,7 @@ def read_eos_input(
         pressure_unit=pressure_unit,
         length_unit=length_unit,
         temperature_unit=temperature_unit,
+        energy_unit=energy_unit,
     ).load(filename)
 
 
@@ -841,6 +940,14 @@ def _normalize_physical_units(
 ) -> None:
     """Convert supported physical input columns to EOS internal units."""
     _convert_temperature(columns, temperature_scale)
+    for name in ("energy", "sigma_energy"):
+        if name in columns:
+            source_unit = raw_units.get(name, "Ha")
+            if not _unit_is(source_unit, {"ha", "hartree"}):
+                columns[name] = np.asarray(
+                    convert_energy(columns[name], source_unit, "Ha"),
+                    dtype=np.float64,
+                )
     for name in ("pressure", "sigma_pressure"):
         if name in columns:
             source_unit = raw_units.get(name, "GPa")

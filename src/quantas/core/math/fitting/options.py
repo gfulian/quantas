@@ -63,8 +63,8 @@ class CovarianceScaling(str, Enum):
         Multiply covariance by the reduced chi-square. Parameter standard
         errors may therefore increase or decrease.
     INFLATE_ONLY
-        Multiply covariance by ``max(1, reduced_chi_square)``. This reproduces
-        the uncertainty-rescaling convention used by EosFit7.
+        Multiply covariance by ``max(1, reduced_chi_square)`` so reported
+        covariance is never reduced below the supplied uncertainty scale.
     """
 
     ABSOLUTE = "absolute"

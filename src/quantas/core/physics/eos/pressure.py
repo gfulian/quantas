@@ -15,7 +15,11 @@ from typing import TypeAlias
 
 import numpy as np
 
-from .parameters import EOSParameters, resolve_pressure_parameters
+from .parameters import (
+    EOSParameters,
+    resolve_pressure_parameters,
+    _tait_coefficients,
+)
 from .spec import EOSFamily, EOSModel, parse_eos_model
 
 ArrayLike: TypeAlias = np.ndarray | float | Sequence[float]
@@ -75,6 +79,9 @@ class PressureEOS:
             return pressure
         if model.family is EOSFamily.TAIT:
             return self._tait_pressure(values, pars)
+        if model.family is EOSFamily.STABILIZED_JELLIUM:
+            pressure, _, _, _ = self._sjeos_derivatives(values, pars)
+            return pressure
         raise ValueError(f"unknown pressure EOS: {eos!r}")
 
     def bulk_modulus(
@@ -106,9 +113,13 @@ class PressureEOS:
             return -x * first / 3.0
         if model.family is EOSFamily.TAIT:
             pressure = self._tait_pressure(values, pars)
-            a, b, c = self._tait_coefficients(pars)
+            a, b, c = _tait_coefficients(pars)
             ratio = values / pars.V0
             return pars.K0 * ratio * (1.0 + b * pressure) ** (c + 1.0)
+        if model.family is EOSFamily.STABILIZED_JELLIUM:
+            _, first, _, _ = self._sjeos_derivatives(values, pars)
+            x = (values / pars.V0) ** (1.0 / 3.0)
+            return -x * first / 3.0
         raise ValueError(f"unknown pressure EOS: {eos!r}")
 
     def bulk_modulus_derivative(
@@ -141,8 +152,12 @@ class PressureEOS:
             return -(1.0 + x * second / first) / 3.0
         if model.family is EOSFamily.TAIT:
             pressure = self._tait_pressure(values, pars)
-            a, b, c = self._tait_coefficients(pars)
+            a, b, c = _tait_coefficients(pars)
             return (pars.KP + 1.0) * ((1.0 - a) * (1.0 + b * pressure) ** c + a) - 1.0
+        if model.family is EOSFamily.STABILIZED_JELLIUM:
+            _, first, second, _ = self._sjeos_derivatives(values, pars)
+            x = (values / pars.V0) ** (1.0 / 3.0)
+            return -(1.0 + x * second / first) / 3.0
         raise ValueError(f"unknown pressure EOS: {eos!r}")
 
     def bulk_modulus_second_derivative(
@@ -178,10 +193,16 @@ class PressureEOS:
             return derivative / first
         if model.family is EOSFamily.TAIT:
             pressure = self._tait_pressure(values, pars)
-            a, b, c = self._tait_coefficients(pars)
+            a, b, c = _tait_coefficients(pars)
             return (
                 (pars.KP + 1.0) * (1.0 - a) * c * b * (1.0 + b * pressure) ** (c - 1.0)
             )
+        if model.family is EOSFamily.STABILIZED_JELLIUM:
+            _, first, second, third = self._sjeos_derivatives(values, pars)
+            x = (values / pars.V0) ** (1.0 / 3.0)
+            ratio = second / first
+            derivative = -(ratio + x * (third / first - ratio**2)) / 3.0
+            return derivative / first
         raise ValueError(f"unknown pressure EOS: {eos!r}")
 
     @staticmethod
@@ -424,18 +445,34 @@ class PressureEOS:
         return pressure, first, second, third
 
     @staticmethod
-    def _tait_coefficients(pars: EOSParameters) -> tuple[float, float, float]:
-        denominator = 1.0 + pars.KP + pars.K0 * pars.KPP
-        a = (1.0 + pars.KP) / denominator
-        b = pars.KP / pars.K0 - pars.KPP / (1.0 + pars.KP)
-        c = denominator / (pars.KP**2 + pars.KP - pars.K0 * pars.KPP)
-        if not np.all(np.isfinite([a, b, c])) or a == 0.0 or b == 0.0 or c == 0.0:
-            raise ValueError("Tait parameters produce a singular equation")
-        return float(a), float(b), float(c)
+    def _sjeos_derivatives(
+        volume: np.ndarray,
+        pars: EOSParameters,
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        """Return SJEOS pressure and its first three derivatives in ``x``."""
+        x = (volume / pars.V0) ** (1.0 / 3.0)
+        kp = pars.KP
+        prefactor = 1.5 * pars.K0
+        a = kp - 3.0
+        b = 10.0 - 3.0 * kp
+        c = 3.0 * kp - 11.0
+        pressure = prefactor * (
+            3.0 * a * x**-6 + 2.0 * b * x**-5 + c * x**-4
+        )
+        first = prefactor * (
+            -18.0 * a * x**-7 - 10.0 * b * x**-6 - 4.0 * c * x**-5
+        )
+        second = prefactor * (
+            126.0 * a * x**-8 + 60.0 * b * x**-7 + 20.0 * c * x**-6
+        )
+        third = prefactor * (
+            -1008.0 * a * x**-9 - 420.0 * b * x**-8 - 120.0 * c * x**-7
+        )
+        return pressure, first, second, third
 
-    @classmethod
-    def _tait_pressure(cls, volume: np.ndarray, pars: EOSParameters) -> np.ndarray:
-        a, b, c = cls._tait_coefficients(pars)
+    @staticmethod
+    def _tait_pressure(volume: np.ndarray, pars: EOSParameters) -> np.ndarray:
+        a, b, c = _tait_coefficients(pars)
         argument = ((volume / pars.V0) + a - 1.0) / a
         if np.any(argument <= 0.0):
             raise ValueError("Tait EOS is undefined for the requested volume")

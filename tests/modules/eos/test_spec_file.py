@@ -55,6 +55,7 @@ def test_spec_resolves_defaults_multi_target_and_presentation(tmp_path: Path) ->
 title = Topaz mixed analysis
 
 [input]
+energy_unit = eV
 pressure_unit = GPa
 length_unit = angstrom
 
@@ -92,6 +93,7 @@ model = PT3
     resolved = resolve_eos_spec(document, dataset)
 
     assert document.metadata["title"] == "Topaz mixed analysis"
+    assert document.input_options.energy_unit == "eV"
     assert resolved.plan.failure_policy.value == "continue"
     assert tuple(job.job_id for job in resolved.plan.jobs) == (
         "volume",
@@ -392,6 +394,25 @@ targets = volume
     assert result.exit_code != 0
     assert "--spec is the authority" in result.output
     assert "--solver" in result.output
+
+    unit_override = CliRunner().invoke(
+        main,
+        [
+            "eos",
+            "run",
+            str(DATA / "PV_quartz.dat"),
+            "--spec",
+            str(spec_path),
+            "--energy-unit",
+            "eV",
+            "--dry-run",
+            "--report",
+            str(tmp_path / "invalid-energy-unit.log"),
+        ],
+    )
+    assert unit_override.exit_code != 0
+    assert "--spec is the authority" in unit_override.output
+    assert "--energy-unit" in unit_override.output
 
 
 def test_spec_uses_v0_for_volume_and_l0_for_axes(tmp_path: Path) -> None:

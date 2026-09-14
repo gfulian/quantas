@@ -23,6 +23,8 @@ def _parse_domain(entry: _Entry, source: Path | None, section: str) -> EOSFitDom
     aliases = {
         "pv": EOSFitDomain.PRESSURE_VOLUME,
         "p-v": EOSFitDomain.PRESSURE_VOLUME,
+        "ev": EOSFitDomain.ENERGY_VOLUME,
+        "e-v": EOSFitDomain.ENERGY_VOLUME,
         "vt": EOSFitDomain.VOLUME_TEMPERATURE,
         "v-t": EOSFitDomain.VOLUME_TEMPERATURE,
         "pvt": EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE,
@@ -31,7 +33,7 @@ def _parse_domain(entry: _Entry, source: Path | None, section: str) -> EOSFitDom
     value = aliases.get(entry.value.strip().lower())
     if value is None:
         raise EOSSpecError(
-            "domain must be pv, vt, or pvt",
+            "domain must be ev, pv, vt, or pvt",
             source=source,
             line=entry.line,
             section=section,
@@ -100,7 +102,7 @@ def _canonical_parameter_for_request(
             "p1": "p1",
         }
         return aliases.get(compact, key)
-    if target == "volume":
+    if domain is EOSFitDomain.ENERGY_VOLUME or target == "volume":
         return canonical_parameter_name(text)
     aliases = {
         "m0": "M0",
@@ -116,6 +118,7 @@ def canonical_parameter_name(value: str) -> str:
     text = str(value).strip()
     key = text.lower().replace("_", "").replace("'", "p")
     aliases = {
+        "e0": "E0",
         "b0": "K0",
         "k0": "K0",
         "kp": "KP",

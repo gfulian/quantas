@@ -18,6 +18,7 @@ from quantas.core.math.fitting import (
     FitResult,
     FitSolver,
     LeastSquaresFitter,
+    WLSOptions,
     OrthogonalDistanceFitter,
     ParameterDefinition,
     ParameterMap,
@@ -29,6 +30,10 @@ from quantas.core.physics.eos import (
     TemperatureEOSModel,
 )
 
+from .domains.ev import (
+    EnergyEOSFitModel,
+    build_energy_parameter_map,
+)
 from .domains.pv import (
     AxialEOSFitModel,
     PressureEOSFitModel,
@@ -38,6 +43,7 @@ from .domains.pv import (
 )
 from .models import (
     EOSDataset,
+    EOSFitOptions,
     EOSFitDomain,
     EOSFitRequest,
     EOSFitResult,
@@ -51,6 +57,23 @@ from .domains.pvt import (
     PVTEOSFitModel,
     build_pvt_parameter_map,
 )
+
+from .structural import (
+    EnergyStructuralResponse,
+    analyze_energy_structural_response,
+)
+
+
+@dataclass(slots=True)
+class _PreparedEVFit:
+    """Validated numerical inputs for one energy-volume fit."""
+
+    series: EOSSeries
+    observations: FitObservations
+    selected: FitObservations
+    parameter_map: ParameterMap
+    model: EnergyEOSFitModel
+    options: FitOptions
 
 
 @dataclass(slots=True)
@@ -129,6 +152,8 @@ class EOSFitter:
         _validate_supported_request(request)
         if request.domain is EOSFitDomain.PRESSURE_VOLUME:
             prepared: Any = _prepare_pv_fit(dataset, request)
+        elif request.domain is EOSFitDomain.ENERGY_VOLUME:
+            prepared = _prepare_ev_fit(dataset, request)
         elif request.domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE:
             prepared = _prepare_pvt_fit(dataset, request)
         else:
@@ -180,6 +205,8 @@ class EOSFitter:
         _validate_supported_request(request)
         if request.domain is EOSFitDomain.PRESSURE_VOLUME:
             prepared: Any = _prepare_pv_fit(dataset, request)
+        elif request.domain is EOSFitDomain.ENERGY_VOLUME:
+            prepared = _prepare_ev_fit(dataset, request)
         elif request.domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE:
             prepared = _prepare_pvt_fit(dataset, request)
         else:
@@ -222,6 +249,17 @@ class EOSFitter:
             )
             fit = _augment_axial_fit(prepared_pv, fit)
             return _build_pv_result(dataset, request, prepared_pv, fit)
+
+        if request.domain is EOSFitDomain.ENERGY_VOLUME:
+            prepared_ev = _prepare_ev_fit(dataset, request)
+            solver = self._solver_for(prepared_ev.options.method)
+            fit = solver.fit_problem(
+                prepared_ev.model,
+                prepared_ev.observations,
+                prepared_ev.parameter_map,
+                prepared_ev.options,
+            )
+            return _build_ev_result(dataset, request, prepared_ev, fit)
 
         if request.domain is EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE:
             prepared_pvt = _prepare_pvt_fit(dataset, request)
@@ -284,15 +322,19 @@ def _validate_supported_request(request: EOSFitRequest) -> None:
     """Reject requests outside the implemented P-V and V-T milestones."""
     if request.domain not in {
         EOSFitDomain.PRESSURE_VOLUME,
+        EOSFitDomain.ENERGY_VOLUME,
         EOSFitDomain.VOLUME_TEMPERATURE,
         EOSFitDomain.PRESSURE_VOLUME_TEMPERATURE,
     }:
         raise NotImplementedError(
-            "the current EOS milestone implements P-V, V-T, and P-V-T fitting"
+            "the current EOS milestone implements E-V, P-V, V-T, and P-V-T fitting"
         )
-    if request.target not in {"volume", "a", "b", "c"}:
+    if request.domain is EOSFitDomain.ENERGY_VOLUME:
+        if request.target != "energy":
+            raise NotImplementedError("E-V fitting requires target='energy'")
+    elif request.target not in {"volume", "a", "b", "c"}:
         raise NotImplementedError(
-            "EOS fitting supports volume and the linear cell parameters a, b, c"
+            "EOS fitting supports energy, volume, and the linear cell parameters a, b, c"
         )
     if request.options.method not in {
         FitMethod.OLS,
@@ -303,6 +345,60 @@ def _validate_supported_request(request: EOSFitRequest) -> None:
         raise NotImplementedError(
             "the current EOS milestone implements OLS, WLS, effective variance, and ODR"
         )
+
+
+def _prepare_ev_fit(
+    dataset: EOSDataset,
+    request: EOSFitRequest,
+) -> _PreparedEVFit:
+    """Build observations, parameters, model, and options for one E-V fit."""
+    dataset.require_variable_coordinate(
+        "volume",
+        purpose="an energy-volume equation of state",
+        mask=request.mask,
+    )
+    if not dataset.has("energy"):
+        raise ValueError("E-V fitting requires an energy column")
+    if dataset.units.get("volume", "angstrom^3") != "angstrom^3":
+        raise ValueError(
+            "E-V fitting currently requires absolute volumes normalized to angstrom^3"
+        )
+    if not isinstance(request.model, EOSModel):
+        raise TypeError("E-V requests require an integrated EOS model")
+    series = dataset.series(
+        "energy",
+        independent="volume",
+        mask=request.mask,
+    )
+    observations = series.observations()
+    selected = observations.selected()
+    model = EnergyEOSFitModel(
+        request.model,
+        energy_unit=series.units.get("energy", "Ha"),
+        volume_unit=series.units.get("volume", "angstrom^3"),
+        pressure_unit="GPa",
+    )
+    parameter_map = build_energy_parameter_map(
+        request.model,
+        selected.x,
+        selected.y,
+        request.constraints,
+        energy_unit=series.units.get("energy", "Ha"),
+        pressure_unit="GPa",
+        volume_unit=series.units.get("volume", "angstrom^3"),
+    )
+    if selected.size <= parameter_map.n_free:
+        raise ValueError(
+            "E-V fit requires more selected observations than free parameters"
+        )
+    return _PreparedEVFit(
+        series=series,
+        observations=observations,
+        selected=selected,
+        parameter_map=parameter_map,
+        model=model,
+        options=_fit_options(dataset, request),
+    )
 
 
 def _prepare_pv_fit(
@@ -588,6 +684,216 @@ def _augment_axial_vt_fit(
             "coefficient_space": "auxiliary_cubed_length",
         },
     )
+
+
+def _build_ev_result(
+    dataset: EOSDataset,
+    request: EOSFitRequest,
+    prepared: _PreparedEVFit,
+    fit: FitResult,
+) -> EOSFitResult:
+    """Wrap one E-V fit and its optional structural response."""
+    predictions: dict[str, np.ndarray] = {}
+    derived: dict[str, float] = {}
+    structural_metadata: dict[str, Any] | None = None
+    secondary_axial: dict[str, Any] | None = None
+    if fit.success and fit.parameters is not None:
+        volume = np.asarray(prepared.series.x, dtype=np.float64)
+        predictions = {
+            "energy": prepared.model.evaluate(volume, fit.parameters),
+            "pressure": prepared.model.pressure(volume, fit.parameters),
+            "bulk_modulus": prepared.model.bulk_modulus(volume, fit.parameters),
+            "bulk_modulus_derivative": prepared.model.bulk_modulus_derivative(
+                volume, fit.parameters
+            ),
+            "bulk_modulus_second_derivative": (
+                prepared.model.bulk_modulus_second_derivative(volume, fit.parameters)
+            ),
+        }
+        if _has_complete_lattice_path(dataset):
+            structural = analyze_energy_structural_response(
+                dataset,
+                prepared.model,
+                fit,
+                mask=prepared.series.mask,
+            )
+            predictions.update(structural.predictions)
+            derived.update(structural.derived)
+            structural_metadata = structural.metadata
+            if request.axial_model is not None:
+                secondary_axial = _fit_secondary_energy_axes(
+                    dataset,
+                    request,
+                    prepared,
+                    structural,
+                )
+                for axis, axis_result in secondary_axial["fits"].items():
+                    values = axis_result.get("parameter_values", {})
+                    errors = axis_result.get("parameter_errors", {})
+                    for name, value in values.items():
+                        derived[f"axial_{axis}_{name}"] = float(value)
+                    for name, value in errors.items():
+                        derived[f"sigma_axial_{axis}_{name}"] = float(value)
+        elif request.axial_model is not None:
+            raise ValueError(
+                "secondary axial E-V fitting requires volume and all lattice "
+                "columns a, b, c, alpha, beta, gamma"
+            )
+    warnings = _fit_warnings(fit)
+    mask = np.asarray(prepared.series.mask, dtype=np.bool_)
+    selected = prepared.selected
+    metadata: dict[str, Any] = {
+        "relationship": "energy(volume)",
+        "residual_definition": "observed_energy-calculated_energy",
+        "pressure_relation": "P(V)=-dE/dV",
+        "energy_unit": prepared.series.units.get("energy", "Ha"),
+        "volume_unit": prepared.series.units.get("volume", "angstrom^3"),
+        "pressure_unit": "GPa",
+        "selected_mask": mask.tolist(),
+        "sampled_volume_range": [
+            float(np.min(selected.x)),
+            float(np.max(selected.x)),
+        ],
+        "sampled_energy_range": [
+            float(np.min(selected.y)),
+            float(np.max(selected.y)),
+        ],
+        "parameter_map": prepared.parameter_map.as_dict(),
+        "dataset_classification": dataset.classify(mask=prepared.series.mask).as_dict(),
+        "input_metadata": dict(dataset.metadata),
+    }
+    if structural_metadata is not None:
+        metadata["structural_response"] = structural_metadata
+    if secondary_axial is not None:
+        metadata["secondary_axial_fits"] = secondary_axial
+    return EOSFitResult(
+        request=request,
+        fit=fit,
+        predictions=predictions,
+        derived=derived,
+        warnings=warnings,
+        metadata=metadata,
+    )
+
+
+def _has_complete_lattice_path(dataset: EOSDataset) -> bool:
+    """Return whether a dataset can define a volume-aligned lattice path."""
+    return all(
+        dataset.has(name)
+        for name in ("volume", "a", "b", "c", "alpha", "beta", "gamma")
+    )
+
+
+def _fit_secondary_energy_axes(
+    dataset: EOSDataset,
+    request: EOSFitRequest,
+    prepared: _PreparedEVFit,
+    structural: EnergyStructuralResponse,
+) -> dict[str, Any]:
+    """Fit optional pressure-form axial EOS models to derived pressures.
+
+    The pressure observations are correlated because they are generated from
+    the same E-V parameter vector.  The current WLS engine accepts marginal
+    standard uncertainties only, so the full derived pressure covariance is
+    retained in provenance while its diagonal is used for weighting.
+    """
+    if request.axial_model is None:
+        return {}
+    axial_model = request.axial_model
+    if not isinstance(axial_model, EOSModel):
+        raise TypeError("resolved axial_model must be an EOSModel")
+    covariance = structural.pressure_covariance
+    if covariance is None:
+        raise ValueError(
+            "--axial-eos requires EnergyEOS parameter covariance for WLS weights"
+        )
+    sigma_pressure = np.sqrt(
+        np.clip(np.diag(np.asarray(covariance, dtype=np.float64)), 0.0, None)
+    )
+    if np.any(~np.isfinite(sigma_pressure)) or np.any(sigma_pressure <= 0.0):
+        raise ValueError(
+            "--axial-eos requires finite positive derived pressure uncertainties"
+        )
+    selection = dataset.selection_mask(prepared.series.mask)
+    fits: dict[str, Any] = {}
+    for axis in structural.independent_axes:
+        lengths = np.asarray(dataset.column(axis)[selection], dtype=np.float64)
+        synthetic = EOSDataset(
+            jobname=f"{dataset.jobname} derived axial {axis}",
+            columns={
+                "pressure": np.asarray(structural.selected_pressure, dtype=np.float64),
+                "sigma_pressure": sigma_pressure,
+                axis: lengths,
+            },
+            units={
+                "pressure": "GPa",
+                "sigma_pressure": "GPa",
+                axis: dataset.units.get(axis, "angstrom"),
+            },
+            metadata={
+                "derived_from": "energy_eos",
+                "parent_model": (
+                    request.model.tag
+                    if isinstance(request.model, EOSModel)
+                    else str(request.model)
+                ),
+                "pressure_covariance_available": True,
+            },
+        )
+        axial_request = EOSFitRequest(
+            model=axial_model,
+            target=axis,
+            domain=EOSFitDomain.PRESSURE_VOLUME,
+            options=EOSFitOptions(solver_options=WLSOptions()),
+            metadata={
+                "derived_from": "energy_eos",
+                "weighting": "diagonal_marginal_pressure_uncertainties",
+            },
+        )
+        axial_prepared = _prepare_pv_fit(synthetic, axial_request)
+        axial_fit = LeastSquaresFitter().fit_problem(
+            axial_prepared.model,
+            axial_prepared.observations,
+            axial_prepared.parameter_map,
+            axial_prepared.options,
+        )
+        axial_fit = _augment_axial_fit(axial_prepared, axial_fit)
+        if not axial_fit.success or axial_fit.parameters is None:
+            raise ValueError(
+                f"secondary axial fit for {axis!r} failed: {axial_fit.message}"
+            )
+        parameter_values = dict(
+            zip(axial_fit.parameter_names, axial_fit.parameters, strict=True)
+        )
+        parameter_errors: dict[str, float] = {}
+        if axial_fit.errors is not None:
+            parameter_errors = {
+                name: float(value)
+                for name, value in zip(
+                    axial_fit.parameter_names, axial_fit.errors, strict=True
+                )
+            }
+        fits[axis] = {
+            "model": axial_model.as_dict(),
+            "method": "diagonal_wls_marginal_pressure_uncertainties",
+            "parameter_values": {
+                name: float(value) for name, value in parameter_values.items()
+            },
+            "parameter_errors": parameter_errors,
+            "fit": axial_fit.as_dict(),
+        }
+    return {
+        "model": axial_model.as_dict(),
+        "method": "diagonal_wls_marginal_pressure_uncertainties",
+        "pressure_source": "P(V)=-dE/dV from fitted EnergyEOS",
+        "pressure_covariance": np.asarray(covariance, dtype=np.float64),
+        "pressure_uncertainty": sigma_pressure,
+        "covariance_note": (
+            "The complete derived pressure covariance is retained; the current "
+            "WLS solver uses only marginal standard uncertainties."
+        ),
+        "fits": fits,
+    }
 
 
 def _build_pv_result(

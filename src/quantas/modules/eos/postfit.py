@@ -58,7 +58,7 @@ def eos_calculation_table(result: EOSCalculationResult) -> ReportTable:
     formats: list[str | None] = []
     for name in result.columns:
         units.append(result.units.get(name, ""))
-        formats.append(_property_format(name))
+        formats.append(_property_format(name, result.units.get(name)))
         if name in result.uncertainties:
             units.append(result.units.get(name, ""))
             formats.append("eos_uncertainty")
@@ -113,7 +113,7 @@ def eos_diagnostic_table(result: EOSDiagnosticResult) -> ReportTable:
         rows,
         metadata={
             "column_units": [result.units.get(name, "") for name in names],
-            "column_formats": [_property_format(name) for name in names],
+            "column_formats": [_property_format(name, result.units.get(name)) for name in names],
             "column_alignments": ["right"] * len(names),
         },
     )
@@ -195,7 +195,7 @@ def _model_tag(value: Any) -> str:
 
 def _display_name(name: str) -> str:
     replacements = {
-        "sigma_": "σ(",
+        "sigma_": "sigma(",
         "bulk_modulus": "Bulk modulus",
         "linear_modulus": "Linear modulus",
         "expansion_coefficient": "Expansion coefficient",
@@ -208,14 +208,18 @@ def _display_name(name: str) -> str:
         "included": "Included",
     }
     if name.startswith("sigma_"):
-        return f"σ({name[6:].replace('_', ' ')})"
+        return f"sigma({name[6:].replace('_', ' ')})"
     if name in replacements:
         return replacements[name]
     return name.replace("_", " ").title()
 
 
-def _property_format(name: str) -> str | None:
-    if "pressure" in name or "modulus" in name or name == "residual":
+def _property_format(name: str, unit: str | None = None) -> str | None:
+    if name == "residual":
+        return "eos_residual" if unit == "Ha" else "eos_pressure"
+    if "energy" in name or unit == "Ha":
+        return "energy_ha"
+    if "pressure" in name or "modulus" in name:
         return "eos_pressure"
     if name == "temperature":
         return "eos_temperature"

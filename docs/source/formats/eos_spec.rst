@@ -29,7 +29,7 @@ with ``--spec``:
 
 The specification becomes the authority for scientific settings.  Therefore
 it cannot be mixed with scientific command-line options such as ``--domain``,
-``--fit``, ``--solver``, ``--pv-eos``, ``--fix``, or input-unit overrides.
+``--fit``, ``--solver``, ``--ev-eos``, ``--pv-eos``, ``--fix``, or input-unit overrides.
 Operational and presentation options remain available:
 
 .. code-block:: console
@@ -71,7 +71,7 @@ The generated file is deliberately verbose and self-documenting.  It contains:
 * every recognized section and ordinary key;
 * pressure, length, and temperature unit overrides;
 * all common solver and covariance controls;
-* P--V, V--T, and P--V--T model lists;
+* E--V, P--V, V--T, and P--V--T model lists;
 * fixed, initial, and bounded parameter examples;
 * acceptance and replacement semantics;
 * short and extended presentation settings;
@@ -142,7 +142,7 @@ A BM2 volume fit using effective variance requires only:
    model = BM2
 
 Unspecified values use documented Quantas defaults.  The default solver is OLS,
-the default P--V model is BM3, the default V--T model is
+the default E--V and P--V model is BM3, the default V--T model is
 ``berman:quadratic``, and the default P--V--T coupling is ``linear``.
 
 Sections
@@ -169,6 +169,12 @@ Metadata does not modify the numerical calculation.
 This optional section overrides input units before the data file is normalized.
 Recognized keys are:
 
+``energy_unit``
+   Energy unit accepted by the shared Quantas converter, for example ``Ha``,
+   ``eV``, or ``Ry``.  Both ``energy`` and ``sigma_energy`` are normalized to
+   Hartree.  ``sigma_energy`` is retained for completeness when supplied; QM
+   input generation does not invent a statistical energy uncertainty.
+
 ``pressure_unit``
    Pressure unit accepted by the Quantas unit converter.  The normalized unit
    is GPa.
@@ -184,6 +190,7 @@ Recognized keys are:
 .. code-block:: ini
 
    [input]
+   energy_unit = eV
    pressure_unit = kbar
    length_unit = bohr
    temperature_unit = C
@@ -259,11 +266,26 @@ Example:
    accept = yes
    replace_accepted = no
 
-``[defaults.pv]``, ``[defaults.vt]``, and ``[defaults.pvt]``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+``[defaults.ev]``, ``[defaults.pv]``, ``[defaults.vt]``, and ``[defaults.pvt]``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Domain defaults are applied after ``[defaults]`` and before the individual job.
 They may contain the common fit keys and parameter declarations.
+
+E--V uses ``model`` and the ``energy`` target:
+
+.. code-block:: ini
+
+   [defaults.ev]
+   model = BM3
+   # Optional pressure-form model for secondary P(l^3) fits:
+   # axial_model = BM3
+
+A job can then inherit those defaults with::
+
+   [job static-energy]
+   domain = ev
+   targets = energy
 
 P--V uses ``model``:
 
@@ -296,7 +318,7 @@ The subordinate ``thermal_pressure_model`` key selects
 ``holland-powell-einstein`` (the default), ``mgd``, or
 ``mgd:q-compromise``.  ``mgd`` is the full model and exposes refinable
 ``theta_d0``, ``gamma0``, and ``q``.  ``mgd:q-compromise`` is the distinct
-EosFit-style compromise approximation: it omits ``q`` rather than assigning a
+q-compromise approximation: it omits ``q`` rather than assigning a
 hidden numerical value, and therefore should be selected explicitly when
 reproducing a q-compromise reference fit.  A cell-volume MGD fit requires
 either ``atoms_per_cell`` or the pair ``formula`` and
@@ -433,7 +455,8 @@ For each job, settings are applied in the following order:
 
 #. internal Quantas defaults;
 #. ``[defaults]``;
-#. the matching ``[defaults.pv]``, ``[defaults.vt]``, or ``[defaults.pvt]``;
+#. the matching ``[defaults.ev]``, ``[defaults.pv]``, ``[defaults.vt]``, or
+   ``[defaults.pvt]``;
 #. ``[job NAME]``.
 
 A later value replaces an earlier value with the same key.  Version 1 has no
@@ -442,16 +465,45 @@ inheritance between job sections and no conditional logic.
 Targets
 -------
 
-Recognized targets are ``volume``, ``a``, ``b``, and ``c``.  Separate targets
-with commas:
+Recognized targets are ``energy``, ``volume``, ``a``, ``b``, and ``c``.
+Separate targets with commas:
 
 .. code-block:: ini
 
    targets = volume, a, b
 
 ``targets = all`` expands to every supported quantity present in the data file.
-It cannot be mixed with explicit targets.  P--V--T currently supports only
-``targets = volume``.
+It cannot be mixed with explicit targets.  E--V resolves ``all`` to ``energy``
+only, while P--V--T currently supports only ``targets = volume``.
+
+E--V models
+-----------
+
+The integrated energy catalogue uses the same compact tags as the isothermal
+EOS registry wherever an E(V) form exists: ``M``, ``BM2``/``BM3``/``BM4``,
+``PT2``/``PT3``/``PT4`` (or ``NS`` aliases), ``V2``/``V3``, and
+``T2``/``T3``/``T4``.  ``SJ`` selects the stabilized-jellium energy EOS and is
+E--V-only in the standalone workflow.  Use
+:command:`quantas eos show-models` with ``--domain ev`` to inspect the active
+catalogue rather than hard-coding a model list in a frontend.
+
+Public E--V parameters use ``E0`` in Ha, ``V0`` in angstrom cubed, ``K0`` in
+GPa, ``KP`` dimensionless, and ``KPP`` in GPa :math:`^{-1}` when that parameter
+is free or implied by the model.  ``axial_model`` is optional and valid only
+for E--V jobs.  It selects a *secondary* pressure-form EOS used after E(V) has
+been fitted and pressure has been derived; it does not change the primary
+Energy EOS or the structural-path calculation.  The selected axial model must
+therefore support direct pressure fitting (for example BM2/BM3/BM4 or Tait);
+``SJ`` is valid as the primary Energy EOS but not as ``axial_model``.
+
+.. code-block:: ini
+
+   [job static-energy]
+   domain = ev
+   targets = energy
+   model = SJ
+   axial_model = BM3
+   solver = ols
 
 P--V models
 -----------
@@ -547,6 +599,7 @@ must exist in the selected model and target.  Parameters implied by an EOS
 order cannot be made free or fixed; the dry run detects this when the complete
 parameter map is prepared.
 
+For E--V fits, common names are ``E0``, ``K0``, ``KP``, ``KPP``, and ``V0``.
 For volumetric P--V fits, common names are ``K0``, ``KP``, ``KPP``, and ``V0``.
 For axial P--V fits, use ``M0``, ``MP``, ``MPP``, and ``L0``.  For V--T
 fits, the reference quantity is always ``V0`` for volume and ``L0`` for a
@@ -609,6 +662,7 @@ Complete example
    description = Volume and axial fits with independent models
 
    [input]
+   energy_unit = Ha
    pressure_unit = GPa
    length_unit = angstrom
    temperature_unit = K

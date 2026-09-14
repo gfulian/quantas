@@ -56,6 +56,53 @@ _SIGMA_TO_VALUE = {
     "sigma_beta": "beta",
     "sigma_gamma": "gamma",
 }
+
+
+class CrystalReference(str, Enum):
+    """Cell reference used by one EOS structural dataset.
+
+    ``primitive`` stores energies, volumes, and lattice parameters per
+    primitive cell. ``crystallographic`` stores the corresponding conventional
+    crystallographic cell.  ``conventional`` is accepted as an input alias by
+    :func:`parse_crystal_reference` but is normalized to ``crystallographic``.
+    """
+
+    PRIMITIVE = "primitive"
+    CRYSTALLOGRAPHIC = "crystallographic"
+
+
+def parse_crystal_reference(value: str | CrystalReference) -> CrystalReference:
+    """Return a canonical EOS crystal-reference value.
+
+    Parameters
+    ----------
+    value : str or CrystalReference
+        ``primitive``, ``crystallographic``, or the alias ``conventional``.
+
+    Returns
+    -------
+    CrystalReference
+        Canonical reference value.
+
+    Raises
+    ------
+    ValueError
+        If the reference label is unsupported.
+    """
+    if isinstance(value, CrystalReference):
+        return value
+    normalized = str(value).strip().lower().replace("_", "-")
+    if normalized == "conventional":
+        normalized = CrystalReference.CRYSTALLOGRAPHIC.value
+    try:
+        return CrystalReference(normalized)
+    except ValueError as exc:
+        raise ValueError(
+            "Unsupported crystal reference "
+            f"{value!r}; expected primitive or crystallographic."
+        ) from exc
+
+
 class EOSCrystalSystem(str, Enum):
     """Canonical crystal systems accepted by EOS input files.
 
@@ -86,6 +133,42 @@ class EOSCrystalSystem(str, Enum):
         }:
             return ("a", "c")
         return ("a", "b", "c")
+
+
+def crystal_system_from_space_group_number(number: int) -> EOSCrystalSystem:
+    """Return the crystal system for an international space-group number.
+
+    Parameters
+    ----------
+    number : int
+        International space-group number in the inclusive range 1--230.
+
+    Returns
+    -------
+    EOSCrystalSystem
+        Corresponding crystallographic system.
+
+    Raises
+    ------
+    ValueError
+        If ``number`` is outside the international space-group range.
+    """
+    value = int(number)
+    if not 1 <= value <= 230:
+        raise ValueError("space-group number must be in the range 1..230")
+    if value <= 2:
+        return EOSCrystalSystem.TRICLINIC
+    if value <= 15:
+        return EOSCrystalSystem.MONOCLINIC
+    if value <= 74:
+        return EOSCrystalSystem.ORTHORHOMBIC
+    if value <= 142:
+        return EOSCrystalSystem.TETRAGONAL
+    if value <= 167:
+        return EOSCrystalSystem.TRIGONAL
+    if value <= 194:
+        return EOSCrystalSystem.HEXAGONAL
+    return EOSCrystalSystem.CUBIC
 
 
 def parse_eos_crystal_system(value: str | EOSCrystalSystem) -> EOSCrystalSystem:
@@ -969,6 +1052,7 @@ class EOSDataset:
         )
 
 __all__ = [
+    "CrystalReference",
     "EOS_COLUMN_NAMES",
     "EOS_TARGET_NAMES",
     "EOSCoordinateProfile",
@@ -977,5 +1061,7 @@ __all__ = [
     "EOSDataset",
     "EOSDatasetClassification",
     "EOSSeries",
+    "crystal_system_from_space_group_number",
+    "parse_crystal_reference",
     "parse_eos_crystal_system",
 ]

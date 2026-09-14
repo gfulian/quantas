@@ -191,3 +191,34 @@ def test_structure_energy_series_rejects_mixed_units():
 
     with pytest.raises(ValueError, match="inconsistent energy units"):
         StructureEnergySeries(points=points)
+
+
+def test_structure_energy_series_rejects_mixed_composition():
+    from quantas.models.computation import (
+        EnergyKind,
+        EnergyRecord,
+        StructureEnergyPoint,
+        StructureEnergySeries,
+    )
+    from quantas.models.structures import CrystalStructure
+
+    def structure(numbers: list[int]) -> CrystalStructure:
+        return CrystalStructure(
+            lattice=np.identity(3),
+            fractional_positions=np.zeros((len(numbers), 3)),
+            atomic_numbers=np.asarray(numbers),
+        )
+
+    points = (
+        StructureEnergyPoint(
+            structure=structure([12, 8]),
+            energy=EnergyRecord(value=-1.0, unit="Ha", kind=EnergyKind.TOTAL),
+        ),
+        StructureEnergyPoint(
+            structure=structure([11, 9]),
+            energy=EnergyRecord(value=-1.1, unit="Ha", kind=EnergyKind.TOTAL),
+        ),
+    )
+
+    with pytest.raises(ValueError, match="chemical compositions"):
+        StructureEnergySeries(points=points)

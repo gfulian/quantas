@@ -392,15 +392,19 @@ def test_eos_tutorial_assets_and_downloads_exist() -> None:
         DOCS_ROOT / "_downloads/tutorials/eos/quartz_pv_comparison.csv",
         DOCS_ROOT / "_downloads/tutorials/eos/rutile_vt_comparison.csv",
         DOCS_ROOT / "_downloads/tutorials/eos/naf_pvt_coupling_comparison.csv",
+        DOCS_ROOT / "_downloads/EV_mgo_pbe.dat",
+        DOCS_ROOT / "_downloads/EV_mgo_pbe_crystallographic.dat",
+        DOCS_ROOT / "_downloads/ev_fit_api.py",
+        DOCS_ROOT / "_downloads/ev_structural_response_api.py",
     ]
     assert all(path.is_file() and path.stat().st_size > 0 for path in expected)
 
 
-def test_eos_tutorial_follows_pv_vt_pvt_and_teaches_batch_fitting() -> None:
+def test_eos_tutorial_covers_all_domains() -> None:
     """EOS tutorial pages remain detailed scientific CLI/API workflows."""
     landing = (DOCS_ROOT / "tutorials/eos.rst").read_text(encoding="utf-8")
     assert "Work in progress" not in landing
-    ordered = ("eos_pv", "eos_vt", "eos_pvt")
+    ordered = ("eos_ev", "eos_pv", "eos_vt", "eos_pvt")
     positions = [landing.index(name) for name in ordered]
     assert positions == sorted(positions)
 
@@ -417,6 +421,13 @@ def test_eos_tutorial_follows_pv_vt_pvt_and_teaches_batch_fitting() -> None:
         assert phrase in batch
 
     expectations = {
+        "eos_ev.rst": (
+            "Energy--volume EOS from static electronic-structure data",
+            "Run a BM3 fit",
+            "Structural response",
+            "Optional pressure-form axial EOS parameterization",
+            "Generating the dataset from CRYSTAL",
+        ),
         "eos_pv.rst": (
             "P--V tutorial: quartz compression",
             "Solver comparison",
@@ -449,6 +460,7 @@ def test_eos_tutorial_python_snippets_use_public_rendering_api() -> None:
     """EOS tutorials do not promote concrete renderer backends."""
     for filename in (
         "eos_batch.rst",
+        "eos_ev.rst",
         "eos_pv.rst",
         "eos_vt.rst",
         "eos_pvt.rst",
@@ -459,6 +471,27 @@ def test_eos_tutorial_python_snippets_use_public_rendering_api() -> None:
         assert "quantas.renderers" not in text
         assert "render_plot_collection" not in text
         assert "MatplotlibOptions(" not in text
+
+
+def test_eos_ev_docs_use_current_cli_terms() -> None:
+    """E-V documentation avoids obsolete CLI and informal model labels."""
+    paths = (
+        DOCS_ROOT / "cli/eos.rst",
+        DOCS_ROOT / "formats/eos_input.rst",
+        DOCS_ROOT / "formats/eos_spec.rst",
+        DOCS_ROOT / "formats/eos_hdf5.rst",
+        DOCS_ROOT / "theory/eos.rst",
+        DOCS_ROOT / "tutorials/eos_ev.rst",
+        DOCS_ROOT / "validation/eos.rst",
+        DOCS_ROOT / "workflows/eos.rst",
+    )
+    text = "\n".join(path.read_text(encoding="utf-8") for path in paths)
+    assert "--domain ev --eos" not in text
+    assert "Angel-style" not in text
+    assert "Angel-like" not in text
+    assert "EosFit-style" not in text
+    assert "--domain ev --ev-eos" in text
+    assert "pressure-form axial EOS" in text
 
 
 def test_ha_qha_workflow_pages_are_complete() -> None:

@@ -23,12 +23,13 @@ _ALLOWED_SECTIONS = {
     "input",
     "batch",
     "defaults",
+    "defaults.ev",
     "defaults.pv",
     "defaults.vt",
     "defaults.pvt",
     "presentation",
 }
-_INPUT_KEYS = {"pressure_unit", "length_unit", "temperature_unit"}
+_INPUT_KEYS = {"pressure_unit", "length_unit", "temperature_unit", "energy_unit"}
 _BATCH_KEYS = {"failure_policy"}
 _PRESENTATION_KEYS = {"detail", "show_uncertainties", "max_data_rows"}
 _SELECTION_KEYS = {
@@ -66,6 +67,7 @@ _JOB_KEYS = (
         "domain",
         "targets",
         "model",
+        "axial_model",
         "pv_model",
         "vt_model",
         "coupling",
@@ -74,6 +76,7 @@ _JOB_KEYS = (
     | _MGD_MODEL_KEYS
 )
 _DOMAIN_KEYS = {
+    "defaults.ev": _COMMON_FIT_KEYS | {"model", "axial_model"},
     "defaults.pv": _COMMON_FIT_KEYS | {"model"},
     "defaults.vt": _COMMON_FIT_KEYS | {"model"},
     "defaults.pvt": (
@@ -297,6 +300,7 @@ def _validate_key(
     if key.lower().startswith(_PARAMETER_PREFIXES):
         if section in {
             "defaults",
+            "defaults.ev",
             "defaults.pv",
             "defaults.vt",
             "defaults.pvt",
@@ -338,4 +342,7 @@ def _parse_input_options(
         if values.get("length_unit") is None
         else values["length_unit"].value,
         temperature_unit=None if temperature is None else temperature.value.upper(),
+        energy_unit=None
+        if values.get("energy_unit") is None
+        else values["energy_unit"].value,
     )

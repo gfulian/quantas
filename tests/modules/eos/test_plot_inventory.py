@@ -315,7 +315,7 @@ def test_eos_cli_lists_public_inventory_descriptions(tmp_path: Path) -> None:
 
     assert result.exit_code == 0, result.output
     assert "fit" in result.output
-    assert "Observed data and the fitted P-V or V-T relation." in result.output
+    assert "Observed data and the fitted E-V, P-V, or V-T relation." in result.output
     assert "normalized_pressure" in result.output
 
 

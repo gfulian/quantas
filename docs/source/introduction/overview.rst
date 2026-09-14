@@ -17,7 +17,7 @@ Scientific domains currently covered by Quantas include:
   properties, and 2D/3D visualization;
 - **SEISMIC**, based on the Christoffel equation and dedicated to phase/group
   velocities, polarization, and derived seismic observables;
-- **Equations of state (EOS)** in the P--V, V--T, and P--V--T domains;
+- **Equations of state (EOS)** in the E--V, P--V, V--T, and P--V--T domains;
 - **Thermoelasticity**, with quasi-static pressure-temperature evolution of the
   elastic tensor and interoperability with SEISMIC.
 

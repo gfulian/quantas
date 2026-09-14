@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+from quantas.cli.completion_command import completion
 from quantas.cli.elasticity import elasticity
 from quantas.cli.eos import eos
 from quantas.cli.ha import ha
@@ -12,7 +13,7 @@ from quantas.cli.seismic import seismic
 from quantas.cli.thermoelastic import thermoelasticity
 
 
-COMMANDS = [elasticity, eos, ha, qha, seismic, thermoelasticity]
+COMMANDS = [completion, elasticity, eos, ha, qha, seismic, thermoelasticity]
 
 
 def register_commands(cli_group) -> None:
