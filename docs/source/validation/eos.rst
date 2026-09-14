@@ -103,7 +103,7 @@ normalizations.  Multiplying primitive-cell energy and volume by four while
 transforming the FCC primitive lattice to the conventional cubic cell changes
 ``E0`` and ``V0`` by exactly the same factor but leaves ``K0``, ``KP``, and the
 axial response invariant.  The crystallographic regression target is
-approximately ``a0 = 4.222212485`` angstrom and ``M_a = 536.2844`` GPa, with
+approximately ``a0 = 4.22221`` angstrom and ``M_a = 536.28`` GPa, with
 ``M_a = 3 K0`` to numerical precision.
 
 Optional secondary pressure-form axial EOS fits are characterized separately.

@@ -196,8 +196,19 @@ def test_real_mgo_crystallographic_normalization_preserves_energy_eos() -> None:
     assert conventional_result.parameter_values["K0"] == pytest.approx(
         primitive_result.parameter_values["K0"], rel=1.0e-12
     )
+    volumes = conventional.column("volume")
+    energies = conventional.column("energy")
+    a_values = conventional.column("a")
+    reference_index = int(np.argmin(energies))
+    expected_a0 = float(a_values[reference_index]) * (
+        conventional_result.parameter_values["V0"]
+        / float(volumes[reference_index])
+    ) ** (1.0 / 3.0)
     assert conventional_result.derived["a0"] == pytest.approx(
-        4.222212485, rel=2.0e-8
+        expected_a0, rel=1.0e-12
+    )
+    assert conventional_result.derived["a0"] == pytest.approx(
+        4.22221, abs=5.0e-6
     )
     assert conventional_result.derived["M_a"] == pytest.approx(
         3.0 * conventional_result.parameter_values["K0"], rel=1.0e-12

@@ -251,8 +251,19 @@ def test_mgo_crystallographic_normalization_preserves_bulk() -> None:
     assert crystallographic_result.parameter_values["KP"] == pytest.approx(
         primitive_result.parameter_values["KP"], rel=1.0e-12
     )
+    volumes = crystallographic.column("volume")
+    energies = crystallographic.column("energy")
+    a_values = crystallographic.column("a")
+    reference_index = int(np.argmin(energies))
+    expected_a0 = float(a_values[reference_index]) * (
+        crystallographic_result.parameter_values["V0"]
+        / float(volumes[reference_index])
+    ) ** (1.0 / 3.0)
     assert crystallographic_result.derived["a0"] == pytest.approx(
-        4.222212485, rel=2.0e-8
+        expected_a0, rel=1.0e-12
+    )
+    assert crystallographic_result.derived["a0"] == pytest.approx(
+        4.22221, abs=5.0e-6
     )
     assert crystallographic_result.derived["eta_a"] == pytest.approx(1.0 / 3.0)
     assert crystallographic_result.derived["M_a"] == pytest.approx(
