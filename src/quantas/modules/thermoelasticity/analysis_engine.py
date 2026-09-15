@@ -63,7 +63,20 @@ class ThermoelasticAnalysisEngine:
         return value
 
     def evaluate_point(self, pressure: float, temperature: float) -> ResultData:
-        """Evaluate one pressure-temperature state."""
+        """Evaluate one pressure-temperature state.
+
+        Parameters
+        ----------
+        pressure : float
+            Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+        temperature : float
+            Temperature value or array in K.
+
+        Returns
+        -------
+        ResultData
+            Evaluated one pressure-temperature state.
+        """
         return self.evaluate_grid([pressure], [temperature])
 
     def evaluate_grid(
@@ -71,7 +84,20 @@ class ThermoelasticAnalysisEngine:
         pressure: ArrayLike,
         temperature: ArrayLike,
     ) -> ResultData:
-        """Evaluate a Cartesian pressure-temperature grid."""
+        """Evaluate a Cartesian pressure-temperature grid.
+
+        Parameters
+        ----------
+        pressure : ArrayLike
+            Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+        temperature : ArrayLike
+            Temperature value or array in K.
+
+        Returns
+        -------
+        ResultData
+            Evaluated a Cartesian pressure-temperature grid.
+        """
         payload = evaluate_thermoelastic_grid(
             self.payload,
             temperature=np.asarray(temperature, dtype=np.float64),
@@ -91,7 +117,18 @@ class ThermoelasticAnalysisEngine:
         self,
         profiles: Sequence[ThermoelasticDepthProfile],
     ) -> ResultData:
-        """Evaluate one or more depth-dependent profiles."""
+        """Evaluate one or more depth-dependent profiles.
+
+        Parameters
+        ----------
+        profiles : Sequence[ThermoelasticDepthProfile]
+            Pressure-temperature depth profiles to evaluate.
+
+        Returns
+        -------
+        ResultData
+            Evaluated one or more depth-dependent profiles.
+        """
         return analyze_thermoelastic_profiles(
             self.source,
             profiles,
@@ -102,7 +139,18 @@ class ThermoelasticAnalysisEngine:
         self,
         pressure: float,
     ) -> ThermoelasticResult:
-        """Evaluate all archived temperatures at one exact pressure."""
+        """Evaluate all archived temperatures at one exact pressure.
+
+        Parameters
+        ----------
+        pressure : float
+            Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+
+        Returns
+        -------
+        ThermoelasticResult
+            Evaluated all archived temperatures at one exact pressure.
+        """
         result = self.evaluate_grid([pressure], self.payload.temperature)
         value = result.results["thermoelasticity"]
         assert isinstance(value, ThermoelasticResult)
@@ -112,7 +160,18 @@ class ThermoelasticAnalysisEngine:
         self,
         temperature: float,
     ) -> ThermoelasticResult:
-        """Evaluate all archived pressures at one exact temperature."""
+        """Evaluate all archived pressures at one exact temperature.
+
+        Parameters
+        ----------
+        temperature : float
+            Temperature value or array in K.
+
+        Returns
+        -------
+        ThermoelasticResult
+            Evaluated all archived pressures at one exact temperature.
+        """
         result = self.evaluate_grid(self.payload.pressure, [temperature])
         value = result.results["thermoelasticity"]
         assert isinstance(value, ThermoelasticResult)

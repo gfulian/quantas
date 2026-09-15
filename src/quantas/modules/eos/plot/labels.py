@@ -10,7 +10,20 @@ from quantas.modules.eos.presentation import format_unit, property_label
 def normalized_pressure_labels(
     metadata: dict[str, object], unit: str | None
 ) -> tuple[str, str]:
-    """Return finite-strain and normalized-pressure axis labels."""
+    """Return finite-strain and normalized-pressure axis labels.
+
+    Parameters
+    ----------
+    metadata : dict[str, object]
+        Metadata mapping used to construct the display label.
+    unit : str | None
+        Unit symbol or canonical unit name.
+
+    Returns
+    -------
+    tuple[str, str]
+        Finite-strain and normalized-pressure axis labels.
+    """
     strain_symbol = str(metadata.get("strain_symbol", "f"))
     pressure_symbol = str(metadata.get("normalized_pressure_symbol", "F"))
     x_label = rf"Finite strain, ${strain_symbol}$"

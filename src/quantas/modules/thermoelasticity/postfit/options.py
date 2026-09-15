@@ -27,6 +27,16 @@ def thermoelastic_options_from_mapping(
 
     Unknown keys are ignored so archives remain readable after new frontend
     controls are introduced.
+
+    Parameters
+    ----------
+    values : Mapping[str, Any]
+        Numerical values consumed by the operation.
+
+    Returns
+    -------
+    ThermoelasticOptions
+        Result described by the operation.
     """
     names = {item.name for item in fields(ThermoelasticOptions)}
     kwargs = {name: values[name] for name in names if name in values}

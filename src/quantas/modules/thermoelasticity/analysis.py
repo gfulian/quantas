@@ -44,7 +44,33 @@ def qha_grid_in_standard_units(
     pressure_unit: str,
     volume_unit: str,
 ) -> tuple[FloatArray, FloatArray, FloatArray]:
-    """Convert a QHA grid to K, GPa and angstrom-cubed cell volume."""
+    """Convert a QHA grid to K, GPa and angstrom-cubed cell volume.
+
+    Parameters
+    ----------
+    temperature : ArrayLike
+        Temperature value or array in K.
+    pressure : ArrayLike
+        Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+    volume : ArrayLike
+        Volume value or array in the units documented by the surrounding model.
+    temperature_unit : str
+        Canonical Quantas unit name to normalize.
+    pressure_unit : str
+        Pressure unit used for public pressure values.
+    volume_unit : str
+        Length unit whose cube defines the public volume unit.
+
+    Returns
+    -------
+    tuple[FloatArray, FloatArray, FloatArray]
+        Tuple containing the returned values in the order described above.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     t = np.asarray(
         convert_temperature(temperature, temperature_unit, "K"),
         dtype=np.float64,
@@ -72,6 +98,11 @@ def normalized_cell_mass(series: ElasticVolumeSeries) -> tuple[float, float]:
     -------
     tuple of float
         Median mass in kg and maximum relative deviation across sampled points.
+
+    Parameters
+    ----------
+    series : ElasticVolumeSeries
+        Volume-dependent elastic series consumed by the operation.
     """
     masses = series.densities * series.volumes * 1.0e-30
     median = float(np.median(masses))
@@ -80,7 +111,25 @@ def normalized_cell_mass(series: ElasticVolumeSeries) -> tuple[float, float]:
 
 
 def density_from_volume(volume: ArrayLike, mass_kg: float) -> FloatArray:
-    """Calculate density in kg m^-3 from cell mass and angstrom-cubed volume."""
+    """Calculate density in kg m^-3 from cell mass and angstrom-cubed volume.
+
+    Parameters
+    ----------
+    volume : ArrayLike
+        Volume value or array in the units documented by the surrounding model.
+    mass_kg : float
+        Normalized-cell mass in kg used to reconstruct density.
+
+    Returns
+    -------
+    FloatArray
+        Calculated density in kg m^-3 from cell mass and angstrom-cubed volume.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     values = np.asarray(volume, dtype=np.float64)
     if np.any(~np.isfinite(values)) or np.any(values <= 0.0):
         raise ValueError("volumes must be finite and positive")
@@ -101,6 +150,22 @@ def reconstruct_stiffness_grid(
     The covariance is used when propagating derived relations such as
     ``C66=(C11-C12)/2`` so shared EOS and volume uncertainty correlations are
     retained.
+
+    Parameters
+    ----------
+    symmetry : str
+        Elastic symmetry class used to reconstruct the full stiffness tensor.
+    labels : tuple[str, ...]
+        Ordered elastic-component labels.
+    values : FloatArray
+        Numerical values consumed by the operation.
+    covariance : FloatArray
+        Covariance matrix associated with the supplied fitted quantities.
+
+    Returns
+    -------
+    tuple[FloatArray, FloatArray]
+        Tuple containing the returned values in the order described above.
     """
     coefficients = stiffness_component_linear_coefficients(symmetry, labels)
     matrix = np.einsum("ijc,...c->...ij", coefficients, values)
@@ -115,7 +180,18 @@ def reconstruct_stiffness_grid(
 
 
 def independent_component_labels(symmetry: str) -> tuple[str, ...]:
-    """Return the canonical independent component order for a symmetry."""
+    """Return the canonical independent component order for a symmetry.
+
+    Parameters
+    ----------
+    symmetry : str
+        Elastic symmetry class used to reconstruct the full stiffness tensor.
+
+    Returns
+    -------
+    tuple[str, ...]
+        The canonical independent component order for a symmetry.
+    """
     return tuple(
         definition.label
         for definition in elastic_component_definitions(symmetry)
@@ -133,6 +209,27 @@ def interpolate_qha_volume_along_profile(
 
     Linear extrapolation is returned outside the rectangular QHA grid together
     with a mask. The caller applies the selected failure/warning policy.
+
+    Parameters
+    ----------
+    temperature_grid : ArrayLike
+        Temperature coordinates of the pressure-temperature grid, in K.
+    pressure_grid : ArrayLike
+        Pressure coordinates of the pressure-temperature grid, in GPa.
+    volume_grid : ArrayLike
+        Equilibrium-volume values aligned with the pressure-temperature grid.
+    profile : ThermoelasticDepthProfile
+        Validated pressure-temperature depth profile.
+
+    Returns
+    -------
+    tuple[FloatArray, NDArray[np.bool_]]
+        Whether the documented condition is satisfied.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
     """
     temperature = np.asarray(temperature_grid, dtype=np.float64)
     pressure = np.asarray(pressure_grid, dtype=np.float64)
@@ -163,7 +260,24 @@ def interpolate_qha_uncertainty_along_profile(
     sigma_grid: ArrayLike | None,
     profile: ThermoelasticDepthProfile,
 ) -> FloatArray | None:
-    """Interpolate an optional QHA volume-uncertainty grid."""
+    """Interpolate an optional QHA volume-uncertainty grid.
+
+    Parameters
+    ----------
+    temperature_grid : ArrayLike
+        Temperature coordinates of the pressure-temperature grid, in K.
+    pressure_grid : ArrayLike
+        Pressure coordinates of the pressure-temperature grid, in GPa.
+    sigma_grid : ArrayLike | None
+        One-sigma uncertainty associated with the corresponding quantity.
+    profile : ThermoelasticDepthProfile
+        Validated pressure-temperature depth profile.
+
+    Returns
+    -------
+    FloatArray | None
+        Result described by the operation.
+    """
     if sigma_grid is None:
         return None
     temperature = np.asarray(temperature_grid, dtype=np.float64)
@@ -198,7 +312,38 @@ def evaluate_depth_profile(
     options: ThermoelasticOptions,
     mass_kg: float,
 ) -> ThermoelasticProfileResult:
-    """Evaluate fitted elastic tensors along one depth-pressure-temperature path."""
+    """Evaluate fitted elastic tensors along one depth-pressure-temperature path.
+
+    Parameters
+    ----------
+    profile : ThermoelasticDepthProfile
+        Validated pressure-temperature depth profile.
+    temperature_grid : FloatArray
+        Temperature coordinates of the pressure-temperature grid, in K.
+    pressure_grid : FloatArray
+        Pressure coordinates of the pressure-temperature grid, in GPa.
+    volume_grid : FloatArray
+        Equilibrium-volume values aligned with the pressure-temperature grid.
+    sigma_volume_grid : FloatArray | None
+        One-sigma uncertainty associated with the corresponding quantity.
+    series : ElasticVolumeSeries
+        Volume-dependent elastic series consumed by the operation.
+    reference_eos : ReferenceEOSFit
+        Static reference EOS shared by the thermoelastic component fits.
+    component_fits : Mapping[str, ElasticComponentFit]
+        Independent elastic-component fits keyed by component label.
+    labels : tuple[str, ...]
+        Ordered elastic-component labels.
+    options : ThermoelasticOptions
+        Validated options controlling this operation.
+    mass_kg : float
+        Normalized-cell mass in kg used to reconstruct density.
+
+    Returns
+    -------
+    ThermoelasticProfileResult
+        Evaluated fitted elastic tensors along one depth-pressure-temperature path.
+    """
     volume, qha_extrapolated = interpolate_qha_volume_along_profile(
         temperature_grid,
         pressure_grid,

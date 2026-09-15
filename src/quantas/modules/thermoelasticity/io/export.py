@@ -33,7 +33,22 @@ class ThermoelasticityHDF5Export(BasicHDF5Export):
         filename: str | Path,
         report_text: str | None = None,
     ) -> None:
-        """Write generic envelope, scientific arrays, and all fit diagnostics."""
+        """Write generic envelope, scientific arrays, and all fit diagnostics.
+
+        Parameters
+        ----------
+        result : ResultData
+            Scientific result consumed or serialized by this operation.
+        filename : str | Path
+            Filesystem path read from or written by the operation.
+        report_text : str | None
+            Plain-text report content to write to the destination.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
+        """
         payload = result.results.get("thermoelasticity")
         if not isinstance(payload, ThermoelasticResult):
             raise ValueError("result does not contain a thermoelasticity payload")

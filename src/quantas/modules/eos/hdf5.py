@@ -248,7 +248,23 @@ def write_eos_dataset(group: h5py.Group, dataset_id: int, dataset: EOSDataset) -
 
 
 def read_eos_dataset(group: h5py.Group) -> EOSDataset:
-    """Read one complete input dataset from an EOS archive group."""
+    """Read one complete input dataset from an EOS archive group.
+
+    Parameters
+    ----------
+    group : h5py.Group
+        HDF5 group containing the serialized record or payload.
+
+    Returns
+    -------
+    EOSDataset
+        Parsed one complete input dataset from an EOS archive group.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     if "normalized_data" not in group:
         raise ValueError(f"missing normalized_data in {group.name}")
     columns = {
@@ -291,7 +307,15 @@ def read_eos_dataset(group: h5py.Group) -> EOSDataset:
 
 
 def write_fit_record(group: h5py.Group, record: EOSFitRecord) -> None:
-    """Write one immutable fit record into a newly created group."""
+    """Write one immutable fit record into a newly created group.
+
+    Parameters
+    ----------
+    group : h5py.Group
+        HDF5 group containing the serialized record or payload.
+    record : EOSFitRecord
+        Immutable EOS fit record.
+    """
     group.attrs["record_id"] = record.record_id
     group.attrs["dataset_id"] = record.dataset_id
     group.attrs["parent_record_id"] = (
@@ -310,7 +334,18 @@ def write_fit_record(group: h5py.Group, record: EOSFitRecord) -> None:
 
 
 def read_fit_record(group: h5py.Group) -> EOSFitRecord:
-    """Reconstruct one immutable fit record from HDF5."""
+    """Reconstruct one immutable fit record from HDF5.
+
+    Parameters
+    ----------
+    group : h5py.Group
+        HDF5 group containing the serialized record or payload.
+
+    Returns
+    -------
+    EOSFitRecord
+        Result described by the operation.
+    """
     request = eos_fit_request_from_mapping(read_mapping(group["request"]))
     result = eos_fit_result_from_mapping(read_mapping(group["result"]), request=request)
     parent = int(group.attrs.get("parent_record_id", -1))
@@ -327,7 +362,15 @@ def read_fit_record(group: h5py.Group) -> EOSFitRecord:
 
 
 def write_state_event(group: h5py.Group, event: EOSStateEvent) -> None:
-    """Write one immutable append-only EOS state event."""
+    """Write one immutable append-only EOS state event.
+
+    Parameters
+    ----------
+    group : h5py.Group
+        HDF5 group containing the serialized record or payload.
+    event : EOSStateEvent
+        Structured EOS history event to serialize.
+    """
     group.attrs["event_id"] = event.event_id
     group.attrs["event_type"] = event.event_type.value
     group.attrs["record_id"] = -1 if event.record_id is None else event.record_id
@@ -340,7 +383,18 @@ def write_state_event(group: h5py.Group, event: EOSStateEvent) -> None:
 
 
 def read_state_event(group: h5py.Group) -> EOSStateEvent:
-    """Read one append-only EOS state event."""
+    """Read one append-only EOS state event.
+
+    Parameters
+    ----------
+    group : h5py.Group
+        HDF5 group containing the serialized record or payload.
+
+    Returns
+    -------
+    EOSStateEvent
+        Parsed one append-only EOS state event.
+    """
     record_id = int(group.attrs.get("record_id", -1))
     slot_text = decode_text(group.attrs.get("slot", ""))
     return EOSStateEvent(
@@ -355,7 +409,15 @@ def read_state_event(group: h5py.Group) -> EOSStateEvent:
 
 
 def write_slot_state(group: h5py.Group, state: EOSSlotState) -> None:
-    """Replace the mutable compact state of one result slot."""
+    """Replace the mutable compact state of one result slot.
+
+    Parameters
+    ----------
+    group : h5py.Group
+        HDF5 group containing the serialized record or payload.
+    state : EOSSlotState
+        Current EOS result-slot state to serialize.
+    """
     group.attrs["domain"] = state.slot.domain.value
     group.attrs["target"] = state.slot.target
     group.attrs["status"] = state.status.value
@@ -375,7 +437,18 @@ def write_slot_state(group: h5py.Group, state: EOSSlotState) -> None:
 
 
 def read_slot_state(group: h5py.Group) -> EOSSlotState:
-    """Read the mutable compact state of one result slot."""
+    """Read the mutable compact state of one result slot.
+
+    Parameters
+    ----------
+    group : h5py.Group
+        HDF5 group containing the serialized record or payload.
+
+    Returns
+    -------
+    EOSSlotState
+        Parsed the mutable compact state of one result slot.
+    """
     accepted = int(group.attrs.get("accepted_record_id", -1))
     last = int(group.attrs.get("last_record_id", -1))
     attempts = (
@@ -399,7 +472,15 @@ def read_slot_state(group: h5py.Group) -> EOSSlotState:
 
 
 def write_accepted_result(group: h5py.Group, record: EOSFitRecord) -> None:
-    """Materialize a compact accepted-result copy with source linkage."""
+    """Materialize a compact accepted-result copy with source linkage.
+
+    Parameters
+    ----------
+    group : h5py.Group
+        HDF5 group containing the serialized record or payload.
+    record : EOSFitRecord
+        Immutable EOS fit record.
+    """
     group.attrs["record_id"] = record.record_id
     group.attrs["dataset_id"] = record.dataset_id
     group.attrs["slot"] = record.slot.key
@@ -410,7 +491,18 @@ def write_accepted_result(group: h5py.Group, record: EOSFitRecord) -> None:
 
 
 def eos_fit_request_from_mapping(values: Mapping[str, Any]) -> EOSFitRequest:
-    """Reconstruct :class:`EOSFitRequest` from its serialized mapping."""
+    """Reconstruct :class:`EOSFitRequest` from its serialized mapping.
+
+    Parameters
+    ----------
+    values : Mapping[str, Any]
+        Numerical values consumed by the operation.
+
+    Returns
+    -------
+    EOSFitRequest
+        Result described by the operation.
+    """
     domain = EOSFitDomain(str(values["domain"]))
     model_values = _mapping(values["model"])
     if domain is EOSFitDomain.VOLUME_TEMPERATURE:
@@ -492,7 +584,23 @@ def eos_fit_request_from_mapping(values: Mapping[str, Any]) -> EOSFitRequest:
 
 
 def fit_options_from_mapping(values: Mapping[str, Any]) -> SolverOptions:
-    """Reconstruct one concrete typed solver-options object."""
+    """Reconstruct one concrete typed solver-options object.
+
+    Parameters
+    ----------
+    values : Mapping[str, Any]
+        Numerical values consumed by the operation.
+
+    Returns
+    -------
+    SolverOptions
+        Result described by the operation.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     type_name = str(values.get("type", ""))
     option_type = _OPTIONS_TYPES.get(type_name)
     if option_type is None:
@@ -531,7 +639,18 @@ def fit_options_from_mapping(values: Mapping[str, Any]) -> SolverOptions:
 
 
 def fit_result_from_mapping(values: Mapping[str, Any]) -> FitResult:
-    """Reconstruct a complete general fitting result."""
+    """Reconstruct a complete general fitting result.
+
+    Parameters
+    ----------
+    values : Mapping[str, Any]
+        Numerical values consumed by the operation.
+
+    Returns
+    -------
+    FitResult
+        Result described by the operation.
+    """
     diagnostics_values = values.get("diagnostics")
     diagnostics = None
     if diagnostics_values is not None:
@@ -601,7 +720,20 @@ def eos_fit_result_from_mapping(
     *,
     request: EOSFitRequest | None = None,
 ) -> EOSFitResult:
-    """Reconstruct a complete EOS-domain fit result."""
+    """Reconstruct a complete EOS-domain fit result.
+
+    Parameters
+    ----------
+    values : Mapping[str, Any]
+        Numerical values consumed by the operation.
+    request : EOSFitRequest | None
+        Validated fitting or calculation request.
+
+    Returns
+    -------
+    EOSFitResult
+        Result described by the operation.
+    """
     resolved_request = request or eos_fit_request_from_mapping(
         _mapping(values["request"])
     )
@@ -623,7 +755,18 @@ def eos_fit_result_from_mapping(
 
 
 def sorted_numeric_children(group: h5py.Group) -> tuple[str, ...]:
-    """Return HDF5 child names in numeric-aware order."""
+    """Return HDF5 child names in numeric-aware order.
+
+    Parameters
+    ----------
+    group : h5py.Group
+        HDF5 group containing the serialized record or payload.
+
+    Returns
+    -------
+    tuple[str, ...]
+        HDF5 child names in numeric-aware order.
+    """
     return tuple(sorted(group.keys(), key=numeric_sort_key))
 
 

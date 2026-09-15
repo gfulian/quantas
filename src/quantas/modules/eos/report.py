@@ -95,7 +95,20 @@ def build_eos_batch_result_tables(
     result: EOSBatchResult,
     options: EOSReportOptions | None = None,
 ) -> tuple[ReportTable, ...]:
-    """Build detailed results followed by compact batch summaries."""
+    """Build detailed results followed by compact batch summaries.
+
+    Parameters
+    ----------
+    result : EOSBatchResult
+        Scientific result consumed or serialized by this operation.
+    options : EOSReportOptions | None
+        Validated options controlling this operation.
+
+    Returns
+    -------
+    tuple[ReportTable, ...]
+        Constructed detailed results followed by compact batch summaries.
+    """
     resolved = EOSReportOptions() if options is None else options
     tables: list[ReportTable] = []
     for job in result.jobs:
@@ -118,7 +131,18 @@ def build_eos_batch_result_tables(
 
 
 def eos_batch_fit_summary_table(result: EOSBatchResult) -> ReportTable:
-    """Return a compact one-row-per-job summary sorted by scientific identity."""
+    """Return a compact one-row-per-job summary sorted by scientific identity.
+
+    Parameters
+    ----------
+    result : EOSBatchResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    ReportTable
+        A compact one-row-per-job summary sorted by scientific identity.
+    """
     domain_order = {"pv": 0, "vt": 1, "pvt": 2, "ev": 3}
     jobs = sorted(
         result.jobs,
@@ -206,7 +230,18 @@ def eos_batch_fit_summary_table(result: EOSBatchResult) -> ReportTable:
 
 
 def eos_batch_parameter_summary_table(result: EOSBatchResult) -> ReportTable:
-    """Return a paper-ready long-form summary of all reported parameters."""
+    """Return a paper-ready long-form summary of all reported parameters.
+
+    Parameters
+    ----------
+    result : EOSBatchResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    ReportTable
+        A paper-ready long-form summary of all reported parameters.
+    """
     domain_order = {"pv": 0, "vt": 1, "pvt": 2, "ev": 3}
     jobs = sorted(
         result.jobs,
@@ -310,7 +345,20 @@ def build_eos_batch_report(
     result: EOSBatchResult,
     options: EOSReportOptions | None = None,
 ) -> tuple[ReportTable, ...]:
-    """Build the complete ordered report for one completed batch."""
+    """Build the complete ordered report for one completed batch.
+
+    Parameters
+    ----------
+    result : EOSBatchResult
+        Scientific result consumed or serialized by this operation.
+    options : EOSReportOptions | None
+        Validated options controlling this operation.
+
+    Returns
+    -------
+    tuple[ReportTable, ...]
+        Constructed the complete ordered report for one completed batch.
+    """
     return (
         *build_eos_batch_preamble(
             result.dataset, result.plan, result.archive_path, options
@@ -320,7 +368,20 @@ def build_eos_batch_report(
 
 
 def eos_input_summary_table(dataset: EOSDataset, archive_path: Any) -> ReportTable:
-    """Return input identity, size, units, and uncertainty availability."""
+    """Return input identity, size, units, and uncertainty availability.
+
+    Parameters
+    ----------
+    dataset : EOSDataset
+        EOS dataset consumed by the operation.
+    archive_path : Any
+        Path to the EOS or thermoelastic HDF5 archive.
+
+    Returns
+    -------
+    ReportTable
+        Input identity, size, units, and uncertainty availability.
+    """
     measured = [
         name
         for name in ("pressure", "temperature", "volume", "energy", "a", "b", "c")
@@ -359,7 +420,20 @@ def eos_input_summary_table(dataset: EOSDataset, archive_path: Any) -> ReportTab
 
 
 def eos_data_table(dataset: EOSDataset, *, max_rows: int | None = None) -> ReportTable:
-    """Return only input quantities actually present in the dataset."""
+    """Return only input quantities actually present in the dataset.
+
+    Parameters
+    ----------
+    dataset : EOSDataset
+        EOS dataset consumed by the operation.
+    max_rows : int | None
+        Maximum number of point-level rows included in the rendered report.
+
+    Returns
+    -------
+    ReportTable
+        Only input quantities actually present in the dataset.
+    """
     available = [
         name
         for name in ("pressure", "temperature", "volume", "energy", "a", "b", "c")
@@ -424,7 +498,20 @@ def eos_data_selection_table(
     dataset: EOSDataset,
     mask: np.ndarray | None = None,
 ) -> ReportTable:
-    """Return non-destructive selection counts overall and by data group."""
+    """Return non-destructive selection counts overall and by data group.
+
+    Parameters
+    ----------
+    dataset : EOSDataset
+        EOS dataset consumed by the operation.
+    mask : np.ndarray | None
+        Boolean selection or validity mask.
+
+    Returns
+    -------
+    ReportTable
+        Non-destructive selection counts overall and by data group.
+    """
     selected = dataset.selection_mask(mask)
     rows: list[list[Any]] = [
         [
@@ -459,7 +546,20 @@ def eos_data_selection_table(
 def eos_uncertainty_table(
     dataset: EOSDataset, *, max_rows: int | None = None
 ) -> ReportTable:
-    """Return standard uncertainties for measured quantities that exist."""
+    """Return standard uncertainties for measured quantities that exist.
+
+    Parameters
+    ----------
+    dataset : EOSDataset
+        EOS dataset consumed by the operation.
+    max_rows : int | None
+        Maximum number of point-level rows included in the rendered report.
+
+    Returns
+    -------
+    ReportTable
+        Standard uncertainties for measured quantities that exist.
+    """
     available = [
         name
         for name in ("pressure", "temperature", "volume", "energy", "a", "b", "c")
@@ -498,12 +598,34 @@ def eos_uncertainty_table(
 
 
 def eos_plan_table(result: EOSBatchResult) -> ReportTable:
-    """Return one row per declarative batch job in a completed result."""
+    """Return one row per declarative batch job in a completed result.
+
+    Parameters
+    ----------
+    result : EOSBatchResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    ReportTable
+        One row per declarative batch job in a completed result.
+    """
     return eos_plan_table_from_plan(result.plan)
 
 
 def eos_plan_table_from_plan(plan: EOSBatchPlan) -> ReportTable:
-    """Return one human-readable row per declarative batch job."""
+    """Return one human-readable row per declarative batch job.
+
+    Parameters
+    ----------
+    plan : EOSBatchPlan
+        Validated EOS batch plan defining the requested jobs.
+
+    Returns
+    -------
+    ReportTable
+        One human-readable row per declarative batch job.
+    """
     rows = []
     for index, job in enumerate(plan.jobs, start=1):
         rows.append(
@@ -552,7 +674,20 @@ def eos_plan_table_from_plan(plan: EOSBatchPlan) -> ReportTable:
 
 
 def eos_requested_fit_table(job: EOSBatchJob, index: int) -> ReportTable:
-    """Return normalized model, solver, and constraint settings for one job."""
+    """Return normalized model, solver, and constraint settings for one job.
+
+    Parameters
+    ----------
+    job : EOSBatchJob
+        Batch job definition being rendered or executed.
+    index : int
+        Integer index selecting one stored value.
+
+    Returns
+    -------
+    ReportTable
+        Normalized model, solver, and constraint settings for one job.
+    """
     request = job.request
     options = request.options.as_dict()
     constraints = request.as_dict().get("constraints", [])
@@ -605,7 +740,24 @@ def eos_job_tables(
     detail: EOSReportDetail = EOSReportDetail.SHORT,
     debug: bool = False,
 ) -> tuple[ReportTable, ...]:
-    """Return short or extended tables for one fit result."""
+    """Return short or extended tables for one fit result.
+
+    Parameters
+    ----------
+    job : EOSBatchJobResult
+        Batch job definition being rendered or executed.
+    dataset : EOSDataset
+        EOS dataset consumed by the operation.
+    detail : EOSReportDetail
+        Requested report-detail level.
+    debug : bool
+        Whether debug-level diagnostics are included in the rendered output.
+
+    Returns
+    -------
+    tuple[ReportTable, ...]
+        Short or extended tables for one fit result.
+    """
     tables: list[ReportTable] = [
         eos_job_configuration_table(job),
         eos_parameter_table(job.result),
@@ -647,7 +799,18 @@ def eos_job_tables(
 
 
 def eos_job_configuration_table(job: EOSBatchJobResult) -> ReportTable:
-    """Return normalized human-readable model and solver configuration."""
+    """Return normalized human-readable model and solver configuration.
+
+    Parameters
+    ----------
+    job : EOSBatchJobResult
+        Batch job definition being rendered or executed.
+
+    Returns
+    -------
+    ReportTable
+        Normalized human-readable model and solver configuration.
+    """
     request = job.request
     rows: list[list[Any]] = [
         ["Job", job.job_id],
@@ -800,7 +963,18 @@ def eos_secondary_axial_table(result: EOSFitResult) -> ReportTable | None:
 
 
 def eos_parameter_table(result: EOSFitResult) -> ReportTable:
-    """Return parameter values with scientific symbols and explicit units."""
+    """Return parameter values with scientific symbols and explicit units.
+
+    Parameters
+    ----------
+    result : EOSFitResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    ReportTable
+        Parameter values with scientific symbols and explicit units.
+    """
     fit = result.fit
     parameter_map = fit.metadata.get("parameter_map", {})
     definitions = (
@@ -897,7 +1071,20 @@ def eos_parameter_table(result: EOSFitResult) -> ReportTable:
 def eos_diagnostics_table(
     job: EOSBatchJobResult, *, debug: bool = False
 ) -> ReportTable:
-    """Return objective and objective diagnostics without subjective judgement."""
+    """Return objective and objective diagnostics without subjective judgement.
+
+    Parameters
+    ----------
+    job : EOSBatchJobResult
+        Batch job definition being rendered or executed.
+    debug : bool
+        Whether debug-level diagnostics are included in the rendered output.
+
+    Returns
+    -------
+    ReportTable
+        Objective and objective diagnostics without subjective judgement.
+    """
     fit = job.result.fit
     diagnostics = fit.diagnostics
     values: list[list[Any]] = [
@@ -1229,7 +1416,20 @@ def eos_observed_calculated_table(
     result: EOSFitResult,
     dataset: EOSDataset,
 ) -> ReportTable:
-    """Return observed, calculated, and residual data in domain orientation."""
+    """Return observed, calculated, and residual data in domain orientation.
+
+    Parameters
+    ----------
+    result : EOSFitResult
+        Scientific result consumed or serialized by this operation.
+    dataset : EOSDataset
+        EOS dataset consumed by the operation.
+
+    Returns
+    -------
+    ReportTable
+        Observed, calculated, and residual data in domain orientation.
+    """
     fit = result.fit
     fitted = np.asarray(fit.fitted if fit.fitted is not None else [], dtype=float)
     residuals = np.asarray(

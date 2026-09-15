@@ -103,7 +103,32 @@ def calculate_eos(
     propagate_uncertainty: bool = True,
     relative_step: float = 1.0e-5,
 ) -> EOSCalculationResult:
-    """Evaluate fitted EOS properties from a native archive."""
+    """Evaluate fitted EOS properties from a native archive.
+
+    Parameters
+    ----------
+    archive : str | Path
+        EOS archive containing persisted datasets and fit records.
+    slot : str | EOSResultSlot | None
+        Scientific result slot addressed by the operation.
+    record_id : int | None
+        Stable identifier of an immutable EOS fit record.
+    pressure : np.ndarray | Sequence[float] | float | None
+        Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+    volume : np.ndarray | Sequence[float] | float | None
+        Volume value or array in the units documented by the surrounding model.
+    temperature : np.ndarray | Sequence[float] | float | None
+        Temperature value or array in K.
+    propagate_uncertainty : bool
+        Whether available parameter covariance is propagated to derived values.
+    relative_step : float
+        Relative finite-difference step used for numerical uncertainty propagation.
+
+    Returns
+    -------
+    EOSCalculationResult
+        Evaluated fitted EOS properties from a native archive.
+    """
     calculator = EOSCalculator.from_archive(
         archive,
         slot=slot,
@@ -125,7 +150,24 @@ def diagnose_eos(
     record_id: int | None = None,
     include_normalized_pressure: bool = True,
 ) -> EOSDiagnosticResult:
-    """Build residual and finite-strain diagnostics from a native archive."""
+    """Build residual and finite-strain diagnostics from a native archive.
+
+    Parameters
+    ----------
+    archive : str | Path
+        EOS archive containing persisted datasets and fit records.
+    slot : str | EOSResultSlot | None
+        Scientific result slot addressed by the operation.
+    record_id : int | None
+        Stable identifier of an immutable EOS fit record.
+    include_normalized_pressure : bool
+        Whether to include normalized pressure in the result.
+
+    Returns
+    -------
+    EOSDiagnosticResult
+        Constructed residual and finite-strain diagnostics from a native archive.
+    """
     diagnostics = EOSDiagnostics.from_archive(
         archive,
         slot=slot,
@@ -148,6 +190,19 @@ def build_eos_plots(
     -------
     PlotCollection
         Neutral plots suitable for the Matplotlib renderer or another frontend adapter.
+
+    Parameters
+    ----------
+    archive : str | Path
+        EOS archive containing persisted datasets and fit records.
+    plot_types : Sequence[str] | str | None
+        Requested plot families; ``None`` selects the default inventory.
+    slot : str | EOSResultSlot | None
+        Scientific result slot addressed by the operation.
+    record_id : int | None
+        Stable identifier of an immutable EOS fit record.
+    options : EOSPlotOptions | None
+        Validated options controlling this operation.
     """
     plotter = EOSPlotter.from_archive(
         archive,

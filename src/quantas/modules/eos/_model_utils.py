@@ -7,7 +7,25 @@ from __future__ import annotations
 import numpy as np
 
 def as_float64_vector(values: np.ndarray, *, name: str) -> np.ndarray:
-    """Return a finite one-dimensional ``float64`` copy."""
+    """Return a finite one-dimensional ``float64`` copy.
+
+    Parameters
+    ----------
+    values : np.ndarray
+        Numerical values consumed by the operation.
+    name : str
+        Stable name or identifier.
+
+    Returns
+    -------
+    np.ndarray
+        A finite one-dimensional ``float64`` copy.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     array = np.asarray(values, dtype=np.float64)
     if array.ndim != 1:
         raise ValueError(f"EOS column '{name}' must be one-dimensional.")
@@ -23,7 +41,27 @@ def optional_sigma(
     shape: tuple[int, ...],
     name: str,
 ) -> np.ndarray | None:
-    """Normalize an optional standard-uncertainty vector."""
+    """Normalize an optional standard-uncertainty vector.
+
+    Parameters
+    ----------
+    values : np.ndarray | None
+        Numerical values consumed by the operation.
+    shape : tuple[int, ...]
+        Expected array shape.
+    name : str
+        Stable name or identifier.
+
+    Returns
+    -------
+    np.ndarray | None
+        Result described by the operation.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     if values is None:
         return None
     array = as_float64_vector(values, name=name)

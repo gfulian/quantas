@@ -85,7 +85,18 @@ def extract_thermoelastic_result(
 
 
 def resolve_style(options: ThermoelasticPlotStyleOptions) -> ResolvedThermoelasticStyle:
-    """Resolve nullable common options against one style preset."""
+    """Resolve nullable common options against one style preset.
+
+    Parameters
+    ----------
+    options : ThermoelasticPlotStyleOptions
+        Validated options controlling this operation.
+
+    Returns
+    -------
+    ResolvedThermoelasticStyle
+        Result described by the operation.
+    """
     if options.preset == "analysis":
         default_show_title = True
         default_grid = True
@@ -179,7 +190,27 @@ def profile_component(
     *,
     tensor_condition: str = "isothermal",
 ) -> tuple[FloatArray, FloatArray]:
-    """Return one component and one-sigma uncertainty along a depth profile."""
+    """Return one component and one-sigma uncertainty along a depth profile.
+
+    Parameters
+    ----------
+    profile : ThermoelasticProfileResult
+        Validated pressure-temperature depth profile.
+    label : str
+        Stable scientific or presentation label.
+    tensor_condition : str
+        Requested elastic-tensor thermodynamic condition.
+
+    Returns
+    -------
+    tuple[FloatArray, FloatArray]
+        One component and one-sigma uncertainty along a depth profile.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     stiffness: np.ndarray | None
     sigma_stiffness: np.ndarray | None
     if tensor_condition == "isothermal":
@@ -202,14 +233,36 @@ def profile_component(
 
 
 def confidence_multiplier(probability: float) -> float:
-    """Return the two-sided standard-normal multiplier for a probability."""
+    """Return the two-sided standard-normal multiplier for a probability.
+
+    Parameters
+    ----------
+    probability : float
+        Probability level associated with the requested confidence multiplier.
+
+    Returns
+    -------
+    float
+        The two-sided standard-normal multiplier for a probability.
+    """
     return float(NormalDist().inv_cdf(0.5 + 0.5 * float(probability)))
 
 
 def extrapolation_masks(
     result: ThermoelasticResult,
 ) -> list[PlotMask]:
-    """Build distinct QHA and elastic extrapolation masks for a P-T map."""
+    """Build distinct QHA and elastic extrapolation masks for a P-T map.
+
+    Parameters
+    ----------
+    result : ThermoelasticResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    list[PlotMask]
+        Constructed distinct QHA and elastic extrapolation masks for a P-T map.
+    """
     masks: list[PlotMask] = []
     qha = np.asarray(result.qha_extrapolation_mask, dtype=np.bool_)
     elastic = np.asarray(result.extrapolation_mask, dtype=np.bool_)
@@ -243,7 +296,18 @@ def extrapolation_masks(
 def profile_extrapolation_spans(
     profile: ThermoelasticProfileResult,
 ) -> list[PlotSpan]:
-    """Return contiguous depth intervals requiring extrapolation."""
+    """Return contiguous depth intervals requiring extrapolation.
+
+    Parameters
+    ----------
+    profile : ThermoelasticProfileResult
+        Validated pressure-temperature depth profile.
+
+    Returns
+    -------
+    list[PlotSpan]
+        Contiguous depth intervals requiring extrapolation.
+    """
     spans: list[PlotSpan] = []
     for key, label, mask, hatch in (
         (
@@ -295,6 +359,11 @@ def contiguous_intervals(
     -------
     tuple of tuple
         Closed intervals in the coordinate units.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
     """
     values = np.asarray(tuple(coordinates), dtype=np.float64)
     flags = np.asarray(tuple(mask), dtype=np.bool_)

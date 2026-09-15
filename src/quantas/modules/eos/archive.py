@@ -104,6 +104,11 @@ class EOSArchive:
         -------
         EOSArchive
             Writable archive.
+
+        Raises
+        ------
+        FileExistsError
+            If the destination exists and replacement is not permitted.
         """
         destination = Path(path)
         destination.parent.mkdir(parents=True, exist_ok=True)
@@ -187,6 +192,12 @@ class EOSArchive:
         -------
         int
             Monotonic dataset identifier.
+
+        Raises
+        ------
+        Exception
+            Propagates the original write/serialization error after removing
+            any temporary dataset group.
         """
         self._require_writable()
         session = self._h5["session"]
@@ -209,14 +220,41 @@ class EOSArchive:
         return dataset_id
 
     def dataset(self, dataset_id: int = 1) -> EOSDataset:
-        """Read one archived input dataset."""
+        """Read one archived input dataset.
+
+        Parameters
+        ----------
+        dataset_id : int
+            Stable identifier of the archived EOS dataset.
+
+        Returns
+        -------
+        EOSDataset
+            Parsed one archived input dataset.
+
+        Raises
+        ------
+        KeyError
+            If a requested identifier or field is not available.
+        """
         path = f"input/datasets/{int(dataset_id):06d}"
         if path not in self._h5:
             raise KeyError(f"EOS archive has no dataset {dataset_id}")
         return read_eos_dataset(self._h5[path])
 
     def register_slot(self, slot: str | EOSResultSlot) -> EOSSlotState:
-        """Ensure that a result slot exists with an explicit empty state."""
+        """Ensure that a result slot exists with an explicit empty state.
+
+        Parameters
+        ----------
+        slot : str | EOSResultSlot
+            Scientific result slot addressed by the operation.
+
+        Returns
+        -------
+        EOSSlotState
+            Result described by the operation.
+        """
         self._require_writable()
         resolved = EOSResultSlot.parse(slot)
         group = self._slot_group(resolved, create=True)
@@ -226,7 +264,13 @@ class EOSArchive:
         return read_slot_state(group)
 
     def slots(self) -> tuple[EOSSlotState, ...]:
-        """Return all registered result slots in stable key order."""
+        """Return all registered result slots in stable key order.
+
+        Returns
+        -------
+        tuple[EOSSlotState, ...]
+            All registered result slots in stable key order.
+        """
         root = self._h5["session/current"]
         states: list[EOSSlotState] = []
         for domain_name in sorted(root):
@@ -244,6 +288,16 @@ class EOSArchive:
             If the archive has no such scientifically available slot. This
             distinguishes an unavailable property from an available but
             ``not_processed`` property.
+
+        Parameters
+        ----------
+        slot : str | EOSResultSlot
+            Scientific result slot addressed by the operation.
+
+        Returns
+        -------
+        EOSSlotState
+            The current state of one registered result slot.
         """
         resolved = EOSResultSlot.parse(slot)
         path = f"session/current/{resolved.key}"
@@ -268,6 +322,35 @@ class EOSArchive:
 
         Failed and invalid-input fit results are persisted exactly like
         successful attempts, but they cannot be accepted.
+
+        Parameters
+        ----------
+        dataset_id : int
+            Stable identifier of the archived EOS dataset.
+        request : EOSFitRequest
+            Validated fitting or calculation request.
+        result : EOSFitResult
+            Scientific result consumed or serialized by this operation.
+        parent_record_id : int | None
+            Stable identifier for the requested parent record.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+        provenance : dict[str, Any] | None
+            Additional provenance metadata stored with the resulting record.
+        accept : bool
+            Whether the newly appended successful record is immediately accepted.
+
+        Returns
+        -------
+        EOSFitRecord
+            Result described by the operation.
+
+        Raises
+        ------
+        KeyError
+            If a requested identifier or field is not available.
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         self._require_writable()
         if int(dataset_id) not in self.dataset_ids:
@@ -340,7 +423,28 @@ class EOSArchive:
         note: str | None = None,
         provenance: dict[str, Any] | None = None,
     ) -> EOSFitRecord:
-        """Append and accept one fit, convenient for Python and batch use."""
+        """Append and accept one fit, convenient for Python and batch use.
+
+        Parameters
+        ----------
+        dataset_id : int
+            Stable identifier of the archived EOS dataset.
+        request : EOSFitRequest
+            Validated fitting or calculation request.
+        result : EOSFitResult
+            Scientific result consumed or serialized by this operation.
+        parent_record_id : int | None
+            Stable identifier for the requested parent record.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+        provenance : dict[str, Any] | None
+            Additional provenance metadata stored with the resulting record.
+
+        Returns
+        -------
+        EOSFitRecord
+            Result described by the operation.
+        """
         return self.append_fit(
             dataset_id,
             request,
@@ -352,7 +456,23 @@ class EOSArchive:
         )
 
     def record(self, record_id: int) -> EOSFitRecord:
-        """Read one immutable fit record."""
+        """Read one immutable fit record.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+
+        Returns
+        -------
+        EOSFitRecord
+            Parsed one immutable fit record.
+
+        Raises
+        ------
+        KeyError
+            If a requested identifier or field is not available.
+        """
         path = f"session/records/{int(record_id):06d}"
         if path not in self._h5:
             raise KeyError(f"EOS archive has no fit record {record_id}")
@@ -362,7 +482,18 @@ class EOSArchive:
         self,
         slot: str | EOSResultSlot | None = None,
     ) -> tuple[EOSFitRecord, ...]:
-        """Return all fit records, optionally filtered by result slot."""
+        """Return all fit records, optionally filtered by result slot.
+
+        Parameters
+        ----------
+        slot : str | EOSResultSlot | None
+            Scientific result slot addressed by the operation.
+
+        Returns
+        -------
+        tuple[EOSFitRecord, ...]
+            All fit records, optionally filtered by result slot.
+        """
         resolved = None if slot is None else EOSResultSlot.parse(slot)
         values = tuple(self.record(record_id) for record_id in self.record_ids)
         if resolved is None:
@@ -375,7 +506,25 @@ class EOSArchive:
         *,
         note: str | None = None,
     ) -> EOSSlotState:
-        """Select a successful fit record as the current accepted result."""
+        """Select a successful fit record as the current accepted result.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSSlotState
+            Result described by the operation.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
+        """
         self._require_writable()
         record = self.record(record_id)
         if not record.successful:
@@ -424,6 +573,18 @@ class EOSArchive:
             If the record is currently accepted. Acceptance must first be
             revoked explicitly with :meth:`unaccept` so the archive history is
             unambiguous.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSStateEvent
+            Result described by the operation.
         """
         record = self.record(record_id)
         state = self.slot_state(record.slot)
@@ -504,7 +665,20 @@ class EOSArchive:
         *,
         note: str | None = None,
     ) -> EOSStateEvent:
-        """Bookmark a fit record without changing the accepted result."""
+        """Bookmark a fit record without changing the accepted result.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSStateEvent
+            Result described by the operation.
+        """
         record = self.record(record_id)
         return self._append_event(
             EOSStateEventType.RECORD_CANDIDATE,
@@ -520,7 +694,27 @@ class EOSArchive:
         child_record_id: int | None = None,
         note: str | None = None,
     ) -> EOSStateEvent:
-        """Record explicit reuse of one result as a later initial guess."""
+        """Record explicit reuse of one result as a later initial guess.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+        child_record_id : int | None
+            Stable identifier for the requested child record.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSStateEvent
+            Result described by the operation.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
+        """
         record = self.record(record_id)
         metadata: dict[str, Any] = {}
         if child_record_id is not None:
@@ -537,7 +731,25 @@ class EOSArchive:
         )
 
     def add_note(self, record_id: int, note: str) -> EOSStateEvent:
-        """Append a note event without mutating the original fit record."""
+        """Append a note event without mutating the original fit record.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+        note : str
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSStateEvent
+            Result described by the operation.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
+        """
         if not str(note).strip():
             raise ValueError("EOS archive note cannot be empty")
         record = self.record(record_id)
@@ -554,7 +766,20 @@ class EOSArchive:
         *,
         note: str | None = None,
     ) -> EOSStateEvent:
-        """Record that a registered property was deliberately left unfitted."""
+        """Record that a registered property was deliberately left unfitted.
+
+        Parameters
+        ----------
+        slot : str | EOSResultSlot
+            Scientific result slot addressed by the operation.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSStateEvent
+            Result described by the operation.
+        """
         resolved = EOSResultSlot.parse(slot)
         self.slot_state(resolved)
         return self._append_event(
@@ -564,21 +789,49 @@ class EOSArchive:
         )
 
     def events(self) -> tuple[EOSStateEvent, ...]:
-        """Return all append-only archive state events."""
+        """Return all append-only archive state events.
+
+        Returns
+        -------
+        tuple[EOSStateEvent, ...]
+            All append-only archive state events.
+        """
         root = self._h5["session/state_events"]
         return tuple(
             read_state_event(root[name]) for name in sorted_numeric_children(root)
         )
 
     def accepted(self, slot: str | EOSResultSlot) -> EOSFitRecord | None:
-        """Return the current accepted fit record for one slot."""
+        """Return the current accepted fit record for one slot.
+
+        Parameters
+        ----------
+        slot : str | EOSResultSlot
+            Scientific result slot addressed by the operation.
+
+        Returns
+        -------
+        EOSFitRecord | None
+            The current accepted fit record for one slot.
+        """
         state = self.slot_state(slot)
         if state.accepted_record_id is None:
             return None
         return self.record(state.accepted_record_id)
 
     def accepted_result(self, slot: str | EOSResultSlot) -> EOSFitResult | None:
-        """Return only the current accepted numerical result for one slot."""
+        """Return only the current accepted numerical result for one slot.
+
+        Parameters
+        ----------
+        slot : str | EOSResultSlot
+            Scientific result slot addressed by the operation.
+
+        Returns
+        -------
+        EOSFitResult | None
+            Only the current accepted numerical result for one slot.
+        """
         record = self.accepted(slot)
         return None if record is None else record.result
 
@@ -611,7 +864,13 @@ class EOSArchive:
         self._h5.flush()
 
     def batch_manifest(self) -> dict[str, Any] | None:
-        """Return the archived declarative batch plan, when present."""
+        """Return the archived declarative batch plan, when present.
+
+        Returns
+        -------
+        dict[str, Any] | None
+            The archived declarative batch plan, when present.
+        """
         session = self._h5["session"]
         if "batch_plan" not in session:
             return None
@@ -621,7 +880,13 @@ class EOSArchive:
         return dict(json.loads(str(value)))
 
     def summary(self) -> dict[str, Any]:
-        """Return a compact frontend-neutral archive summary."""
+        """Return a compact frontend-neutral archive summary.
+
+        Returns
+        -------
+        dict[str, Any]
+            A compact frontend-neutral archive summary.
+        """
         return {
             "path": str(self.path),
             "schema_version": str(self._h5["metadata"].attrs["schema_version"]),
@@ -694,7 +959,18 @@ class EOSArchive:
         )
 
     def inspect_slot(self, slot: str | EOSResultSlot) -> EOSSlotInspection:
-        """Return all attempts and current state for one result slot."""
+        """Return all attempts and current state for one result slot.
+
+        Parameters
+        ----------
+        slot : str | EOSResultSlot
+            Scientific result slot addressed by the operation.
+
+        Returns
+        -------
+        EOSSlotInspection
+            All attempts and current state for one result slot.
+        """
         state = self.slot_state(slot)
         records = self.records(state.slot)
         events = self.events()
@@ -716,7 +992,18 @@ class EOSArchive:
         *,
         warning_threshold_mib: float | None = 100.0,
     ) -> EOSArchiveInspection:
-        """Return a complete frontend-neutral archive inspection snapshot."""
+        """Return a complete frontend-neutral archive inspection snapshot.
+
+        Parameters
+        ----------
+        warning_threshold_mib : float | None
+            Approximate in-memory payload threshold, in MiB, above which a warning is emitted.
+
+        Returns
+        -------
+        EOSArchiveInspection
+            A complete frontend-neutral archive inspection snapshot.
+        """
         states = self.slots()
         records = self.records()
         events = self.events()
@@ -805,6 +1092,16 @@ def infer_result_slots(dataset: EOSDataset) -> tuple[EOSResultSlot, ...]:
     Constant control coordinates do not create fitting slots. For example, a
     constant pressure in an isobaric V--T dataset is preserved as metadata but
     does not create P--V slots.
+
+    Parameters
+    ----------
+    dataset : EOSDataset
+        EOS dataset consumed by the operation.
+
+    Returns
+    -------
+    tuple[EOSResultSlot, ...]
+        Tuple containing the returned values in the order described above.
     """
     slots: list[EOSResultSlot] = []
     targets = tuple(name for name in ("volume", "a", "b", "c") if dataset.has(name))

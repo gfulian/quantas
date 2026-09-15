@@ -9,10 +9,12 @@ therefore decomposes the lattice deformation gradient relative to the selected
 reference state as ``F = R U`` and removes the proper rotation ``R`` from both
 lattice and stiffness components while retaining the symmetric stretch ``U``.
 
-The finite-pressure stiffness matrices handled here are the hydrostatic
-stress--strain coefficients discussed by Barron and Klein (1965) and Wallace
-(1972).  Co-rotation changes only their Cartesian representation; it does not
-change the physical stressed state.
+The stiffness matrices handled here are already finite-pressure stress--strain
+coefficients.  Their provenance records whether the backend supplied the
+finite-prestress coefficients directly or Quantas converted a raw tensor during
+input generation.  Co-rotation changes only their Cartesian representation; it
+does not apply any further pressure correction or change the physical stressed
+state.
 
 References
 ----------
@@ -44,7 +46,7 @@ class ElasticFrameNormalization:
     lattice : ndarray
         Rotation-free lattice matrix with vectors stored by rows.
     stiffness : ndarray
-        Co-rotated ``6 x 6`` Wallace stiffness matrix in GPa.
+        Co-rotated ``6 x 6`` finite-pressure stiffness matrix in GPa.
     rotation_to_reference : ndarray
         Proper active rotation applied to the sampled stiffness tensor.
     removed_rotation_degrees : float
@@ -77,7 +79,7 @@ def normalize_elastic_frame(
     lattice : array_like
         Sampled direct-lattice matrix with vectors stored by rows.
     stiffness : array_like
-        Sampled Wallace stiffness matrix in Voigt notation and GPa.
+        Sampled finite-pressure stiffness matrix in Voigt notation and GPa.
     reference_lattice : array_like
         Reference direct-lattice matrix with vectors stored by rows.
     determinant_tolerance : float, optional

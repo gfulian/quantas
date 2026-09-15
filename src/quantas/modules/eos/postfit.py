@@ -17,7 +17,18 @@ from .diagnostics import EOSDiagnosticResult
 
 
 def eos_calculation_summary_table(result: EOSCalculationResult) -> ReportTable:
-    """Return source, model, propagation, and extrapolation information."""
+    """Return source, model, propagation, and extrapolation information.
+
+    Parameters
+    ----------
+    result : EOSCalculationResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    ReportTable
+        Source, model, propagation, and extrapolation information.
+    """
     extrapolated = result.columns.get("extrapolated")
     rows: list[list[Any]] = [
         ["Record", result.record_id],
@@ -40,7 +51,18 @@ def eos_calculation_summary_table(result: EOSCalculationResult) -> ReportTable:
 
 
 def eos_calculation_table(result: EOSCalculationResult) -> ReportTable:
-    """Return calculated values with adjacent one-sigma columns."""
+    """Return calculated values with adjacent one-sigma columns.
+
+    Parameters
+    ----------
+    result : EOSCalculationResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    ReportTable
+        Calculated values with adjacent one-sigma columns.
+    """
     names: list[str] = []
     for name in result.columns:
         names.append(name)
@@ -80,7 +102,18 @@ def eos_calculation_table(result: EOSCalculationResult) -> ReportTable:
 
 
 def eos_diagnostic_summary_table(result: EOSDiagnosticResult) -> ReportTable:
-    """Return residual and normalized-pressure availability information."""
+    """Return residual and normalized-pressure availability information.
+
+    Parameters
+    ----------
+    result : EOSDiagnosticResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    ReportTable
+        Residual and normalized-pressure availability information.
+    """
     normalized = result.metadata.get("normalized_pressure", {})
     rows: list[list[Any]] = [
         ["Record", result.record_id],
@@ -101,7 +134,18 @@ def eos_diagnostic_summary_table(result: EOSDiagnosticResult) -> ReportTable:
 
 
 def eos_diagnostic_table(result: EOSDiagnosticResult) -> ReportTable:
-    """Return the complete residual and finite-strain diagnostic table."""
+    """Return the complete residual and finite-strain diagnostic table.
+
+    Parameters
+    ----------
+    result : EOSDiagnosticResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    ReportTable
+        The complete residual and finite-strain diagnostic table.
+    """
     names = list(result.columns)
     rows = [
         [_report_value(name, result.columns[name][index]) for name in names]
@@ -125,7 +169,22 @@ def write_eos_calculation_csv(
     *,
     overwrite: bool = False,
 ) -> Path:
-    """Write calculated properties and propagated uncertainties to CSV."""
+    """Write calculated properties and propagated uncertainties to CSV.
+
+    Parameters
+    ----------
+    result : EOSCalculationResult
+        Scientific result consumed or serialized by this operation.
+    path : str | Path
+        Filesystem path read from or written by the operation.
+    overwrite : bool
+        Whether an existing output may be replaced.
+
+    Returns
+    -------
+    Path
+        Destination path or output produced by the write operation.
+    """
     columns: list[tuple[str, np.ndarray, str]] = []
     for name, values in result.columns.items():
         columns.append((name, values, result.units.get(name, "")))
@@ -146,7 +205,22 @@ def write_eos_diagnostic_csv(
     *,
     overwrite: bool = False,
 ) -> Path:
-    """Write residual and finite-strain diagnostics to CSV."""
+    """Write residual and finite-strain diagnostics to CSV.
+
+    Parameters
+    ----------
+    result : EOSDiagnosticResult
+        Scientific result consumed or serialized by this operation.
+    path : str | Path
+        Filesystem path read from or written by the operation.
+    overwrite : bool
+        Whether an existing output may be replaced.
+
+    Returns
+    -------
+    Path
+        Destination path or output produced by the write operation.
+    """
     columns = [
         (name, values, result.units.get(name, ""))
         for name, values in result.columns.items()

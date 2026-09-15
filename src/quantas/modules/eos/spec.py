@@ -76,7 +76,13 @@ class EOSSpecInputOptions:
     energy_unit: str | None = None
 
     def as_dict(self) -> dict[str, str | None]:
-        """Return a serialization-ready mapping."""
+        """Return a serialization-ready mapping.
+
+        Returns
+        -------
+        dict[str, str | None]
+            A serialization-ready mapping.
+        """
         return {
             "pressure_unit": self.pressure_unit,
             "length_unit": self.length_unit,
@@ -137,7 +143,13 @@ class EOSSpecDocument:
     _sections: tuple[_Section, ...] = field(repr=False)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return document provenance without unresolved job internals."""
+        """Return document provenance without unresolved job internals.
+
+        Returns
+        -------
+        dict[str, Any]
+            Document provenance without unresolved job internals.
+        """
         return {
             "source": None if self.source is None else str(self.source),
             "version": self.version,

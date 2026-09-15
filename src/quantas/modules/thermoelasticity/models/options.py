@@ -75,7 +75,7 @@ class ThermoelasticOptions:
         Maximum preferred scale-aware parameter change between second- and
         third-order finite-strain descriptions.
     stability_policy : {"fail", "warn", "allow"}, optional
-        Response when reconstructed Wallace stiffness matrices are unstable or
+        Response when reconstructed finite-pressure stiffness matrices are unstable or
         indeterminate.
     stability_tolerance : float, optional
         Minimum accepted stiffness eigenvalue in GPa for the generic positive-

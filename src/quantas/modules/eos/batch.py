@@ -83,7 +83,13 @@ class EOSBatchJob:
         return EOSResultSlot.from_request(self.request)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready job description."""
+        """Return a serialization-ready job description.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready job description.
+        """
         return {
             "job_id": self.job_id,
             "slot": self.slot.as_dict(),
@@ -128,7 +134,13 @@ class EOSBatchPlan:
             accepted.add(key)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready batch manifest."""
+        """Return a serialization-ready batch manifest.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready batch manifest.
+        """
         return {
             "failure_policy": self.failure_policy.value,
             "metadata": dict(self.metadata),
@@ -224,6 +236,11 @@ class EOSBatchWorkflow:
         -------
         EOSBatchResult
             Dataset, records, archive path, and meaningful workflow events.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         self._events = []
         dataset = self._read_source(
@@ -373,7 +390,24 @@ def run_eos_batch(
     archive_path: str | Path,
     **kwargs: Any,
 ) -> EOSBatchResult:
-    """Execute one EOS batch using the default workflow service."""
+    """Execute one EOS batch using the default workflow service.
+
+    Parameters
+    ----------
+    source : str | Path | EOSDataset
+        Normalized scientific source object consumed by the operation.
+    plan : EOSBatchPlan
+        Validated EOS batch plan defining the requested jobs.
+    archive_path : str | Path
+        Path to the EOS or thermoelastic HDF5 archive.
+    kwargs : Any
+        Additional keyword arguments forwarded to the batch execution call.
+
+    Returns
+    -------
+    EOSBatchResult
+        Result described by the operation.
+    """
     return EOSBatchWorkflow().run(source, plan, archive_path, **kwargs)
 
 

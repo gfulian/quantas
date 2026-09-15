@@ -447,7 +447,20 @@ class EOSSession:
         return record
 
     def accept(self, record_id: int, *, note: str | None = None) -> EOSSlotState:
-        """Accept one successful session record as the current result."""
+        """Accept one successful session record as the current result.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSSlotState
+            Result described by the operation.
+        """
         record = self._session_record(record_id)
         state = self.archive.accept(record.record_id, note=note)
         self._emit(
@@ -464,7 +477,20 @@ class EOSSession:
         *,
         note: str | None = None,
     ) -> EOSSlotState:
-        """Revoke the current accepted result for one slot."""
+        """Revoke the current accepted result for one slot.
+
+        Parameters
+        ----------
+        slot : str | EOSResultSlot
+            Scientific result slot addressed by the operation.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSSlotState
+            Result described by the operation.
+        """
         resolved = EOSResultSlot.parse(slot)
         previous = self.archive.slot_state(resolved).accepted_record_id
         state = self.archive.unaccept(resolved, note=note)
@@ -481,7 +507,20 @@ class EOSSession:
         return state
 
     def reject(self, record_id: int, *, note: str | None = None) -> EOSStateEvent:
-        """Reject one stored record without deleting it."""
+        """Reject one stored record without deleting it.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSStateEvent
+            Result described by the operation.
+        """
         record = self._session_record(record_id)
         event = self.archive.reject(record.record_id, note=note)
         self._emit(
@@ -498,7 +537,20 @@ class EOSSession:
         *,
         note: str | None = None,
     ) -> EOSStateEvent:
-        """Bookmark one stored record for later comparison."""
+        """Bookmark one stored record for later comparison.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+        note : str | None
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSStateEvent
+            Result described by the operation.
+        """
         record = self._session_record(record_id)
         event = self.archive.mark_candidate(record.record_id, note=note)
         self._emit(
@@ -509,7 +561,20 @@ class EOSSession:
         return event
 
     def add_note(self, record_id: int, note: str) -> EOSStateEvent:
-        """Append a scientific note to one session record."""
+        """Append a scientific note to one session record.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+        note : str
+            Optional human-readable note stored with the resulting history record.
+
+        Returns
+        -------
+        EOSStateEvent
+            Result described by the operation.
+        """
         record = self._session_record(record_id)
         event = self.archive.add_note(record.record_id, note)
         self._emit(
@@ -520,20 +585,54 @@ class EOSSession:
         return event
 
     def inspect_record(self, record_id: int) -> EOSRecordInspection:
-        """Return the derived inspection view for one session record."""
+        """Return the derived inspection view for one session record.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+
+        Returns
+        -------
+        EOSRecordInspection
+            The derived inspection view for one session record.
+        """
         self._session_record(record_id)
         return self.archive.inspect_record(record_id)
 
     def inspect_slot(self, slot: str | EOSResultSlot) -> EOSSlotInspection:
-        """Return the derived history and current state of one slot."""
+        """Return the derived history and current state of one slot.
+
+        Parameters
+        ----------
+        slot : str | EOSResultSlot
+            Scientific result slot addressed by the operation.
+
+        Returns
+        -------
+        EOSSlotInspection
+            The derived history and current state of one slot.
+        """
         return self.archive.inspect_slot(slot)
 
     def inspect(self) -> EOSArchiveInspection:
-        """Return a complete frontend-neutral archive inspection snapshot."""
+        """Return a complete frontend-neutral archive inspection snapshot.
+
+        Returns
+        -------
+        EOSArchiveInspection
+            A complete frontend-neutral archive inspection snapshot.
+        """
         return self.archive.inspect(warning_threshold_mib=self.archive_size_warning_mib)
 
     def archive_size(self) -> EOSArchiveSizeInfo:
-        """Return the current archive size and advisory warning state."""
+        """Return the current archive size and advisory warning state.
+
+        Returns
+        -------
+        EOSArchiveSizeInfo
+            The current archive size and advisory warning state.
+        """
         return self.archive.size_info(
             warning_threshold_mib=self.archive_size_warning_mib
         )

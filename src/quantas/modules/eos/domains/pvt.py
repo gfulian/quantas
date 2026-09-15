@@ -101,7 +101,22 @@ class PVTEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Evaluate pressure at paired volume and temperature coordinates."""
+        """Evaluate pressure at paired volume and temperature coordinates.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Paired coordinates with shape ``(2, n)``: volume in the first row
+            and temperature in K in the second row.
+        parameters : np.ndarray | Sequence[float]
+            Complete parameter vector in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        np.ndarray
+            Pressure at each paired volume-temperature coordinate, in the same
+            pressure unit used by the reference EOS parameters.
+        """
         volume, temperature = _split_coordinates(x)
         pressure, thermal, coupling = self.split_parameters(parameters)
         return self._core.pressure(
@@ -130,6 +145,25 @@ class PVTEOSFitModel(BaseFitModel):
         stable scale-aware numerical derivative for the other compositional
         couplings.  It represents :math:`(\partial P/\partial T)_V`, the
         quantity required to project temperature uncertainty into pressure.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Paired coordinates with shape ``(2, n)``: volume in the first row
+            and temperature in K in the second row.
+        parameters : np.ndarray | Sequence[float]
+            Complete parameter vector in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        np.ndarray
+            Array with shape ``(2, n)`` containing ``dP/dV`` in the first row
+            and ``dP/dT`` at constant volume in the second row.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         volume, temperature = _split_coordinates(x)
         pressure, thermal, coupling = self.split_parameters(parameters)
@@ -185,7 +219,20 @@ class PVTEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return configured complete initial parameters after validation."""
+        """Return configured complete initial parameters after validation.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Paired volume-temperature coordinates with shape ``(2, n)``.
+        y : np.ndarray | Sequence[float]
+            Observed pressures aligned with the coordinate columns.
+
+        Returns
+        -------
+        np.ndarray
+            Configured complete initial parameters after validation.
+        """
         volume, temperature = _split_coordinates(x)
         pressure = np.asarray(y, dtype=np.float64)
         _validate_pvt_data(volume, temperature, pressure)
@@ -196,7 +243,20 @@ class PVTEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Return minimally restrictive physical bounds."""
+        """Return minimally restrictive physical bounds.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Paired volume-temperature coordinates with shape ``(2, n)``.
+        y : np.ndarray | Sequence[float]
+            Observed pressures aligned with the coordinate columns.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            Minimally restrictive physical bounds.
+        """
         self.initial_guess(x, y)
         lower: list[float] = []
         upper: list[float] = []
@@ -210,7 +270,23 @@ class PVTEOSFitModel(BaseFitModel):
         self,
         parameters: np.ndarray | Sequence[float],
     ) -> tuple[dict[str, float], dict[str, float] | None, dict[str, float]]:
-        """Split a complete vector into pressure, thermal, and coupling parts."""
+        """Split a complete vector into pressure, thermal, and coupling parts.
+
+        Parameters
+        ----------
+        parameters : np.ndarray | Sequence[float]
+            Complete parameter vector in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        tuple[dict[str, float], dict[str, float] | None, dict[str, float]]
+            Mapping containing the normalized values described by this contract.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
+        """
         array = np.asarray(parameters, dtype=np.float64)
         names = self.parameter_names
         if array.ndim != 1 or array.size != len(names):
@@ -267,7 +343,13 @@ class PVTEOSFitModel(BaseFitModel):
         return pressure, thermal, coupling
 
     def metadata(self) -> dict[str, Any]:
-        """Return model composition and coordinate semantics."""
+        """Return model composition and coordinate semantics.
+
+        Returns
+        -------
+        dict[str, Any]
+            Model composition and coordinate semantics.
+        """
         return {
             **super().metadata(),
             "pvt_model": self.pvt_model.as_dict(),
@@ -279,7 +361,18 @@ class PVTEOSFitModel(BaseFitModel):
 
 
 def pvt_parameter_names(model: PVTModel) -> tuple[str, ...]:
-    """Return complete reporting order for one P--V--T model."""
+    """Return complete reporting order for one P--V--T model.
+
+    Parameters
+    ----------
+    model : PVTModel
+        EOS or thermoelastic model used by the operation.
+
+    Returns
+    -------
+    tuple[str, ...]
+        Complete reporting order for one P--V--T model.
+    """
     names: list[str] = ["K0", "KP", "KPP", "V0", "temperature_ref"]
     thermal = model.thermal_spec
     if thermal is not None:
@@ -321,6 +414,24 @@ def estimate_pvt_parameters(
     temperature.  The V--T estimate uses observations at the smallest absolute
     pressures.  These subsets provide initialization only; the subsequent fit
     uses every selected observation.
+
+    Parameters
+    ----------
+    model : PVTModel
+        EOS or thermoelastic model used by the operation.
+    volume : np.ndarray | Sequence[float]
+        Volume value or array in the units documented by the surrounding model.
+    temperature : np.ndarray | Sequence[float]
+        Temperature value or array in K.
+    pressure : np.ndarray | Sequence[float]
+        Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+    reference_temperature : float | None
+        Reference temperature of the thermal model, in K.
+
+    Returns
+    -------
+    dict[str, float]
+        Mapping containing the normalized values described by this contract.
     """
     v, t, p = _validate_pvt_data(volume, temperature, pressure)
     thermal = model.thermal_spec
@@ -392,7 +503,37 @@ def build_pvt_parameter_map(
     volume_unit: str = "angstrom^3",
     reference_temperature: float | None = None,
 ) -> ParameterMap:
-    """Build FREE/FIXED/IMPLIED parameters for a global P--V--T fit."""
+    """Build FREE/FIXED/IMPLIED parameters for a global P--V--T fit.
+
+    Parameters
+    ----------
+    model : PVTModel
+        EOS or thermoelastic model used by the operation.
+    volume : np.ndarray | Sequence[float]
+        Volume value or array in the units documented by the surrounding model.
+    temperature : np.ndarray | Sequence[float]
+        Temperature value or array in K.
+    pressure : np.ndarray | Sequence[float]
+        Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+    constraints : Sequence[ParameterConstraint]
+        Optional parameter constraints overriding model defaults.
+    pressure_unit : str
+        Pressure unit used for public pressure values.
+    volume_unit : str
+        Length unit whose cube defines the public volume unit.
+    reference_temperature : float | None
+        Reference temperature of the thermal model, in K.
+
+    Returns
+    -------
+    ParameterMap
+        Constructed fREE/FIXED/IMPLIED parameters for a global P--V--T fit.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     estimates = estimate_pvt_parameters(
         model,
         volume,

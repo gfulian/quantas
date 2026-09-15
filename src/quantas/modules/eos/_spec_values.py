@@ -114,7 +114,18 @@ def _canonical_parameter_for_request(
 
 
 def canonical_parameter_name(value: str) -> str:
-    """Return the documented canonical EOS parameter name for one alias."""
+    """Return the documented canonical EOS parameter name for one alias.
+
+    Parameters
+    ----------
+    value : str
+        Specification value to normalize.
+
+    Returns
+    -------
+    str
+        The documented canonical EOS parameter name for one alias.
+    """
     text = str(value).strip()
     key = text.lower().replace("_", "").replace("'", "p")
     aliases = {

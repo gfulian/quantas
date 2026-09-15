@@ -79,7 +79,24 @@ def evaluate_thermoelastic_grid(
     *,
     options: ThermoelasticOptions,
 ) -> ThermoelasticResult:
-    """Evaluate fitted tensors on a requested rectangular P--T grid."""
+    """Evaluate fitted tensors on a requested rectangular P--T grid.
+
+    Parameters
+    ----------
+    source : ThermoelasticResult
+        Normalized scientific source object consumed by the operation.
+    temperature : ArrayLike
+        Temperature value or array in K.
+    pressure : ArrayLike
+        Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+    options : ThermoelasticOptions
+        Validated options controlling this operation.
+
+    Returns
+    -------
+    ThermoelasticResult
+        Evaluated fitted tensors on a requested rectangular P--T grid.
+    """
     target_temperature = validated_axis(temperature, "temperature")
     target_pressure = validated_axis(pressure, "pressure")
     volume, qha_extrapolated = interpolate_archived_grid(
@@ -175,7 +192,22 @@ def evaluate_thermoelastic_profile(
     *,
     options: ThermoelasticOptions,
 ) -> ThermoelasticProfileResult:
-    """Evaluate one depth-dependent pressure-temperature profile from fits."""
+    """Evaluate one depth-dependent pressure-temperature profile from fits.
+
+    Parameters
+    ----------
+    source : ThermoelasticResult
+        Normalized scientific source object consumed by the operation.
+    profile : ThermoelasticDepthProfile
+        Validated pressure-temperature depth profile.
+    options : ThermoelasticOptions
+        Validated options controlling this operation.
+
+    Returns
+    -------
+    ThermoelasticProfileResult
+        Evaluated one depth-dependent pressure-temperature profile from fits.
+    """
     volume, qha_extrapolated = interpolate_archived_points(
         source.temperature,
         source.pressure,

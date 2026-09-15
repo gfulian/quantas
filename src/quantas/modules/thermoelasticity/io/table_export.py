@@ -26,7 +26,25 @@ def thermoelastic_point_table(
     *,
     tensor_condition: Literal["isothermal", "adiabatic"] = "adiabatic",
 ) -> ReportTable:
-    """Return a compact human-readable table for one reconstructed state."""
+    """Return a compact human-readable table for one reconstructed state.
+
+    Parameters
+    ----------
+    result : ThermoelasticResult
+        Scientific result consumed or serialized by this operation.
+    tensor_condition : Literal['isothermal', 'adiabatic']
+        Requested elastic-tensor thermodynamic condition.
+
+    Returns
+    -------
+    ReportTable
+        A compact human-readable table for one reconstructed state.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     if result.temperature.size != 1 or result.pressure.size != 1:
         raise ValueError("point table requires exactly one pressure-temperature state")
     if tensor_condition == "isothermal":
@@ -94,6 +112,31 @@ def write_thermoelastic_grid_table(
     Only symmetry-independent stiffness components are exported.  Isothermal
     and adiabatic fields occupy separate columns when ``tensor_condition`` is
     ``"both"``; rows are never duplicated.
+
+    Parameters
+    ----------
+    result : ThermoelasticResult
+        Scientific result consumed or serialized by this operation.
+    filename : str | Path
+        Filesystem path read from or written by the operation.
+    tensor_condition : TensorSelection
+        Requested elastic-tensor thermodynamic condition.
+    file_format : TableFormat
+        Output table format identifier.
+    include_uncertainties : bool
+        Whether to include uncertainties in the result.
+    overwrite : bool
+        Whether an existing output may be replaced.
+
+    Returns
+    -------
+    Path
+        Destination path or output produced by the write operation.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
     """
     if result.stiffness_isothermal is None:
         raise ValueError("archive does not contain a reconstructed P-T grid")

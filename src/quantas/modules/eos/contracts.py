@@ -176,7 +176,18 @@ class EOSModuleContract:
     build_plots: Callable[..., Any]
 
     def capability(self, domain: EOSFitDomain | str) -> EOSDomainCapability:
-        """Return the capability declaration for ``domain``."""
+        """Return the capability declaration for ``domain``.
+
+        Parameters
+        ----------
+        domain : EOSFitDomain | str
+            EOS domain identifier.
+
+        Returns
+        -------
+        EOSDomainCapability
+            The capability declaration for ``domain``.
+        """
         return eos_domain_capability(domain)
 
 

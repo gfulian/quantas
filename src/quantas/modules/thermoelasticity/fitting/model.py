@@ -38,7 +38,10 @@ class ColdFiniteStrainComponentModel(BaseFitModel):
     bulk_modulus_derivative : float
         Fixed static-EOS first pressure derivative.
     wallace_delta : float
-        Matching Wallace pre-stress coefficient.
+        Matching Voigt component of the Eulerian finite-strain delta tensor
+        used by the cold constitutive expansion.  This coefficient belongs to
+        the finite-strain model; it is not an additional pressure correction of
+        the sampled finite-pressure stiffness tensor.
     order : {2, 3}
         Finite-strain truncation order.
     label : str
@@ -73,7 +76,26 @@ class ColdFiniteStrainComponentModel(BaseFitModel):
         return ("C0", "Cprime")
 
     def evaluate(self, x: ArrayLike, parameters: ArrayLike) -> FloatArray:
-        """Evaluate the component at sampled volumes."""
+        """Evaluate the component at sampled volumes.
+
+        Parameters
+        ----------
+        x : ArrayLike
+            Primitive-cell volume value or array in angstrom cubed.
+        parameters : ArrayLike
+            Two-element ``C0, Cprime`` vector, where ``C0`` is in GPa and
+            ``Cprime=dC/dP`` is dimensionless.
+
+        Returns
+        -------
+        FloatArray
+            Evaluated the component at sampled volumes.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
+        """
         values = np.asarray(parameters, dtype=np.float64)
         if values.shape != (2,):
             raise ValueError("component parameters must contain C0 and Cprime")
@@ -89,7 +111,20 @@ class ColdFiniteStrainComponentModel(BaseFitModel):
         )
 
     def initial_guess(self, x: ArrayLike, y: ArrayLike) -> FloatArray:
-        """Return the exact linear least-squares estimate for model parameters."""
+        """Return the exact linear least-squares estimate for model parameters.
+
+        Parameters
+        ----------
+        x : ArrayLike
+            Sampled primitive-cell volumes in angstrom cubed.
+        y : ArrayLike
+            Observed finite-pressure stiffness component values in GPa.
+
+        Returns
+        -------
+        FloatArray
+            The exact linear least-squares estimate for model parameters.
+        """
         volumes = np.asarray(x, dtype=np.float64)
         observed = np.asarray(y, dtype=np.float64)
         zero = self.evaluate(volumes, np.asarray([0.0, 0.0], dtype=np.float64))
@@ -109,7 +144,21 @@ class ColdFiniteStrainComponentModel(BaseFitModel):
         return np.asarray(parameters, dtype=np.float64)
 
     def derivative_x(self, x: ArrayLike, parameters: ArrayLike) -> FloatArray:
-        """Return the analytical volume derivative of the component."""
+        """Return the analytical volume derivative of the component.
+
+        Parameters
+        ----------
+        x : ArrayLike
+            Primitive-cell volume value or array in angstrom cubed.
+        parameters : ArrayLike
+            Two-element ``C0, Cprime`` vector, where ``C0`` is in GPa and
+            ``Cprime=dC/dP`` is dimensionless.
+
+        Returns
+        -------
+        FloatArray
+            The analytical volume derivative of the component.
+        """
         values = np.asarray(parameters, dtype=np.float64)
         jacobian = cold_finite_strain_component_jacobian(
             x,
@@ -124,7 +173,13 @@ class ColdFiniteStrainComponentModel(BaseFitModel):
         return np.asarray(jacobian[..., 5], dtype=np.float64)
 
     def metadata(self) -> dict[str, object]:
-        """Return fixed-EOS and component metadata."""
+        """Return fixed-EOS and component metadata.
+
+        Returns
+        -------
+        dict[str, object]
+            Fixed-EOS and component metadata.
+        """
         return {
             **super().metadata(),
             "component": self.label,

@@ -112,11 +112,13 @@ class ThermoelasticInputCreator:
     ) -> ThermoelasticInput:
         """Read CRYSTAL outputs and return normalized thermoelastic input.
 
-        CRYSTAL ``PRESSURE`` and ``PRESSEOS`` outputs already contain the
-        hydrostatic Barron--Klein/Wallace correction and are preserved.  Raw
-        energy--strain tensors are corrected exactly once after resolving the
-        hydrostatic pressure from output stress, explicit values, or an
-        energy-volume relation.
+        CRYSTAL ``PRESSURE`` and ``PRESSEOS`` outputs are treated as already
+        containing the finite-pressure stress--strain coefficients appropriate
+        to the stressed state and are therefore preserved.  Raw CRYSTAL
+        energy--strain tensors are converted exactly once with the finite-
+        prestress transformation used by CRYSTAL/Erba et al. after resolving
+        the hydrostatic pressure from output stress, explicit values, or an
+        energy-volume relation.  QSA does not repeat that conversion.
 
         Parameters
         ----------
@@ -151,8 +153,8 @@ class ThermoelasticInputCreator:
         Returns
         -------
         ThermoelasticInput
-            Validated input contract containing only Wallace/incremental
-            stiffness tensors.
+            Validated input contract containing only finite-pressure
+            stress--strain stiffness tensors suitable for QSA calibration.
 
         Raises
         ------
@@ -541,7 +543,7 @@ def _resolve_pressure_series(
     symprec: float,
     angle_tolerance: float,
 ) -> tuple[ElasticStateSeries, dict[str, Any]]:
-    """Return Wallace tensors and complete pressure-resolution provenance."""
+    """Return finite-pressure CRYSTAL stiffness tensors and pressure provenance."""
     if pressure_source not in _ENERGY_PRESSURE_SOURCES:
         if energy_input is not None:
             raise ValueError(

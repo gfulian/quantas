@@ -86,7 +86,13 @@ class EOSArchiveSizeInfo:
         )
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready size description."""
+        """Return a serialization-ready size description.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready size description.
+        """
         return {
             "size_bytes": self.size_bytes,
             "size_mib": self.size_mib,
@@ -149,7 +155,13 @@ class EOSRecordInspection:
         return self.disposition is EOSRecordDisposition.ACCEPTED
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready inspection view."""
+        """Return a serialization-ready inspection view.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready inspection view.
+        """
         return {
             "record_id": self.record_id,
             "dataset_id": self.record.dataset_id,
@@ -198,7 +210,13 @@ class EOSSlotInspection:
         return next((item for item in self.records if item.record_id == last_id), None)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready slot inspection."""
+        """Return a serialization-ready slot inspection.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready slot inspection.
+        """
         return {
             "state": self.state.as_dict(),
             "records": [record.as_dict() for record in self.records],
@@ -238,7 +256,13 @@ class EOSArchiveInspection:
         return sum(len(slot.records) for slot in self.slots)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready archive inspection."""
+        """Return a serialization-ready archive inspection.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready archive inspection.
+        """
         return {
             "path": str(self.path),
             "schema_version": self.schema_version,
