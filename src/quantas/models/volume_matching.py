@@ -45,7 +45,21 @@ class VolumeMatchPolicy:
 
 @dataclass(frozen=True, slots=True)
 class VolumeMatch:
-    """One traceable association between target and source volumes."""
+    """One traceable association between target and source volumes.
+
+    Parameters
+    ----------
+    target_index : int
+        Index of the consumer-side volume.
+    source_index : int
+        Index of the matched producer-side volume.
+    target_volume, source_volume : float
+        Primitive-cell volumes in cubic angstrom after unit normalization.
+    absolute_difference : float
+        Absolute volume difference in cubic angstrom.
+    relative_difference : float
+        Absolute difference divided by ``abs(target_volume)``.
+    """
 
     target_index: int
     source_index: int

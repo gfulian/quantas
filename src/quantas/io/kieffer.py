@@ -37,6 +37,11 @@ def kieffer_series_to_mapping(
     -------
     dict
         YAML-safe logical data. Presentation formatting is applied later.
+
+    Raises
+    ------
+    TypeError
+        If ``series`` is not a :class:`KiefferVolumeSeries`.
     """
     if not isinstance(series, KiefferVolumeSeries):
         raise TypeError("series must be a KiefferVolumeSeries")

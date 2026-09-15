@@ -150,7 +150,46 @@ class KiefferVolumeSeries:
 
 @dataclass(slots=True)
 class KiefferThermodynamicContribution:
-    """Separately traceable acoustic contribution on a sampled volume grid."""
+    """Acoustic thermodynamic contribution on a sampled volume grid.
+
+    The first axis of every thermodynamic array is temperature and the second
+    is volume. Acoustic branch-resolved quantities use branch order
+    ``(S1, S2, P)`` on the first axis. Energetic and entropic units are defined
+    by the consuming HA/QHA workflow and must be recorded in ``metadata`` when
+    this object is serialized outside that workflow.
+
+    Parameters
+    ----------
+    cutoff_frequencies_hz : ndarray
+        Positive branch cutoffs in Hz with shape ``(3, nvol)``.
+    effective_velocities_km_s : ndarray
+        Positive effective acoustic phase velocities in km s^-1 with shape
+        ``(3, nvol)``.
+    zero_point_energy : ndarray
+        Acoustic zero-point contribution with shape ``(ntemperature, nvol)``.
+        The value is temperature-independent in the physical model but is
+        stored on the common thermodynamic grid.
+    thermal_energy : ndarray
+        Thermal acoustic internal-energy contribution with shape
+        ``(ntemperature, nvol)``.
+    entropy : ndarray
+        Acoustic entropy contribution with shape ``(ntemperature, nvol)``.
+    vibrational_free_energy : ndarray
+        Acoustic vibrational Helmholtz contribution with shape
+        ``(ntemperature, nvol)``.
+    isochoric_heat_capacity : ndarray
+        Acoustic constant-volume heat capacity with shape
+        ``(ntemperature, nvol)``.
+    metadata : dict, optional
+        Units, provenance, and workflow-specific interpretation metadata.
+
+    Raises
+    ------
+    ValueError
+        If cutoff/velocity data are non-positive or have incompatible shapes,
+        or if thermodynamic arrays are non-finite or inconsistent with the
+        volume/temperature grids.
+    """
 
     cutoff_frequencies_hz: NDArray[np.float64]
     effective_velocities_km_s: NDArray[np.float64]

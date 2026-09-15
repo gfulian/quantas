@@ -483,6 +483,12 @@ class StructureVolumeSeries:
         -------
         dict
             Structure, symmetry, normalization, and reconstruction data.
+
+        Raises
+        ------
+        RuntimeError
+            If source supercells were requested but the retained source state
+            is internally incomplete.
         """
         data: dict[str, Any] = {
             "representation": "primitive",

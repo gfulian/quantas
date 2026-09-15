@@ -31,15 +31,22 @@ class BasicExport(ABC):
 
     @abstractmethod
     def export(self, result: ResultData, filename: str | Path) -> None:
-        """
-        Export a Quantas result.
+        """Export a frontend-neutral Quantas result.
+
+        Concrete exporters are responsible for format-specific serialization;
+        they must not reinterpret or recompute the scientific payload.
 
         Parameters
         ----------
         result : ResultData
             Result object to be exported.
         filename : str or Path
-            Path to the output file.
+            Destination path.
+
+        Raises
+        ------
+        NotImplementedError
+            Always in the abstract base implementation.
         """
         raise NotImplementedError
 

@@ -24,7 +24,9 @@ def write_events(h5: h5py.File, events: list[EventRecord]) -> h5py.Group:
     h5 : h5py.File
         Open destination file.
     events : list of EventRecord
-        Events to serialize.
+        Persistent workflow events in chronological order. Operational progress
+        events should already have been filtered by the calculator and are not
+        part of the native history contract.
 
     Returns
     -------

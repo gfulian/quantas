@@ -36,8 +36,11 @@ class BasicReader(ABC, Generic[ReaderResult]):
 
     @abstractmethod
     def load(self, filename: str | Path) -> ReaderResult:
-        """
-        Load an input file.
+        """Load and validate one input source.
+
+        Concrete readers define whether recoverable parse failures are returned
+        through a result object or recorded in :attr:`error`; callers should
+        consult the reader-specific contract for that distinction.
 
         Parameters
         ----------
@@ -47,6 +50,11 @@ class BasicReader(ABC, Generic[ReaderResult]):
         Returns
         -------
         ReaderResult
-            Parsed reader result.
+            Parsed reader result defined by the concrete reader.
+
+        Raises
+        ------
+        NotImplementedError
+            Always in the abstract base implementation.
         """
         raise NotImplementedError

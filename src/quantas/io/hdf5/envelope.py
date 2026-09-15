@@ -29,7 +29,8 @@ def write_result_metadata(h5: h5py.File, result: ResultData) -> h5py.Group:
     h5 : h5py.File
         Open destination file.
     result : ResultData
-        Generic result container.
+        Generic result container whose metadata are written without inferring
+        module identity from the destination filename.
 
     Returns
     -------
@@ -100,11 +101,22 @@ def write_precision_metadata(h5: h5py.File) -> h5py.Group:
 
 
 def read_precision_metadata(h5: h5py.File) -> dict[str, str | int]:
-    """Read numerical precision metadata from a native Quantas file.
+    """Read the numerical precision contract from a native Quantas file.
 
     Historical files are reported exactly as stored, including the short-lived
-    experimental single-precision storage metadata.  Missing metadata uses the
-    original Quantas double-precision default.
+    experimental single-precision storage metadata. Missing metadata is
+    interpreted using the current native double-precision policy; it does not
+    activate a runtime precision selector.
+
+    Parameters
+    ----------
+    h5 : h5py.File
+        Open Quantas result file.
+
+    Returns
+    -------
+    dict
+        Working/storage precision names, NumPy dtype names, and bit widths.
     """
     default = NumericPrecisionPolicy().as_metadata()
     path = "metadata/numerics"
@@ -133,7 +145,8 @@ def write_input_data(h5: h5py.File, input_data: InputData | None) -> h5py.Group:
     h5 : h5py.File
         Open destination file.
     input_data : InputData or None
-        Generic normalized input container.
+        Generic normalized input container. ``data`` is the machine-readable
+        scientific contract; ``raw`` and ``source`` are retained as provenance.
 
     Returns
     -------
@@ -232,7 +245,8 @@ def write_diagnostics(
     result : ResultData
         Generic result container.
     report_text : str or None, optional
-        Report text produced by a frontend renderer.
+        Deterministic plain-text report produced by a renderer. Interactive
+        terminal markup and live progress output do not belong in this field.
 
     Returns
     -------

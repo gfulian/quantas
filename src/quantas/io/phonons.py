@@ -40,9 +40,17 @@ class PhononInputFileReader(BasicReader):
     Attributes
     ----------
     completed : bool
-        Flag set to ``True`` when the input file has been read successfully.
+        Flag set to ``True`` only after the minimum phonon-input structure has
+        been parsed and validated.
     error : str or None
-        Error message generated during parsing or validation, if any.
+        User-facing parse or validation error. File/YAML errors are captured
+        here rather than raised by :meth:`load`.
+
+    Notes
+    -----
+    Accessor properties may still raise when a required scientific field is
+    missing or malformed. Use :attr:`completed` before consuming a newly loaded
+    file, and use :meth:`to_input` to obtain the normalized public contract.
     """
 
     def __init__(self, filename: str | Path | None = None) -> None:
@@ -61,8 +69,12 @@ class PhononInputFileReader(BasicReader):
             self.load(filename)
 
     def load(self, filename: str | Path) -> None:
-        """
-        Read a Quantas phonon YAML input file.
+        """Read a Quantas phonon YAML input file into reader state.
+
+        YAML syntax, Unicode, and file-system errors are converted to the
+        frontend-neutral :attr:`error` string and leave :attr:`completed`
+        ``False``. This method therefore does not use exceptions for ordinary
+        user input failures.
 
         Parameters
         ----------
@@ -516,7 +528,9 @@ class PhononInputFileReader(BasicReader):
         Returns
         -------
         PhononInputData
-            Normalized volume-dependent phonon input data.
+            Normalized frontend-neutral phonon input. Numerical arrays are
+            converted to float64 and source/provenance information is retained
+            in the returned contract.
 
         Raises
         ------
