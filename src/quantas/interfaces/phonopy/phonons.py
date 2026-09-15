@@ -102,7 +102,19 @@ class PhonopyReader(BasicReader[None]):
 
     @property
     def unitcell(self) -> tuple[Any, Any, Any, Any]:
-        """Return unit-cell atom count, lattice, positions, and atomic numbers."""
+        """Return the historical public unit-cell tuple.
+
+        Returns
+        -------
+        tuple
+            ``(natom, lattice, positions, numbers)``. Lattice vectors and fractional
+            positions follow the Phonopy YAML representation.
+
+        Notes
+        -----
+        The getter order is retained for backward compatibility and differs from the
+        internal setter tuple ``(natom, numbers, positions, lattice)`` used by the
+        legacy reader implementation."""
         return (
             self._data["unitcell"]["natom"],
             self._data["unitcell"]["lattice"],
@@ -112,7 +124,12 @@ class PhonopyReader(BasicReader[None]):
 
     @unitcell.setter
     def unitcell(self, cell_data: tuple[Any, Any, Any, Any]) -> None:
-        """Store unit-cell data in the reader's historical tuple layout."""
+        """Store unit-cell data in the historical setter layout.
+
+        Parameters
+        ----------
+        cell_data : tuple
+            ``(natom, numbers, positions, lattice)`` parsed from the Phonopy mesh."""
         self._data["unitcell"]["natom"] = cell_data[0]
         self._data["unitcell"]["numbers"] = cell_data[1]
         self._data["unitcell"]["positions"] = cell_data[2]
@@ -120,7 +137,18 @@ class PhonopyReader(BasicReader[None]):
 
     @property
     def supercell(self) -> tuple[Any, Any, Any]:
-        """Return supercell lattice, positions, and atomic numbers."""
+        """Return the historical public supercell tuple.
+
+        Returns
+        -------
+        tuple
+            ``(lattice, positions, numbers)`` for the parsed Phonopy displacement
+            supercell.
+
+        Notes
+        -----
+        The setter consumes ``(natom, numbers, positions, lattice)`` internally; this
+        asymmetry is retained for backward compatibility with the legacy interface."""
         return (
             self._data["supercell"]["lattice"],
             self._data["supercell"]["positions"],
@@ -129,7 +157,13 @@ class PhonopyReader(BasicReader[None]):
 
     @supercell.setter
     def supercell(self, cell_data: tuple[Any, Any, Any, Any]) -> None:
-        """Store supercell data in the reader's historical tuple layout."""
+        """Store supercell data in the historical setter layout.
+
+        Parameters
+        ----------
+        cell_data : tuple
+            ``(natom, numbers, positions, lattice)`` parsed from the displacement
+            YAML file."""
         self._data["supercell"]["natom"] = cell_data[0]
         self._data["supercell"]["numbers"] = cell_data[1]
         self._data["supercell"]["positions"] = cell_data[2]
@@ -142,7 +176,12 @@ class PhonopyReader(BasicReader[None]):
 
     @dim.setter
     def dim(self, matrix: Any) -> None:
-        """Store a copy of the Phonopy supercell expansion matrix."""
+        """Store the Phonopy supercell expansion matrix.
+
+        Parameters
+        ----------
+        matrix : array-like
+            ``(3, 3)`` supercell matrix. A copy is retained by the reader."""
         self._data["expansion"] = matrix.copy()
 
     @property
@@ -223,18 +262,20 @@ class PhonopyReader(BasicReader[None]):
         self,
         file: str | Path,
     ) -> tuple[bool, str | None, dict[str, Any] | None]:
-        """Read a YAML mapping without raising parser errors.
+        """Read a YAML mapping while reporting parser failure as reader data.
 
         Parameters
         ----------
-        file : str or Path
+        file : str or pathlib.Path
             YAML file to read.
 
         Returns
         -------
         tuple
-            Error flag, optional error description, and parsed mapping.
-        """
+            ``(error, exception, data)``. ``error`` is ``True`` for a YAML parser
+            failure and ``data`` is otherwise the parsed mapping. The historical
+            ``exception`` slot is currently ``None``; :meth:`load` supplies the
+            user-facing error message when parsing fails."""
         idata = None
         error = False
         exception = None
@@ -249,7 +290,20 @@ class PhonopyReader(BasicReader[None]):
         self,
         idata: dict[str, Any],
     ) -> tuple[int, Any, Any, Any]:
-        """Extract supercell geometry from a Phonopy displacement mapping."""
+        """Extract the Phonopy supercell and expansion matrix.
+
+        Parameters
+        ----------
+        idata : dict
+            Parsed displacement-YAML mapping containing ``supercell_matrix`` and the
+            ``supercell`` structure.
+
+        Returns
+        -------
+        tuple
+            ``(natom, numbers, positions, lattice)`` in the historical setter layout.
+            Atomic numbers have shape ``(natom,)`` and positions have shape
+            ``(natom, 3)``."""
         self.dim = np.asarray(idata["supercell_matrix"])
 
         natom = len(idata["supercell"]["points"])
@@ -265,7 +319,18 @@ class PhonopyReader(BasicReader[None]):
         return natom, numbers, positions, lattice
 
     def set_unit_cell(self, idata: dict[str, Any]) -> tuple[int, Any, Any, Any]:
-        """Extract unit-cell geometry from a Phonopy mesh mapping."""
+        """Extract the unit cell from a Phonopy mesh mapping.
+
+        Parameters
+        ----------
+        idata : dict
+            Parsed Phonopy mesh mapping.
+
+        Returns
+        -------
+        tuple
+            ``(natom, numbers, positions, lattice)`` in the historical setter layout,
+            with atomic-number shape ``(natom,)`` and position shape ``(natom, 3)``."""
         natom = idata["natom"]
         numbers = np.zeros(natom, dtype=int)
         positions = np.zeros((natom, 3), dtype=int)
@@ -279,7 +344,19 @@ class PhonopyReader(BasicReader[None]):
         return natom, numbers, positions, lattice
 
     def set_phonons(self, idata: dict[str, Any]) -> None:
-        """Store q-points, weights, and frequencies from a Phonopy mapping."""
+        """Store q-point sampling and normalized phonon frequencies.
+
+        Parameters
+        ----------
+        idata : dict
+            Parsed Phonopy mesh mapping containing ``natom``, ``nqpoint``, and
+            ``phonon`` records.
+
+        Notes
+        -----
+        Phonopy frequencies are read in THz and converted at the interface boundary to
+        ``cm^-1`` before storage. Q-point coordinates remain fractional reciprocal
+        coordinates and the printed integration weights are preserved."""
         nf = 3 * idata["natom"]
         nq = idata["nqpoint"]
 
