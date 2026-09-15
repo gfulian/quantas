@@ -13,12 +13,34 @@ A canonical :class:`quantas.references.Citation` stores:
 * stable key;
 * ordered authors;
 * title and year;
-* article/book/preprint/software kind;
-* journal, volume, pages, or publisher;
+* article, book, chapter, preprint, report, or software kind;
+* journal, volume, pages, publisher, or parent-book metadata as appropriate;
+* a report number for technical reports when applicable;
 * DOI without a URL prefix;
 * external URL only when a DOI is unavailable.
 
 Citation objects are immutable dataclasses.
+
+Canonical bibliographic style
+-----------------------------
+
+The registry stores scientific metadata independently from the surface used to
+render it. Canonical records follow these rules:
+
+* authors and editors use ``initials + surname`` in publication order, for
+  example ``R. J. Angel`` or ``F.-X. Coudert``;
+* scientific spelling and Unicode typography are retained in canonical data,
+  for example ``G. Valdrè`` and ``Zeitschrift für Kristallographie``;
+* DOI values are stored without ``doi:`` or URL prefixes;
+* page ranges use a simple ASCII hyphen in machine data;
+* book chapters and technical reports use their own record kinds rather than
+  being represented as journal articles;
+* a URL is stored only when no DOI is available.
+
+The plain-text renderer transliterates canonical Unicode metadata to portable
+ASCII for terminal reports and HDF5-embedded text. The RST renderer preserves
+the canonical scientific typography. Do not degrade the registry itself merely
+to satisfy a terminal encoding constraint.
 
 Key conventions
 ---------------
@@ -105,9 +127,11 @@ Validation
 
 Tests should verify:
 
-* unique keys;
+* unique keys and DOI values;
+* canonical ``initials + surname`` author/editor formatting;
 * valid year and record kind;
-* DOI stored without URL prefix;
+* record-specific metadata for chapters and reports;
+* DOI stored without URL prefix and no redundant URL when a DOI exists;
 * referenced keys exist;
 * module/method sets preserve intended order;
 * documentation footnotes match the registry;

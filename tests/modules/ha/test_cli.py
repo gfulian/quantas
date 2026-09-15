@@ -67,7 +67,7 @@ def test_ha_run_activates_embedded_kieffer_cutoffs(tmp_path, monkeypatch) -> Non
     assert captured["input"] == filename
     assert captured["cutoffs"] is cutoffs
     report = filename.with_suffix(".log").read_text(encoding="utf-8")
-    assert "Susan Werner Kieffer" in report
+    assert "S. W. Kieffer" in report
 
 
 def test_ha_export_help_is_available():

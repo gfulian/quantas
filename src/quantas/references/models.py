@@ -13,7 +13,9 @@ class CitationKind(str, Enum):
 
     ARTICLE = "article"
     BOOK = "book"
+    CHAPTER = "chapter"
     PREPRINT = "preprint"
+    REPORT = "report"
     SOFTWARE = "software"
 
 
@@ -26,7 +28,7 @@ class Citation:
     key : str
         Stable machine-readable identifier.
     authors : tuple of str
-        Ordered author names.
+        Ordered author names in canonical bibliographic form.
     title : str
         Publication title.
     year : int
@@ -36,11 +38,17 @@ class Citation:
     journal : str or None, optional
         Journal or series title.
     volume : str or None, optional
-        Journal volume.
+        Journal or series volume.
     pages : str or None, optional
         Page range or article number.
     publisher : str or None, optional
-        Publisher for books or software.
+        Publisher for books, chapters, reports, or software.
+    container_title : str or None, optional
+        Parent book title for a chapter.
+    editors : tuple of str, optional
+        Ordered editor names for a chapter.
+    report_number : str or None, optional
+        Stable report or technical-publication identifier.
     doi : str or None, optional
         Digital object identifier without a URL prefix.
     url : str or None, optional
@@ -56,6 +64,9 @@ class Citation:
     volume: str | None = None
     pages: str | None = None
     publisher: str | None = None
+    container_title: str | None = None
+    editors: tuple[str, ...] = ()
+    report_number: str | None = None
     doi: str | None = None
     url: str | None = None
 

@@ -5,25 +5,72 @@
 from __future__ import annotations
 
 from collections.abc import Iterable
+import unicodedata
 
 from .models import Citation, CitationKind
 from .registry import get_citation
 
 
-def render_citation(citation: Citation) -> str:
-    """Render one citation as deterministic plain text."""
-    authors = ", ".join(citation.authors)
-    source_parts: list[str] = []
-    if citation.journal:
-        source_parts.append(citation.journal)
+def _ascii_text(value: str) -> str:
+    """Return a portable ASCII representation for plain-text surfaces."""
+    punctuation = str.maketrans(
+        {
+            "–": "-",
+            "—": "-",
+            "−": "-",
+            "‘": "'",
+            "’": "'",
+            "“": '"',
+            "”": '"',
+        }
+    )
+    normalized = unicodedata.normalize("NFKD", value.translate(punctuation))
+    return normalized.encode("ascii", errors="ignore").decode("ascii")
+
+
+def _plain_authors(authors: tuple[str, ...]) -> str:
+    """Render canonical author strings for ASCII report output."""
+    return ", ".join(_ascii_text(author) for author in authors)
+
+
+def _plain_source(citation: Citation) -> str:
+    """Render source metadata for deterministic plain-text output."""
+    parts: list[str] = []
+    if citation.kind is CitationKind.CHAPTER:
+        if citation.container_title:
+            parts.append(f"In {_ascii_text(citation.container_title)}")
+        if citation.editors:
+            parts.append("edited by " + _plain_authors(citation.editors))
+    elif citation.journal:
+        parts.append(_ascii_text(citation.journal))
     if citation.volume:
-        source_parts.append(citation.volume)
+        parts.append(citation.volume)
     if citation.pages:
-        source_parts.append(citation.pages)
+        parts.append(citation.pages)
+    if citation.report_number:
+        parts.append(citation.report_number)
     if citation.publisher:
-        source_parts.append(citation.publisher)
-    source = ", ".join(source_parts)
-    lines = [f"{authors} ({citation.year}).", f"{citation.title}."]
+        parts.append(_ascii_text(citation.publisher))
+    return ", ".join(parts)
+
+
+def render_citation(citation: Citation) -> str:
+    """Render one citation as deterministic ASCII plain text.
+
+    Parameters
+    ----------
+    citation : Citation
+        Canonical bibliographic record.
+
+    Returns
+    -------
+    str
+        Portable plain-text representation suitable for terminal reports and
+        HDF5-embedded report text.
+    """
+    authors = _plain_authors(citation.authors)
+    source = _plain_source(citation)
+    lines = [f"{authors} ({citation.year}).", f"{_ascii_text(citation.title)}."]
     if source:
         lines.append(source + ".")
     if citation.doi:
@@ -67,6 +114,42 @@ def _render_rst_authors(authors: tuple[str, ...]) -> str:
     return ", ".join(authors[:-1]) + f", and {authors[-1]}"
 
 
+def _render_rst_source(record: Citation) -> str:
+    """Render bibliographic source metadata for an RST footnote."""
+    if record.kind is CitationKind.CHAPTER:
+        parts: list[str] = []
+        if record.container_title:
+            parts.append(f"In *{record.container_title}*")
+        if record.editors:
+            parts.append(f"edited by {_render_rst_authors(record.editors)}")
+        if record.volume:
+            parts.append(f"**{record.volume}**")
+        if record.pages:
+            parts.append(record.pages)
+        if record.publisher:
+            parts.append(record.publisher)
+        return ", ".join(parts)
+
+    if record.kind is CitationKind.REPORT:
+        parts = []
+        if record.report_number:
+            parts.append(record.report_number)
+        if record.publisher:
+            parts.append(record.publisher)
+        return ", ".join(parts)
+
+    parts = []
+    if record.journal:
+        parts.append(f"*{record.journal}*")
+    if record.volume:
+        parts.append(f"**{record.volume}**")
+    if record.pages:
+        parts.append(record.pages)
+    if record.publisher:
+        parts.append(record.publisher)
+    return ", ".join(parts)
+
+
 def render_rst_footnote(citation: Citation | str) -> str:
     """Render one canonical citation as a labelled auto-numbered RST footnote.
 
@@ -78,38 +161,24 @@ def render_rst_footnote(citation: Citation | str) -> str:
     Returns
     -------
     str
-        A reStructuredText footnote definition.  The stable citation key is
+        A reStructuredText footnote definition. The stable citation key is
         used as the label, while Sphinx displays a page-local number.
     """
     record = get_citation(citation) if isinstance(citation, str) else citation
     authors = _render_rst_authors(record.authors)
-    if record.kind is CitationKind.BOOK:
+    source = _render_rst_source(record)
+
+    if record.kind in {CitationKind.BOOK, CitationKind.REPORT, CitationKind.SOFTWARE}:
         body = f"{authors}. *{record.title}*."
-        if record.publisher:
-            body += f" {record.publisher}"
-        body += f" ({record.year})."
-    elif record.kind is CitationKind.SOFTWARE:
-        body = f"{authors}. *{record.title}*."
-        if record.publisher:
-            body += f" {record.publisher}"
-        body += f" ({record.year})."
     else:
         body = f'{authors}. “{record.title}”.'
-        source: list[str] = []
-        if record.journal:
-            source.append(f"*{record.journal}*")
-        if record.volume:
-            source.append(f"**{record.volume}**")
-        if record.pages:
-            source.append(record.pages)
-        if source:
-            body += " " + ", ".join(source)
-        body += f" ({record.year})."
+
+    if source:
+        body += f" {source}"
+    body += f" ({record.year})."
+
     if record.doi:
-        body += (
-            f" `DOI: {record.doi} "
-            f"<https://doi.org/{record.doi}>`_."
-        )
+        body += f" `DOI: {record.doi} <https://doi.org/{record.doi}>`_."
     elif record.url:
         body += f" `External link <{record.url}>`_."
     return f".. [#{record.key}] {body}"
