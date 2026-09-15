@@ -131,7 +131,19 @@ class CLIOutput:
         persist: bool = True,
         bold: bool = False,
     ) -> None:
-        """Render one message and optionally append it to the plain report."""
+        """Render one message and optionally persist its plain representation.
+
+        Parameters
+        ----------
+        message : str
+            Message body without frontend-specific markup.
+        level : EventLevel, optional
+            Presentation severity controlling warning/error prefixes and terminal
+            styling.
+        persist : bool, optional
+            Append the portable plain representation to the collected report.
+        bold : bool, optional
+            Request bold terminal presentation."""
         if not message:
             return
         plain = _plain_message(message, level)
@@ -146,7 +158,14 @@ class CLIOutput:
         self._terminal_last_kind = "message"
 
     def text_block(self, text: str, *, persist: bool = True) -> None:
-        """Render preformatted text without interpreting Rich markup."""
+        """Render preformatted text without interpreting Rich markup.
+
+        Parameters
+        ----------
+        text : str
+            Preformatted frontend-neutral text block.
+        persist : bool, optional
+            Append the block unchanged to the collected plain-text report."""
         if not text:
             return
         if persist:
@@ -157,7 +176,14 @@ class CLIOutput:
             self._terminal_last_kind = "block"
 
     def table(self, table: ReportTable, *, persist: bool = True) -> None:
-        """Render one neutral table to terminal and plain-text report."""
+        """Render one neutral table to terminal and optional report text.
+
+        Parameters
+        ----------
+        table : ReportTable
+            Frontend-neutral table containing raw values and rendering metadata.
+        persist : bool, optional
+            Include the deterministic plain-text rendering in the collected report."""
         if persist:
             self._append_chunk("table", render_table(table).rstrip())
         if not self.silent:
@@ -178,12 +204,25 @@ class CLIOutput:
         *,
         persist: bool = True,
     ) -> None:
-        """Render an ordered sequence of neutral tables."""
+        """Render an ordered sequence of neutral report tables.
+
+        Parameters
+        ----------
+        tables : sequence of ReportTable
+            Tables in the scientific display order chosen by the report builder.
+        persist : bool, optional
+            Include each deterministic text table in the collected report."""
         for table in tables:
             self.table(table, persist=persist)
 
     def progress(self, event: Event) -> None:
-        """Update the terminal-only live progress display."""
+        """Update the terminal-only live progress display.
+
+        Parameters
+        ----------
+        event : Event
+            Quantas progress event. The event is presented operationally and is not
+            appended to the deterministic report."""
         if self.silent:
             return
         self.progress_display.update(event)
@@ -197,7 +236,13 @@ class CLIOutput:
         self.progress_display.stop()
 
     def text(self) -> str:
-        """Return the deterministic plain-text report collected so far."""
+        """Return the deterministic plain-text report collected so far.
+
+        Returns
+        -------
+        str
+            Persistable report text with frontend styling and live-progress artifacts
+            removed."""
         if not self._chunks:
             return ""
         rendered = self._chunks[0][1]
@@ -239,7 +284,21 @@ def print_terminal_message(
     silent: bool = False,
     console: Console | None = None,
 ) -> None:
-    """Print one standalone terminal message using the shared style policy."""
+    """Print one standalone message using the shared terminal style policy.
+
+    Parameters
+    ----------
+    message : str
+        Message body without Rich markup.
+    level : EventLevel, optional
+        Presentation severity.
+    bold : bool, optional
+        Request bold terminal presentation.
+    silent : bool, optional
+        Suppress all terminal output.
+    console : rich.console.Console or None, optional
+        Explicit Rich console. ``None`` creates one using terminal capability
+        detection."""
     if silent:
         return
     target = create_console() if console is None else console

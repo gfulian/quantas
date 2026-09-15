@@ -80,7 +80,22 @@ class OperationDescriptor:
     description: str = ""
 
     def resolve(self, module: ModuleType) -> Callable[..., Any]:
-        """Resolve the described callable from an imported API namespace."""
+        """Resolve the described operation from one imported API namespace.
+
+        Parameters
+        ----------
+        module : ModuleType
+            Imported public ``quantas.api`` module named by its module descriptor.
+
+        Returns
+        -------
+        callable
+            Public operation declared by :attr:`function_name`.
+
+        Raises
+        ------
+        AttributeError
+            If the named object is missing or is not callable."""
         operation = getattr(module, self.function_name)
         if not callable(operation):
             raise AttributeError(
@@ -161,15 +176,25 @@ class ModuleDescriptor:
         return Capability(capability) in self.capabilities
 
     def operation(self, capability: Capability | str) -> Callable[..., Any]:
-        """Resolve the public function implementing one capability.
+        """Resolve the canonical callable implementing one capability.
+
+        Parameters
+        ----------
+        capability : Capability or str
+            Frontend-neutral capability enum member or stable string value.
+
+        Returns
+        -------
+        callable
+            Canonical public function for the requested capability.
 
         Raises
         ------
         ValueError
-            If the capability is not declared for this module.
+            If the capability is unsupported or has only named multi-operation
+            entries and therefore no single canonical callable.
         AttributeError
-            If the declared public operation is absent.
-        """
+            If the declared public object is missing or is not callable."""
         resolved = Capability(capability)
         if resolved not in self.capabilities:
             raise ValueError(
@@ -197,12 +222,23 @@ class ModuleDescriptor:
         self,
         capability: Capability | str | None = None,
     ) -> tuple[OperationDescriptor, ...]:
-        """Return named public operations, optionally filtered by capability.
+        """List named operations, optionally filtering by capability.
 
-        Canonical single-operation capabilities that predate the named catalog
-        are exposed through synthesized descriptors, so frontends can use one
-        discovery path for both simple and multi-operation workflows.
-        """
+        Parameters
+        ----------
+        capability : Capability, str, or None, optional
+            Capability used to filter the catalogue. ``None`` returns all public
+            operations, including descriptors synthesized for canonical operations.
+
+        Returns
+        -------
+        tuple of OperationDescriptor
+            Stable operation descriptors suitable for frontend discovery.
+
+        Raises
+        ------
+        ValueError
+            If a string is not a valid :class:`Capability` value."""
         selected = None if capability is None else Capability(capability)
         catalog = self.operation_catalog
         known = {(item.capability, item.function_name) for item in catalog}
@@ -225,7 +261,24 @@ class ModuleDescriptor:
         self,
         capability: Capability | str,
     ) -> tuple[Callable[..., Any], ...]:
-        """Resolve all public callables implementing one capability."""
+        """Resolve all public callables implementing one capability.
+
+        Parameters
+        ----------
+        capability : Capability or str
+            Capability enum member or stable string value.
+
+        Returns
+        -------
+        tuple of callable
+            Public functions registered for the capability, in catalogue order.
+
+        Raises
+        ------
+        ValueError
+            If the module does not advertise the requested capability.
+        AttributeError
+            If a declared operation cannot be resolved as a callable."""
         resolved = Capability(capability)
         if resolved not in self.capabilities:
             raise ValueError(
@@ -235,7 +288,24 @@ class ModuleDescriptor:
         return tuple(item.resolve(module) for item in self.list_operations(resolved))
 
     def named_operation(self, key: str) -> Callable[..., Any]:
-        """Resolve one public operation by its stable module-local key."""
+        """Resolve one public operation by its stable module-local key.
+
+        Parameters
+        ----------
+        key : str
+            Stable operation identifier from :meth:`list_operations`.
+
+        Returns
+        -------
+        callable
+            Resolved public API function.
+
+        Raises
+        ------
+        KeyError
+            If no operation with ``key`` is registered.
+        AttributeError
+            If the registered operation cannot be resolved as a callable."""
         for item in self.list_operations():
             if item.key == key:
                 return item.resolve(self.load())

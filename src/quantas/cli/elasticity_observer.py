@@ -76,7 +76,12 @@ class ElasticityTextObserver:
         self.output.close()
 
     def text(self) -> str:
-        """Return the deterministic plain-text report."""
+        """Return the deterministic elasticity report collected by the observer.
+
+        Returns
+        -------
+        str
+            Plain text without terminal styling or live-progress artifacts."""
         return self.output.text()
 
     def _handle_result_event(self, event: Event) -> None:

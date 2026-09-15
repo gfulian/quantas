@@ -17,6 +17,16 @@ COMMANDS = [completion, elasticity, eos, ha, qha, seismic, thermoelasticity]
 
 
 def register_commands(cli_group) -> None:
-    """Register all top-level commands on the main Click group."""
+    """Register all top-level Quantas commands on one Click group.
+
+    Parameters
+    ----------
+    cli_group : click.Group
+        Root command group that receives the supported CLI command families.
+
+    Notes
+    -----
+    Registration binds frontend adapters only; numerical workflow discovery lives
+    in :mod:`quantas.api.registry`."""
     for command in COMMANDS:
         cli_group.add_command(command)

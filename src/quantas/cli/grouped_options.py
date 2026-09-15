@@ -29,7 +29,19 @@ class GroupedCommand(click.Command):
     def format_options(
         self, ctx: click.Context, formatter: click.HelpFormatter
     ) -> None:
-        """Render command options under canonical semantic headings."""
+        """Render Click options under canonical semantic headings.
+
+        Parameters
+        ----------
+        ctx : click.Context
+            Active Click command context.
+        formatter : click.HelpFormatter
+            Formatter receiving grouped option records.
+
+        Notes
+        -----
+        This method changes help presentation only; it does not validate or transform
+        scientific option values."""
         groups: OrderedDict[str, list[tuple[str, str]]] = OrderedDict()
         for parameter in self.get_params(ctx):
             record = parameter.get_help_record(ctx)
@@ -180,7 +192,21 @@ def _help_group_priority(title: str) -> int:
 
 
 def grouped_option(*param_decls: str, group: str, **attrs: Any) -> Callable[[Any], Any]:
-    """Return a Click option decorator assigned to one help group."""
+    """Create a Click option decorator assigned to one help group.
+
+    Parameters
+    ----------
+    *param_decls : str
+        Click option declarations passed unchanged to :func:`click.option`.
+    group : str
+        Human-readable option group shown by :class:`GroupedCommand`.
+    **attrs : Any
+        Additional Click option attributes.
+
+    Returns
+    -------
+    callable
+        Decorator that creates a :class:`GroupedOption`."""
     return click.option(*param_decls, cls=GroupedOption, help_group=group, **attrs)
 
 

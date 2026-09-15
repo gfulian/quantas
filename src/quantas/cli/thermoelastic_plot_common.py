@@ -38,7 +38,17 @@ _COMPONENT_GROUPS = (
 
 
 def component_options(function: _F) -> _F:
-    """Attach shared elastic-component selection options."""
+    """Attach shared thermoelastic component-selection options.
+
+    Parameters
+    ----------
+    function : callable
+        Click callback receiving the common component-selection parameters.
+
+    Returns
+    -------
+    callable
+        Decorated callback with component, component-group, and listing options."""
     decorators = (
         grouped_option(
             "--component",
@@ -73,7 +83,18 @@ def component_options(function: _F) -> _F:
 
 
 def style_options(function: _F) -> _F:
-    """Attach common frontend-neutral plot style controls."""
+    """Attach common frontend-neutral plot-style controls.
+
+    Parameters
+    ----------
+    function : callable
+        Click callback receiving the shared style parameters.
+
+    Returns
+    -------
+    callable
+        Decorated callback with preset, line, marker, error-bar, grid, and title
+        controls."""
     decorators = (
         figure_preset_option(parameter_name="preset", group="Style preset"),
         grouped_option(
@@ -153,7 +174,18 @@ def render_options(
     default_width: float,
     default_height: float,
 ) -> Callable[[_F], _F]:
-    """Return a decorator attaching shared Matplotlib output controls."""
+    """Create a decorator attaching shared Matplotlib output controls.
+
+    Parameters
+    ----------
+    default_width, default_height : float
+        Default figure dimensions in inches.
+
+    Returns
+    -------
+    callable
+        Decorator adding output directory, image format, resolution, geometry,
+        typography, transparency, and interactive-display options."""
 
     def decorate(function: _F) -> _F:
         decorators = (
@@ -255,7 +287,22 @@ def render_options(
 
 
 def read_archive(archive: Path) -> tuple[ResultData, ThermoelasticResult]:
-    """Read one thermoelastic HDF5 archive and return its passive payload."""
+    """Read one thermoelastic archive through the public API.
+
+    Parameters
+    ----------
+    archive : Path
+        Native Quantas HDF5 result archive.
+
+    Returns
+    -------
+    tuple of ResultData and ThermoelasticResult
+        Generic result envelope and typed thermoelastic payload.
+
+    Raises
+    ------
+    click.ClickException
+        If the archive cannot be read or lacks the expected thermoelastic payload."""
     try:
         result_data = read_thermoelastic_hdf5(archive)
     except Exception as exc:
@@ -280,7 +327,28 @@ def make_style(
     grid: bool | None,
     title: bool | None,
 ) -> ThermoelasticPlotStyleOptions:
-    """Build validated common plot style options from CLI values."""
+    """Build normalized thermoelastic plot-style options from CLI values.
+
+    Parameters
+    ----------
+    preset : str
+        User-facing figure preset. ``"screen"`` maps to the thermoelastic
+        ``"analysis"`` style preset.
+    line_width, marker_size : float or None
+        Optional line and marker overrides.
+    marker_edge_color : str
+        Marker-border color accepted by the rendering backend.
+    marker_edge_width : float
+        Marker-border width in points.
+    errorbar_width, errorbar_capsize : float
+        Error-bar stroke width and cap size.
+    grid, title : bool or None
+        Optional overrides for preset grid and title behavior.
+
+    Returns
+    -------
+    ThermoelasticPlotStyleOptions
+        Passive normalized style contract consumed by plot builders."""
     normalized_preset = "analysis" if preset.lower() == "screen" else preset.lower()
     return ThermoelasticPlotStyleOptions(
         preset=cast(ThermoelasticPlotPreset, normalized_preset),
@@ -312,7 +380,38 @@ def render_collection(
     title_font_size: float | None,
     tick_label_font_size: float | None,
 ) -> None:
-    """Render one prepared plot collection and report generated artifacts."""
+    """Render one prepared thermoelastic plot collection.
+
+    Parameters
+    ----------
+    archive : Path
+        Source archive used to derive the default output directory.
+    collection : PlotCollection
+        Frontend-neutral plot specifications prepared by the public API.
+    family : str
+        Human-readable plot family used in terminal messages.
+    output_dir : Path or None
+        Explicit output directory or ``None`` for the archive-derived default.
+    image_format : str
+        Output image format.
+    preset : str
+        Matplotlib figure preset.
+    dpi : int or None
+        Optional raster resolution override.
+    transparent : bool
+        Save figures with a transparent background.
+    show : bool
+        Display figures interactively after rendering.
+    figure_size : tuple of float
+        Figure width and height in inches.
+    axis_label_font_size, legend_font_size, title_font_size, tick_label_font_size : float or None
+        Optional typography overrides.
+
+    Raises
+    ------
+    click.ClickException
+        If rendering options are invalid or the backend cannot render the
+        collection."""
     destination = output_dir or archive.with_name(f"{archive.stem}_plots")
     try:
         rendered = render_plot_collection(
@@ -356,7 +455,13 @@ def render_collection(
 
 
 def show_components(result: ThermoelasticResult) -> None:
-    """Print all non-zero and independent elastic components in one archive."""
+    """Print elastic components available in one thermoelastic result.
+
+    Parameters
+    ----------
+    result : ThermoelasticResult
+        Completed result whose non-zero components and independent fit labels are
+        listed."""
     available = resolve_components(result, group="all")
     independent = set(result.independent_labels)
     rows = [[label, "yes" if label in independent else "no"] for label in available]
@@ -375,7 +480,12 @@ def show_components(result: ThermoelasticResult) -> None:
 
 
 def show_profiles(result: ThermoelasticResult) -> None:
-    """Print archived geological profile coverage."""
+    """Print geological profiles stored in one thermoelastic result.
+
+    Parameters
+    ----------
+    result : ThermoelasticResult
+        Completed result containing zero or more archived depth/P/T profiles."""
     rows = [
         [
             name,

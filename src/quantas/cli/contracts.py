@@ -120,7 +120,17 @@ def default_hdf5_path(
 
 
 def output_option(*, help: str) -> Callable[[_F], _F]:
-    """Return the standard ``-o/--output`` path decorator."""
+    """Create the standard ``-o/--output`` Click decorator.
+
+    Parameters
+    ----------
+    help : str
+        User-facing help text describing the generated output.
+
+    Returns
+    -------
+    callable
+        Decorator adding the shared optional output-path contract."""
     return cast(
         Callable[[_F], _F],
         grouped_option(
@@ -135,7 +145,12 @@ def output_option(*, help: str) -> Callable[[_F], _F]:
 
 
 def report_option() -> Callable[[_F], _F]:
-    """Return the standard automatic report option decorator."""
+    """Create the standard automatic report-path decorator.
+
+    Returns
+    -------
+    callable
+        Decorator adding the optional deterministic plain-text report path."""
     return cast(
         Callable[[_F], _F],
         grouped_option(
@@ -153,7 +168,12 @@ def report_option() -> Callable[[_F], _F]:
 
 
 def verbosity_option() -> Callable[[_F], _F]:
-    """Return the standard ``-v/--verbosity`` decorator."""
+    """Create the standard report-verbosity decorator.
+
+    Returns
+    -------
+    callable
+        Decorator exposing the supported :class:`ReportVerbosity` values."""
     return cast(
         Callable[[_F], _F],
         grouped_option(
@@ -175,7 +195,13 @@ def verbosity_option() -> Callable[[_F], _F]:
 
 
 def quiet_option() -> Callable[[_F], _F]:
-    """Return the standard terminal-suppression decorator."""
+    """Create the standard terminal-suppression decorator.
+
+    Returns
+    -------
+    callable
+        Decorator adding ``--quiet`` without changing report or result
+        persistence."""
     return cast(
         Callable[[_F], _F],
         grouped_option(
@@ -193,7 +219,13 @@ def quiet_option() -> Callable[[_F], _F]:
 
 
 def progress_option() -> Callable[[_F], _F]:
-    """Return the standard transient-progress decorator."""
+    """Create the standard transient-progress decorator.
+
+    Returns
+    -------
+    callable
+        Decorator adding ``--progress/--no-progress``. Progress remains
+        terminal-only and is never persisted as scientific history."""
     return cast(
         Callable[[_F], _F],
         grouped_option(
@@ -207,12 +239,16 @@ def progress_option() -> Callable[[_F], _F]:
 
 
 def kieffer_option() -> Callable[[_F], _F]:
-    """Return the shared opt-in Kieffer execution decorator.
+    """Create the shared opt-in Kieffer execution decorator.
 
-    The enriched YAML block is deliberately inactive unless this flag is
-    supplied.  This keeps calculations with and without the acoustic model
-    directly comparable from the same input file.
-    """
+    The enriched YAML block remains inactive unless the user selects this flag,
+    so the same input can be used for calculations with and without the acoustic
+    contribution.
+
+    Returns
+    -------
+    callable
+        Decorator adding the ``--kieffer`` execution flag."""
     return cast(
         Callable[[_F], _F],
         grouped_option(
@@ -272,7 +308,13 @@ def figure_preset_option(
 
 
 def force_option() -> Callable[[_F], _F]:
-    """Return the standard overwrite-policy decorator."""
+    """Create the standard overwrite-policy decorator.
+
+    Returns
+    -------
+    callable
+        Decorator adding ``-f/--force`` for non-interactive replacement of
+        generated files."""
     return cast(
         Callable[[_F], _F],
         grouped_option(

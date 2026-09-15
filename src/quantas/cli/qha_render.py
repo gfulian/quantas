@@ -76,7 +76,19 @@ def preview_report_tables(
     *,
     include_diagnostics: bool = True,
 ) -> list[ReportTable]:
-    """Return neutral pressure-volume preview tables."""
+    """Build neutral tables for a QHA pressure-volume preview.
+
+    Parameters
+    ----------
+    preview : PressureVolumePreview
+        Preview fit and diagnostics produced by the public QHA inspection path.
+    include_diagnostics : bool, optional
+        Include fitted parameters and residual diagnostics.
+
+    Returns
+    -------
+    list of ReportTable
+        Frontend-neutral tables in display order."""
     tables = [pressure_volume_preview_table(preview)]
     if include_diagnostics:
         tables.append(preview_parameters_table(preview))
@@ -90,7 +102,21 @@ def phonon_frequency_fit_report_tables(
     *,
     include_debug: bool = False,
 ) -> list[ReportTable]:
-    """Return neutral frequency-volume fit report tables."""
+    """Build neutral tables for QHA frequency-volume fit diagnostics.
+
+    Parameters
+    ----------
+    input_data : QHAInput
+        Mode-resolved QHA input on the sampled volume grid.
+    options : QHAOptions
+        QHA options controlling the frequency-volume representation.
+    include_debug : bool, optional
+        Include detailed per-branch diagnostics before the summary table.
+
+    Returns
+    -------
+    list of ReportTable
+        Frontend-neutral diagnostic tables in display order."""
     debug_tables, summary = phonon_frequency_fit_tables(input_data, options)
     tables = list(debug_tables) if include_debug else []
     tables.append(summary)
@@ -103,7 +129,21 @@ def thermodynamic_fit_report_tables(
     *,
     include_debug: bool = False,
 ) -> list[ReportTable]:
-    """Return neutral thermodynamic fit report tables."""
+    """Build neutral tables for QHA thermodynamic-fit diagnostics.
+
+    Parameters
+    ----------
+    sampled : HarmonicThermodynamicResult
+        Harmonic thermodynamic properties evaluated on sampled volumes.
+    options : QHAOptions
+        QHA options controlling the thermodynamic interpolation.
+    include_debug : bool, optional
+        Include detailed fit diagnostics before the summary table.
+
+    Returns
+    -------
+    list of ReportTable
+        Frontend-neutral diagnostic tables in display order."""
     details, summary = thermodynamic_fit_tables(sampled, options)
     tables = [details] if include_debug else []
     tables.append(summary)
@@ -116,7 +156,21 @@ def final_qha_result_tables(
     include_debug: bool = False,
     pressure_indices: Sequence[int] | None = None,
 ) -> list[ReportTable]:
-    """Return neutral final QHA result tables."""
+    """Build neutral tables for final QHA pressure-temperature results.
+
+    Parameters
+    ----------
+    result : QHAResult
+        Completed quasi-harmonic result contract.
+    include_debug : bool, optional
+        Append detailed thermodynamic debug tables.
+    pressure_indices : sequence of int or None, optional
+        Pressure-grid indices to include. ``None`` selects the report defaults.
+
+    Returns
+    -------
+    list of ReportTable
+        Property and structural tables in deterministic display order."""
     tables = list(selected_property_tables(result, pressure_indices=pressure_indices))
     tables.extend(structural_property_tables(result, pressure_indices=pressure_indices))
     if include_debug:

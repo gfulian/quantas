@@ -160,7 +160,22 @@ def add_kieffer_input(
 
 
 def read_kieffer_input(source: str | Path) -> KiefferVolumeSeries:
-    """Read the Kieffer cutoff series embedded in an HA YAML input."""
+    """Read the Kieffer cutoff series embedded in an HA YAML input.
+
+    Parameters
+    ----------
+    source : str or Path
+        Harmonic input file containing a validated ``kieffer`` block.
+
+    Returns
+    -------
+    KiefferVolumeSeries
+        Parsed acoustic cutoff data in the normalized public Kieffer contract.
+
+    Raises
+    ------
+    ValueError
+        If the input does not contain a valid Kieffer block."""
     return _read_kieffer_input(source)
 
 

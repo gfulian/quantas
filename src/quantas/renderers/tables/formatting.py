@@ -121,7 +121,28 @@ def resolve_numeric_format(format_name: str | None) -> str:
 
 
 def format_numeric(value: Any, format_name: str | None = None) -> str:
-    """Format one real numerical value without modifying the source value."""
+    """Format one real numerical value without changing the source value.
+
+    Parameters
+    ----------
+    value : Any
+        Boolean, integer, or real scalar to render.
+    format_name : str or None, optional
+        Registered numeric profile or explicit Python format specification.
+        ``None`` uses the general display profile.
+
+    Returns
+    -------
+    str
+        Display representation. Formatting never rounds or mutates the stored
+        numerical value.
+
+    Raises
+    ------
+    ValueError
+        If ``format_name`` is unknown or invalid.
+    TypeError
+        If ``value`` is not a supported real scalar."""
     specification = resolve_numeric_format(format_name)
     if specification in ADAPTIVE_NUMERIC_FORMATTERS:
         return ADAPTIVE_NUMERIC_FORMATTERS[specification](value)

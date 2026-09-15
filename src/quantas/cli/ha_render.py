@@ -44,17 +44,47 @@ def render_ha_cli_report(
 
 
 def render_settings(options: HAOptions) -> str:
-    """Render selected HA settings."""
+    """Render normalized HA options as deterministic plain text.
+
+    Parameters
+    ----------
+    options : HAOptions
+        Scientific options already normalized by the HA workflow.
+
+    Returns
+    -------
+    str
+        Plain-text representation produced from the neutral options table."""
     return render_table(options_table(options))
 
 
 def render_input_data(input_data: HAInput) -> str:
-    """Render the normalized HA input summary."""
+    """Render normalized HA input metadata as deterministic plain text.
+
+    Parameters
+    ----------
+    input_data : HAInput
+        Validated harmonic input contract.
+
+    Returns
+    -------
+    str
+        Plain-text input summary produced from a neutral report table."""
     return render_table(input_table(input_data))
 
 
 def render_thermodynamic_summary(result: HAResult) -> str:
-    """Render the available harmonic properties."""
+    """Render available HA thermodynamic results as deterministic plain text.
+
+    Parameters
+    ----------
+    result : HAResult
+        Completed harmonic result contract.
+
+    Returns
+    -------
+    str
+        Plain-text thermodynamic summary produced from a neutral report table."""
     return render_table(thermodynamic_summary_table(result))
 
 

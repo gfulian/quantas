@@ -79,7 +79,12 @@ class HATextObserver:
         self.output.close()
 
     def text(self) -> str:
-        """Return the collected plain-text report."""
+        """Return the deterministic HA report collected by the observer.
+
+        Returns
+        -------
+        str
+            Plain text without terminal styling or live-progress artifacts."""
         return self.output.text()
 
     def _handle_result_event(self, event: Event) -> None:
