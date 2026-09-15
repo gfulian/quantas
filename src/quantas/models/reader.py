@@ -9,7 +9,6 @@ depending on command-line and graphical frontends.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Generic, TypeVar
 
@@ -17,10 +16,16 @@ from typing import Generic, TypeVar
 ReaderResult = TypeVar("ReaderResult")
 
 
-@dataclass
 class BasicReader(ABC, Generic[ReaderResult]):
     """
     Basic class for Quantas input readers.
+
+    Parameters
+    ----------
+    completed : bool, optional
+        Initial completion state. The default is ``False``.
+    error : str or None, optional
+        Initial error message. The default is ``None``.
 
     Attributes
     ----------
@@ -29,10 +34,30 @@ class BasicReader(ABC, Generic[ReaderResult]):
         read.
     error : str or None
         Error message generated while reading the input file, if any.
+
+    Notes
+    -----
+    Readers are active, stateful objects. Their identity is therefore distinct
+    from passive data contracts even when two instances currently expose the
+    same completion and error state.
     """
 
-    completed: bool = False
-    error: str | None = None
+    def __init__(
+        self,
+        completed: bool = False,
+        error: str | None = None,
+    ) -> None:
+        """Initialize the shared reader state.
+
+        Parameters
+        ----------
+        completed : bool, optional
+            Initial completion state.
+        error : str or None, optional
+            Initial error message.
+        """
+        self.completed = completed
+        self.error = error
 
     @abstractmethod
     def load(self, filename: str | Path) -> ReaderResult:

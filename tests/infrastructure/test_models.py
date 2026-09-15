@@ -1,7 +1,11 @@
+from dataclasses import is_dataclass
+from pathlib import Path
+
 import numpy as np
 import pytest
 
 from quantas.models import (
+    BasicReader,
     HarmonicThermodynamicResult,
     InputData,
     LinePlotSpec,
@@ -13,6 +17,27 @@ from quantas.models import (
     ResultData,
     ResultMetadata,
 )
+
+
+def test_basic_reader_is_a_stateful_active_object():
+    """Reader bases use object identity rather than passive-value semantics."""
+
+    class DummyReader(BasicReader[None]):
+        def load(self, filename: str | Path) -> None:
+            self.completed = True
+            self.error = None
+
+    first = DummyReader()
+    second = DummyReader()
+    preset = DummyReader(completed=True, error="example")
+
+    assert not is_dataclass(BasicReader)
+    assert first.completed is False
+    assert first.error is None
+    assert preset.completed is True
+    assert preset.error == "example"
+    assert first is not second
+    assert first != second
 
 
 def test_input_data_container():
