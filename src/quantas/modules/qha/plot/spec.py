@@ -204,13 +204,28 @@ def build_property_curve_spec(
     property_info: QHAPlotProperty,
     options: QHAPlotOptions | None = None,
 ) -> LinePlotSpec:
-    """Build one exact-grid QHA line-section specification.
+    """Build one exact-grid QHA scalar line-section specification.
 
-    The default representation places temperature on the independent axis and
-    emits one series per selected pressure.  ``curve_axis="pressure"`` places
-    pressure on the independent axis and emits one series per selected stored
-    temperature. Selection is exact on the native result grid and never
-    interpolates missing coordinates.
+    Parameters
+    ----------
+    result : QHAResult
+        QHA result containing the requested pressure-temperature property.
+    property_info : QHAPlotProperty
+        Canonical plotting metadata for the scalar property.
+    options : QHAPlotOptions or None, optional
+        Curve-axis, exact stored-condition selection, and display-unit options.
+
+    Returns
+    -------
+    LinePlotSpec
+        Temperature curves at exact stored pressures or pressure curves at exact
+        stored temperatures. No coordinate interpolation is performed.
+
+    Raises
+    ------
+    ValueError
+        If the property/grid is unavailable, a selected coordinate is not stored, or
+        pressure-axis sections are requested from a single-pressure result.
     """
     opts = _validated_options(options or QHAPlotOptions())
     context = _unit_context(result, opts)
@@ -318,7 +333,28 @@ def build_heat_capacity_spec(
     result: QHAResult,
     options: QHAPlotOptions | None = None,
 ) -> LinePlotSpec:
-    """Build combined exact-grid ``C_P`` and ``C_V`` line sections."""
+    """Build combined exact-grid ``C_P`` and ``C_V`` line sections.
+
+    Parameters
+    ----------
+    result : QHAResult
+        QHA result containing one or both heat-capacity fields.
+    options : QHAPlotOptions or None, optional
+        Curve-axis, exact stored-condition selection, and display-unit options.
+
+    Returns
+    -------
+    LinePlotSpec
+        Combined available ``C_P``/``C_V`` series. ``C_V`` uses a distinct dashed
+        line style while both fields retain their raw calculated values.
+
+    Raises
+    ------
+    ValueError
+        If neither heat capacity is available, requested grid coordinates are
+        invalid, or pressure-axis sections are requested from a single-pressure
+        result.
+    """
     opts = _validated_options(options or QHAPlotOptions())
     context = _unit_context(result, opts)
     native_temperature = _required_grid(result.temperature, "temperature")

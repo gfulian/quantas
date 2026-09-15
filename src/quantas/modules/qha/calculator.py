@@ -218,13 +218,27 @@ class QHACalculator(BasicCalculator):
                 self.emit(warning, level=EventLevel.WARNING)
 
     def run(self) -> ResultData:
-        """Run the QHA workflow.
+        """Run the quasi-harmonic approximation workflow.
+
+        The calculation minimizes the pressure-shifted Helmholtz free energy on the
+        requested ``(T, P)`` grid, then evaluates thermodynamic, elastic, structural,
+        and Gruneisen quantities according to the selected scheme and available input.
 
         Returns
         -------
         ResultData
-            Generic Quantas result containing the QHA result object and the
-            main numerical arrays.
+            Generic Quantas result containing the QHA result object, workflow metadata,
+            normalized input summary, options, warnings, and persisted events.
+
+        Raises
+        ------
+        ValueError
+            If configured Kieffer thermodynamics cannot be evaluated or another
+            required scientific contract fails after preparation. Without Kieffer,
+            unavailable harmonic thermodynamics may instead trigger the documented
+            static-energy fallback.
+        RuntimeError
+            If the selected QHA fit-failure policy requests immediate propagation.
         """
         self.emit("Starting quasi-harmonic analysis", level=EventLevel.INFO)
         if self.qha_options.scheme == "freq":

@@ -61,13 +61,57 @@ def add_kieffer_to_phonon_input(
     refinement_factor: int = 2,
     batch_size: int = 512,
 ) -> Path:
-    """Create a new HA/QHA YAML input containing Kieffer cutoff data.
+    """Create a new HA/QHA YAML input containing Kieffer acoustic cutoff data.
 
-    The source input is never overwritten implicitly.  Existing Kieffer data
-    are rejected so replacement remains an explicit caller decision. For QHA,
-    ``energy_eos`` and ``energy_polynomial`` derive hydrostatic pressures from
-    the static energy-volume arrays in the phonon input, attach them to the raw
-    elastic tensors, and then apply the Wallace correction exactly once.
+    The source YAML is never overwritten. Elastic tensors are read through the
+    selected external-code interface, converted to the hydrostatic finite-pressure
+    form when required, and used to construct the three Kieffer branches. For QHA,
+    ``energy_eos`` and ``energy_polynomial`` obtain ``P_static(V)`` from the static
+    energy-volume series before the CRYSTAL Wallace correction is applied exactly
+    once. Energy-derived pressure is intentionally unavailable for single-volume HA.
+
+    Parameters
+    ----------
+    source : str or Path
+        Existing Quantas phonon YAML input.
+    destination : str or Path
+        New YAML path that will receive the Kieffer data.
+    elastic_outputs : sequence of str or Path
+        Elastic-output files associated with the HA/QHA volume states.
+    workflow : {"ha", "qha"}
+        Applicability contract to enforce.
+    interface : str, optional
+        Elastic interface. The current implementation accepts ``"crystal"``.
+    pressure_policy : CrystalPressurePolicy or str, optional
+        Pressure source: ``auto``, ``output_stress``, ``manual``, ``energy_eos``, or
+        ``energy_polynomial``.
+    manual_pressures_gpa : sequence of float or None, optional
+        Hydrostatic pressures in GPa for ``manual`` pressure assignment.
+    eos : str, optional
+        Energy EOS used when ``pressure_policy="energy_eos"``.
+    polynomial_degree : int, optional
+        Degree used when ``pressure_policy="energy_polynomial"``.
+    maxfev : int or None, optional
+        Maximum EnergyEOS optimizer evaluations when applicable.
+    mu_order, phi_order : int, optional
+        Polar and azimuthal spherical quadrature orders used for acoustic averaging.
+    refinement_factor : int, optional
+        Angular refinement factor used by the Kieffer velocity integration.
+    batch_size : int, optional
+        Number of directions processed per numerical batch.
+
+    Returns
+    -------
+    Path
+        Path to the newly written enriched YAML file.
+
+    Raises
+    ------
+    ValueError
+        If source/destination are invalid, Kieffer data already exist, the elastic
+        interface or pressure source is unsupported, volumes cannot be matched, the
+        phonon calculation violates the primitive Gamma-only contract, or an
+        energy-derived pressure source is requested for HA.
     """
     source_path = Path(source)
     destination_path = Path(destination)
@@ -249,7 +293,23 @@ def _normalize_pressure_source(value: CrystalPressurePolicy | str) -> str:
 
 
 def read_kieffer_from_phonon_input(source: str | Path) -> KiefferVolumeSeries:
-    """Read embedded Kieffer cutoff data from a Quantas phonon YAML file."""
+    """Read embedded Kieffer cutoff data from a Quantas phonon YAML file.
+
+    Parameters
+    ----------
+    source : str or Path
+        Quantas HA/QHA phonon YAML file.
+
+    Returns
+    -------
+    KiefferVolumeSeries
+        Validated cutoff states, effective acoustic velocities, and provenance.
+
+    Raises
+    ------
+    ValueError
+        If the YAML cannot be read or does not contain a valid ``kieffer`` mapping.
+    """
     reader = PhononInputFileReader(source)
     if not reader.completed:
         raise ValueError(reader.error or "Unable to read phonon YAML input")

@@ -93,27 +93,37 @@ def calculate_sampled_thermodynamics(
     options: QHAOptions,
     kieffer_cutoffs: KiefferVolumeSeries | None = None,
 ) -> QHASampledThermodynamicResult:
-    """Calculate harmonic thermodynamic properties at sampled volumes.
+    """Calculate harmonic thermodynamic properties at the sampled QHA volumes.
 
     Parameters
     ----------
     input_data : QHAInput
-        QHA input containing static energies, phonon frequencies, and q-point
-        weights on the sampled volume grid.
+        QHA input containing static energies, ordinary phonon frequencies ``nu``,
+        and q-point weights on the sampled volume grid. Frequencies have shape
+        ``(qpoints, modes, nvol)``.
     options : QHAOptions
-        QHA options defining temperature and unit conventions.
+        Temperature grid and physical unit conventions.
     kieffer_cutoffs : KiefferVolumeSeries or None, optional
-        Direct cutoff states matched explicitly to all sampled volumes.
+        Direct primitive-cell cutoff states matched explicitly to all sampled
+        volumes. The resulting three acoustic branches are additive to the stored
+        Gamma phonons; no phonon mode is removed or replaced.
 
     Returns
     -------
     QHASampledThermodynamicResult
-        Harmonic properties sampled on the temperature-volume grid.
+        Harmonic properties on the native ``(temperature, volume)`` grid. Energy
+        arrays use ``options.energy_unit`` and entropy/heat capacity use that unit
+        per cell and kelvin.
 
     Raises
     ------
+    TypeError
+        If Kieffer applicability validation receives an unsupported input type.
     ValueError
-        If required input arrays are missing or inconsistent.
+        If required arrays are missing/inconsistent or Kieffer applicability and
+        volume matching fail.
+    NotImplementedError
+        If a requested physical unit conversion is unsupported.
     """
     if input_data.volume is None or input_data.energy is None:
         raise ValueError("volume and static energy data are required")
@@ -318,22 +328,34 @@ def free_energy_grid(
 
 
 class FrequencyThermodynamicEvaluator:
-    """Evaluate harmonic thermodynamics from volume-fitted phonon modes.
+    """Evaluate QHA thermodynamics from volume-fitted phonon branches.
+
+    Each ``(qpoint, mode)`` frequency series is fitted independently as a polynomial
+    of volume and then evaluated at requested equilibrium volumes. The public
+    frequency convention is ordinary frequency ``nu`` in ``options.frequency_unit``;
+    conversion to hertz occurs only at the thermodynamic boundary. Static energy is
+    fitted separately. If Kieffer enrichment is enabled, the three cutoff-frequency
+    branches are fitted on the same sampled volume axis and added to the phonon
+    thermodynamics.
 
     Parameters
     ----------
     input_data : QHAInput
-        QHA input containing static energies, mode-resolved frequencies and
-        q-point weights.
+        Volume-dependent phonon branches, static energies, and q-point weights.
+        Scientific use of the frequency scheme requires meaningful branch identity
+        along the volume axis.
     options : QHAOptions
-        QHA options defining polynomial degrees and unit conventions.
+        Polynomial degrees and unit conventions used by the evaluator.
     kieffer_cutoffs : KiefferVolumeSeries or None, optional
-        Direct acoustic cutoff states fitted against sampled volume.
+        Direct acoustic cutoff states covering the sampled volumes.
 
     Raises
     ------
+    TypeError
+        If Kieffer applicability validation receives an unsupported input type.
     ValueError
-        If required input data are missing or a polynomial fit fails.
+        If required arrays are missing, polynomial fits fail, or Kieffer cutoffs do
+        not satisfy the primitive Gamma-only/matching contract.
     """
 
     def __init__(

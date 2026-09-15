@@ -286,8 +286,28 @@ def build_thermodynamic_contour_spec(
 ) -> ContourPlotSpec:
     """Build one exact-grid volume-temperature contour specification.
 
-    No interpolation or resampling is performed. Temperature-independent
-    properties are represented by their broadcast values on the stored grid.
+    Parameters
+    ----------
+    result : HAResult
+        Harmonic result containing the requested temperature-volume property.
+    property_info : HAPlotProperty
+        Canonical property metadata.
+    unit : str or None, optional
+        Requested display energy unit for compatible properties.
+    options : HAPlotOptions or None, optional
+        Contour and exact-grid selection options.
+
+    Returns
+    -------
+    ContourPlotSpec
+        Frontend-neutral contour specification with volume and temperature as the
+        physical axes.
+
+    Raises
+    ------
+    ValueError
+        If the property lacks a compatible physical volume axis, has an invalid
+        shape, or the requested display conversion cannot be performed.
     """
     opts = _validated_options(options or HAPlotOptions(), unit=unit)
     attr = _resolve_plot_property_name(property_name)

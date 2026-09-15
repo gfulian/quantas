@@ -780,30 +780,35 @@ def evaluate_fitted_polynomial_at_pressure(
     local_grid_separation: float = 0.05,
     local_degree: int = 3,
 ) -> VolumeMinimumResult:
-    """Evaluate one fitted polynomial model at a target pressure.
+    """Evaluate a fitted polynomial free-energy model at a target pressure.
 
     Parameters
     ----------
     fitted : PolynomialModelFitResult
-        Reusable polynomial free-energy model.
+        Successful scaled polynomial fit and reusable free-energy model.
     pressure_energy_density : float
-        Target pressure in the energy-density scale of the fit.
+        Target pressure expressed in the same energy-per-volume scale as the fitted
+        free-energy derivatives.
     derivative_method : {"local_grid", "analytic"}, optional
-        Method used to obtain ``K_T`` and ``K'_T``.
-    local_free_energy : callable or None, optional
-        Function receiving a local volume array and returning Helmholtz free
-        energies. When omitted, the fitted global polynomial is evaluated.
+        Method used to obtain ``K_T`` and ``K'_T`` at the minimum.
     local_grid_points : int, optional
-        Number of points in the local volume grid.
+        Odd number of local volume points for ``local_grid`` derivatives.
     local_grid_separation : float, optional
-        Adjacent local-grid spacing as a percentage of the central volume.
+        Adjacent local-grid spacing as a percentage of equilibrium volume.
     local_degree : int, optional
-        Polynomial degree used for the local free-energy fit.
+        Polynomial degree used for the local derivative fit.
 
     Returns
     -------
     VolumeMinimumResult
-        Equilibrium volume and thermoelastic properties.
+        Equilibrium volume, bulk properties, range classification, and fit
+        diagnostics. Invalid numerical/model states are normally represented as a
+        failed result rather than raised.
+
+    Raises
+    ------
+    ValueError
+        If the derivative method or local-grid settings are invalid.
     """
     if not fitted.success or fitted.model is None:
         return VolumeMinimumResult.failed(
@@ -1080,13 +1085,38 @@ def fit_eos_free_energy_model(
     pressure_unit: str | None = None,
     maxfev: int | None = None,
 ) -> EOSModelFitResult:
-    """Fit one energy EOS and build the matching pressure-volume model.
+    """Fit one energy EOS to a Helmholtz free-energy curve.
 
-    The EOS family and order are resolved once and shared by the integrated
-    energy fit and the pressure evaluator.  Free parameters are converted from
-    energy-density units to the requested pressure scale by name: ``K0`` is
-    multiplied by the conversion factor, while a fitted ``KPP`` is divided by
-    the same factor.
+    The EOS family and order are resolved once and shared by the integrated energy
+    fit and pressure evaluator. When explicit units are supplied, ``K0`` is
+    converted from energy density to ``pressure_unit`` and a fitted ``KPP`` is
+    converted to inverse pressure consistently.
+
+    Parameters
+    ----------
+    volume : array-like
+        Sampled volumes.
+    free_energy : array-like
+        Helmholtz free energies at the sampled volumes.
+    eos : str, optional
+        Energy-EOS model identifier.
+    energy_unit, volume_unit, pressure_unit : str or None, optional
+        Physical unit triplet. Either all three values must be supplied or all must
+        be ``None``. ``volume_unit`` is the length unit whose cube defines volume.
+    maxfev : int or None, optional
+        Maximum nonlinear optimizer evaluations.
+
+    Returns
+    -------
+    EOSModelFitResult
+        Structured fit diagnostics and a reusable pressure-volume model when the fit
+        succeeds. Unsupported EOS identifiers and numerical fit failures are
+        represented in the returned result.
+
+    Raises
+    ------
+    ValueError
+        If only part of the unit triplet is supplied or a unit conversion is invalid.
     """
     units = (energy_unit, volume_unit, pressure_unit)
     if any(value is not None for value in units) and not all(

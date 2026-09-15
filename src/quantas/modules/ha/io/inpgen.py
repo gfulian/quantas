@@ -150,26 +150,34 @@ class HAInputCreator:
         reference: int = 0,
         use_symm: bool = False,
     ) -> tuple[bool, str | None]:
-        """
-        Read one or more QM output files through the selected interface.
+        """Read one or more electronic-structure phonon outputs through the selected interface.
 
         Parameters
         ----------
         filename : str or pathlib.Path
-            QM output file or text file containing a list of QM output files.
+            Electronic-structure output file or text file containing one filename per
+            line when ``is_list`` is ``True``.
         is_list : bool, optional
-            If ``True``, ``filename`` is interpreted as a file list.
+            Interpret ``filename`` as a list of source files.
         reference : int, optional
-            Reference file index for multiple-file input generation.
+            Reference source index used to define structural and q-point conventions for
+            multiple-file input generation.
         use_symm : bool, optional
-            Kept for compatibility with the historical API. It is not used by
-            the current HA input generator.
+            Historical compatibility argument. It is ignored by the current input
+            generator.
 
         Returns
         -------
         tuple of bool and str or None
-            ``(True, None)`` if all files were read successfully. Otherwise,
-            ``False`` and a human-readable error message are returned.
+            ``(True, None)`` after successful parsing, otherwise ``(False, message)``.
+            Ordinary parser, file, and interface failures are returned rather than raised.
+
+        Raises
+        ------
+        RuntimeError
+            If the internal multiple-file reader state is inconsistent with the selected
+            interface. This indicates an internal workflow invariant failure rather than
+            invalid scientific input.
         """
         del use_symm
 

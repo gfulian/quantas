@@ -18,7 +18,21 @@ HAKiefferContribution = KiefferThermodynamicContribution
 
 @dataclass(slots=True)
 class HAInput(PhononInputData):
-    """Input data for a harmonic-approximation calculation."""
+    """Input data for a harmonic-approximation calculation.
+
+    ``HAInput`` inherits the normalized structural, static-energy, q-point, and
+    phonon arrays from :class:`~quantas.models.phonons.PhononInputData`. Frequencies
+    use shape ``(qpoints, modes, volumes)`` and are interpreted independently at
+    each sampled volume; HA performs no pressure-volume minimization or
+    volume interpolation.
+
+    Notes
+    -----
+    When Kieffer enrichment is requested, the phonon data must satisfy the strict
+    primitive-cell, Gamma-only applicability contract. The three Kieffer acoustic
+    branches are added to the stored Gamma phonons and do not replace or delete any
+    calculated mode.
+    """
 
 
 @dataclass(slots=True)
@@ -87,6 +101,14 @@ class HAOptions:
 
 @dataclass(slots=True)
 class HAResult(HarmonicThermodynamicResult):
-    """Results of a harmonic-approximation calculation."""
+    """Results of a harmonic-approximation calculation.
+
+    The inherited thermodynamic arrays are stored on a temperature-volume grid.
+    Energy-like quantities use the selected HA energy unit; entropy and heat
+    capacity use that energy unit per cell and kelvin. ``kieffer_contribution``
+    retains the separately evaluated acoustic contribution when Kieffer enrichment
+    was enabled, so the additive correction remains inspectable after the total
+    properties have been assembled.
+    """
 
     kieffer_contribution: HAKiefferContribution | None = None

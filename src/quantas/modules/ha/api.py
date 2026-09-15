@@ -277,7 +277,25 @@ def build_ha_report(result: ResultData) -> list[ReportTable]:
 
 
 def describe_ha_plot_inventory(result: ResultData) -> PlotInventory:
-    """Describe plots that can be built from a complete HA result."""
+    """Describe plots that can be built from a complete HA result.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas result whose ``ha`` payload is an :class:`HAResult`.
+
+    Returns
+    -------
+    PlotInventory
+        Available HA properties and exact-grid representations. Discovery does not
+        interpolate missing temperature or volume coordinates.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` is not an HA result or does not contain an :class:`HAResult`
+        payload.
+    """
     payload = result.results.get("ha")
     if result.metadata.module != "ha" or not isinstance(payload, HAResult):
         raise ValueError("ResultData does not contain a valid HA result.")
@@ -298,16 +316,23 @@ def build_ha_plots(
     result : ResultData
         Generic Quantas HA result.
     properties : str, list of str, tuple of str, or None, optional
-        Requested thermodynamic properties.
+        Requested thermodynamic properties. ``None`` selects the standard
+        available properties.
     unit : str or None, optional
-        Requested display energy unit.
+        Requested display energy unit for compatible plotted properties.
     options : HAPlotOptions or None, optional
-        Scientific section selection and contour-preparation options.
+        Exact-grid section selection and contour-preparation options.
 
     Returns
     -------
     PlotCollection
-        Neutral HA plot specifications.
+        Frontend-neutral HA plot specifications containing raw numerical arrays.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` is not a valid HA result, a requested property is unavailable,
+        or a requested exact-grid section cannot be constructed.
     """
     payload = result.results.get("ha")
     if result.metadata.module != "ha" or not isinstance(payload, HAResult):

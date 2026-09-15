@@ -49,7 +49,23 @@ from quantas.modules.qha.report import (
 def build_qha_inspection_report(
     preview: PressureVolumePreview,
 ) -> list[ReportTable]:
-    """Build neutral report tables from a QHA input inspection."""
+    """Build neutral report tables from a QHA input inspection.
+
+    Parameters
+    ----------
+    preview : PressureVolumePreview
+        Static energy-volume inspection result.
+
+    Returns
+    -------
+    list of ReportTable
+        Pressure-volume preview, fit diagnostics, and fitted/implied parameters.
+
+    Raises
+    ------
+    TypeError
+        If ``preview`` is not a :class:`PressureVolumePreview`.
+    """
     if not isinstance(preview, PressureVolumePreview):
         raise TypeError("preview must be a PressureVolumePreview object")
     return [
@@ -64,7 +80,28 @@ def build_qha_inspection_plots(
     *,
     sample_points: int = 201,
 ) -> PlotCollection:
-    """Build a neutral energy-volume plot from a QHA input inspection."""
+    """Build a neutral energy-volume plot from a QHA input inspection.
+
+    Parameters
+    ----------
+    preview : PressureVolumePreview
+        Static energy-volume inspection result.
+    sample_points : int, optional
+        Number of points used to sample successful fitted curves inside the observed
+        volume interval.
+
+    Returns
+    -------
+    PlotCollection
+        Frontend-neutral observed and fitted energy-volume series.
+
+    Raises
+    ------
+    TypeError
+        If ``preview`` is not a :class:`PressureVolumePreview`.
+    ValueError
+        If ``sample_points`` is invalid or the preview has no plottable data.
+    """
     if not isinstance(preview, PressureVolumePreview):
         raise TypeError("preview must be a PressureVolumePreview object")
     return build_pressure_volume_preview_plots(
@@ -205,7 +242,19 @@ def normalize_qha_input(
 
 
 def read_qha_hdf5(filename: str | Path) -> ResultData:
-    """Read a complete native Quantas QHA result."""
+    """Read a complete native Quantas QHA result.
+
+    Parameters
+    ----------
+    filename : str or Path
+        Native Quantas HDF5 result file.
+
+    Returns
+    -------
+    ResultData
+        Generic result envelope containing a reconstructed :class:`QHAResult` and
+        its metadata, inputs, options, warnings, and persisted diagnostics.
+    """
     return _read_qha_hdf5(filename)
 
 
@@ -237,7 +286,24 @@ def write_qha_hdf5(
 
 
 def build_qha_report(result: ResultData) -> list[ReportTable]:
-    """Build neutral report tables from a complete QHA result."""
+    """Build frontend-neutral report tables from a complete QHA result.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas result whose ``qha`` payload is a :class:`QHAResult`.
+
+    Returns
+    -------
+    list of ReportTable
+        Input/options tables, result summary, provenance, structural properties,
+        diagnostics, and failed-point tables available for the stored result.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` is not a valid QHA result envelope.
+    """
     payload = result.results.get("qha")
     if result.metadata.module != "qha" or not isinstance(payload, QHAResult):
         raise ValueError("ResultData does not contain a valid QHA result.")
@@ -266,7 +332,28 @@ def build_qha_plots(
     property_names: list[str] | tuple[str, ...] | None = None,
     options: QHAPlotOptions | None = None,
 ) -> PlotCollection:
-    """Build neutral QHA plot specifications from a complete result."""
+    """Build neutral QHA plot specifications from a complete result.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas QHA result.
+    properties : str, list of str, tuple of str, or None, optional
+        Requested scalar QHA properties.
+    options : QHAPlotOptions or None, optional
+        Exact-grid line-section, contour, and display-unit options.
+
+    Returns
+    -------
+    PlotCollection
+        Frontend-neutral QHA line and contour specifications.
+
+    Raises
+    ------
+    ValueError
+        If the result payload is invalid, a property is unavailable, or a requested
+        exact-grid section cannot be built.
+    """
     payload = result.results.get("qha")
     if result.metadata.module != "qha" or not isinstance(payload, QHAResult):
         raise ValueError("ResultData does not contain a valid QHA result.")
@@ -278,7 +365,24 @@ def build_qha_plots(
 
 
 def describe_qha_plot_inventory(result: ResultData) -> PlotInventory:
-    """Describe exact-grid QHA plot properties and representations."""
+    """Describe exact-grid QHA plot properties and representations.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas result whose ``qha`` payload is a :class:`QHAResult`.
+
+    Returns
+    -------
+    PlotInventory
+        Available QHA scalar properties and native temperature/pressure line or
+        contour representations. Discovery never interpolates grid coordinates.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` does not contain a valid QHA payload.
+    """
     payload = result.results.get("qha")
     if result.metadata.module != "qha" or not isinstance(payload, QHAResult):
         raise ValueError("ResultData does not contain a valid QHA result.")
