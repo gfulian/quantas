@@ -36,6 +36,13 @@ class SeismicInput:
         Source from which the input was obtained.
     raw : str or None, optional
         Original text input when available.
+
+    Notes
+    -----
+    Quantas uses the standard 6-component Voigt representation consumed by
+    :class:`~quantas.core.physics.elasticity.ElasticTensor`. A tensor rotation, when
+    requested, transforms components before the Christoffel analysis while leaving
+    the physical tensor unchanged.
     """
 
     jobname: str = "Unknown"
@@ -52,16 +59,16 @@ class SeismicOptions:
     Parameters
     ----------
     ntheta, nphi : int, optional
-        Polar and azimuthal sampling counts. The azimuthal seam is not
-        duplicated.
+        Polar and azimuthal sampling counts. The azimuthal seam is not duplicated.
     hemisphere : Hemisphere, optional
         Polar domain sampled by the workflow.
     level : SamplingLevel, optional
-        Highest acoustic quantity to calculate.
+        Highest acoustic quantity to calculate: phase, group, or enhancement.
     batch_size : int, optional
         Maximum number of directions evaluated in one NumPy batch.
     track_polarization_axes : bool, optional
-        Whether to align axial polarizations along a deterministic grid path.
+        Whether to align axial polarization eigenvectors continuously along a
+        deterministic grid path without changing local acoustic-mode ordering.
     eigenvalue_rtol, eigenvalue_atol : float, optional
         Tolerances for small negative Christoffel eigenvalues.
     degeneracy_rtol, degeneracy_atol : float, optional
@@ -72,6 +79,12 @@ class SeismicOptions:
         Tolerances used to identify possible caustics.
     rotation : TensorRotation or None, optional
         Optional source-to-analysis tensor-component transformation.
+
+    Notes
+    -----
+    Phase modes remain locally ordered by speed as ``V_S2``, ``V_S1``, ``V_P``.
+    Polarization tracking resolves eigenvector-axis continuity and must not be
+    interpreted as relabelling the locally ordered acoustic branches.
     """
 
     ntheta: int = 91
@@ -106,19 +119,26 @@ class SeismicResult:
     density : float
         Material density in kg m^-3.
     stiffness : ndarray
-        Elastic stiffness matrix in GPa.
+        Analysis-frame elastic stiffness matrix with shape ``(6, 6)`` in GPa.
     stability : StabilityResult
         Positive-definiteness result for the stiffness matrix.
     averages : ElasticAverages
         Voigt, Reuss and Hill elastic averages.
     isotropic_velocities : IsotropicSeismicVelocities
-        Hill-average shear and compressional reference velocities.
+        Hill-average shear and compressional reference velocities in km s^-1.
     grid : SphericalGrid
-        Sampled angular grid.
+        Sampled wave-normal grid.
     field : SeismicFieldResult
-        Sampled phase, group and enhancement fields.
+        Sampled phase, optional group, polarization-tracking and enhancement fields.
     metadata : dict, optional
-        Additional numerical diagnostics.
+        Tensor-frame provenance and numerical/physical diagnostic counts.
+
+    Notes
+    -----
+    Per-mode arrays in the seismic core use canonical local phase-speed order
+    ``V_S2``, ``V_S1``, ``V_P``. Wave normals, polarizations and ray directions are
+    Cartesian vectors in the analysis tensor frame. Phase and group velocities are
+    distinct quantities and are persisted separately.
     """
 
     jobname: str

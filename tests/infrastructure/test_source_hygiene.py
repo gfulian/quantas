@@ -349,3 +349,45 @@ def test_public_interface_callables_document_contracts() -> None:
     assert not violations, "incomplete interface docstring contracts:\n" + "\n".join(
         violations
     )
+
+def test_public_elasticity_and_seismic_callables_document_contracts() -> None:
+    """Elasticity and seismic public callables document their API contracts."""
+    quantas_root = _TEST_ROOT.parent / "src" / "quantas"
+    source_roots = (
+        quantas_root / "modules" / "elasticity",
+        quantas_root / "modules" / "seismic",
+    )
+    violations: list[str] = []
+    for source_root in source_roots:
+        for path in sorted(source_root.rglob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            relative = path.relative_to(quantas_root).as_posix()
+            for node in tree.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    if node.name.startswith("_"):
+                        continue
+                    missing = _structured_docstring_issues(node)
+                    if missing:
+                        violations.append(
+                            f"{relative}::{node.name}: {', '.join(missing)}"
+                        )
+                    continue
+                if not isinstance(node, ast.ClassDef) or node.name.startswith("_"):
+                    continue
+                for member in node.body:
+                    if not isinstance(
+                        member, (ast.FunctionDef, ast.AsyncFunctionDef)
+                    ):
+                        continue
+                    if member.name.startswith("_"):
+                        continue
+                    missing = _structured_docstring_issues(member)
+                    if missing:
+                        violations.append(
+                            f"{relative}::{node.name}.{member.name}: "
+                            + ", ".join(missing)
+                        )
+    assert not violations, (
+        "incomplete elasticity/seismic docstring contracts:\n"
+        + "\n".join(violations)
+    )

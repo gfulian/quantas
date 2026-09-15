@@ -76,7 +76,14 @@ class ElasticityCalculator(BasicCalculator):
         )
 
     def run(self) -> ResultData:
-        """Run the elasticity workflow and return generic Quantas results."""
+        """Run the prepared elasticity workflow.
+
+        Returns
+        -------
+        ResultData
+            Generic Quantas result containing the :class:`ElasticityResult`, normalized
+            input/options, persisted warnings, and meaningful workflow events.
+        """
         self.emit("Creating elastic tensor", level=EventLevel.DEBUG)
         tensor = create_elastic_tensor(
             self.elasticity_input,

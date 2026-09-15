@@ -85,11 +85,20 @@ _PROPERTY_DEFINITIONS = (
 def describe_elasticity_plots(result: ElasticityResult) -> PlotInventory:
     """Describe plots that can be built from one elasticity result.
 
-    Two-dimensional polar plots are advertised only when all three principal
-    planes contain the required stored property. Three-dimensional surfaces are
-    advertised when a stiffness matrix is available and the result is not
-    explicitly marked mechanically unstable. Such surfaces may be reused from
-    persistence or calculated transiently without mutating the result.
+    Two-dimensional plots are advertised only when all three principal planes
+    contain the required stored property. Three-dimensional surfaces are advertised
+    when a stiffness matrix is available and the result is not explicitly marked
+    mechanically unstable.
+
+    Parameters
+    ----------
+    result : ElasticityResult
+        Typed elasticity result used to inspect persisted data and stability.
+
+    Returns
+    -------
+    PlotInventory
+        Available property descriptors, representations and plotting contexts.
     """
     polar_keys = tuple(
         item.key for item in _PROPERTY_DEFINITIONS if _has_2d_property(result, item)

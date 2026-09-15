@@ -69,7 +69,14 @@ class SeismicCalculator(BasicCalculator):
         )
 
     def run(self) -> ResultData:
-        """Run the acoustic-wave workflow and return generic results."""
+        """Run the prepared Christoffel sampling workflow.
+
+        Returns
+        -------
+        ResultData
+            Generic Quantas result containing sampled phase/group/enhancement fields,
+            isotropic reference velocities, diagnostics, warnings and workflow events.
+        """
         self.emit(
             "Seismic input data loaded",
             level=EventLevel.RESULT,

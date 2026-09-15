@@ -240,5 +240,23 @@ class SeismicHDF5Reader(BasicReader[ResultData]):
 
 
 def read_seismic_hdf5(filename: str | Path) -> ResultData:
-    """Read a complete native Quantas seismic HDF5 file."""
+    """Read a complete native Quantas seismic HDF5 result.
+
+    Parameters
+    ----------
+    filename : str or Path
+        Quantas HDF5 file whose metadata identifies the ``seismic`` module.
+
+    Returns
+    -------
+    ResultData
+        Generic Quantas result containing a :class:`SeismicResult` payload.
+
+    Raises
+    ------
+    OSError
+        If the file cannot be opened.
+    ValueError
+        If required metadata, units or seismic datasets are invalid.
+    """
     return SeismicHDF5Reader().load(filename)

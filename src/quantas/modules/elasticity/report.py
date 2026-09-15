@@ -32,7 +32,20 @@ def input_table(
     input_data: ElasticityInput,
     result: ElasticityResult | None = None,
 ) -> ReportTable:
-    """Build a neutral table describing elasticity input data."""
+    """Build a neutral table describing elasticity input data.
+
+    Parameters
+    ----------
+    input_data : ElasticityInput
+        Normalized workflow input.
+    result : ElasticityResult or None, optional
+        Result supplying the detected crystal system when available.
+
+    Returns
+    -------
+    ReportTable
+        Frontend-neutral input summary.
+    """
     rows: list[list[object]] = [
         ["Job name", input_data.jobname],
         [
@@ -48,7 +61,18 @@ def input_table(
 
 
 def options_table(options: ElasticityOptions) -> ReportTable:
-    """Build a neutral table describing scientific elasticity options."""
+    """Build a neutral table describing scientific elasticity options.
+
+    Parameters
+    ----------
+    options : ElasticityOptions
+        Persisted scientific and sampling options.
+
+    Returns
+    -------
+    ReportTable
+        Frontend-neutral option summary.
+    """
     return _ReportTable(
         title="Elasticity options",
         columns=["Option", "Value"],
@@ -187,12 +211,35 @@ def tensor_rotation_metadata_table(
 
 
 def compliance_table(result: ElasticityResult) -> ReportTable:
-    """Build a neutral compliance-matrix table."""
+    """Build the elastic compliance-matrix table.
+
+    Parameters
+    ----------
+    result : ElasticityResult
+        Result containing a ``(6, 6)`` Voigt compliance matrix in GPa^-1.
+
+    Returns
+    -------
+    ReportTable
+        Frontend-neutral compliance matrix.
+    """
     return _matrix_table("Compliance matrix (GPa^-1)", result.compliance, "S")
 
 
 def averages_table(result: ElasticityResult) -> ReportTable:
-    """Build a Voigt-Reuss-Hill average-property table."""
+    """Build the Voigt-Reuss-Hill polycrystalline-average table.
+
+    Parameters
+    ----------
+    result : ElasticityResult
+        Result containing Voigt, Reuss and Hill elastic estimates.
+
+    Returns
+    -------
+    ReportTable
+        Bulk, Young and shear moduli in GPa together with dimensionless Poisson
+        ratios for each averaging scheme.
+    """
     rows: list[list[Any]] = []
     if result.averages is not None:
         for label, properties in (
@@ -217,7 +264,18 @@ def averages_table(result: ElasticityResult) -> ReportTable:
 
 
 def stability_table(result: ElasticityResult) -> ReportTable:
-    """Build a positive-definiteness and eigenvalue table."""
+    """Build the stiffness positive-definiteness table.
+
+    Parameters
+    ----------
+    result : ElasticityResult
+        Result containing mechanical-stability diagnostics.
+
+    Returns
+    -------
+    ReportTable
+        Stiffness eigenvalues in GPa and positive-definiteness metadata.
+    """
     rows: list[list[Any]] = []
     metadata: dict[str, object] = {"positive_definite": False}
     if result.stability is not None:
@@ -364,7 +422,23 @@ def build_elasticity_report(
     options: ElasticityOptions,
     result: ElasticityResult,
 ) -> list[ReportTable]:
-    """Build the complete neutral elasticity report."""
+    """Build the complete frontend-neutral elasticity report.
+
+    Parameters
+    ----------
+    input_data : ElasticityInput
+        Normalized workflow input.
+    options : ElasticityOptions
+        Scientific options used for the calculation.
+    result : ElasticityResult
+        Complete elasticity result.
+
+    Returns
+    -------
+    list of ReportTable
+        Ordered input, option, tensor, average, stability and directional-property
+        tables.
+    """
     tables = [
         input_table(input_data, result),
         options_table(options),

@@ -249,7 +249,21 @@ def build_elasticity_2d_plot_collection(
     result: ElasticityResult,
     properties: tuple[ElasticityPlotProperty, ...] | None = None,
 ) -> PlotCollection:
-    """Build neutral polar specifications for available 2D properties."""
+    """Build neutral polar specifications for available principal-plane data.
+
+    Parameters
+    ----------
+    result : ElasticityResult
+        Elasticity result containing ``properties_2d``.
+    properties : tuple of str or None, optional
+        Requested plot-property keys. ``None`` selects all supported properties.
+
+    Returns
+    -------
+    PlotCollection
+        Polar specifications for properties available on all three principal
+        planes. Missing or malformed stored properties are reported as warnings.
+    """
     collection = PlotCollection()
     if not result.properties_2d:
         return collection
@@ -381,9 +395,19 @@ def build_elasticity_surface_plot_collection(
 def build_elasticity_plot_collection(result: ElasticityResult) -> PlotCollection:
     """Build the default persisted elasticity plot collection.
 
-    This function implements the uniform module contract and therefore uses
-    only the 2D data already present in ``result``.  Transient 3D surfaces are
-    built explicitly with :func:`build_elasticity_surface_plot_collection`.
+    This function implements the uniform module plot contract and therefore uses
+    only principal-plane data already stored in ``result``. Transient 3D surfaces
+    are requested explicitly through the surface API.
+
+    Parameters
+    ----------
+    result : ElasticityResult
+        Complete elasticity result.
+
+    Returns
+    -------
+    PlotCollection
+        Frontend-neutral two-dimensional polar plot specifications.
     """
     return build_elasticity_2d_plot_collection(result)
 

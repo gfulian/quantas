@@ -62,7 +62,16 @@ class ElasticityTableExport(BasicExport):
     """Export principal-plane elasticity data as a neutral text table."""
 
     def export(self, result: ResultData, filename: str | Path) -> None:
-        """Export 2D directional data from a generic Quantas result."""
+        """Export principal-plane directional elasticity data as plain text.
+
+        Parameters
+        ----------
+        result : ResultData
+            Generic Quantas result containing an elasticity payload. Numerical values
+            are exported from the stored arrays without display rounding.
+        filename : str or Path
+            Destination path. The ``.dat`` suffix is added when missing.
+        """
         filename = ensure_suffix(filename, ".dat")
         elasticity = result.results["elasticity"]
 
@@ -84,7 +93,15 @@ class ElasticityTableExport(BasicExport):
         input_file: str | Path,
         output_file: str | Path,
     ) -> None:
-        """Export 2D directional data from a Quantas elasticity HDF5 file."""
+        """Export principal-plane data directly from native HDF5.
+
+        Parameters
+        ----------
+        input_file : str or Path
+            Native Quantas elasticity HDF5 result.
+        output_file : str or Path
+            Destination text path. The ``.dat`` suffix is added when missing.
+        """
         output_file = ensure_suffix(output_file, ".dat")
         result = read_elasticity_hdf5(input_file)
         self.export(result, output_file)

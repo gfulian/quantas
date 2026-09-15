@@ -90,17 +90,21 @@ def build_seismic_report_tables(
     result : SeismicResult
         Complete sampled seismic-wave result.
     level : {"standard", "extended", "debug"}, optional
-        Scientific report detail. ``standard`` retains the principal input,
-        stability, isotropic-reference, extrema, and diagnostic summaries.
-        ``extended`` adds conventions, power-flow details, and candidate axes.
-        ``debug`` additionally includes the full stiffness matrix and available
-        tensor-frame provenance.
+        Scientific report detail. ``standard`` retains principal input, stability,
+        isotropic-reference, extrema and diagnostic summaries. ``extended`` adds
+        mode conventions, power-flow details and candidate axes. ``debug`` also
+        exposes the full stiffness matrix and available tensor-frame provenance.
 
     Returns
     -------
     list of ReportTable
-        Ordered report tables describing input, extrema, anisotropy, wave
-        splitting, power flow, enhancement, and numerical diagnostics.
+        Ordered report tables describing elastic references, acoustic extrema,
+        anisotropy, wave splitting, power flow, enhancement and diagnostics.
+
+    Raises
+    ------
+    ValueError
+        If ``level`` is not ``"standard"``, ``"extended"`` or ``"debug"``.
     """
     if level not in {"standard", "extended", "debug"}:
         raise ValueError("seismic report level must be standard, extended, or debug")
@@ -227,7 +231,18 @@ def tensor_rotation_metadata_table(
 
 
 def calculation_summary_table(result: SeismicResult) -> ReportTable:
-    """Build a table describing the calculation and spherical sampling."""
+    """Build a table describing the seismic calculation and spherical sampling.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Complete seismic result.
+
+    Returns
+    -------
+    ReportTable
+        Job, density, tensor-frame, sampling-grid and available-field summary.
+    """
     try:
         symmetry = detect_elastic_symmetry(result.stiffness)
     except ValueError:
@@ -262,7 +277,18 @@ def calculation_summary_table(result: SeismicResult) -> ReportTable:
 
 
 def elastic_reference_table(result: SeismicResult) -> ReportTable:
-    """Build a table of Voigt, Reuss, and Hill isotropic elastic estimates."""
+    """Build the Voigt-Reuss-Hill elastic-reference table.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Result containing polycrystalline elastic averages.
+
+    Returns
+    -------
+    ReportTable
+        Bulk, Young and shear moduli in GPa plus dimensionless Poisson ratios.
+    """
     rows: list[list[object]] = []
     for label, values in (
         ("Voigt", result.averages.voigt),
@@ -286,7 +312,18 @@ def elastic_reference_table(result: SeismicResult) -> ReportTable:
 
 
 def stability_table(result: SeismicResult) -> ReportTable:
-    """Build a stiffness-eigenvalue table for mechanical stability."""
+    """Build the seismic stiffness positive-definiteness table.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Result containing the stiffness stability diagnostic.
+
+    Returns
+    -------
+    ReportTable
+        Stiffness eigenvalues in GPa and positive-definiteness metadata.
+    """
     rows = [
         [index, f"{value:.8f}"]
         for index, value in enumerate(result.stability.eigenvalues, start=1)
@@ -303,7 +340,19 @@ def stability_table(result: SeismicResult) -> ReportTable:
 
 
 def isotropic_reference_table(result: SeismicResult) -> ReportTable:
-    """Build a table of Hill-average isotropic acoustic velocities."""
+    """Build the Hill-average isotropic acoustic-reference table.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Result containing isotropic velocities derived from Hill elastic averages
+        and the material density.
+
+    Returns
+    -------
+    ReportTable
+        Isotropic shear and compressional reference velocities in km s^-1.
+    """
     v_s = result.isotropic_velocities.shear
     v_p = result.isotropic_velocities.compressional
     rows = [
@@ -320,7 +369,14 @@ def isotropic_reference_table(result: SeismicResult) -> ReportTable:
 
 
 def acoustic_mode_conventions_table() -> ReportTable:
-    """Build a table defining the acoustic-mode symbols used in reports."""
+    """Build the table defining acoustic-mode symbols and ordering.
+
+    Returns
+    -------
+    ReportTable
+        Definitions of ``V_S2``, ``V_S1`` and ``V_P``. Quantas stores acoustic
+        modes locally in ascending phase-speed order ``V_S2 <= V_S1 <= V_P``.
+    """
     return ReportTable(
         title="Acoustic-mode conventions",
         columns=["Symbol", "Physical description", "Local phase-speed order"],
@@ -336,7 +392,24 @@ def acoustic_mode_conventions_table() -> ReportTable:
 
 
 def phase_velocity_extrema_table(result: SeismicResult) -> ReportTable:
-    """Build sampled phase-speed extrema and anisotropy for all modes."""
+    """Build sampled phase-speed extrema and anisotropy for all acoustic modes.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Result containing the sampled phase field.
+
+    Returns
+    -------
+    ReportTable
+        Minimum/maximum phase speeds in km s^-1, representative wave-normal
+        directions, symmetric percentage anisotropy and max/min ratios.
+
+    Notes
+    -----
+    The reported extrema are selected from the sampled spherical grid; they are not
+    continuous directional optimizations.
+    """
     rows: list[list[object]] = []
     phase = result.field.phase
     for mode in reversed(MODE_ORDER):
@@ -367,7 +440,19 @@ def phase_velocity_extrema_table(result: SeismicResult) -> ReportTable:
 
 
 def phase_derived_properties_table(result: SeismicResult) -> ReportTable:
-    """Build shear splitting and phase-velocity ratio diagnostics."""
+    """Build phase-derived shear-splitting and velocity-ratio diagnostics.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Result containing phase speeds and per-mode validity masks.
+
+    Returns
+    -------
+    ReportTable
+        Sampled ``V_S1 - V_S2`` splitting, directional shear anisotropy, and
+        ``V_P/V_S1`` and ``V_P/V_S2`` ratios with extrema and summary statistics.
+    """
     phase = result.field.phase
     i_s2 = MODE_INDEX[WaveMode.V_S2]
     i_s1 = MODE_INDEX[WaveMode.V_S1]
@@ -474,7 +559,23 @@ def phase_derived_properties_table(result: SeismicResult) -> ReportTable:
 
 
 def group_velocity_extrema_table(result: SeismicResult) -> ReportTable:
-    """Build sampled group-speed extrema and associated ray directions."""
+    """Build sampled group-speed extrema and associated ray directions.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Result containing resolved group-velocity fields.
+
+    Returns
+    -------
+    ReportTable
+        Group-speed extrema in km s^-1 with both wave-normal and energy-flow
+        directions, plus anisotropy diagnostics.
+
+    Notes
+    -----
+    Only valid, resolved group modes contribute to the extrema.
+    """
     assert result.field.group is not None
     rows: list[list[object]] = []
     group = result.field.group
@@ -508,7 +609,19 @@ def group_velocity_extrema_table(result: SeismicResult) -> ReportTable:
 
 
 def power_flow_table(result: SeismicResult) -> ReportTable:
-    """Build power-flow angle extrema and distribution statistics."""
+    """Build power-flow angle extrema and distribution statistics.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Result containing resolved group fields and power-flow angles.
+
+    Returns
+    -------
+    ReportTable
+        Per-mode power-flow extrema in degrees together with representative wave
+        normals, ray directions, mean, RMS and 95th-percentile values.
+    """
     assert result.field.group is not None
     rows: list[list[object]] = []
     group = result.field.group
@@ -564,7 +677,24 @@ def power_flow_table(result: SeismicResult) -> ReportTable:
 
 
 def enhancement_table(result: SeismicResult) -> ReportTable:
-    """Build logarithmic enhancement extrema and caustic diagnostics."""
+    """Build logarithmic enhancement extrema and caustic diagnostics.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Result containing enhancement fields calculated from group-velocity
+        curvature.
+
+    Returns
+    -------
+    ReportTable
+        Per-mode extrema of ``log10(A)`` plus valid-point, caustic-candidate and
+        non-finite-enhancement counts.
+
+    Notes
+    -----
+    Only valid, resolved and finite enhancement values contribute to extrema.
+    """
     assert result.field.enhancement is not None
     enhancement = result.field.enhancement
     rows: list[list[object]] = []
@@ -618,7 +748,19 @@ def enhancement_table(result: SeismicResult) -> ReportTable:
 
 
 def diagnostics_table(result: SeismicResult) -> ReportTable:
-    """Build a compact table of numerical and physical diagnostics."""
+    """Build a compact summary of seismic numerical and physical diagnostics.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Complete sampled seismic result.
+
+    Returns
+    -------
+    ReportTable
+        Counts of invalid/clamped/degenerate phase modes and, when available,
+        unresolved group modes, caustic candidates and non-finite enhancements.
+    """
     field = result.field
     phase = field.phase
     rows: list[list[object]] = [

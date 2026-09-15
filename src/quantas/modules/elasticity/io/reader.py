@@ -55,7 +55,19 @@ class ElasticityInputFileReader(BasicReader[None]):
         return stiffness
 
     def load(self, filename: str | Path) -> None:
-        """Parse a Quantas elasticity input file."""
+        """Parse a Quantas second-order elasticity text input file.
+
+        Parameters
+        ----------
+        filename : str or Path
+            Text file containing an optional job name followed by a full, upper-
+            triangular, or lower-triangular ``6 x 6`` stiffness matrix in GPa.
+
+        Notes
+        -----
+        Scientific format errors set ``completed`` to ``False`` and populate ``error``.
+        Filesystem errors from opening the file are allowed to propagate.
+        """
         filename = Path(filename)
         self.completed = False
         self.error = None
@@ -196,5 +208,23 @@ class ElasticityHDF5Reader(BasicReader):
 
 
 def read_elasticity_hdf5(filename: str | Path) -> ResultData:
-    """Read a complete Quantas elasticity HDF5 result."""
+    """Read a complete native Quantas elasticity HDF5 result.
+
+    Parameters
+    ----------
+    filename : str or Path
+        Quantas HDF5 file whose metadata identifies the ``elasticity`` module.
+
+    Returns
+    -------
+    ResultData
+        Generic Quantas result containing an :class:`ElasticityResult` payload.
+
+    Raises
+    ------
+    OSError
+        If the file cannot be opened.
+    ValueError
+        If required Quantas metadata or elasticity datasets are invalid.
+    """
     return ElasticityHDF5Reader().load(filename)

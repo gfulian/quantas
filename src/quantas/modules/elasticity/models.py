@@ -131,22 +131,30 @@ class ElasticityResult:
     jobname : str, optional
         Name or short description of the calculation.
     crystal_system : str or None, optional
-        Crystal system inferred from the stiffness matrix.
-    stiffness, compliance : ndarray or None, optional
-        Elastic matrices in Voigt notation.
+        Elastic crystal system inferred from the stiffness matrix.
+    stiffness : ndarray or None, optional
+        Analysis-frame stiffness matrix with shape ``(6, 6)`` in GPa.
+    compliance : ndarray or None, optional
+        Inverse elastic matrix with shape ``(6, 6)`` in GPa^-1.
     averages : ElasticAverages or None, optional
-        Voigt, Reuss, and Hill estimates.
+        Voigt, Reuss and Hill polycrystalline estimates.
     stability : StabilityResult or None, optional
         Positive-definiteness check and stiffness eigenvalues.
     variations : dict, optional
-        Directional extrema for elastic properties.
+        Exact directional extrema for supported elastic properties.
     properties_2d : dict, optional
-        Principal-plane directional data requested by the workflow.
+        Principal-plane angle arrays and raw directional property values.
     properties_3d : ElasticitySurfaceCollection or None, optional
-        Persisted three-dimensional directional surfaces requested by the
-        workflow. Plot-only calculations may remain transient instead.
+        Persisted three-dimensional directional surfaces. Plot-only calculations
+        may remain transient instead.
     metadata : dict, optional
-        Additional workflow metadata.
+        Workflow metadata, including tensor-frame and sampling provenance.
+
+    Notes
+    -----
+    All tensor components and stored directions refer to the analysis Cartesian
+    frame. Raw numerical values are retained at scientific precision; display
+    rounding belongs to report and plot renderers.
     """
 
     jobname: str = "Unknown"
@@ -161,17 +169,49 @@ class ElasticityResult:
     metadata: dict[str, Any] = field(default_factory=dict)
 
     def has_2d_data(self) -> bool:
-        """Return whether principal-plane directional data are available."""
+        """Return whether principal-plane directional data are available.
+
+        Returns
+        -------
+        bool
+            ``True`` when at least one principal-plane data block is stored.
+        """
         return bool(self.properties_2d)
 
     def has_3d_data(self) -> bool:
-        """Return whether persisted three-dimensional data are available."""
+        """Return whether persisted three-dimensional surface data are available.
+
+        Returns
+        -------
+        bool
+            ``True`` when a non-empty surface collection is attached to the result.
+        """
         return self.properties_3d is not None and bool(self.properties_3d.surfaces)
 
     def add_variation(self, name: str, value: DirectionalExtrema) -> None:
-        """Store directional-extrema data under a property name."""
+        """Store one directional-extrema result.
+
+        Parameters
+        ----------
+        name : str
+            Property key, for example ``"young_modulus"`` or ``"poisson_ratio"``.
+        value : DirectionalExtrema
+            Exact extrema and associated directions returned by the elasticity core.
+        """
         self.variations[name] = value
 
     def add_2d_data(self, plane: str, property_name: str, value: Any) -> None:
-        """Store one two-dimensional property for a principal plane."""
+        """Store one principal-plane data array.
+
+        Parameters
+        ----------
+        plane : str
+            Cartesian principal plane, normally ``"xy"``, ``"xz"`` or ``"yz"``.
+        property_name : str
+            Stored property key such as ``"theta"``, ``"young_modulus"`` or
+            ``"poisson_ratio"``.
+        value : Any
+            Raw numerical data. Scientific values remain unrounded; display formatting
+            belongs to renderers.
+        """
         self.properties_2d.setdefault(plane, {})[property_name] = value
