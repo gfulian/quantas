@@ -152,7 +152,28 @@ def standardized_residuals(
     residuals: ArrayLike,
     sigma: ArrayLike,
 ) -> np.ndarray:
-    """Return residuals normalized by strictly positive standard deviations."""
+    """Return residuals normalized by stated standard deviations.
+
+    Parameters
+    ----------
+    residuals : array-like
+        One-dimensional residual vector, conventionally observed minus fitted.
+    sigma : array-like
+        One-standard-deviation uncertainties aligned with ``residuals``. Every
+        value must be strictly positive.
+
+    Returns
+    -------
+    ndarray
+        ``float64`` standardized residuals with the same shape as the validated
+        residual vector.
+
+    Raises
+    ------
+    ValueError
+        If the vectors are misaligned, non-finite, contain fewer than two values,
+        or if any standard deviation is non-positive.
+    """
     residual_array, sigma_array = validate_xy(residuals, sigma)
     if np.any(sigma_array <= 0.0):
         raise ValueError("standard deviations must be strictly positive")

@@ -26,6 +26,85 @@ def _test_functions(path: Path) -> list[str]:
     ]
 
 
+
+def _is_property(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """Return whether a function node is decorated as a property."""
+    for decorator in node.decorator_list:
+        if isinstance(decorator, ast.Name) and decorator.id == "property":
+            return True
+        if isinstance(decorator, ast.Attribute) and decorator.attr == "property":
+            return True
+    return False
+
+
+def _has_direct_raise(node: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """Return whether a callable raises directly outside nested callables."""
+
+    class RaiseVisitor(ast.NodeVisitor):
+        found = False
+
+        def visit_Raise(self, child: ast.Raise) -> None:
+            self.found = True
+
+        def visit_FunctionDef(self, child: ast.FunctionDef) -> None:
+            return
+
+        def visit_AsyncFunctionDef(self, child: ast.AsyncFunctionDef) -> None:
+            return
+
+        def visit_Lambda(self, child: ast.Lambda) -> None:
+            return
+
+        def visit_ClassDef(self, child: ast.ClassDef) -> None:
+            return
+
+    visitor = RaiseVisitor()
+    for statement in node.body:
+        visitor.visit(statement)
+    return visitor.found
+
+
+def _structured_docstring_issues(
+    node: ast.FunctionDef | ast.AsyncFunctionDef,
+) -> list[str]:
+    """Return missing NumPy-style contract sections for one public callable."""
+    if _is_property(node):
+        return []
+    docstring = ast.get_docstring(node) or ""
+    arguments = [
+        argument.arg
+        for argument in (
+            *node.args.posonlyargs,
+            *node.args.args,
+            *node.args.kwonlyargs,
+        )
+        if argument.arg not in {"self", "cls"}
+    ]
+    if node.args.vararg is not None:
+        arguments.append(node.args.vararg.arg)
+    if node.args.kwarg is not None:
+        arguments.append(node.args.kwarg.arg)
+
+    issues: list[str] = []
+    if arguments and "Parameters\n----------" not in docstring:
+        issues.append("Parameters")
+
+    annotation = node.returns
+    returns_value = annotation is not None and not (
+        isinstance(annotation, ast.Constant) and annotation.value is None
+    )
+    returns_value = returns_value and not (
+        isinstance(annotation, ast.Name) and annotation.id == "None"
+    )
+    if returns_value and not any(
+        section in docstring for section in ("Returns\n-------", "Yields\n------")
+    ):
+        issues.append("Returns")
+    if _has_direct_raise(node) and "Raises\n------" not in docstring:
+        issues.append("Raises")
+    return issues
+
+
 def test_test_paths_describe_domains_not_refactoring_history() -> None:
     """Test paths must not encode implementation phases or numeric ordering."""
     violations: list[str] = []
@@ -161,3 +240,38 @@ def test_public_source_objects_have_docstrings() -> None:
                                 f"method: {relative}::{node.name}.{member.name}"
                             )
     assert not violations, "missing public docstrings:\n" + "\n".join(violations)
+
+
+def test_public_core_callables_document_structured_contracts() -> None:
+    """Public core callables document inputs, outputs, and direct errors."""
+    source_root = _TEST_ROOT.parent / "src" / "quantas" / "core"
+    violations: list[str] = []
+    for path in sorted(source_root.rglob("*.py")):
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        relative = path.relative_to(source_root).as_posix()
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                if node.name.startswith("_"):
+                    continue
+                missing = _structured_docstring_issues(node)
+                if missing:
+                    violations.append(
+                        f"{relative}::{node.name}: {', '.join(missing)}"
+                    )
+                continue
+            if not isinstance(node, ast.ClassDef) or node.name.startswith("_"):
+                continue
+            for member in node.body:
+                if not isinstance(member, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                if member.name.startswith("_"):
+                    continue
+                missing = _structured_docstring_issues(member)
+                if missing:
+                    violations.append(
+                        f"{relative}::{node.name}.{member.name}: "
+                        + ", ".join(missing)
+                    )
+    assert not violations, "incomplete core docstring contracts:\n" + "\n".join(
+        violations
+    )

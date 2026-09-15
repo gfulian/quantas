@@ -464,6 +464,11 @@ def default_solver_options(method: FitMethod | str) -> SolverOptions:
     -------
     SolverOptions
         Fresh method-specific options object.
+
+    Raises
+    ------
+    ValueError
+        If ``method`` is not a supported fitting strategy.
     """
     resolved = FitMethod(method)
     if resolved is FitMethod.OLS:

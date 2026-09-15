@@ -121,7 +121,14 @@ class FitDiagnostics:
         self.metadata = dict(self.metadata)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready diagnostic mapping."""
+        """Return a serialization-ready diagnostic mapping.
+
+        Returns
+        -------
+        dict
+            Mapping containing objective statistics, correlation and residual
+            diagnostics, optimizer counters, warnings, and metadata.
+        """
         return {
             "objective": self.objective,
             "weighted": self.weighted,
@@ -249,7 +256,34 @@ class FitResult:
         parameter_states: tuple[ParameterState, ...] = (),
         diagnostics: FitDiagnostics | None = None,
     ) -> FitResult:
-        """Create a failed fit result."""
+        """Create a structured unsuccessful fit result.
+
+        Parameters
+        ----------
+        message : str
+            Human-readable failure explanation.
+        status : FitStatus, optional
+            Failure classification. Use ``INVALID_INPUT`` only for documented request
+            errors; numerical/backend failures use ``FAILED``.
+        n_points, n_parameters : int, optional
+            Observation and free-parameter counts used to derive residual degrees of
+            freedom.
+        metadata : mapping or None, optional
+            Passive failure provenance.
+        method : FitMethod or None, optional
+            Regression strategy, when known.
+        parameter_names : tuple of str, optional
+            Complete reporting-order parameter names.
+        parameter_states : tuple of ParameterState, optional
+            Parameter roles aligned with ``parameter_names``.
+        diagnostics : FitDiagnostics or None, optional
+            Extended termination diagnostics.
+
+        Returns
+        -------
+        FitResult
+            Result with ``success=False`` and :attr:`FitQuality.FAILED`.
+        """
         return cls(
             success=False,
             status=status,
@@ -266,7 +300,15 @@ class FitResult:
         )
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serializable dictionary representation."""
+        """Return a serializable fit-result representation.
+
+        Returns
+        -------
+        dict
+            Mapping containing status and quality, resolved parameters and
+            covariance, predictions and residuals, diagnostics, method metadata,
+            and parameter-state information.
+        """
         return {
             "success": self.success,
             "status": self.status.value,

@@ -148,7 +148,24 @@ class TabulatedPressureModel(_TabulatedDepthModel):
         )
 
     def pressure(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate interpolated pressure in GPa."""
+        """Interpolate tabulated pressure at requested depths.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km inside the closed tabulated interval.
+
+        Returns
+        -------
+        ndarray
+            Pressure in GPa with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside the tabulated interval. Extrapolation
+            is never performed.
+        """
         return self._evaluate(depth_km)
 
 
@@ -194,7 +211,24 @@ class TabulatedTemperatureModel(_TabulatedDepthModel):
         )
 
     def temperature(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate interpolated temperature in K."""
+        """Interpolate tabulated temperature at requested depths.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km inside the closed tabulated interval.
+
+        Returns
+        -------
+        ndarray
+            Absolute temperature in K with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside the tabulated interval. Extrapolation
+            is never performed.
+        """
         return self._evaluate(depth_km)
 
 

@@ -153,41 +153,39 @@ def adiabatic_stiffness_field(
     sigma_thermal_expansion_tensor: ArrayLike | None = None,
     zero_temperature_tolerance: float = 1.0e-12,
 ) -> AdiabaticStiffnessFieldResult:
-    r"""Convert an isothermal stiffness field to adiabatic conditions.
+    """Convert an isothermal stiffness field to adiabatic conditions.
 
     Parameters
     ----------
-    stiffness_isothermal : array-like
+    stiffness_isothermal : array_like
         Isothermal stiffness in GPa with shape ``field_shape + (6, 6)``.
-    temperature : array-like
+    temperature : array_like
         Absolute temperature in K, broadcastable to ``field_shape``.
-    volume_m3 : array-like
-        Volume represented by each heat-capacity value, in m\ :sup:`3`.
-    heat_capacity_j_per_k : array-like or None
-        Isochoric heat capacity for the same cell as ``volume_m3``, in J K\ :sup:`-1`.
-    thermal_expansion_tensor : array-like or None
-        Cartesian thermal-expansion tensor in K\ :sup:`-1` with shape
+    volume_m3 : array_like
+        Volume represented by each heat-capacity value, in m^3.
+    heat_capacity_j_per_k : array_like or None
+        Isochoric heat capacity for the same cell as ``volume_m3``, in J K^-1.
+    thermal_expansion_tensor : array_like or None
+        Cartesian thermal-expansion tensor in K^-1 with shape
         ``field_shape + (3, 3)``.
     sigma_stiffness_isothermal, sigma_volume_m3, sigma_heat_capacity_j_per_k,
-    sigma_thermal_expansion_tensor : array-like or None, optional
-        One-standard-deviation uncertainties.  Cross-covariances are not
-        available in the current QHA archive and are therefore assumed zero.
+    sigma_thermal_expansion_tensor : array_like or None, optional
+        One-standard-deviation uncertainties. Cross-covariances are not
+        available in the current QHA archive and are therefore neglected.
     zero_temperature_tolerance : float, optional
-        Temperatures within this absolute tolerance of zero return the exact
-        thermodynamic limit ``C^S=C^T``.
+        Non-negative tolerance used to identify the zero-temperature limit.
 
     Returns
     -------
     AdiabaticStiffnessFieldResult
-        Converted tensors, uncertainty estimates, validity masks, and
-        provenance.
+        Corrected stiffness field, optional propagated marginal uncertainties,
+        and diagnostics describing where the correction was evaluated.
 
-    Notes
-    -----
-    Nonzero-temperature states are invalid when ``C_V`` or the thermal-
-    expansion tensor is absent, non-finite, or non-positive where required.
-    Invalid states are represented by NaN tensors; Quantas never substitutes
-    the isothermal tensor silently.
+    Raises
+    ------
+    ValueError
+        If input shapes are incompatible, required thermodynamic quantities are
+        invalid, or ``zero_temperature_tolerance`` is negative or non-finite.
     """
     stiffness = np.asarray(stiffness_isothermal, dtype=np.float64)
     if stiffness.ndim < 2 or stiffness.shape[-2:] != (6, 6):

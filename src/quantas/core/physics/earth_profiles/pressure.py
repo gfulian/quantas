@@ -171,18 +171,57 @@ class PremPressureModel:
         return result
 
     def density(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate PREM density in kg m^-3 within the public domain."""
+        """Evaluate PREM mass density within the public depth domain.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km within :attr:`depth_bounds`.
+
+        Returns
+        -------
+        ndarray
+            PREM density in ``kg m^-3`` with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside the public PREM domain.
+        """
         depth = _validated_depth(depth_km, self.depth_bounds, self.name)
         radius = self.earth_radius_km - depth
         return 1000.0 * self._density_g_cm3(radius)
 
     def gravity(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate gravity in m s^-2 from the integrated PREM mass profile."""
+        """Evaluate gravitational acceleration from the integrated PREM mass profile.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km within :attr:`depth_bounds`.
+
+        Returns
+        -------
+        ndarray
+            Gravity in ``m s^-2`` with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside the public PREM domain.
+        """
         depth = _validated_depth(depth_km, self.depth_bounds, self.name)
         return np.asarray(self._gravity_interpolator(depth), dtype=np.float64)
 
     def metadata(self) -> dict[str, Any]:
-        """Return model parameters and complete bibliographic provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing PREM parameters, units,
+            scientific scope, and bibliographic provenance.
+        """
         return {
             "model": self.name,
             "kind": "hydrostatic_reference_earth_model",
@@ -377,7 +416,23 @@ class LayeredLithostaticPressureModel:
         return tuple(float(value) for value in self._boundaries[:-1])
 
     def pressure(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate lithostatic pressure in GPa."""
+        """Evaluate piecewise-constant-density lithostatic pressure.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km within the declared layered model.
+
+        Returns
+        -------
+        ndarray
+            Lithostatic pressure in GPa with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside :attr:`depth_bounds`.
+        """
         depth = _validated_depth(depth_km, self.depth_bounds, self.name)
         flat = depth.ravel()
         pressure_pa = np.zeros_like(flat)
@@ -389,7 +444,14 @@ class LayeredLithostaticPressureModel:
         return (pressure_pa.reshape(depth.shape) / 1.0e9).astype(np.float64)
 
     def metadata(self) -> dict[str, Any]:
-        """Return layer parameters and optional user provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing layer parameters, units, and
+            optional user provenance.
+        """
         return {
             "model": self.name,
             "kind": "piecewise_constant_density_lithostatic",

@@ -413,7 +413,26 @@ class MappedFitModel(BaseFitModel):
         return self.parameter_map.free_names
 
     def evaluate(self, x: ArrayLike, parameters: ArrayLike) -> np.ndarray:
-        """Resolve free values and evaluate the complete physical model."""
+        """Evaluate the wrapped model from a reduced free-parameter vector.
+
+        Parameters
+        ----------
+        x : array-like
+            Independent coordinates accepted by the wrapped model.
+        parameters : array-like
+            Free parameters in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        ndarray
+            Wrapped-model values after fixed, implied, and derived parameters have
+            been resolved through the :class:`ParameterMap`.
+
+        Raises
+        ------
+        ValueError
+            If the reduced parameter vector cannot be expanded consistently.
+        """
         resolved = self.parameter_map.expand(parameters)
         return self.model.evaluate(x, resolved.model_values())
 
@@ -422,22 +441,81 @@ class MappedFitModel(BaseFitModel):
         x: ArrayLike,
         parameters: ArrayLike,
     ) -> np.ndarray:
-        """Resolve free values and evaluate the wrapped x derivative."""
+        """Evaluate the wrapped coordinate derivative from free parameters.
+
+        Parameters
+        ----------
+        x : array-like
+            Independent coordinates accepted by the wrapped model.
+        parameters : array-like
+            Free parameters in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        ndarray
+            Coordinate derivative returned by the complete wrapped model after
+            resolving the parameter map.
+
+        Raises
+        ------
+        ValueError
+            If parameters cannot be resolved or the wrapped derivative is invalid.
+        """
         resolved = self.parameter_map.expand(parameters)
         return self.model.derivative_x(x, resolved.model_values())
 
     def initial_guess(self, x: ArrayLike, y: ArrayLike) -> np.ndarray:
-        """Return the configured reduced initial vector."""
+        """Return the configured reduced initial parameter vector.
+
+        Parameters
+        ----------
+        x, y : array-like
+            Coordinates and observations. They are validated for shape and finiteness
+            even though the configured parameter map supplies the initial values.
+
+        Returns
+        -------
+        ndarray
+            Copy of the free initial values in solver order.
+
+        Raises
+        ------
+        ValueError
+            If ``x`` and ``y`` do not define a valid fitting dataset.
+        """
         validate_xy(x, y)
         return self.parameter_map.initial_free_values()
 
     def bounds(self, x: ArrayLike, y: ArrayLike) -> tuple[np.ndarray, np.ndarray]:
-        """Return configured reduced parameter bounds."""
+        """Return bounds for the reduced free-parameter vector.
+
+        Parameters
+        ----------
+        x, y : array-like
+            Coordinates and observations, validated for consistency.
+
+        Returns
+        -------
+        tuple of ndarray
+            Lower and upper bounds in free-parameter solver order.
+
+        Raises
+        ------
+        ValueError
+            If ``x`` and ``y`` do not define a valid fitting dataset.
+        """
         validate_xy(x, y)
         return self.parameter_map.free_bounds()
 
     def metadata(self) -> dict[str, Any]:
-        """Return wrapped model and complete mapping metadata."""
+        """Return metadata for the mapped fitting model.
+
+        Returns
+        -------
+        dict
+            Wrapped model metadata augmented with optimizer parameter order and the
+            serialized parameter-map definition.
+        """
         metadata = self.model.metadata()
         metadata["optimizer_parameter_order"] = list(self.parameter_names)
         metadata["parameter_map"] = self.parameter_map.as_dict()

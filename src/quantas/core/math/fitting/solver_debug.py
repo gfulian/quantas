@@ -194,7 +194,14 @@ class ModelEvaluationRecorder:
             self._recent.append(dict(record))
 
     def as_metadata(self) -> dict[str, Any]:
-        """Return a serialization-ready recorder summary."""
+        """Return a serialization-ready recorder summary.
+
+        Returns
+        -------
+        dict
+            Mapping containing evaluation counts, first/last evaluations, and the
+            optional bounded detailed trace.
+        """
         payload: dict[str, Any] = {
             "recorded_model_evaluations": self.n_evaluations,
             "first_evaluation": None

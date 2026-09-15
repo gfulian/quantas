@@ -46,15 +46,30 @@ class NumericPrecisionPolicy:
         cls,
         values: Mapping[str, Any] | None,
     ) -> "NumericPrecisionPolicy":
-        """Return the fixed Quantas precision policy.
+        """Return the fixed Quantas precision policy from legacy metadata.
 
-        Historical mappings are accepted for compatibility but do not alter
-        the validated double-precision policy.
+        Parameters
+        ----------
+        values : mapping or None
+            Historical precision metadata. The mapping is accepted for compatibility
+            only and cannot alter the validated runtime precision.
+
+        Returns
+        -------
+        NumericPrecisionPolicy
+            Fixed ``float64``/``complex128`` working and storage policy.
         """
         return cls()
 
     def as_metadata(self) -> dict[str, str | int]:
-        """Return serializable fixed precision metadata."""
+        """Return serializable fixed precision metadata.
+
+        Returns
+        -------
+        dict
+            Mapping describing the working and storage precision names, NumPy
+            dtypes, and bit widths.
+        """
         return {
             "working": self.working,
             "working_dtype": self.working_dtype,
@@ -66,14 +81,33 @@ class NumericPrecisionPolicy:
 
 
 def default_precision_policy() -> NumericPrecisionPolicy:
-    """Return the validated fixed precision policy."""
+    """Return the validated fixed precision policy.
+
+    Returns
+    -------
+    NumericPrecisionPolicy
+        Default Quantas numerical policy, using ``float64`` for real-valued
+        scientific calculations and storage.
+    """
     return NumericPrecisionPolicy()
 
 
 def precision_policy_from_options(
     options: Mapping[str, Any] | None,
 ) -> NumericPrecisionPolicy:
-    """Return the fixed precision policy for any workflow options mapping."""
+    """Return the fixed precision policy for workflow options.
+
+    Parameters
+    ----------
+    options : mapping or None
+        Workflow options. Precision-like keys are intentionally ignored because
+        Quantas exposes no runtime precision selector.
+
+    Returns
+    -------
+    NumericPrecisionPolicy
+        Fixed double-precision policy.
+    """
     return NumericPrecisionPolicy()
 
 
@@ -82,9 +116,21 @@ def cast_floating_array(
     *,
     copy: bool = False,
 ) -> NDArray[Any]:
-    """Cast a floating array to the validated Quantas dtype.
+    """Cast floating arrays to the validated Quantas dtypes.
 
-    Integer, boolean, string, and object arrays retain their original dtype.
+    Parameters
+    ----------
+    value : array-like
+        Input scalar or array. Real floating data are cast to ``float64`` and
+        complex floating data to ``complex128``; other dtypes are preserved.
+    copy : bool, optional
+        Force a copy when possible.
+
+    Returns
+    -------
+    ndarray
+        Array obeying the fixed Quantas floating-point policy while preserving
+        non-floating dtypes.
     """
     array = np.asarray(value)
     if np.issubdtype(array.dtype, np.floating):
@@ -95,7 +141,20 @@ def cast_floating_array(
 
 
 def cast_floating_scalar(value: Any) -> Any:
-    """Cast one floating scalar to the validated Quantas dtype."""
+    """Cast one floating scalar to the validated Quantas dtype.
+
+    Parameters
+    ----------
+    value : Any
+        Scalar-like value. Python/NumPy real and complex floating scalars are cast;
+        other objects are returned unchanged.
+
+    Returns
+    -------
+    Any
+        ``numpy.float64`` or ``numpy.complex128`` for floating inputs, otherwise
+        the original value.
+    """
     if isinstance(value, (float, np.floating)):
         return FLOAT_DTYPE.type(value)
     if isinstance(value, (complex, np.complexfloating)):

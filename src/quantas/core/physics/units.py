@@ -625,8 +625,7 @@ def energy_to_pressure(
     volume_scale: str,
     pressure_scale: str,
 ) -> float | np.ndarray:
-    """
-    Convert an energy density to a pressure.
+    """Convert an energy density to a pressure.
 
     The input is interpreted as an energy divided by a volume, where the energy
     and volume units are specified separately. Volume units are specified by
@@ -648,6 +647,11 @@ def energy_to_pressure(
     -------
     float or ndarray
         Converted pressure value or values.
+
+    Raises
+    ------
+    NotImplementedError
+        If any requested unit scale is unsupported.
 
     Examples
     --------
@@ -680,8 +684,7 @@ def pressure_to_energy(
     volume_scale: str,
     pressure_scale: str,
 ) -> float | np.ndarray:
-    """
-    Convert a pressure to an energy density.
+    """Convert a pressure to an energy density.
 
     The output is expressed as an energy divided by a volume, where the energy
     and volume units are specified separately. Volume units are specified by
@@ -703,6 +706,11 @@ def pressure_to_energy(
     -------
     float or ndarray
         Converted energy density value or values.
+
+    Raises
+    ------
+    NotImplementedError
+        If any requested unit scale is unsupported.
 
     Examples
     --------
@@ -794,8 +802,7 @@ def convert_volume(
     from_scale: str,
     to_scale: str,
 ) -> float | np.ndarray:
-    """
-    Convert volumes between cubes of supported metric units, Angstrom, and Bohr.
+    """Convert volumes between cubes of supported metric units, Angstrom, and Bohr.
 
     The ``from_scale`` and ``to_scale`` parameters refer to the length unit
     used to define the volume unit. For example, ``angstrom`` means
@@ -814,6 +821,11 @@ def convert_volume(
     -------
     float or ndarray
         Converted volume value or values.
+
+    Raises
+    ------
+    NotImplementedError
+        If either requested length scale is unsupported.
 
     Examples
     --------

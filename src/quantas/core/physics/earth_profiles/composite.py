@@ -164,7 +164,26 @@ class PiecewiseTemperatureModel:
         return tuple(sorted(values))
 
     def temperature(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate the composed temperature model in K."""
+        """Evaluate the composed piecewise temperature profile.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km within the full piecewise domain.
+
+        Returns
+        -------
+        ndarray
+            Absolute temperature in K with the same shape as ``depth_km`` after the
+            configured direct, offset, or blend joins are applied.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside :attr:`depth_bounds`.
+        RuntimeError
+            If an internal segment-assignment invariant is violated.
+        """
         depth = _validated_depth(depth_km, self.depth_bounds, self.name)
         flat = depth.ravel()
         result = np.empty_like(flat)
@@ -198,7 +217,14 @@ class PiecewiseTemperatureModel:
         return result.reshape(depth.shape).astype(np.float64)
 
     def metadata(self) -> dict[str, Any]:
-        """Return segment composition and explicit join transformations."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing segment composition, join
+            transformations, and source-model provenance.
+        """
         return {
             "model": self.name,
             "kind": "piecewise_temperature",
@@ -383,7 +409,14 @@ class EarthProfileModel:
         return self.evaluate(depth, profile_name=profile_name)
 
     def metadata(self) -> dict[str, Any]:
-        """Return complete pressure-temperature composition provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing the composed pressure-temperature
+            profile, its units, and provenance.
+        """
         return {
             "kind": "composed_earth_profile",
             "profile_schema_version": 1,

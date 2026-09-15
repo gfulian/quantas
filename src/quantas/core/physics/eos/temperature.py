@@ -275,7 +275,14 @@ def parse_temperature_eos_model(
 
 
 def available_temperature_eos_models() -> tuple[TemperatureEOSModel, ...]:
-    """Return all supported volume-temperature family/variant combinations."""
+    """Return all supported volume-temperature EOS models.
+
+    Returns
+    -------
+    tuple of TemperatureEOSModel
+        Canonical family/variant combinations accepted by the temperature EOS
+        implementation.
+    """
     return tuple(
         TemperatureEOSModel(family, variant)
         for family in TemperatureEOSFamily
@@ -305,7 +312,25 @@ class TemperatureEOS:
         model: str | TemperatureEOSFamily | TemperatureEOSModel,
         variant: str | TemperatureEOSVariant | None = None,
     ) -> TemperatureEOSModel:
-        """Return the canonical model specification."""
+        """Return a canonical structural-quantity--temperature model.
+
+        Parameters
+        ----------
+        model : str, TemperatureEOSFamily, or TemperatureEOSModel
+            Family name, alias, tag, or existing model specification.
+        variant : str, TemperatureEOSVariant, or None, optional
+            Explicit family-specific variant.
+
+        Returns
+        -------
+        TemperatureEOSModel
+            Canonical immutable family-and-variant specification.
+
+        Raises
+        ------
+        ValueError
+            If the family or variant is unsupported or specified inconsistently.
+        """
         return parse_temperature_eos_model(model, variant)
 
     def value(
@@ -316,12 +341,30 @@ class TemperatureEOS:
         *,
         variant: str | TemperatureEOSVariant | None = None,
     ) -> np.ndarray:
-        """Evaluate the structural quantity at one or more temperatures.
+        """Evaluate the modeled structural quantity versus temperature.
+
+        Parameters
+        ----------
+        model : str, TemperatureEOSFamily, or TemperatureEOSModel
+            Volume-temperature model specification.
+        parameters : TemperatureEOSParameters or mapping
+            Physical parameters required by the selected formulation.
+        temperature : array-like
+            Scalar or one-dimensional absolute temperatures in kelvin.
+        variant : str, TemperatureEOSVariant, or None, optional
+            Explicit model variant when not encoded in ``model``.
+
+        Returns
+        -------
+        ndarray
+            Positive structural quantity ``X(T)`` with one value per temperature and
+            the same physical unit as ``V0``.
 
         Raises
         ------
         ValueError
-            If temperatures or parameters lie outside the mathematical domain.
+            If temperatures, parameters, reference conditions, or the selected model
+            leave the real-valued physical domain.
         """
         spec = self.model(model, variant)
         pars = self._resolve_parameters(spec, parameters)
@@ -338,7 +381,30 @@ class TemperatureEOS:
         *,
         variant: str | TemperatureEOSVariant | None = None,
     ) -> np.ndarray:
-        """Evaluate the exact volumetric or auxiliary expansion coefficient."""
+        """Evaluate the exact expansion coefficient of the modeled quantity.
+
+        Parameters
+        ----------
+        model : str, TemperatureEOSFamily, or TemperatureEOSModel
+            Volume-temperature model specification.
+        parameters : TemperatureEOSParameters or mapping
+            Physical parameters required by the selected formulation.
+        temperature : array-like
+            Scalar or one-dimensional absolute temperatures in kelvin.
+        variant : str, TemperatureEOSVariant, or None, optional
+            Explicit model variant when not encoded in ``model``.
+
+        Returns
+        -------
+        ndarray
+            ``alpha = (1/X)(dX/dT)`` in ``K^-1``. For an auxiliary cubed length this
+            is the auxiliary volumetric coefficient, not the physical linear value.
+
+        Raises
+        ------
+        ValueError
+            If inputs or the selected model are outside their mathematical domain.
+        """
         spec = self.model(model, variant)
         pars = self._resolve_parameters(spec, parameters)
         temp = self._validate_temperature(temperature)
@@ -355,7 +421,29 @@ class TemperatureEOS:
         *,
         variant: str | TemperatureEOSVariant | None = None,
     ) -> np.ndarray:
-        r"""Evaluate :math:`\mathrm dX/\mathrm dT = \alpha X`."""
+        """Evaluate the temperature derivative ``dX/dT = alpha X``.
+
+        Parameters
+        ----------
+        model : str, TemperatureEOSFamily, or TemperatureEOSModel
+            Volume-temperature model specification.
+        parameters : TemperatureEOSParameters or mapping
+            Physical parameters required by the selected formulation.
+        temperature : array-like
+            Scalar or one-dimensional temperatures in kelvin.
+        variant : str, TemperatureEOSVariant, or None, optional
+            Explicit model variant when not encoded in ``model``.
+
+        Returns
+        -------
+        ndarray
+            Temperature derivative in the unit of ``X`` per kelvin.
+
+        Raises
+        ------
+        ValueError
+            If inputs or the selected model are outside their mathematical domain.
+        """
         spec = self.model(model, variant)
         pars = self._resolve_parameters(spec, parameters)
         temp = self._validate_temperature(temperature)
@@ -366,7 +454,23 @@ class TemperatureEOS:
 
     @staticmethod
     def linear_expansion_coefficient(auxiliary_alpha: ArrayLike) -> np.ndarray:
-        """Convert the expansion of :math:`q=x^3` to linear expansion."""
+        """Convert an auxiliary ``q=x^3`` expansion to linear expansion.
+
+        Parameters
+        ----------
+        auxiliary_alpha : array-like
+            Finite expansion coefficient ``alpha_q = (1/q)(dq/dT)`` in ``K^-1``.
+
+        Returns
+        -------
+        ndarray
+            Physical linear coefficient ``alpha_x = alpha_q / 3`` in ``K^-1``.
+
+        Raises
+        ------
+        ValueError
+            If any coefficient is non-finite.
+        """
         values = np.asarray(auxiliary_alpha, dtype=np.float64)
         if not np.all(np.isfinite(values)):
             raise ValueError("auxiliary expansion coefficients must be finite")

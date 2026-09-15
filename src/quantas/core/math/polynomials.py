@@ -22,8 +22,7 @@ def polyfit(
     y: ArrayLike,
     degree: int,
 ) -> NDArray[np.float64]:
-    """
-    Fit one or more datasets with a polynomial.
+    """Fit one or more datasets with a polynomial.
 
     Coefficients follow the convention used by
     :mod:`numpy.polynomial.polynomial`, where the coefficient of degree zero is
@@ -45,6 +44,11 @@ def polyfit(
         Polynomial coefficients. For a single dataset, the shape is
         ``(degree + 1,)``. For multiple datasets, the shape is
         ``(n_datasets, degree + 1)``.
+
+    Raises
+    ------
+    ValueError
+        If ``y`` is not one- or two-dimensional.
     """
     x_array = np.asarray(x, dtype=float)
     y_array = np.asarray(y, dtype=float)
@@ -62,8 +66,7 @@ def interpolate(
     x: ArrayLike | float,
     parameters: ArrayLike,
 ) -> float | NDArray[np.float64]:
-    """
-    Evaluate one or more polynomials.
+    """Evaluate one or more polynomials.
 
     Parameters
     ----------
@@ -79,6 +82,11 @@ def interpolate(
     -------
     float or ndarray
         Interpolated value or values.
+
+    Raises
+    ------
+    ValueError
+        If ``parameters`` does not have one, two, or three dimensions.
     """
     x_array = np.asarray(x, dtype=float)
     pars = np.asarray(parameters, dtype=float)
@@ -139,8 +147,7 @@ def R_squared(
     y: ArrayLike,
     parameters: ArrayLike,
 ) -> float | NDArray[np.float64]:
-    """
-    Calculate R-squared values for one or more polynomial fits.
+    """Calculate R-squared values for one or more polynomial fits.
 
     Parameters
     ----------
@@ -156,6 +163,11 @@ def R_squared(
     -------
     float or ndarray
         R-squared value or values.
+
+    Raises
+    ------
+    ValueError
+        If ``y`` is not one- or two-dimensional.
     """
     y_array = np.asarray(y, dtype=float)
     pars = np.asarray(parameters, dtype=float)

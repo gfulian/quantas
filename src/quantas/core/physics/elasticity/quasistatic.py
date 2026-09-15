@@ -100,14 +100,18 @@ def cold_finite_strain_component(
     wallace_delta: float,
     order: FiniteStrainOrder = 3,
 ) -> FloatArray:
-    r"""Evaluate one cold finite-strain stiffness component.
+    """Evaluate one cold finite-strain stiffness component.
 
     Parameters
     ----------
     volume : array_like
         Positive evaluation volume or array.
-    reference_volume, bulk_modulus, bulk_modulus_derivative : float
-        Fixed reference EOS parameters ``V0``, ``K0`` and ``Kp``.
+    reference_volume : float
+        Positive reference volume ``V0``.
+    bulk_modulus : float
+        Positive reference bulk modulus ``K0`` in GPa.
+    bulk_modulus_derivative : float
+        Dimensionless reference pressure derivative ``Kprime``.
     reference_component : float
         Component value ``C0`` at the reference state, in GPa.
     component_pressure_derivative : float
@@ -120,20 +124,21 @@ def cold_finite_strain_component(
     Returns
     -------
     ndarray
-        Component values with the shape of ``volume``.
+        Component values in GPa with the shape of ``volume``.
+
+    Raises
+    ------
+    ValueError
+        If the truncation order is unsupported, volumes or parameters are
+        non-finite, or ``K0``/``V0`` are not positive.
 
     Notes
     -----
-    ``wallace_delta`` is an analytical coefficient of the Eulerian
-    finite-strain expansion for Wallace stress--strain coefficients. It does
-    not apply an additional pressure correction to sampled input tensors.
-    Quantas requires CRYSTAL calculations performed with ``PRESSURE`` and fits
-    those already corrected coefficients directly.
-
-    References
-    ----------
-    Canonical citation keys: ``stixrude_lithgow_bertelloni_2005``,
-    ``barron_klein_1965``, and ``wallace_1972``.
+    ``wallace_delta`` is an analytical coefficient of the Eulerian finite-strain
+    expansion for Wallace stress-strain coefficients. It does not apply an
+    additional pressure correction to sampled input tensors. Quantas requires
+    CRYSTAL calculations used here to have the appropriate prestress correction
+    applied exactly once before fitting.
     """
     if order not in (2, 3):
         raise ValueError("order must be 2 or 3")
@@ -167,16 +172,38 @@ def cold_finite_strain_component_jacobian(
     wallace_delta: float,
     order: FiniteStrainOrder = 3,
 ) -> FloatArray:
-    r"""Return analytical derivatives of one component prediction.
+    """Return analytical derivatives of one finite-strain component prediction.
 
     The last axis follows ``C0, Cprime, V0, K0, Kprime, V``.
 
-    Parameters are identical to :func:`cold_finite_strain_component`.
+    Parameters
+    ----------
+    volume : array_like
+        Positive evaluation volume or array.
+    reference_volume : float
+        Positive reference volume ``V0``.
+    bulk_modulus : float
+        Positive reference bulk modulus ``K0`` in GPa.
+    bulk_modulus_derivative : float
+        Dimensionless reference pressure derivative ``Kprime``.
+    reference_component : float
+        Component value ``C0`` at the reference state, in GPa.
+    component_pressure_derivative : float
+        ``dC/dP`` at the reference state.
+    wallace_delta : float
+        Matching Voigt entry of Wallace's hydrostatic delta tensor.
+    order : {2, 3}, optional
+        Finite-strain truncation order.
 
     Returns
     -------
     ndarray
         Jacobian with shape ``volume.shape + (6,)``.
+
+    Raises
+    ------
+    ValueError
+        If the truncation order or finite-strain inputs are invalid.
     """
     if order not in (2, 3):
         raise ValueError("order must be 2 or 3")

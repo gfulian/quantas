@@ -41,15 +41,69 @@ class PressureEOS:
     """
 
     def model(self, eos: str | EOSModel, order: int | None = None) -> EOSModel:
-        """Return the canonical family-and-order specification."""
+        """Return a canonical pressure-EOS model specification.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Family name, alias, compact tag, or existing specification.
+        order : int or None, optional
+            Explicit EOS order when not embedded in ``eos``.
+
+        Returns
+        -------
+        EOSModel
+            Canonical family-and-order specification.
+
+        Raises
+        ------
+        ValueError
+            If the model family or order is unsupported.
+        """
         return parse_eos_model(eos, order)
 
     def canonical_name(self, eos: str | EOSModel, order: int | None = None) -> str:
-        """Return the canonical EOS family name."""
+        """Return the canonical family name of a pressure EOS.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            EOS family, alias, tag, or specification.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        str
+            Canonical EOS family value.
+
+        Raises
+        ------
+        ValueError
+            If the model is unsupported.
+        """
         return self.model(eos, order).family.value
 
     def canonical_tag(self, eos: str | EOSModel, order: int | None = None) -> str:
-        """Return the compact canonical EOS tag."""
+        """Return the canonical family-and-order EOS tag.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            EOS family, alias, tag, or specification.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        str
+            Stable compact family-and-order tag.
+
+        Raises
+        ------
+        ValueError
+            If the model is unsupported.
+        """
         return self.model(eos, order).tag
 
     def pressure(
@@ -60,7 +114,31 @@ class PressureEOS:
         *,
         order: int | None = None,
     ) -> np.ndarray:
-        """Evaluate pressure at one or more volumes."""
+        """Evaluate an isothermal pressure-volume equation of state.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Pressure-EOS family, tag, or specification.
+        parameters : array-like, mapping, or EOSParameters
+            Free or complete physical EOS parameters.
+        volume : array-like
+            Positive finite volumes using the same unit and normalization as ``V0``.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        ndarray
+            Pressure values with the same shape as ``volume`` and the same pressure
+            unit as ``K0``.
+
+        Raises
+        ------
+        ValueError
+            If the model, parameters, or volumes are invalid or outside the model
+            domain.
+        """
         model = self.model(eos, order)
         pars = resolve_pressure_parameters(model, parameters)
         values = self._validate_volume(volume)
@@ -92,7 +170,30 @@ class PressureEOS:
         *,
         order: int | None = None,
     ) -> np.ndarray:
-        """Evaluate the isothermal bulk modulus."""
+        """Evaluate the isothermal bulk modulus ``K_T(V)``.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Pressure-EOS family, tag, or specification.
+        parameters : array-like, mapping, or EOSParameters
+            Free or complete physical EOS parameters.
+        volume : array-like
+            Positive finite volumes in the same unit as ``V0``.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        ndarray
+            Isothermal bulk modulus with the input volume shape and the same pressure
+            unit as ``K0``.
+
+        Raises
+        ------
+        ValueError
+            If the model, parameters, or volumes are invalid.
+        """
         model = self.model(eos, order)
         pars = resolve_pressure_parameters(model, parameters)
         values = self._validate_volume(volume)
@@ -130,7 +231,29 @@ class PressureEOS:
         *,
         order: int | None = None,
     ) -> np.ndarray:
-        """Evaluate the first pressure derivative of the bulk modulus."""
+        """Evaluate the first pressure derivative ``dK_T/dP``.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Pressure-EOS family, tag, or specification.
+        parameters : array-like, mapping, or EOSParameters
+            Free or complete physical EOS parameters.
+        volume : array-like
+            Positive finite volumes in the same unit as ``V0``.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        ndarray
+            Dimensionless first pressure derivative with the input volume shape.
+
+        Raises
+        ------
+        ValueError
+            If the model, parameters, or volumes are invalid.
+        """
         model = self.model(eos, order)
         pars = resolve_pressure_parameters(model, parameters)
         values = self._validate_volume(volume)
@@ -168,7 +291,30 @@ class PressureEOS:
         *,
         order: int | None = None,
     ) -> np.ndarray:
-        """Evaluate the second pressure derivative of the bulk modulus."""
+        r"""Evaluate the second pressure derivative ``d²K_T/dP²``.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Pressure-EOS family, tag, or specification.
+        parameters : array-like, mapping, or EOSParameters
+            Free or complete physical EOS parameters.
+        volume : array-like
+            Positive finite volumes in the same unit as ``V0``.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        ndarray
+            Second derivative in inverse-pressure units consistent with ``K0`` and
+            with the input volume shape.
+
+        Raises
+        ------
+        ValueError
+            If the model, parameters, or volumes are invalid.
+        """
         model = self.model(eos, order)
         pars = resolve_pressure_parameters(model, parameters)
         values = self._validate_volume(volume)
@@ -207,12 +353,31 @@ class PressureEOS:
 
     @staticmethod
     def murnaghan(volume: ArrayLike, K0: float, KP: float, V0: float) -> np.ndarray:
-        r"""Return pressure from the Murnaghan equation.
+        """Return pressure from the Murnaghan equation.
+
+        The pressure is
 
         .. math::
 
-            P(V)=\frac{K_0}{K'_0}
-            \left[\left(\frac{V_0}{V}\right)^{K'_0}-1\right].
+            P(V)=\\frac{K_0}{K'_0}
+            \\left[\\left(\\frac{V_0}{V}\\right)^{K'_0}-1\\right].
+
+        Parameters
+        ----------
+        volume : array_like
+            Positive evaluation volume or volumes.
+        K0 : float
+            Reference isothermal bulk modulus. The returned pressure uses the same
+            pressure unit.
+        KP : float
+            Dimensionless first pressure derivative of the bulk modulus.
+        V0 : float
+            Positive reference volume in the same unit as ``volume``.
+
+        Returns
+        -------
+        ndarray
+            Pressure values with the broadcast shape of ``volume``.
         """
         pars = EOSParameters(K0=K0, KP=KP, KPP=0.0, V0=V0)
         return PressureEOS._murnaghan_pressure(

@@ -43,7 +43,26 @@ class FittedEnergyEOS:
         sampled_volumes: ArrayLike | None = None,
         covariance: np.ndarray | None = None,
     ) -> None:
-        """Initialize a fitted equation-of-state model."""
+        """Initialize a reusable fitted energy EOS.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Integrated EOS family, tag, or canonical model specification.
+        parameters : array-like
+            Free fitted parameters in the selected model's energy-parameter order.
+        sampled_volumes : array-like or None, optional
+            Positive sampled volumes used to identify interpolation versus
+            extrapolation of reconstructed states.
+        covariance : ndarray or None, optional
+            Free-parameter covariance with shape ``(n_free, n_free)``.
+
+        Raises
+        ------
+        ValueError
+            If parameters, sampled volumes, or covariance violate the selected EOS
+            contract.
+        """
         self._energy_eos = EnergyEOS()
         self._pressure_eos = PressureEOS()
         self._model = self._energy_eos.model(eos)
@@ -147,25 +166,89 @@ class FittedEnergyEOS:
         return float(self.resolved_parameters.KPP)
 
     def pressure(self, volume: ArrayLike) -> np.ndarray:
-        """Evaluate pressure at one or more volumes."""
+        """Evaluate pressure at one or more volumes.
+
+        Parameters
+        ----------
+        volume : array-like
+            Positive volumes in the same unit and normalization as the fitted ``V0``.
+
+        Returns
+        -------
+        ndarray
+            Pressure with the input shape and the same pressure unit as fitted ``K0``.
+
+        Raises
+        ------
+        ValueError
+            If volumes are invalid or outside the mathematical domain of the EOS.
+        """
         return self._pressure_eos.pressure(
             self._model, self.resolved_parameters, volume
         )
 
     def bulk_modulus(self, volume: ArrayLike) -> np.ndarray:
-        """Evaluate the isothermal bulk modulus."""
+        """Evaluate the isothermal bulk modulus at one or more volumes.
+
+        Parameters
+        ----------
+        volume : array-like
+            Positive volumes in the same unit as fitted ``V0``.
+
+        Returns
+        -------
+        ndarray
+            ``K_T(V)`` with the input shape and the same pressure unit as ``K0``.
+
+        Raises
+        ------
+        ValueError
+            If volumes are invalid for the selected EOS.
+        """
         return self._pressure_eos.bulk_modulus(
             self._model, self.resolved_parameters, volume
         )
 
     def bulk_modulus_derivative(self, volume: ArrayLike) -> np.ndarray:
-        """Evaluate the first pressure derivative of the bulk modulus."""
+        """Evaluate the first pressure derivative of the bulk modulus.
+
+        Parameters
+        ----------
+        volume : array-like
+            Positive volumes in the same unit as fitted ``V0``.
+
+        Returns
+        -------
+        ndarray
+            Dimensionless ``dK_T/dP`` values with the input shape.
+
+        Raises
+        ------
+        ValueError
+            If volumes are invalid for the selected EOS.
+        """
         return self._pressure_eos.bulk_modulus_derivative(
             self._model, self.resolved_parameters, volume
         )
 
     def bulk_modulus_second_derivative(self, volume: ArrayLike) -> np.ndarray:
-        """Evaluate the second pressure derivative of the bulk modulus."""
+        r"""Evaluate the second pressure derivative of the bulk modulus.
+
+        Parameters
+        ----------
+        volume : array-like
+            Positive volumes in the same unit as fitted ``V0``.
+
+        Returns
+        -------
+        ndarray
+            ``d²K_T/dP²`` in inverse-pressure units consistent with ``K0``.
+
+        Raises
+        ------
+        ValueError
+            If volumes are invalid for the selected EOS.
+        """
         return self._pressure_eos.bulk_modulus_second_derivative(
             self._model, self.resolved_parameters, volume
         )
@@ -179,7 +262,31 @@ class FittedEnergyEOS:
         rtol: float = 1.0e-12,
         maxiter: int = 200,
     ) -> float:
-        """Return the positive volume satisfying ``P(V)=pressure``."""
+        """Invert the fitted EOS and return volume at a target pressure.
+
+        Parameters
+        ----------
+        pressure : float
+            Finite target pressure in the same unit as fitted ``K0``.
+        bounds : tuple of float or None, optional
+            Initial positive volume bracket. When omitted, sampled-volume bounds are
+            used when available, otherwise ``0.75*V0`` to ``1.25*V0``.
+        xtol, rtol : float, optional
+            Absolute and relative Brent root tolerances.
+        maxiter : int, optional
+            Maximum Brent iterations after a sign-changing bracket is found.
+
+        Returns
+        -------
+        float
+            Positive volume in the same unit as fitted ``V0``.
+
+        Raises
+        ------
+        ValueError
+            If pressure or bounds are invalid, EOS evaluation is non-finite, or a
+            pressure root cannot be bracketed.
+        """
         return self._volume_at_pressure_for_parameters(
             pressure,
             self._parameters,
@@ -201,7 +308,40 @@ class FittedEnergyEOS:
         random_state: RandomState = None,
         minimum_success_fraction: float = 0.8,
     ) -> EOSState:
-        """Evaluate volume, bulk modulus and ``K'`` at a target pressure."""
+        """Evaluate an EOS state and optional uncertainty at one pressure.
+
+        Parameters
+        ----------
+        pressure : float
+            Target pressure in the same unit as ``K0``.
+        bounds : tuple of float or None, optional
+            Initial volume bracket used to invert ``P(V)``.
+        uncertainty_method : str, optional
+            ``"none"``, ``"covariance"``/``"linear"``, or
+            ``"montecarlo"``/``"mc"``.
+        relative_step : float, optional
+            Relative finite-difference step used by covariance propagation.
+        confidence_level : float, optional
+            Two-sided confidence level for propagated intervals.
+        monte_carlo_samples : int, optional
+            Number of parameter draws for Monte Carlo propagation.
+        random_state : int, Generator, or None, optional
+            Random seed or generator for reproducible Monte Carlo sampling.
+        minimum_success_fraction : float, optional
+            Minimum accepted fraction of successful Monte Carlo EOS inversions.
+
+        Returns
+        -------
+        EOSState
+            Pressure, volume, isothermal bulk modulus, ``K'``, extrapolation flag, and
+            optional uncertainty information.
+
+        Raises
+        ------
+        ValueError
+            If inversion or uncertainty settings are invalid, required covariance is
+            unavailable, or uncertainty propagation is numerically unusable.
+        """
         vector = self._state_vector_at_pressure(
             pressure, self._parameters, bounds=bounds
         )
@@ -250,7 +390,34 @@ class FittedEnergyEOS:
         random_state: RandomState = None,
         minimum_success_fraction: float = 0.8,
     ) -> list[EOSState]:
-        """Evaluate EOS states at several pressures."""
+        """Evaluate fitted EOS states on a one-dimensional pressure grid.
+
+        Parameters
+        ----------
+        pressures : array-like
+            Finite one-dimensional target pressures in the unit of ``K0``.
+        uncertainty_method : str, optional
+            Uncertainty strategy passed to :meth:`state_at_pressure`.
+        relative_step, confidence_level : float, optional
+            Covariance/interval controls passed to each state evaluation.
+        monte_carlo_samples : int, optional
+            Number of Monte Carlo draws per state.
+        random_state : int, Generator, or None, optional
+            Random seed or generator.
+        minimum_success_fraction : float, optional
+            Minimum successful Monte Carlo inversion fraction.
+
+        Returns
+        -------
+        list of EOSState
+            States in the same order as ``pressures``.
+
+        Raises
+        ------
+        ValueError
+            If ``pressures`` is not a finite vector or any requested state cannot be
+            evaluated under the selected uncertainty policy.
+        """
         values = np.asarray(pressures, dtype=np.float64)
         if values.ndim != 1:
             raise ValueError("pressures must be a one-dimensional array")
@@ -276,7 +443,29 @@ class FittedEnergyEOS:
         bounds: tuple[float, float] | None = None,
         relative_step: float = 1.0e-5,
     ) -> np.ndarray:
-        """Return the state Jacobian with respect to free EOS parameters."""
+        """Return the local state Jacobian with respect to free EOS parameters.
+
+        Parameters
+        ----------
+        pressure : float
+            Target pressure in the unit of ``K0``.
+        bounds : tuple of float or None, optional
+            Initial volume bracket used during perturbed EOS inversions.
+        relative_step : float, optional
+            Positive relative finite-difference scale.
+
+        Returns
+        -------
+        ndarray
+            Matrix with shape ``(3, n_free)`` for ``(V, K, K')`` with columns in
+            :attr:`parameter_names` order. The ``E0`` column is identically zero.
+
+        Raises
+        ------
+        ValueError
+            If the finite-difference scale is invalid or a perturbed pressure state
+            cannot be evaluated.
+        """
         if not np.isfinite(relative_step) or relative_step <= 0.0:
             raise ValueError("relative_step must be finite and positive")
         jacobian = np.zeros((3, len(self._parameter_names)), dtype=np.float64)
@@ -314,7 +503,29 @@ class FittedEnergyEOS:
         bounds: tuple[float, float] | None = None,
         relative_step: float = 1.0e-5,
     ) -> np.ndarray:
-        """Propagate the free-parameter covariance to one pressure state."""
+        """Propagate fitted-parameter covariance to ``(V, K, K')``.
+
+        Parameters
+        ----------
+        pressure : float
+            Target pressure in the unit of ``K0``.
+        bounds : tuple of float or None, optional
+            Initial volume bracket for state inversion.
+        relative_step : float, optional
+            Relative finite-difference scale used for the state Jacobian.
+
+        Returns
+        -------
+        ndarray
+            Symmetric positive-semidefinite covariance with shape ``(3, 3)`` in state
+            order ``volume, bulk_modulus, bulk_modulus_derivative``.
+
+        Raises
+        ------
+        ValueError
+            If no free-parameter covariance is available, Jacobian evaluation fails,
+            or the propagated covariance is not numerically positive semidefinite.
+        """
         covariance = self._require_covariance()
         jacobian = self.state_jacobian_at_pressure(
             pressure, bounds=bounds, relative_step=relative_step

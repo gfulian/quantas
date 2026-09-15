@@ -89,7 +89,14 @@ class PressureEstimate:
         return float(np.nanmax(self.pressure))
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a YAML- and JSON-serializable representation."""
+        """Return a YAML- and JSON-serializable pressure estimate.
+
+        Returns
+        -------
+        dict
+            Mapping containing the pressure array and range, unit, fitting result,
+            warnings, and pressure-source metadata.
+        """
         return {
             "method": self.method,
             "success": self.success,
@@ -112,13 +119,38 @@ def pressure_from_energy_polynomial(
     volume_unit: str,
     pressure_unit: str = "GPa",
 ) -> PressureEstimate:
-    """Estimate ``-dE/dV`` from a polynomial energy--volume fit.
+    """Estimate static pressure from a polynomial E(V) representation.
 
     The polynomial coordinate is centred and scaled over the sampled interval
-    before fitting; its transform is retained in the fit metadata and the
-    derivative is converted back to physical-volume coordinates.
-    ``volume_unit`` is the length unit whose cube defines the input volumes,
-    for example ``"angstrom"`` for values expressed in angstrom cubed.
+    before fitting. Its transform is retained in fit metadata and the derivative
+    is converted back to physical-volume coordinates before unit conversion.
+
+    Parameters
+    ----------
+    volume, energy : array-like
+        Aligned one-dimensional static E(V) samples. Volumes must be positive.
+    degree : int
+        Polynomial degree passed to the shared polynomial fitter.
+    energy_unit : str
+        Unit of ``energy`` accepted by :func:`quantas.core.physics.units.energy_to_pressure`.
+    volume_unit : str
+        Length unit whose cube defines ``volume``; for example ``"angstrom"`` for
+        values in cubic angstrom. This is intentionally a length-unit token rather
+        than a string such as ``"angstrom^3"``.
+    pressure_unit : str, optional
+        Requested output pressure unit.
+
+    Returns
+    -------
+    PressureEstimate
+        Pressure evaluated at every sampled volume, together with the polynomial
+        fit diagnostics, warnings, units, and scaling metadata.
+
+    Raises
+    ------
+    ValueError
+        If E(V) samples are invalid, the degree is unsupported, or a unit token is
+        not recognized.
     """
     volume_array, energy_array = _energy_volume_arrays(volume, energy)
     fit, fitted_polynomial = fit_polynomial(
@@ -171,10 +203,36 @@ def pressure_from_energy_eos(
     pressure_unit: str = "GPa",
     maxfev: int | None = None,
 ) -> PressureEstimate:
-    """Estimate ``-dE/dV`` from an integrated energy EOS fit.
+    """Estimate static pressure from an integrated energy-EOS fit.
 
-    ``volume_unit`` is the length unit whose cube defines the input volumes.
-    The returned metadata records the canonical EOS tag, family, and order.
+    Parameters
+    ----------
+    volume, energy : array-like
+        Aligned one-dimensional static E(V) samples. Volumes must be positive.
+    eos : str
+        Integrated energy-EOS family or compact tag.
+    energy_unit : str
+        Unit of ``energy`` accepted by the shared unit-conversion service.
+    volume_unit : str
+        Length unit whose cube defines ``volume``; for example ``"angstrom"`` for
+        values in cubic angstrom.
+    pressure_unit : str, optional
+        Requested output pressure unit.
+    maxfev : int or None, optional
+        Optional maximum nonlinear EOS fitting evaluations.
+
+    Returns
+    -------
+    PressureEstimate
+        Pressure evaluated at every sampled volume and complete fit/provenance
+        information. Unsupported EOS or fit failure is represented by
+        ``PressureEstimate.success == False``.
+
+    Raises
+    ------
+    ValueError
+        If the E(V) arrays or requested units are invalid. Unsupported EOS models
+        are converted to a failed :class:`PressureEstimate` rather than raised.
     """
     volume_array, energy_array = _energy_volume_arrays(volume, energy)
     model = EnergyEOS()

@@ -202,7 +202,14 @@ class EOSModel:
         return sources
 
     def as_dict(self) -> dict[str, object]:
-        """Return a serializable representation."""
+        """Return a serializable EOS model description.
+
+        Returns
+        -------
+        dict
+            Mapping containing the EOS family, order, stable tag, display name,
+            and energy-form capability.
+        """
         return {
             "family": self.family.value,
             "order": self.order,

@@ -161,7 +161,34 @@ class StructuralPathModel:
         *,
         basis: Literal["crystallographic", "sampled"] = "crystallographic",
     ) -> None:
-        """Build the structural-path interpolation model."""
+        """Build a structural-path interpolation model.
+
+        Parameters
+        ----------
+        series : StructuralSeries
+            Volume-resolved crystal structures in one consistent primitive-cell
+            normalization and Cartesian orientation.
+        degree : int, optional
+            Polynomial degree used for each independent deviatoric logarithmic-strain
+            component. The effective degree is capped at ``series.nvol - 1``.
+        basis : {"crystallographic", "sampled"}, optional
+            Frame in which the structural path is represented. ``"crystallographic"``
+            reconstructs a stable crystallographic basis from the reference structure;
+            ``"sampled"`` preserves the supplied lattice basis.
+
+        Raises
+        ------
+        ValueError
+            If fewer than two structures are available, volumes are invalid, the
+            reference lattice is singular, ``basis`` is unsupported, or a required
+            structural-path fit fails.
+
+        Notes
+        -----
+        Cubic series use the exact isotropic relation and do not fit deviatoric
+        components. Non-cubic series remove rigid rotations before fitting the
+        volume-dependent deviatoric logarithmic stretch.
+        """
         if series.nvol < 2:
             raise ValueError("at least two structures are required")
         if degree < 1:
@@ -735,19 +762,25 @@ class StructuralPathModel:
 
 
 def axial_expansion(lattice: FloatArray, derivative: FloatArray) -> FloatArray:
-    r"""Return linear expansion coefficients of the three lattice edges.
+    """Return linear expansion coefficients of the three lattice edges.
 
     Parameters
     ----------
-    lattice : array-like
+    lattice : array_like
         Direct lattice matrix with vectors stored by rows.
-    derivative : array-like
-        Temperature derivative of the lattice matrix.
+    derivative : array_like
+        Temperature derivative of the lattice matrix in the same basis.
 
     Returns
     -------
     ndarray
-        :math:`(1/a_i)(\partial a_i/\partial T)` for ``a``, ``b``, and ``c``.
+        ``(1/a_i) (d a_i / dT)`` for the ``a``, ``b``, and ``c`` lattice
+        edges, in inverse-temperature units inherited from ``derivative``.
+
+    Raises
+    ------
+    ValueError
+        If any lattice vector has zero or negative length.
     """
     matrix = np.asarray(lattice, dtype=np.float64)
     rate = np.asarray(derivative, dtype=np.float64)

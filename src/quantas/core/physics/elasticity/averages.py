@@ -33,7 +33,14 @@ class IsotropicElasticProperties:
     poisson_ratio: float
 
     def as_array(self) -> np.ndarray:
-        """Return values in ``K, E, G, nu`` order."""
+        """Return the isotropic properties in canonical order.
+
+        Returns
+        -------
+        ndarray
+            One-dimensional ``float64`` array ordered as bulk modulus ``K``, Young's
+            modulus ``E``, shear modulus ``G``, and Poisson ratio ``nu``.
+        """
         return np.asarray(
             [
                 self.bulk_modulus,
@@ -54,7 +61,14 @@ class ElasticAverages:
     hill: IsotropicElasticProperties
 
     def as_array(self) -> np.ndarray:
-        """Return a ``(3, 4)`` array ordered as Voigt, Reuss, and Hill."""
+        """Return Voigt, Reuss, and Hill properties in canonical order.
+
+        Returns
+        -------
+        ndarray
+            Array with shape ``(3, 4)``. Rows are Voigt, Reuss, and Hill; columns
+            are ``K``, ``E``, ``G``, and ``nu``.
+        """
         return np.vstack(
             [
                 self.voigt.as_array(),
