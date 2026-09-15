@@ -4,7 +4,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Sequence
 
 import numpy as np
@@ -23,7 +22,6 @@ from quantas.modules.thermoelasticity.postfit import (
 )
 
 
-@dataclass(slots=True)
 class ThermoelasticAnalysisEngine:
     """Evaluate point, grid, and depth-profile states through one path.
 
@@ -36,6 +34,8 @@ class ThermoelasticAnalysisEngine:
         Analysis policies.  When omitted, options are reconstructed from the
         archive while ignoring obsolete frontend keys.
     """
+
+    __slots__ = ("source", "options")
 
     source: ResultData
     options: ThermoelasticOptions

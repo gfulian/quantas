@@ -150,9 +150,25 @@ def _run(command: Sequence[str], *, cwd: Path | None = None) -> None:
     subprocess.run(list(command), cwd=cwd, check=True)
 
 
-def _smoke_script() -> str:
-    """Return the installed-package smoke-test program."""
-    return r"""
+def _smoke_script(*, verify_distribution_metadata: bool = True) -> str:
+    """Return the package smoke-test program.
+
+    Parameters
+    ----------
+    verify_distribution_metadata : bool, optional
+        When ``True``, require installed distribution metadata to match
+        ``quantas.__version__``. Source-tree registry tests disable this
+        check so they do not depend on stale editable-install metadata.
+    """
+    metadata_check = (
+        'version = metadata.version("quantas")\n'
+        'assert version == quantas.__version__\n'
+        'requirements = metadata.requires("quantas") or []\n'
+        'assert not any("dash" in item.lower() for item in requirements)'
+        if verify_distribution_metadata
+        else 'version = quantas.__version__'
+    )
+    script = r"""
 from importlib import metadata, resources
 from pathlib import Path
 
@@ -161,8 +177,7 @@ from quantas.api import elasticity, eos, ha, plotting, qha, registry, seismic, t
 from quantas.api.registry import Capability
 from quantas.core.physics.elasticity import cold_finite_strain_component
 
-version = metadata.version("quantas")
-assert version == quantas.__version__
+__METADATA_CHECK__
 assert registry.get("eos").has(Capability.FIT)
 assert registry.get("thermoelasticity").has(Capability.RUN_CONTEXT)
 plot_namespaces = {
@@ -201,9 +216,6 @@ reference_component = cold_finite_strain_component(
 )
 assert float(reference_component) == 200.0
 
-requirements = metadata.requires("quantas") or []
-assert not any("dash" in item.lower() for item in requirements)
-
 marker = resources.files("quantas").joinpath("py.typed")
 assert marker.is_file(), "Installed wheel is missing quantas/py.typed"
 
@@ -212,6 +224,7 @@ print(f"Quantas {version} installed from {package_path}")
 print("Organized public API:", ", ".join(item.name for item in registry.list_modules()))
 print("Thermoelastic QSA API: available")
 """
+    return script.replace("__METADATA_CHECK__", metadata_check)
 
 
 def _validate_artifacts(artifacts: Sequence[Path], root: Path) -> None:
