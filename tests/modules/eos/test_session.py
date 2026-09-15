@@ -14,8 +14,10 @@ from quantas.core.math.fitting import OLSOptions, WLSOptions
 from quantas.modules.eos import (
     EOSArchive,
     EOSDataset,
+    EOSFitter,
     EOSFitOptions,
     EOSFitRequest,
+    EOSFitResult,
     EOSRecordDisposition,
     EOSSession,
     EOSSlotStatus,
@@ -24,6 +26,16 @@ from quantas.modules.eos import (
 )
 
 DATA = Path(__file__).with_name("data")
+
+
+class _RaisingFitter(EOSFitter):
+    """Test double that raises one exception before numerical execution."""
+
+    def __init__(self, exc: Exception) -> None:
+        self.exc = exc
+
+    def fit(self, dataset: EOSDataset, request: EOSFitRequest) -> EOSFitResult:
+        raise self.exc
 
 
 def _request(model: str) -> EOSFitRequest:
@@ -167,6 +179,35 @@ def test_session_persists_numerical_validation_failures(tmp_path: Path) -> None:
         assert session.inspect_record(record.record_id).disposition is (
             EOSRecordDisposition.UNDECIDED
         )
+
+
+def test_session_classifies_documented_request_exception_as_invalid_input(
+    tmp_path: Path,
+) -> None:
+    """Documented request errors remain persistent INVALID_INPUT attempts."""
+    path = tmp_path / "expected_error.hdf5"
+    fitter = _RaisingFitter(ValueError("invalid synthetic request"))
+    with EOSSession.create(DATA / "PV_quartz.dat", path, fitter=fitter) as session:
+        record = session.fit(_request("BM3"))
+
+    assert record.result.fit.status.value == "invalid_input"
+    assert record.result.metadata["workflow_exception"] == "ValueError"
+    assert (
+        record.result.metadata["workflow_failure_classification"]
+        == "request_error"
+    )
+
+
+def test_session_propagates_unexpected_workflow_exception(
+    tmp_path: Path,
+) -> None:
+    """Unexpected workflow exceptions must remain visible to the caller."""
+    path = tmp_path / "unexpected_error.hdf5"
+    fitter = _RaisingFitter(RuntimeError("synthetic backend failure"))
+    with EOSSession.create(DATA / "PV_quartz.dat", path, fitter=fitter) as session:
+        with pytest.raises(RuntimeError, match="synthetic backend failure"):
+            session.fit(_request("BM3"))
+        assert session.archive.record_ids == ()
 
 
 def test_archive_size_warning_is_advisory_and_emitted_once(tmp_path: Path) -> None:

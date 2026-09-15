@@ -232,7 +232,9 @@ class EOSFitter:
         ------
         NotImplementedError
             If the requested scientific domain or fitting strategy is outside
-            the implemented pressure-volume and volume-temperature milestones.
+            the implemented capabilities.
+        TypeError
+            If the requested model type is incompatible with the fit domain.
         ValueError
             If the selected dataset cannot support the requested fit.
         """

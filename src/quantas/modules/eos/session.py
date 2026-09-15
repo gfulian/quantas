@@ -18,8 +18,12 @@ from typing import Any
 import numpy as np
 
 from quantas.core.events import Event, EventLevel, EventRecord, NullObserver
-from quantas.core.math.fitting import FitResult, FitStatus, ParameterState
+from quantas.core.math.fitting import ParameterState
 
+from ._fit_failures import (
+    EXPECTED_EOS_FIT_EXCEPTIONS,
+    eos_invalid_request_result,
+)
 from .api import EOSFitter
 from .archive import EOSArchive, infer_result_slots
 from .history import EOSFitRecord, EOSResultSlot, EOSSlotState, EOSStateEvent
@@ -396,8 +400,10 @@ class EOSSession:
         -----
         Numerical and request-validation failures produced after a valid slot
         is selected are converted to failed :class:`EOSFitResult` objects and
-        persisted. The frontend may then inspect or reject them like any other
-        attempt.
+        persisted. Documented request errors use ``INVALID_INPUT``. Numerical
+        failures already returned by the fitter retain their original status,
+        while unexpected workflow exceptions propagate instead of being
+        misclassified as invalid scientific input.
         """
         self._require_open()
         slot = EOSResultSlot.from_request(request)
@@ -544,25 +550,11 @@ class EOSSession:
         return record
 
     def _execute_fit(self, request: EOSFitRequest) -> EOSFitResult:
-        """Convert workflow exceptions into persistent failed fit results."""
+        """Persist documented request errors and expose unexpected failures."""
         try:
             return self.fitter.fit(self.dataset, request)
-        except Exception as exc:
-            fit = FitResult.failed(
-                str(exc),
-                status=FitStatus.INVALID_INPUT,
-                method=(
-                    None
-                    if request.options.solver_options is None
-                    else request.options.solver_options.method
-                ),
-            )
-            return EOSFitResult(
-                request=request,
-                fit=fit,
-                warnings=[str(exc)],
-                metadata={"workflow_exception": type(exc).__name__},
-            )
+        except EXPECTED_EOS_FIT_EXCEPTIONS as exc:
+            return eos_invalid_request_result(request, exc)
 
     def _check_archive_size(self) -> EOSArchiveSizeInfo:
         """Emit one warning after the advisory size threshold is reached."""

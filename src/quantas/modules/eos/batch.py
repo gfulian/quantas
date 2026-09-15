@@ -17,8 +17,11 @@ from pathlib import Path
 from typing import Any
 
 from quantas.core.events import Event, EventLevel, EventRecord, NullObserver
-from quantas.core.math.fitting import FitResult, FitStatus
 
+from ._fit_failures import (
+    EXPECTED_EOS_FIT_EXCEPTIONS,
+    eos_invalid_request_result,
+)
 from .api import EOSFitter
 from .archive import EOSArchive
 from .history import EOSResultSlot
@@ -338,24 +341,11 @@ class EOSBatchWorkflow:
                 )
 
     def _execute_job(self, dataset: EOSDataset, request: EOSFitRequest) -> EOSFitResult:
+        """Execute one fit while preserving workflow failure semantics."""
         try:
             return self.fitter.fit(dataset, request)
-        except Exception as exc:
-            fit = FitResult.failed(
-                str(exc),
-                status=FitStatus.INVALID_INPUT,
-                method=(
-                    None
-                    if request.options.solver_options is None
-                    else request.options.solver_options.method
-                ),
-            )
-            return EOSFitResult(
-                request=request,
-                fit=fit,
-                warnings=[str(exc)],
-                metadata={"workflow_exception": type(exc).__name__},
-            )
+        except EXPECTED_EOS_FIT_EXCEPTIONS as exc:
+            return eos_invalid_request_result(request, exc)
 
     def _emit(
         self,

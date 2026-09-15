@@ -13,9 +13,12 @@ from quantas.modules.eos import (
     EOSBatchJob,
     EOSBatchPlan,
     EOSBatchWorkflow,
+    EOSDataset,
     EOSFitDomain,
     EOSFitOptions,
+    EOSFitter,
     EOSFitRequest,
+    EOSFitResult,
     EOSReportDetail,
     EOSReportOptions,
     EOSSlotStatus,
@@ -24,6 +27,16 @@ from quantas.modules.eos import (
 )
 
 DATA = Path(__file__).with_name("data")
+
+
+class _RaisingFitter(EOSFitter):
+    """Test double that raises one exception before numerical execution."""
+
+    def __init__(self, exc: Exception) -> None:
+        self.exc = exc
+
+    def fit(self, dataset: EOSDataset, request: EOSFitRequest) -> EOSFitResult:
+        raise self.exc
 
 
 def _request(
@@ -132,6 +145,38 @@ def test_continue_policy_persists_failed_attempt_and_later_success(
         state = archive.slot_state("vt/volume")
         assert state.accepted_record_id == 2
         assert state.attempted_record_ids == (1, 2)
+
+
+def test_batch_distinguishes_request_errors_from_unexpected_exceptions(
+    tmp_path: Path,
+) -> None:
+    """Batch jobs persist request errors but expose unexpected exceptions."""
+    request = _request()
+    plan = EOSBatchPlan(jobs=(EOSBatchJob(request, accept=False),))
+
+    expected = EOSBatchWorkflow(
+        fitter=_RaisingFitter(ValueError("invalid synthetic request"))
+    ).run(
+        DATA / "PV_quartz.dat",
+        plan,
+        tmp_path / "expected.hdf5",
+    )
+    expected_result = expected.jobs[0].result
+    assert expected_result.fit.status.value == "invalid_input"
+    assert (
+        expected_result.metadata["workflow_failure_classification"]
+        == "request_error"
+    )
+
+    unexpected = EOSBatchWorkflow(
+        fitter=_RaisingFitter(RuntimeError("synthetic backend failure"))
+    )
+    with pytest.raises(RuntimeError, match="synthetic backend failure"):
+        unexpected.run(
+            DATA / "PV_quartz.dat",
+            plan,
+            tmp_path / "unexpected.hdf5",
+        )
 
 
 def test_reports_separate_data_uncertainties_and_extended_diagnostics(
