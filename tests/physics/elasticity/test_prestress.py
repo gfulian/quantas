@@ -10,8 +10,10 @@ from quantas.core.physics.elasticity import (
     correct_hydrostatic_elastic_series,
     correct_hydrostatic_elastic_state,
     hydrostatic_wallace_stiffness,
+    resolve_energy_derived_pressures,
 )
 from quantas.core.physics.kieffer import build_kieffer_volume_series
+from quantas.core.physics.units import energy_to_pressure
 from quantas.models import (
     ElasticState,
     ElasticStateSeries,
@@ -160,3 +162,54 @@ def test_external_pressure_assignment_cannot_replace_provenance() -> None:
             pressure_source=PressureSource.ENERGY_POLYNOMIAL,
             assignment_method="energy_polynomial",
         )
+
+def test_energy_pressure_resolution_reuses_fit_matching_and_assignment() -> None:
+    """One backend-neutral service owns E(V) fitting and volume assignment."""
+    raw = ElasticStateSeries(
+        states=(
+            _state(90.0, None),
+            _state(100.0, None),
+            _state(110.0, None),
+        ),
+        reference_index=1,
+        metadata={"dataset": "synthetic"},
+    )
+    source_volumes = np.asarray([110.0, 95.0, 90.0, 105.0, 100.0])
+    source_energies = -100.0 + 1.0e-4 * (source_volumes - 100.0) ** 2
+
+    resolution = resolve_energy_derived_pressures(
+        raw,
+        source_volumes,
+        source_energies,
+        pressure_source=PressureSource.ENERGY_POLYNOMIAL,
+        source_dataset="synthetic-e-v",
+        energy_unit="Ha",
+        volume_length_unit="angstrom",
+        volume_unit="angstrom^3",
+        polynomial_degree=2,
+    )
+
+    expected = energy_to_pressure(
+        -2.0e-4 * (raw.volumes - 100.0),
+        "Ha",
+        "angstrom",
+        "GPa",
+    )
+    np.testing.assert_allclose(
+        resolution.pressures_gpa, expected, rtol=2.0e-11, atol=1.0e-10
+    )
+    assert [match.source_index for match in resolution.matches] == [2, 4, 0]
+    assert resolution.provenance["method"] == "energy_polynomial"
+    assert resolution.provenance["relation"] == "P(V) = -dE/dV"
+    assert resolution.provenance["source_dataset"] == "synthetic-e-v"
+    assert resolution.provenance["settings"] == {"degree": 2}
+    assert resolution.provenance["volume_unit"] == "angstrom^3"
+    assert resolution.provenance["volume_matches"][0]["source_index"] == 2
+    assignment = resolution.series.metadata["pressure_assignment"]
+    assert assignment["fit"]["success"] is True
+    assert assignment["volume_matches"][1]["source_index"] == 4
+    np.testing.assert_allclose(resolution.series.stiffness, raw.stiffness)
+    assert all(
+        state.prestress.pressure_source is PressureSource.ENERGY_POLYNOMIAL
+        for state in resolution.series.states
+    )

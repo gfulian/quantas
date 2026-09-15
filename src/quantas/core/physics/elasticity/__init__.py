@@ -51,6 +51,10 @@ from .prestress import (
     correct_hydrostatic_elastic_state,
     hydrostatic_wallace_stiffness,
 )
+from .pressure_resolution import (
+    EnergyPressureResolution,
+    resolve_energy_derived_pressures,
+)
 from .sampling import (
     SUPPORTED_DIRECTIONAL_PROPERTIES,
     ElasticDirectionalField,
@@ -111,6 +115,7 @@ __all__ = [
     "ELASTIC_SYMMETRY_PATTERNS",
     "ENGINEERING_SHEAR_FACTORS",
     "ElasticAverages",
+    "EnergyPressureResolution",
     "FiniteStrainOrder",
     "ElasticSurfaceProperty",
     "ElasticTensor",
@@ -151,6 +156,7 @@ __all__ = [
     "linear_compressibility",
     "poisson_ratio",
     "reconstruct_stiffness_from_components",
+    "resolve_energy_derived_pressures",
     "stiffness_component_linear_coefficients",
     "rotate_voigt_stiffness",
     "sample_elasticity_surfaces",

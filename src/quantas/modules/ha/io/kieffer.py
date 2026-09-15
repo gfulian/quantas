@@ -10,12 +10,7 @@ from typing import Any, Literal
 
 import numpy as np
 
-from quantas.core.physics.elasticity import assign_hydrostatic_pressures
-from quantas.core.physics.eos import (
-    PressureEstimate,
-    pressure_from_energy_eos,
-    pressure_from_energy_polynomial,
-)
+from quantas.core.physics.elasticity import resolve_energy_derived_pressures
 from quantas.core.physics.kieffer import build_kieffer_volume_series
 from quantas.interfaces.crystal import (
     CrystalPressurePolicy,
@@ -27,13 +22,13 @@ from quantas.io.kieffer import (
     kieffer_series_to_mapping,
 )
 from quantas.io.phonons import PhononInputFileReader
-from quantas.models.elastic_states import ElasticStateSeries, PressureSource
+from quantas.models.elastic_states import ElasticStateSeries
 from quantas.models.kieffer import KiefferVolumeSeries
 from quantas.models.kieffer_application import (
     validate_kieffer_phonon_applicability,
 )
 from quantas.models.phonons import PhononInputData
-from quantas.models.volume_matching import VolumeMatch, match_sampled_volumes
+from quantas.models.volume_matching import VolumeMatch
 from quantas.modules.ha.io.inpgen import format_quantas_yaml
 
 
@@ -161,58 +156,9 @@ def _prepare_elastic_series(
             "energy-derived pressure requires a multi-volume QHA input; "
             "use output stress or manual pressure for HA"
         )
-
-    estimate, fit_provenance = _fit_phonon_input_pressure(
-        phonon_input,
-        pressure_source=pressure_source,
-        eos=eos,
-        polynomial_degree=polynomial_degree,
-        maxfev=maxfev,
-    )
-    raw_series = read_crystal_elastic_series(
-        elastic_outputs,
-        pressure_policy=CrystalPressurePolicy.DEFERRED,
-        apply_prestress_correction=False,
-    )
-    if phonon_input.volume is None:
-        raise ValueError("QHA input does not contain sampled volumes")
-    matches = match_sampled_volumes(raw_series.volumes, phonon_input.volume)
-    pressures = np.asarray(
-        [estimate.pressure[match.source_index] for match in matches],
-        dtype=np.float64,
-    )
-    pressure_enum = (
-        PressureSource.ENERGY_EOS
-        if pressure_source == "energy_eos"
-        else PressureSource.ENERGY_POLYNOMIAL
-    )
-    match_provenance = _volume_match_provenance(matches)
-    fit_provenance["volume_matches"] = match_provenance
-    assigned = assign_hydrostatic_pressures(
-        raw_series,
-        pressures,
-        pressure_source=pressure_enum,
-        assignment_method=pressure_source,
-        metadata=fit_provenance,
-    )
-    corrected = correct_crystal_hydrostatic_elastic_series(
-        assigned,
-        correction_applied_by="quantas-kieffer-enrichment",
-    )
-    return corrected, fit_provenance
-
-
-def _fit_phonon_input_pressure(
-    phonon_input: PhononInputData,
-    *,
-    pressure_source: str,
-    eos: str,
-    polynomial_degree: int,
-    maxfev: int | None,
-) -> tuple[PressureEstimate, dict[str, Any]]:
-    """Fit QHA static energy data and return pressures with provenance."""
     if phonon_input.volume is None or phonon_input.energy is None:
         raise ValueError("energy-derived pressure requires QHA volume and energy data")
+
     volume = np.asarray(phonon_input.volume, dtype=np.float64)
     energy = np.asarray(phonon_input.energy, dtype=np.float64)
     if volume.size < 3:
@@ -223,42 +169,44 @@ def _fit_phonon_input_pressure(
     energy_unit = str(phonon_input.units.get("energy", "Ha"))
     volume_unit = str(phonon_input.units.get("volume", "angstrom^3"))
     length_unit = str(phonon_input.units.get("length", "angstrom"))
-    if pressure_source == "energy_eos":
-        estimate = pressure_from_energy_eos(
-            volume,
-            energy,
-            eos=eos,
-            energy_unit=energy_unit,
-            volume_unit=length_unit,
-            pressure_unit="GPa",
-            maxfev=maxfev,
-        )
-    else:
-        estimate = pressure_from_energy_polynomial(
-            volume,
-            energy,
-            degree=polynomial_degree,
-            energy_unit=energy_unit,
-            volume_unit=length_unit,
-            pressure_unit="GPa",
-        )
-    if not estimate.success:
-        detail = estimate.fit.message or "fit did not return finite pressures"
-        raise ValueError(f"{pressure_source} pressure fit failed: {detail}")
-    provenance = {
-        "method": pressure_source,
-        "relation": "P(V) = -dE/dV",
-        "source_dataset": "phonon_input_static_energy",
-        "energy_unit": energy_unit,
+    raw_series = read_crystal_elastic_series(
+        elastic_outputs,
+        pressure_policy=CrystalPressurePolicy.DEFERRED,
+        apply_prestress_correction=False,
+    )
+    resolution = resolve_energy_derived_pressures(
+        raw_series,
+        volume,
+        energy,
+        pressure_source=pressure_source,
+        source_dataset="phonon_input_static_energy",
+        energy_unit=energy_unit,
+        volume_length_unit=length_unit,
+        volume_unit=volume_unit,
+        eos=eos,
+        polynomial_degree=polynomial_degree,
+        maxfev=maxfev,
+    )
+    shared_provenance = resolution.provenance
+    fit_provenance = {
+        "method": shared_provenance["method"],
+        "relation": shared_provenance["relation"],
+        "source_dataset": shared_provenance["source_dataset"],
+        "energy_unit": shared_provenance["energy_unit"],
         "volume_unit": volume_unit,
-        "volume_length_unit": length_unit,
-        "pressure_unit": estimate.unit,
-        "settings": dict(estimate.metadata),
-        "evaluated_pressures_gpa": estimate.pressure.tolist(),
-        "fit": estimate.fit.as_dict(),
-        "warnings": list(estimate.warnings),
+        "volume_length_unit": shared_provenance["volume_length_unit"],
+        "pressure_unit": shared_provenance["pressure_unit"],
+        "settings": shared_provenance["settings"],
+        "evaluated_pressures_gpa": resolution.estimate.pressure.tolist(),
+        "fit": shared_provenance["fit"],
+        "warnings": shared_provenance["warnings"],
+        "volume_matches": _volume_match_provenance(resolution.matches),
     }
-    return estimate, provenance
+    corrected = correct_crystal_hydrostatic_elastic_series(
+        resolution.series,
+        correction_applied_by="quantas-kieffer-enrichment",
+    )
+    return corrected, fit_provenance
 
 
 def _volume_match_provenance(matches: Sequence[VolumeMatch]) -> list[dict[str, Any]]:

@@ -338,11 +338,16 @@ energy-volume arrays already present in the phonon input:
        --interface crystal --pressure-source energy-polynomial --degree 3 \
        -o qha-kieffer.yaml
 
-The reusable fit operations live in :mod:`quantas.core.physics.eos`; pressure
-assignment and hydrostatic correction remain separate operations in
-:mod:`quantas.core.physics.elasticity`. This boundary lets tests verify that
-``P(V)`` is attached to an unmodified raw tensor before the tensor is corrected
-exactly once.
+The reusable fit operations live in :mod:`quantas.core.physics.eos`.  The
+backend-neutral
+:func:`quantas.core.physics.elasticity.resolve_energy_derived_pressures`
+service combines the selected E(V) fit with explicit volume matching and
+pressure assignment while leaving the raw stiffness coefficients unchanged.
+Both Kieffer enrichment and thermoelastic input generation use this same
+pressure-resolution path.  The subsequent hydrostatic tensor correction
+remains interface-specific, so CRYSTAL conventions do not leak into the shared
+core.  This boundary lets tests verify that ``P(V)`` is attached to an
+unmodified raw tensor before the tensor is corrected exactly once.
 
 The destination defaults to ``<input-stem>-kieffer.yaml`` and must differ from
 the source path. An existing Kieffer block is never replaced silently.  The
