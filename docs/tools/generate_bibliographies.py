@@ -94,6 +94,9 @@ PAGE_REFERENCE_KEYS: dict[str, tuple[str, ...]] = {
         "elate_gaillac_pullumbi_coudert_2016",
         "jaeken_cottenier_2016",
     ),
+    "workflows/qha.rst": (
+        "erba_mahmoud_belmonte_dovesi_2014",
+    ),
     "validation/thermoelasticity.rst": (
         "karki_stixrude_clark_warren_ackland_crain_1997",
         "sinogeikin_bass_1999",

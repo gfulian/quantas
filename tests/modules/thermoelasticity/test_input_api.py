@@ -285,7 +285,7 @@ def test_generator_preserves_backend_pressure_keyword(
 
 
 def test_generator_auto_corrects_raw_tensor_from_output_stress(tmp_path: Path) -> None:
-    """Raw CRYSTAL tensors use output stress and record one Wallace correction."""
+    """Raw CRYSTAL tensors use output stress and record one CRYSTAL conversion."""
     path = tmp_path / "raw.out"
     _write_crystal_soec(
         path,

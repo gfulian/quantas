@@ -178,7 +178,8 @@ class ElasticVolumeSeries:
             )
         if not all(point.prestress_applied for point in self.points):
             raise ValueError(
-                "all elastic points must include hydrostatic Wallace pre-stress terms"
+                "all elastic points must contain finite-pressure incremental "
+                "stress-strain coefficients"
             )
 
     @property

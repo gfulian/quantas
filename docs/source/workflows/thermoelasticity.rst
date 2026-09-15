@@ -55,7 +55,7 @@ The complete workflow is intentionally staged:
 
    CRYSTAL elastic outputs
        │
-       ├─ resolve hydrostatic pressure and Wallace tensor provenance
+       ├─ resolve hydrostatic pressure and finite-pressure tensor provenance
        ├─ preserve PRESSURE/PRESSEOS tensors or correct raw tensors once
        ├─ validate phase, symmetry, atom order, volumes, and pressures
        ├─ co-rotate all tensors into one reference Cartesian frame
@@ -121,8 +121,8 @@ It does not calculate:
 Input normalization
 -------------------
 
-CRYSTAL pressure resolution and Wallace tensors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+CRYSTAL pressure resolution and finite-pressure tensors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The elastic tensors supplied to QSA must be the incremental stress--strain
 coefficients appropriate to each hydrostatically pre-stressed state.  The

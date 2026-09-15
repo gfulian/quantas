@@ -67,7 +67,8 @@ def add_kieffer_to_phonon_input(
     selected external-code interface, converted to the hydrostatic finite-pressure
     form when required, and used to construct the three Kieffer branches. For QHA,
     ``energy_eos`` and ``energy_polynomial`` obtain ``P_static(V)`` from the static
-    energy-volume series before the CRYSTAL Wallace correction is applied exactly
+    energy-volume series before the CRYSTAL finite-prestress conversion is
+    applied exactly
     once. Energy-derived pressure is intentionally unavailable for single-volume HA.
 
     Parameters

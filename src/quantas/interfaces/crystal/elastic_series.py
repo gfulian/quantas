@@ -63,10 +63,11 @@ def read_crystal_elastic_series(
         Hydrostatic pressures in GPa, positive in compression, in input-file
         order.  Accepted only with the manual policy.
     apply_prestress_correction : bool, optional
-        Convert raw energy--strain tensors to Wallace hydrostatic tensors.
-        Tensors already corrected by CRYSTAL are retained unchanged.
+        Convert raw CRYSTAL energy--strain tensors to finite-pressure incremental
+        coefficients using the CRYSTAL/Erba relation.  Tensors already corrected
+        by CRYSTAL are retained unchanged.
     correction_applied_by : str, optional
-        Provenance label used when Quantas applies the Wallace correction.
+        Provenance label used when Quantas applies the CRYSTAL conversion.
     symprec, angle_tolerance : float, optional
         Symmetry tolerances forwarded to :class:`CrystalElasticityReader`.
 

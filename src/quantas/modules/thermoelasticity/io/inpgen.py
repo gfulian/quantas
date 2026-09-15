@@ -568,7 +568,8 @@ def _resolve_pressure_series(
             if pressure_source == "auto" and "lacks pressure" in str(exc):
                 raise ValueError(
                     f"{exc}. The tensor is raw and cannot enter QSA without a "
-                    "hydrostatic Barron-Klein/Wallace correction. Select an "
+                    "CRYSTAL finite-prestress conversion (Erba/Barron-Klein). "
+                    "Select an "
                     "explicit pressure source: output-stress, manual, energy-eos, "
                     "or energy-polynomial."
                 ) from exc

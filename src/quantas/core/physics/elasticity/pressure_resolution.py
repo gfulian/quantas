@@ -129,7 +129,7 @@ def resolve_energy_derived_pressures(
 
     Notes
     -----
-    This function intentionally stops before any Wallace or backend-specific
+    This function intentionally stops before any finite-prestress or backend-specific
     finite-pressure correction.  Interfaces must transform the assigned raw
     tensors according to the convention emitted by the external code.
     """

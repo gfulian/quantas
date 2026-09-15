@@ -576,7 +576,7 @@ def test_thermoelasticity_workflow_page_is_complete() -> None:
     )
 
     for phrase in (
-        "CRYSTAL pressure resolution and Wallace tensors",
+        "CRYSTAL pressure resolution and finite-pressure tensors",
         "Reference point and frame normalization",
         "What is and is not fitted from the elastic outputs",
         "Cold reference EOS",

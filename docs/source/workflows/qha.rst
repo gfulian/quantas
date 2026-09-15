@@ -134,8 +134,9 @@ Elastic constants obtained from a CRYSTAL energy--strain calculation without
 an explicit finite-pressure correction cannot be passed directly to the
 Christoffel solver.  Once a hydrostatic pressure has been assigned to every
 state, the CRYSTAL interface converts the raw coefficients with the same
-finite-pressure relation used by CRYSTAL ``PRESSURE``/``PRESSEOS``
-(Erba *et al.*, *J. Chem. Phys.* **140**, 124703 (2014)):
+finite-pressure relation used by CRYSTAL ``PRESSURE``/``PRESSEOS``, as
+documented for CRYSTAL finite-pressure elasticity
+[#erba_mahmoud_belmonte_dovesi_2014]_:
 
 .. math::
 
@@ -157,13 +158,18 @@ elastic state and records the source and target tensor kinds, method, pressure
 source, and software applying it. An already incremental tensor is rejected,
 which prevents accidental double correction.
 
-The reusable Python operations are
-``hydrostatic_wallace_stiffness()``,
-``assign_hydrostatic_pressures()``,
-``correct_hydrostatic_elastic_state()``, and
-``correct_hydrostatic_elastic_series()`` in
-:mod:`quantas.core.physics.elasticity`.  The corrected series can be passed
-directly to ``build_kieffer_volume_series()``.
+The backend-neutral pressure-assignment service is
+``assign_hydrostatic_pressures()``.  Quantas also exposes the internal
+Eulerian operators ``eulerian_hydrostatic_incremental_stiffness()``,
+``convert_eulerian_hydrostatic_elastic_state()``, and
+``convert_eulerian_hydrostatic_elastic_series()`` for tensors whose derivative
+definition is explicitly compatible with that convention.  These operators
+are **not** used as a substitute for the CRYSTAL adapter: raw CRYSTAL tensors
+are converted by ``crystal_hydrostatic_stiffness()`` in
+:mod:`quantas.interfaces.crystal`.  Historical ``hydrostatic_wallace_*`` and
+``correct_hydrostatic_*`` names remain compatibility aliases only.  A
+correctly converted series can be passed directly to
+``build_kieffer_volume_series()``.
 
 Both QHA schemes include the acoustic contribution consistently.  With
 ``scheme=td``, the combined harmonic-plus-acoustic properties are fitted and
@@ -923,3 +929,8 @@ Related documentation
 - CLI syntax: :doc:`../cli/qha`
 - Public Python surface: :doc:`../api/qha`
 - EOS background: :doc:`../theory/eos`
+
+References
+----------
+
+.. include:: ../_generated/references/workflows_qha.inc
