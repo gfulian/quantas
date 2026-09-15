@@ -379,7 +379,7 @@ parameter rules as their pressure counterparts.  The EOS implementation uses
 this identity directly when reconstructing pressure from a fitted static
 energy--volume curve.
 
-At the current ``2.0.0b11`` checkpoint, the numerical core provides integrated
+At the current ``2.0.0b12`` checkpoint, the numerical core provides integrated
 forms for Murnaghan, Birch--Murnaghan orders 2--4, natural-strain
 Poirier--Tarantola orders 2--4, Vinet orders 2--3, modified Tait orders 2--4,
 and SJEOS.  The standalone ``ev/energy`` workflow exposes these integrated

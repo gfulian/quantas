@@ -2,6 +2,8 @@
 
 """Read CRYSTAL quasi-harmonic outputs and structural volume paths."""
 
+from __future__ import annotations
+
 import numpy as np
 
 from quantas.core.geometry import (
@@ -843,7 +845,27 @@ class CrystalQHAReader(BasicReader):
         )
 
     def set_phonons(self, file):
-        """ """
+        """Parse volume-resolved phonon frequencies from CRYSTAL QHA output.
+
+        Parameters
+        ----------
+        file : str or pathlib.Path
+            CRYSTAL output produced by a native QHA calculation.
+
+        Returns
+        -------
+        dict[int, numpy.ndarray]
+            Mapping from equal-weight phonon block index to an array with shape
+            ``(self.natom * 3, self.points)`` containing frequencies in cm^-1
+            along the sampled volume path.
+
+        Raises
+        ------
+        OSError
+            If the output file cannot be opened.
+        ValueError
+            If a parsed frequency value is not numeric.
+        """
         phonons = {}
         nfreq = self.natom * self.qpoints * 3
         phonon_matrix = np.zeros((nfreq, self.points), dtype=float)

@@ -2,6 +2,8 @@
 
 """Read CRYSTAL phonon outputs for Quantas HA and QHA workflows."""
 
+from __future__ import annotations
+
 import re
 from pathlib import Path
 from typing import Sequence
@@ -1227,7 +1229,26 @@ class CrystalPhononReader(BasicReader):
         return scf_energy, provenance
 
     def set_phonons(self, file):
-        """ """
+        """Parse phonon-frequency blocks from a CRYSTAL output file.
+
+        Parameters
+        ----------
+        file : str or pathlib.Path
+            CRYSTAL frequency-calculation output file.
+
+        Returns
+        -------
+        dict[int, numpy.ndarray]
+            Mapping from sequential q-point block index to a one-dimensional
+            array of ``self.nphonon`` frequencies in cm^-1.
+
+        Raises
+        ------
+        OSError
+            If the output file cannot be opened.
+        ValueError
+            If a parsed mode index or frequency is not numeric.
+        """
         phonons = {}
         band_counter = 0
 
