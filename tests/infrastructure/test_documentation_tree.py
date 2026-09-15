@@ -331,43 +331,54 @@ def test_eos_background_is_scientific_and_follows_angel_order() -> None:
         assert forbidden not in text
 
 
-def test_scientific_background_bibliographies_are_canonical() -> None:
-    """Theory citations use page-local numbers generated from the registry."""
+def test_page_local_bibliographies_are_canonical_and_at_page_end() -> None:
+    """Scientific citations use one numbered page-local bibliography format."""
     import importlib.util
 
     from quantas.references.registry import get_citation
     from quantas.references.render import render_rst_bibliography
 
-    script = Path("docs/tools/generate_theory_bibliographies.py")
-    spec = importlib.util.spec_from_file_location("theory_bibliographies", script)
+    script = Path("docs/tools/generate_bibliographies.py")
+    spec = importlib.util.spec_from_file_location("bibliographies", script)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    for page, keys in module.THEORY_REFERENCE_KEYS.items():
-        theory_path = DOCS_ROOT / "theory" / f"{page}.rst"
-        fragment_path = DOCS_ROOT / "_generated" / "references" / f"{page}.inc"
-        text = theory_path.read_text(encoding="utf-8")
+    for page, keys in module.PAGE_REFERENCE_KEYS.items():
+        page_path = DOCS_ROOT / page
+        fragment_name = module.fragment_name(page)
+        fragment_path = DOCS_ROOT / "_generated" / "references" / fragment_name
+        text = page_path.read_text(encoding="utf-8")
         inline_keys = tuple(dict.fromkeys(re.findall(r"\[#([A-Za-z0-9_]+)\]_", text)))
         assert inline_keys == keys
-        assert fragment_path.read_text(encoding="utf-8") == render_rst_bibliography(keys)
-        assert f".. include:: ../_generated/references/{page}.inc" in text
+
+        fragment = fragment_path.read_text(encoding="utf-8")
+        assert fragment == render_rst_bibliography(keys)
+        assert fragment.startswith("References\n----------\n")
+
+        include_target = posixpath.relpath(
+            fragment_path.relative_to(DOCS_ROOT).as_posix(),
+            start=page_path.relative_to(DOCS_ROOT).parent.as_posix(),
+        )
+        include = f".. include:: {include_target}"
+        assert text.rstrip().endswith(include)
+
         for key in keys:
             citation = get_citation(key)
-            assert f".. [#{key}]" in fragment_path.read_text(encoding="utf-8")
+            assert f".. [#{key}]" in fragment
             if citation.doi:
-                assert f"https://doi.org/{citation.doi}" in fragment_path.read_text(
-                    encoding="utf-8"
-                )
+                assert f"https://doi.org/{citation.doi}" in fragment
 
 
-def test_theory_pages_do_not_embed_free_form_bibliographies() -> None:
-    """Scientific citations remain linked to the canonical registry."""
-    for path in (DOCS_ROOT / "theory").glob("*.rst"):
+def test_documentation_does_not_embed_free_form_bibliographies() -> None:
+    """Bibliographic records outside generated fragments remain registry-backed."""
+    registry_guide = DOCS_ROOT / "developer" / "citation_registry.rst"
+    for path in DOCS_ROOT.rglob("*.rst"):
+        if path == registry_guide:
+            continue
         text = path.read_text(encoding="utf-8")
-        assert "doi:" not in text.lower()
         assert "https://doi.org/" not in text
-
+        assert re.search(r"^\.\. \[[A-Za-z0-9_]+\]", text, re.MULTILINE) is None
 
 def test_eos_tutorial_assets_and_downloads_exist() -> None:
     """The complete EOS tutorial retains its generated figures and files."""

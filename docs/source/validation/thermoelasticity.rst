@@ -121,18 +121,11 @@ Literature context
 
 The MgO case is appropriate because its three independent single-crystal
 elastic constants and their pressure dependence have been extensively studied
-experimentally and by first-principles methods.  The dolomite case provides a
-low-symmetry carbonate whose ambient single-crystal tensor has also been
-measured by Brillouin spectroscopy.
+experimentally and by first-principles methods
+[#karki_stixrude_clark_warren_ackland_crain_1997]_ [#sinogeikin_bass_1999]_.
+The dolomite case provides a low-symmetry carbonate whose ambient
+single-crystal tensor has been measured by Brillouin spectroscopy
+[#jiang_speziale_duffy_2006]_.
 
-* Karki, B. B., Stixrude, L., Clark, S. J., Warren, M. C., Ackland, G. J., and
-  Crain, J. (1997). Structure and elasticity of MgO at high pressure.
-  *American Mineralogist*, **82**, 51--60.
-  https://doi.org/10.2138/am-1997-1-207
-* Sinogeikin, S. V. and Bass, J. D. (1999). Single-crystal elasticity of MgO
-  at high pressure. *Physical Review B*, **59**, R14141--R14144.
-  https://doi.org/10.1103/PhysRevB.59.R14141
-* Jiang, F., Speziale, S., and Duffy, T. S. (2006). Elasticity of magnesite and
-  dolomite from a genetic algorithm for inverting Brillouin spectroscopy
-  measurements. *Physics of the Earth and Planetary Interiors*, **155**,
-  1--20. https://doi.org/10.1016/j.pepi.2005.08.004
+
+.. include:: ../_generated/references/validation_thermoelasticity.inc

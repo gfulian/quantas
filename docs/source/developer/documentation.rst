@@ -102,12 +102,13 @@ tests.
 Scientific citations
 --------------------
 
-Theory pages use labelled auto-numbered footnotes backed by the canonical
-registry. Regenerate fragments with:
+Scientific documentation uses labelled auto-numbered footnotes backed by the
+canonical registry. Each page keeps its bibliography at the end, rendered in
+the same ``References`` format. Regenerate fragments with:
 
 .. code-block:: console
 
-   python docs/tools/generate_theory_bibliographies.py
+   python docs/tools/generate_bibliographies.py
 
 See :doc:`citation_registry`.
 

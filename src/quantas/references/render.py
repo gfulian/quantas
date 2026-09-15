@@ -187,7 +187,7 @@ def render_rst_footnote(citation: Citation | str) -> str:
 def render_rst_bibliography(
     keys: Iterable[str],
     *,
-    heading: str = "Bibliographic references",
+    heading: str = "References",
 ) -> str:
     """Render a page-local numbered RST bibliography from canonical keys.
 

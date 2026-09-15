@@ -1,5 +1,5 @@
-Bibliographic references
-------------------------
+References
+----------
 
 .. [#prem_dziewonski_anderson_1981] A. M. Dziewonski and D. L. Anderson. “Preliminary reference Earth model”. *Physics of the Earth and Planetary Interiors*, **25**, 297-356 (1981). `DOI: 10.1016/0031-9201(81)90046-7 <https://doi.org/10.1016/0031-9201(81)90046-7>`_.
 

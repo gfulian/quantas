@@ -1,5 +1,5 @@
-Bibliographic references
-------------------------
+References
+----------
 
 .. [#stixrude_lithgow_bertelloni_2005] L. Stixrude and C. Lithgow-Bertelloni. “Thermodynamics of mantle minerals—I. Physical properties”. *Geophysical Journal International*, **162**, 610-632 (2005). `DOI: 10.1111/j.1365-246X.2005.02642.x <https://doi.org/10.1111/j.1365-246X.2005.02642.x>`_.
 

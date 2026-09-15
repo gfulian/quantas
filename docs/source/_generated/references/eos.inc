@@ -1,5 +1,5 @@
-Bibliographic references
-------------------------
+References
+----------
 
 .. [#eosfit7_angel_gonzalez_platas_alvaro_2014] R. J. Angel, J. Gonzalez-Platas, and M. Alvaro. “EosFit7c and a Fortran module (library) for equation of state calculations”. *Zeitschrift für Kristallographie*, **229**, 405-419 (2014). `DOI: 10.1515/zkri-2013-1711 <https://doi.org/10.1515/zkri-2013-1711>`_.
 

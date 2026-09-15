@@ -121,7 +121,7 @@ def test_cross_cutting_contracts_are_documented() -> None:
         ),
         "citation_registry.rst": (
             "Module and method sets",
-            "Scientific-background pages",
+            "Documentation pages",
             "DOI",
         ),
     }

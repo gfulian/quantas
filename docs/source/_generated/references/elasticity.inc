@@ -1,5 +1,5 @@
-Bibliographic references
-------------------------
+References
+----------
 
 .. [#nye_1985] J. F. Nye. *Physical Properties of Crystals: Their Representation by Tensors and Matrices*. Oxford University Press, Oxford, 2nd edition (1985).
 

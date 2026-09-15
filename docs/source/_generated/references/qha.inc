@@ -1,5 +1,5 @@
-Bibliographic references
-------------------------
+References
+----------
 
 .. [#anderson_1995] O. L. Anderson. *Equations of State of Solids for Geophysics and Ceramic Science*. *Oxford Monographs on Geology and Geophysics*, **31**, Oxford University Press, New York (1995).
 

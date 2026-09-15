@@ -260,7 +260,8 @@ Pressure selection is explicit:
    pressure source.
 
 By default, raw CRYSTAL energy--strain tensors are converted once with the
-finite-pressure transformation implemented by CRYSTAL itself [Erba2014]_:
+finite-pressure transformation implemented by CRYSTAL itself
+[#erba_mahmoud_belmonte_dovesi_2014]_:
 
 .. math::
 
@@ -276,8 +277,6 @@ correction are retained in each state. Passing a non-auto pressure policy for
 a tensor already corrected by CRYSTAL is an error, preventing an accidental
 second correction.
 
-.. [Erba2014] A. Erba, A. Mahmoud, D. Belmonte, and R. Dovesi,
-   *J. Chem. Phys.* **140**, 124703 (2014), doi:10.1063/1.4869144.
 
 .. code-block:: python
 
@@ -418,3 +417,6 @@ Adding support for a new code
 
 Do not create a large universal parser hierarchy before the external formats
 have demonstrated a stable common structure.
+
+
+.. include:: ../_generated/references/developer_interfaces.inc
