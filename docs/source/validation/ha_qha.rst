@@ -529,23 +529,6 @@ reconstruction. The 3x3x3 phonon supercell maps to ten primitive atoms with 27
 translational copies per atom, and translational residuals remain at numerical
 round-off.
 
-Traceability
-~~~~~~~~~~~~
-
-The principal characterization is implemented in:
-
-``tests/interfaces/test_crystal_phonon_modes.py``
-   CRYSTAL block parsing, real/complex modes, normalization, native MgO QHA
-   continuity, and source-mode provenance.
-
-``tests/modules/qha/test_mode_tracking.py``
-   Permutations, phase invariance, degenerate subspaces, ambiguity semantics,
-   leave-one-out support/rejection, and the real dolomite regression.
-
-``tests/modules/ha/test_input_generation.py``
-   Multi-file input generation, continuity metadata, diagnostic tables, and
-   serialization.
-
 Scientific limits of this validation
 ------------------------------------
 

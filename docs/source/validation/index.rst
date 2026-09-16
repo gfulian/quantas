@@ -14,8 +14,8 @@ already been completed.
 - :doc:`strategy`
 - :doc:`matrix`
 - :doc:`ha_qha`
-- :doc:`eos`
+- :doc:`eos` — Energy EOS and BM3 P--V reference scopes validated; V--T/P--V--T record in progress
 - :doc:`thermoelasticity`
 - :doc:`elasticity` — work in progress
 - :doc:`seismic` — work in progress
-- :doc:`precision`
+- :doc:`precision` — work in progress

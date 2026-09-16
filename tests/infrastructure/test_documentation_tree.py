@@ -804,3 +804,47 @@ def test_format_pages_use_only_public_quantas_namespaces() -> None:
         text = path.read_text(encoding="utf-8")
         for name in forbidden:
             assert name not in text, f"{path}: public format page exposes {name}"
+
+
+def test_validation_status_matches_public_evidence() -> None:
+    """Validation status reflects public evidence, not raw test-count alone."""
+    validation = DOCS_ROOT / "validation"
+    strategy = (validation / "strategy.rst").read_text(encoding="utf-8")
+    matrix = (validation / "matrix.rst").read_text(encoding="utf-8")
+
+    for phrase in (
+        "Validation status",
+        "``validated``",
+        "``work in progress``",
+        "Test coverage is necessary for validation",
+        "Regression tolerance is not physical acceptance",
+    ):
+        assert phrase in strategy
+
+    for phrase in (
+        "Energy EOS E--V",
+        "Experimental P--V BM3 reference scope",
+        "Kieffer acoustic thermodynamics",
+        "Thermoelastic QSA",
+        "Elasticity",
+        "SEISMIC",
+        "Numerical precision and tolerance policy",
+    ):
+        assert phrase in matrix
+    assert "**validated**" in matrix
+    assert "**work in progress**" in matrix
+
+    for name in ("elasticity", "seismic", "precision"):
+        text = (validation / f"{name}.rst").read_text(encoding="utf-8")
+        assert "Work in progress" in text
+        assert "Current traceability" in text or name == "precision"
+
+    eos = (validation / "eos.rst").read_text(encoding="utf-8")
+    assert "Experimental P--V reference regression" in eos
+    assert "Work in progress" in eos
+    assert "tests/modules/eos/test_eosfit_reference.py" in eos
+
+    for name in ("ha_qha", "thermoelasticity"):
+        text = (validation / f"{name}.rst").read_text(encoding="utf-8")
+        assert "Work in progress" not in text
+        assert "Traceability" in text

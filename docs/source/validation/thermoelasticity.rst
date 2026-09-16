@@ -116,6 +116,29 @@ and its physical accuracy must still be assessed against full strain-dependent
 QHA, experiment or another finite-temperature method for the material of
 interest.
 
+Traceability
+------------
+
+The public reference matrix is reproduced primarily by:
+
+``tests/modules/thermoelasticity/test_real_reference.py``
+   Frozen MgO and dolomite source provenance, fitted targets, selected P--T
+   states, mechanical stability, frame normalization, and adiabatic checkpoints.
+
+``tests/modules/thermoelasticity/test_science.py``
+   Independent scientific identities and tensor-level reconstruction checks.
+
+``tests/modules/thermoelasticity/test_qsa.py``
+   Quasi-static fitting and evaluation contracts.
+
+``tests/modules/thermoelasticity/data/thermoelastic_reference.json``
+   Compact frozen evidence derived from the larger phase-validation archive,
+   including source identifiers and the numerical checkpoints documented above.
+
+The reference fixture is intentionally compact; it is not a replacement for the
+original electronic-structure and QHA calculations. Its stored provenance links
+the routine regression back to those larger sources.
+
 Literature context
 ------------------
 
