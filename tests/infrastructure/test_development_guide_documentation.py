@@ -171,3 +171,15 @@ def test_documentation_ownership_is_defined() -> None:
         "Re-teaching the algorithm being validated",
     ):
         assert phrase in text
+
+
+def test_documentation_writing_style_is_defined() -> None:
+    """The documentation guide distinguishes narrative prose from references."""
+    text = (ROOT / "documentation.rst").read_text(encoding="utf-8")
+    for phrase in (
+        "Writing style",
+        "cause-and-effect sentences",
+        "genuine constraints or warnings",
+        "Reference pages are different",
+    ):
+        assert phrase in text

@@ -23,8 +23,8 @@ energy for each state::
 
 The primary Energy EOS fit uses ``V`` and ``E``.  When the complete cell metrics
 are present, Quantas also treats them as a volume-aligned structural path and
-derives the crystallographic response from the same E--V fit.  Quantas does not
-derive a pressure from an arbitrary stress tensor during input generation;
+derives the crystallographic response from the same E--V fit.  During input
+generation, pressure is not taken from an arbitrary stress tensor;
 pressure is reconstructed from the fitted energy relation as
 
 .. math::

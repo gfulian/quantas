@@ -12,8 +12,9 @@ HA and QHA validation is divided into two complementary questions:
    workflows preserve the expected formulas, limits, shapes, and cross-method
    consistency?
 
-This page concentrates on the first question where the recent CRYSTAL interface
-and phonon-mode continuity work required new scientific validation.  The HA/QHA
+The most extensive recent validation concerns the first question, because the
+CRYSTAL interface and phonon-mode continuity work introduced new scientific
+contracts that needed direct evidence.  The HA/QHA
 thermodynamic equations and workflow choices are documented in
 :doc:`../theory/ha`, :doc:`../theory/qha`, :doc:`../workflows/ha`, and
 :doc:`../workflows/qha`.
@@ -85,9 +86,10 @@ diagnostics.
 Multi-volume thermodynamic QHA composition
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The QHA validation uses input volumes deliberately ordered differently from
-the increasing cutoff series.  It verifies that explicit one-to-one volume
-matches, rather than array indices, determine the acoustic association.  The
+One QHA validation case deliberately scrambles the input-volume order relative
+to the increasing cutoff series.  The test then verifies that explicit
+one-to-one volume matches, rather than array indices, determine the acoustic
+association.  The
 enriched-minus-harmonic sampled Helmholtz surface must equal an independent
 Kieffer evaluation at every temperature and volume, while the original Gamma
 frequency array remains unchanged.
@@ -116,8 +118,7 @@ denominator in the first entropy term.  The published equation contains
    \frac{x}{e^x-1}
 
 rather than :math:`x/(e^x-1)^2`.  The historical value is retained as a frozen
-characterization datum, but the new core intentionally uses the published
-formula.  The corrected result is independently constrained by
+characterization datum, while the new core uses the published formula.  The corrected result is independently constrained by
 :math:`S=-\partial F/\partial T`; no compatibility switch preserves the defect.
 
 Acoustic velocity averages
@@ -432,7 +433,7 @@ reproduced with:
       --temperature 0 1500 300 --pressure -2 5 1 \
       --output-dir ohap_kieffer_pressure_validation
 
-The same driver deliberately confirms rejection of a base input without an
+The same driver also checks that the workflow rejects a base input without an
 embedded Kieffer block, a non-Gamma q-point, a phonon supercell, an incomplete
 or mismatched cutoff series, a negative cutoff, an incompatible mode-Gruneisen
 request, duplicate elastic sources, in-place enrichment, silent replacement
@@ -515,8 +516,8 @@ characterization produces no unresolved assignments, without replacing that
 source provenance.
 
 The real dolomite regression contains seven independent CRYSTAL23 dispersion
-calculations with 27 q-points and 30 modes at each volume. Source files are
-intentionally non-monotonic in volume. Across the six adjacent-volume matching
+calculations with 27 q-points and 30 modes at each volume. The source files are non-monotonic in volume, which prevents the regression
+from relying accidentally on file order. Across the six adjacent-volume matching
 steps the regression contains 4860 local links, including 274 cautions and six
 low-overlap assignments. All six weak links occur in the widest volume
 interval and are independently supported by leave-one-out checks; none remains

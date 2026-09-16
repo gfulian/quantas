@@ -68,16 +68,18 @@ pressure and temperature fields themselves remain continuous.
 Representation used by Quantas
 -------------------------------
 
-Quantas represents a geological path as three aligned float64 arrays,
+For numerical analysis, a geological path is represented by three aligned
+``float64`` arrays,
 
 .. math::
 
    z_i,\qquad P(z_i),\qquad T(z_i),
 
 where depth is in km, pressure in GPa, and absolute temperature in K.  Pressure
-and temperature are deliberately separate models.  They may therefore be
-combined, for example, as PREM pressure plus a user-supplied geotherm, without
-embedding a thermoelastic calculator or a frontend in the scientific core.
+and temperature remain separate because they arise from different physical
+models.  They can therefore be combined, for example, as PREM pressure plus a
+user-supplied geotherm, without embedding a thermoelastic calculator or a
+frontend in the scientific core.
 
 These paths are reference models, not phase-equilibrium calculations.  Before
 a mineral tensor is interpreted along a path, the user must still assess phase

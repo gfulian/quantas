@@ -12,9 +12,9 @@ be fitted repeatedly with different domains, formulations, regressions,
 constraints, data selections, and initial conditions before one result is
 accepted for later use.
 
-Quantas therefore treats EOS analysis as a sequence of immutable fit attempts
-stored in a persistent archive.  The workflow is designed to answer questions
-such as:
+For that reason, EOS analysis is organized around immutable fit attempts
+stored in a persistent archive.  A useful way to read the workflow is through
+the questions it must answer:
 
 - which observations and physical target are being fitted?;
 - which E--V, P--V, V--T, or P--V--T formulation is being tested?;
@@ -28,10 +28,10 @@ such as:
   calculation?;
 
 The equations and their physical assumptions are described in
-:doc:`../theory/eos`.  Worked examples are provided in
-:doc:`../tutorials/eos`.  This page focuses on the implementation choices,
-workflow semantics, diagnostics, and reasons why the EOS command line differs
-from the other Quantas modules.
+:doc:`../theory/eos`, while :doc:`../tutorials/eos` develops complete worked
+examples.  Here the emphasis is on model selection, diagnostics, persistence,
+and the parts of the EOS workflow that differ from the more linear Quantas
+modules.
 
 
 The ``2.0.0b11`` Energy EOS tranche promotes the integrated E--V service to a
@@ -52,7 +52,7 @@ Model naming and discovery
 --------------------------
 
 Isothermal EOS selection is normalized by one shared model resolver.  Compact
-Quantas tags such as ``BM3``, ``PT4`` (or historical alias ``NS4``), ``V3``,
+Compact Quantas tags such as ``BM3``, ``PT4`` (or historical alias ``NS4``), ``V3``,
 ``T3``, and ``SJ`` remain the canonical persisted identifiers.  Descriptive
 aliases such as ``birch-murnaghan3`` and ``natural-strain4`` are accepted at
 CLI boundaries and resolve to the same scientific model.
@@ -91,7 +91,7 @@ can contain a complete volume series, while an additional single-volume output
 can be appended through the same ``--list`` workflow.
 
 For CRYSTAL native EOS output, the final sorted volume--energy table defines
-which states belong to the curve.  Quantas independently matches those volumes
+which states belong to the curve.  The collector independently matches those volumes
 to ``FINAL OPTIMIZED GEOMETRY`` blocks and to the authoritative state-resolved
 total energy, including printed DFT-D/gCP corrections when present.  A mismatch
 is rejected rather than resolved heuristically.  Sources with different atom
@@ -249,9 +249,9 @@ only to targets that are valid and non-constant in the dataset.
 Missing columns, constant independent coordinates, or unsupported target/domain
 combinations are rejected during preflight.
 
-EOS data selection is deliberately non-destructive.  The original dataset is
-always archived, while each fit request carries its own boolean mask and
-selection provenance.
+EOS data selection is non-destructive.  The original dataset remains in the
+archive, while each fit request carries its own boolean mask and selection
+provenance.
 
 A specification job may select data through:
 
@@ -260,11 +260,10 @@ A specification job may select data through:
 - included or excluded one-based data rows;
 - combinations of the above in a defined order.
 
-This permits controlled experiments such as fitting independent experimental
+This supports controlled experiments such as fitting independent experimental
 groups, testing the influence of one high-pressure subset, or repeating a fit
-without an obvious outlier.  Quantas does not decide that an observation is an
-outlier merely because its residual is large.  Exclusion is always an explicit
-scientific action.
+without a suspicious observation.  A large residual alone is not evidence that
+a datum is an outlier; exclusion remains an explicit scientific decision.
 
 Model construction
 ------------------
@@ -285,7 +284,7 @@ Parameter state
    derived, or unavailable.  Initial values and bounds apply only where they
    are meaningful.
 
-Quantas validates model/order combinations before fitting.  An orderless model
+Model/order combinations are validated before fitting.  An orderless model
 cannot acquire an arbitrary order merely because a generic option was supplied,
 and a model-implied parameter is not converted into a free parameter by an
 initial-value override.
@@ -323,15 +322,16 @@ column for constrained-volume electronic-structure optimizations, where an
 intermediate stress tensor need not represent a hydrostatic pressure.
 
 OLS is the natural default for deterministic electronic-structure energies.
-WLS is available when a genuine ``sigma_energy`` is supplied; Quantas does not
-turn SCF thresholds or output precision into statistical energy uncertainties.
+WLS is appropriate only when a genuine ``sigma_energy`` is available.  SCF
+thresholds and printed numerical precision are not promoted to statistical
+energy uncertainties.
 
 When the dataset contains ``a, b, c, alpha, beta, gamma`` at the same sampled
 volumes, the E--V workflow also evaluates a shared
 :class:`~quantas.core.geometry.StructuralPathModel`.  This is the same
 volume-constrained structural backend used by QHA; EOS does not maintain a
 second lattice interpolator.  At equilibrium the model supplies
-``a0/b0/c0`` and :math:`\eta_i=d\ln l_i/d\ln V`; Quantas combines the latter
+``a0/b0/c0`` and :math:`\eta_i=d\ln l_i/d\ln V`; the structural-response layer combines the latter
 with the Energy-EOS bulk modulus as
 
 .. math::
@@ -367,7 +367,7 @@ P--V implementation choices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 P--V fitting supports volumetric and linear targets.  For a linear target,
-Quantas applies the standard linear-EOS construction internally: the length is
+The secondary axial fit uses the standard linear-EOS construction: the length is
 mapped to an auxiliary cubic quantity for evaluation by a volumetric EOS, then
 reported using linear physical parameters.  The auxiliary cube is not treated
 as a crystallographic volume.
@@ -387,7 +387,7 @@ V--T implementation choices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 V--T fitting accepts volumetric or linear targets and keeps the reference
-state, temperature scale, and model variant explicit.  Quantas evaluates the
+state, temperature scale, and model variant explicit.  The selected model evaluates the
 chosen thermal-expansion formulation directly; it does not first smooth the
 observations with an unrelated generic polynomial.
 
@@ -461,7 +461,7 @@ Initial values, fixed parameters, and bounds
 --------------------------------------------
 
 Non-linear EOS fitting often requires a physically reasonable starting state.
-Quantas separates three concepts that are sometimes conflated.
+Three concepts that are easily conflated are kept separate.
 
 Initial value
    Starting point for a free parameter.  It does not constrain the final
@@ -489,7 +489,7 @@ parameters.
 Covariance scaling
 ------------------
 
-Quantas separates the numerical covariance from the policy used to scale it.
+The workflow keeps the numerical covariance separate from the policy used to scale it.
 The available policies are:
 
 ``absolute``
@@ -655,7 +655,7 @@ criteria.  It does not establish that:
 - extrapolation is safe;
 - parameter correlations are acceptable.
 
-Quantas therefore preserves and reports several diagnostic layers.
+The archive therefore preserves several diagnostic layers.
 
 Parameter diagnostics
    Standard errors, bounds, bound hits, fixed/implied state, covariance, and
@@ -679,8 +679,8 @@ plots and tables have been examined.
 Failed fits and last iterates
 -----------------------------
 
-Quantas does not reinterpret a finite last iterate as a successful result.
-Failures are categorized, for example, as:
+A finite last iterate is not enough to make a fit successful.  Failed attempts
+remain failed records and are categorized, for example, as:
 
 - invalid input or model state;
 - unavailable or invalid required runtime backend;
@@ -712,7 +712,7 @@ explicit record ID.  It can report and export:
 
 An explicit record ID is valuable when comparing rejected or candidate fits.
 When a slot is omitted, the archive must contain exactly one accepted result;
-otherwise the choice would be ambiguous and Quantas requires the user to state
+otherwise the choice would be ambiguous and the user must state
 it.
 
 Property calculation
@@ -739,7 +739,7 @@ the numerical evaluation succeeds.
 Plotting implementation
 -----------------------
 
-EOS plotting is record-driven.  Quantas first builds frontend-neutral plot
+EOS plotting is record-driven.  It first builds frontend-neutral plot
 specifications from the selected fit record; Matplotlib is only the renderer.
 Available plots depend on the domain and model:
 
@@ -816,8 +816,8 @@ For a new dataset, the following sequence is robust.
 - compare interpolation inside the data range before considering
   extrapolation.
 
-5. Accept deliberately
-~~~~~~~~~~~~~~~~~~~~~~~
+5. Accept a result only after review
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 - accept one record per slot only after diagnostics are satisfactory;
 - retain alternatives as candidate or rejected records with notes;

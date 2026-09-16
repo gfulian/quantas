@@ -6,8 +6,8 @@ thermodynamics implemented in Quantas.  It describes the vibrations of a
 crystal in terms of independent quantum harmonic oscillators whose frequencies
 are obtained from the normal modes of the lattice [#mcquarrie_simon_1997]_.
 
-The treatment in this section is purely scientific.  Input formats, numerical
-options, and execution details are described separately in the
+This chapter stays with the physics of the approximation.  Input formats,
+numerical choices, and execution details are described separately in the
 :doc:`../workflows/ha` workflow and in :doc:`../formats/phonon_yaml`.
 
 Lattice vibrations in the harmonic approximation

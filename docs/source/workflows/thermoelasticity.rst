@@ -25,10 +25,10 @@ appear in a complete quasi-harmonic theory of elasticity are not calculated.
 The physical derivation and the distinction between full quasi-harmonic
 elasticity and the QSA are discussed in :doc:`../theory/thermoelasticity`.
 
-This page explains how Quantas implements that approximation, why the workflow
-is divided into calibration and analysis stages, how its scientific controls
-should be selected, and which diagnostics must be checked before interpreting
-a pressure-temperature or depth-dependent tensor field.
+The workflow chapter follows that approximation from calibration to analysis.
+It explains why the two stages are kept separate, how the main scientific
+controls affect the reconstruction, and which diagnostics should be checked
+before interpreting a pressure-temperature or depth-dependent tensor field.
 
 Questions addressed by the workflow include:
 
@@ -37,7 +37,7 @@ Questions addressed by the workflow include:
 - why is the static energy EOS fitted separately from the elastic components?;
 - when is a second- or third-order Eulerian finite-strain description
   justified?;
-- how does Quantas distinguish numerical convergence from adequate scientific
+- how can numerical convergence be distinguished from adequate scientific
   support?;
 - which uncertainties are propagated, and which are not?;
 - how are arbitrary P--T states and geological profiles reconstructed without
@@ -49,7 +49,7 @@ Questions addressed by the workflow include:
 Computational pipeline
 ----------------------
 
-The complete workflow is intentionally staged:
+The calculation is staged in two parts:
 
 .. code-block:: text
 
@@ -200,7 +200,7 @@ Adiabatic conversion additionally requires:
   :math:`\boldsymbol\alpha(P,T)`;
 - the same cell normalization as the QHA equilibrium volume.
 
-Quantas converts the QHA heat capacity to J K\ :sup:`-1` per normalized cell
+The workflow converts the QHA heat capacity to J K\ :sup:`-1` per normalized cell
 and stores the expansion tensor in K\ :sup:`-1`.  Missing or shape-incompatible
 fields do not prevent an isothermal calibration unless ``adiabatic=require``
 is selected.
@@ -208,10 +208,10 @@ is selected.
 Atomic and cell normalization
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When the QHA archive contains primitive atomic numbers, Quantas requires exact
-agreement with the thermoelastic reference structure.  Density is not
-interpolated from the CRYSTAL values.  Instead, Quantas infers the normalized
-cell mass from every CRYSTAL density-volume pair:
+When the QHA archive contains primitive atomic numbers, exact agreement with
+the thermoelastic reference structure is required.  Density is not interpolated
+from the CRYSTAL values.  Instead, the workflow infers the normalized cell mass
+from every CRYSTAL density-volume pair:
 
 .. math::
 
@@ -233,7 +233,7 @@ QHA HDF5 versus QHA YAML
 ``thermoelasticity run`` can consume either:
 
 - an existing native QHA HDF5 archive;
-- a QHA or phonon YAML that Quantas must calculate first.
+- a QHA or phonon YAML that must be calculated first.
 
 Using an existing QHA HDF5 is normally preferable for production work because
 it:
@@ -250,7 +250,7 @@ meaning is described in :doc:`qha`.
 Volume support at coupling time
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Quantas compares every archived QHA equilibrium volume with the sampled
+The importer compares every archived QHA equilibrium volume with the sampled
 elastic-volume interval.  States outside that interval are recorded in the
 calibration archive, but calibration itself is still possible.  The selected
 extrapolation policy is enforced later, when a point, grid, or profile is
@@ -268,13 +268,14 @@ volume domain are different concepts:
 Calibration stage
 -----------------
 
-The calibration archive contains models and source fields.  It intentionally
-does not contain a reconstructed P--T stiffness grid.
+The calibration archive contains the fitted models and source fields, but no
+precomputed P--T stiffness grid.  Reconstruction is left to the analysis stage
+so that the same calibration can serve different targets.
 
 Cold reference EOS
 ~~~~~~~~~~~~~~~~~~
 
-Quantas first fits an integrated energy EOS to the QHA sampled static
+Calibration first fits an integrated energy EOS to the QHA sampled static
 energy-volume data.  The resulting reference parameters are:
 
 - :math:`V_0`, the static zero-pressure volume;
@@ -491,7 +492,7 @@ silently replacing a failed component.
 Uncertainty propagation
 -----------------------
 
-Quantas propagates several available first-order uncertainty sources.  The
+The workflow propagates several available first-order uncertainty sources.  The
 result should be interpreted as the uncertainty of the fitted numerical model
 under its stated assumptions, not as a complete uncertainty budget for the
 material.
@@ -510,7 +511,7 @@ All elastic components share the same fitted :math:`V_0`, :math:`K_0`, and
 :math:`K'_0`.  Their uncertainties therefore create correlations between
 otherwise separate component predictions.
 
-Quantas includes two contributions:
+Two contributions are included:
 
 1. the direct analytical sensitivity of the component formula to the EOS
    parameters;
@@ -529,7 +530,7 @@ QHA equilibrium-volume uncertainty
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When the QHA archive provides a valid uncertainty field matching
-:math:`V(P,T)`, Quantas propagates it through the analytical derivative
+:math:`V(P,T)`, the workflow propagates it through the analytical derivative
 :math:`\partial C_{IJ}/\partial V`.  This contribution is optional through
 ``--volume-uncertainty/--no-volume-uncertainty``.
 
@@ -549,7 +550,7 @@ retained in derived entries.  For example, the uncertainty of
 Adiabatic uncertainty
 ~~~~~~~~~~~~~~~~~~~~~
 
-When enabled, Quantas propagates available uncertainties in:
+When enabled, uncertainty propagation covers:
 
 - the isothermal stiffness tensor;
 - volume;
@@ -618,7 +619,7 @@ Archived-field interpolation
 The post-fit engine interpolates archived QHA fields on their rectilinear
 :math:`(T,P)` coordinates using piecewise-linear interpolation.
 
-For a rectangular target grid, Quantas evaluates the Cartesian product of the
+For a rectangular target grid, the analysis evaluates the Cartesian product of the
 requested temperature and pressure axes.  For a geological profile, it
 evaluates aligned pairs :math:`(T_i,P_i)` directly.  A profile therefore does
 not construct a hidden rectangular grid.
@@ -647,7 +648,7 @@ Its limitations are equally important:
 Evaluation at the QHA volume
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-For every requested state, Quantas performs the following sequence:
+For every requested state, the analysis follows the same sequence:
 
 1. interpolate :math:`V(P,T)` and optional :math:`\sigma_V`;
 2. evaluate all independent cold finite-strain component models at that
@@ -718,7 +719,7 @@ without a warning, but the masks remain stored.
 Mechanical stability
 --------------------
 
-Quantas evaluates the eigenvalues of each reconstructed **isothermal** Wallace
+The stability check evaluates the eigenvalues of each reconstructed **isothermal** Wallace
 stiffness matrix.  The generic positive-definiteness criterion is:
 
 .. math::
@@ -733,7 +734,7 @@ Each isothermal state is classified as:
 - unstable;
 - indeterminate because the tensor contains invalid values.
 
-Quantas never repairs an unstable tensor by clipping eigenvalues or replacing
+An unstable tensor is never repaired by clipping eigenvalues or replacing
 components.  The current result stores no separate adiabatic stability field.
 For a valid state the implemented adiabatic correction is positive
 semidefinite, so it cannot destabilize an already positive-definite
@@ -767,7 +768,7 @@ Isothermal-to-adiabatic conversion
 Implemented identity
 ~~~~~~~~~~~~~~~~~~~~
 
-Quantas converts the isothermal field using:
+The adiabatic conversion uses:
 
 .. math::
 
@@ -818,8 +819,8 @@ If the complete QHA adiabatic fields are absent and ``auto`` is selected, no
 adiabatic field is created, including at zero kelvin.  When the fields exist, a
 nonzero-temperature state with non-finite or non-positive :math:`C_V`, an
 invalid volume, or a non-finite expansion tensor is represented by NaN in
-``auto`` mode and rejected in ``require`` mode.  Quantas does not silently
-substitute the isothermal tensor.
+``auto`` mode and rejected in ``require`` mode.  The isothermal tensor is not
+used as a silent substitute for a failed adiabatic conversion.
 
 Interpretation of :math:`C^S`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -22,9 +22,9 @@ The presentation follows the order used by Angel *et al.* (2014):
 #. pressure--volume--temperature equations obtained by coupling compression
    and thermal expansion.
 
-The equations below define the scientific models.  Parameter estimation,
-uncertainty treatment, diagnostics, and command-line options belong to the
-:doc:`../workflows/eos` workflow rather than to this chapter.
+The equations below define the scientific models.  Questions of parameter
+estimation, uncertainty treatment, diagnostics, and command-line use are taken
+up in :doc:`../workflows/eos`.
 
 Reference state and notation
 ----------------------------

@@ -183,7 +183,7 @@ both quantities at the interface boundary:
 The generic :class:`quantas.interfaces.crystal.output.CrystalOutputParser`
 resolves these values state by state and does not attach a correction printed
 for one SCF calculation to a later state.  The corrected total printed by the
-backend is authoritative; Quantas does not reconstruct it by summing empirical
+backend is authoritative; the interface does not reconstruct it by summing empirical
 components.  Correction labels and the difference between total and SCF
 energy are retained as provenance.
 

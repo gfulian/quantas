@@ -120,6 +120,32 @@ NumPy/Sphinx-compatible docstring. Include:
 A public function that returns ``ndarray`` should state the array shape and
 axis order. A tolerance should state its unit and effect.
 
+Writing style
+-------------
+
+Scientific documentation should be precise without sounding like a sequence of
+software assertions.  Prose is usually easier to follow when it explains the
+reason for a choice before listing its consequences.
+
+For narrative pages such as Scientific Background, Workflows, and Tutorials:
+
+* prefer cause-and-effect sentences over repeated statements beginning with
+  ``Quantas``;
+* describe requirements positively when possible, reserving ``must`` and
+  ``do not`` for genuine constraints or warnings;
+* use phrases such as ``in practice``, ``for this dataset``, or ``use ... when``
+  when they help connect a method to a scientific decision;
+* keep implementation names out of user-facing prose unless the name itself is
+  needed to understand the workflow;
+* avoid filler such as ``explicitly``, ``deliberately``, or ``intentionally``
+  when the same meaning follows naturally from the sentence;
+* let transitions explain *why* the next step follows instead of presenting
+  every paragraph as an isolated rule.
+
+Reference pages are different.  Formats, CLI syntax, and API contracts should
+remain compact and normative; readability there comes from consistent structure
+rather than a more conversational voice.
+
 CLI reference
 -------------
 
@@ -170,7 +196,7 @@ Asset generators must:
 * preserve source provenance;
 * be covered by manifest or existence tests.
 
-The EOS asset generator is intentionally explicit because full MGD fitting is
+The EOS asset generator keeps this step explicit because full MGD fitting is
 not appropriate for every Sphinx startup.
 
 RST quality

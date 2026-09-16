@@ -56,8 +56,8 @@ or tabular export.
 Input validation and tensor convention
 --------------------------------------
 
-Quantas expects a finite ``6 × 6`` stiffness matrix in engineering Voigt
-notation and in GPa.  The matrix must be symmetric within the historical
+The elasticity workflow expects a finite ``6 × 6`` stiffness matrix in
+engineering Voigt notation and in GPa.  The matrix must be symmetric within the historical
 Elasticity tolerance
 
 .. math::
@@ -65,8 +65,8 @@ Elasticity tolerance
    \lVert \mathbf C-\mathbf C^{\mathsf T}\rVert_F \leq 10^{-3}\ \mathrm{GPa}.
 
 The tolerance permits harmless textual rounding, but it is not a license to
-supply independently inconsistent upper and lower triangles.  Quantas validates
-rather than silently symmetrizes the matrix.  A singular matrix cannot be
+supply independently inconsistent upper and lower triangles.  Inconsistent
+triangles are rejected rather than silently symmetrized.  A singular matrix cannot be
 inverted and therefore fails before directional properties are evaluated.
 
 Engineering shear factors are handled when the Voigt compliance is converted
@@ -486,8 +486,9 @@ The calculation stops when:
 - a requested sampling grid or property identifier is invalid;
 - a required compliance denominator is non-positive or non-finite.
 
-A mechanically unstable but invertible tensor produces a result and warning,
-but directional analysis is intentionally skipped.
+A mechanically unstable but invertible tensor still produces the basic result
+and a warning; directional analysis is skipped because the extrema would not
+have the intended mechanical interpretation.
 
 Surface warnings can indicate that a signed branch is absent—for example, no
 negative compressibility or no auxetic branch.  This is a physical result, not

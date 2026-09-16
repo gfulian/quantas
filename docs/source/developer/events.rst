@@ -99,7 +99,7 @@ run inside tests, notebooks, the CLI, or a GUI.
 Persistent and operational events
 ---------------------------------
 
-``PROGRESS`` events are observer-only and are intentionally excluded from
+``PROGRESS`` events are observer-only and are excluded from
 ``ResultData.events`` and native HDF5. Persisting thousands of loop updates
 would inflate files without adding scientific provenance.
 

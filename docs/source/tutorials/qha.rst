@@ -36,8 +36,8 @@ The file can be regenerated from the distributed CRYSTAL QHA output with
        --output mgo_b3lyp.yaml
 
 The generated YAML records ``mode_continuity: verified`` with
-``method: crystal-qha`` because the native CRYSTAL workflow explicitly reports
-continuity of the frequencies with volume.  This is source-managed provenance;
+``method: crystal-qha`` because the native CRYSTAL workflow reports continuity
+of the frequencies with volume.  This is source-managed provenance;
 it is distinct from the Quantas eigenvector tracking used for independent
 single-volume phonon outputs.  See
 :doc:`../workflows/phonon_input_generation`.
@@ -252,8 +252,8 @@ reconstructs the equilibrium cell.  At 0 GPa:
    1000   19.669793   4.285024   4.285024   4.285024
 
 MgO is cubic, so :math:`a=b=c` and each linear expansion coefficient equals
-one third of the volumetric coefficient.  The report explicitly verifies that
-the trace of the linear expansion tensor agrees with :math:`\alpha_V`.
+one third of the volumetric coefficient.  The report also checks that the trace of the linear expansion tensor agrees
+with :math:`\alpha_V`.
 
 Exporting QHA tables
 --------------------

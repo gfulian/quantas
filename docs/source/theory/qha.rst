@@ -8,9 +8,9 @@ harmonic calculations defines a temperature-dependent free-energy surface from
 which equilibrium properties can be obtained at finite pressure and
 temperature [#anderson_1995]_ [#anderson_masuda_isaak_1995]_.
 
-The treatment in this section describes the scientific model.  The numerical
-representations, fit diagnostics, and execution choices available in Quantas
-are documented in :doc:`../workflows/qha`.
+The discussion below stays with the scientific model.  Numerical
+representations, fit diagnostics, and execution choices are documented in
+:doc:`../workflows/qha`.
 
 Why the harmonic approximation is insufficient
 -----------------------------------------------

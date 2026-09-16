@@ -1,9 +1,9 @@
 Results, reports, and plots
 ===========================
 
-Quantas deliberately separates the scientific result from its presentation.
-A normal calculation may produce several complementary artifacts, each with a
-different purpose.
+A Quantas calculation separates the scientific result from the way that result
+is presented.  It may therefore produce several complementary artifacts, each
+serving a different purpose.
 
 .. list-table:: Output roles
    :header-rows: 1

@@ -1,8 +1,9 @@
 Capabilities
 ============
 
-This page summarizes what Quantas can currently do, which approximations are
-implemented, and which outputs are produced.
+Quantas brings several solid-state analysis workflows under one consistent
+interface.  The overview below shows what each module is designed to calculate,
+which approximation it uses, and the kinds of results it produces.
 
 Scientific modules
 ------------------

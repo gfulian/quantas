@@ -4,10 +4,9 @@ Interoperability between workflows
 Purpose and scope
 -----------------
 
-Interoperability in Quantas is a scientific transformation between typed
-results, not a shortcut for copying similarly shaped arrays. A downstream
-workflow must receive the units, tensor condition, normalization, masks, and
-provenance that define the upstream result.
+Interoperability is more than passing an array from one module to another.  A
+downstream workflow needs the units, tensor condition, normalization, masks,
+and provenance that give the upstream result its scientific meaning.
 
 The currently supported chain is:
 
@@ -27,9 +26,10 @@ The currently supported chain is:
           v                         v
       Elasticity                 SEISMIC
 
-The physical approximations belong to the individual workflows. This page is
-concerned with the **contracts between them**: what is transferred, what is
-validated, and what remains the user's scientific responsibility.
+The physical approximations remain documented with their individual workflows.
+Here the concern is the **contract between them**: what crosses each boundary,
+what is validated there, and which scientific decisions still belong to the
+user.
 
 Supported transformations
 -------------------------
@@ -57,8 +57,8 @@ Supported transformations
      - Elasticity or SEISMIC CLI
      - ``quantas thermoelasticity analysis point``
 
-These are deliberate, narrow transformations. Quantas does not infer a general
-workflow graph from file names or array shapes.
+These transformations are deliberately narrow.  File names and array shapes
+are not enough to infer a general workflow graph.
 
 QHA to Thermoelasticity
 -----------------------

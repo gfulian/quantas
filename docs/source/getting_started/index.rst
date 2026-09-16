@@ -3,8 +3,9 @@
 Getting started
 ===============
 
-This section takes a new user from installation to one complete calculation,
-then explains the two supported frontends and the artifacts they produce.
+If this is your first time using Quantas, the pages below provide a short path
+from installation to a complete calculation.  They then introduce the Python
+and command-line frontends and explain what each output artifact is for.
 
 .. list-table:: Recommended reading order
    :header-rows: 1

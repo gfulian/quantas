@@ -7,9 +7,9 @@ Validation is documented separately from tutorials. Tutorials explain how to
 run a workflow; validation establishes why its numerical and scientific results
 can be trusted.
 
-The detailed records are intentionally allowed to mature at different rates.
-Pages marked *Work in progress* describe the planned evidence without implying
-that release-level consolidation is already complete.
+The validation record is still growing.  Pages marked *Work in progress* state
+what evidence is planned without implying that release-level validation has
+already been completed.
 
 - :doc:`strategy`
 - :doc:`matrix`

@@ -19,10 +19,10 @@ The workflow addresses questions such as:
 - how do polarization axes evolve across the sphere?;
 - where does the ray mapping show strong focusing or possible caustic behavior?
 
-The physical derivation is given in :doc:`../theory/seismic`.  This page
-explains how Quantas samples and organizes that theory, how the numerical
-controls should be interpreted, and which approximations remain in a finite
-spherical grid.
+The physical derivation is given in :doc:`../theory/seismic`.  The workflow
+chapter turns that theory into a practical directional calculation: how the
+sphere is sampled, what the numerical controls change, and which limitations
+remain on a finite grid.
 
 Computational pipeline
 ----------------------
@@ -538,8 +538,8 @@ Recommended procedure:
 
 If only a few specific crystallographic directions are required, the public
 low-level physical objects can solve those directions directly, but the
-persisted workflow is intentionally organized around regular fields for maps,
-reports, export, and GUI reuse.
+persisted workflow uses regular fields because they can be reused directly
+for maps, reports, exports, and graphical frontends.
 
 Performance and memory strategy
 -------------------------------
@@ -596,8 +596,8 @@ not invalidate the phase speeds there.
 
 During sampling, the calculator emits one operational ``PROGRESS`` event after
 each completed batch.  Its ``current`` and ``total`` fields are monotonic and
-the final progress value is one.  Progress events are transport state for a live
-frontend and are intentionally not duplicated in the persisted event history.
+the final progress value is one.  Progress events are transport state for a live frontend, so they are not
+duplicated in the persisted event history.
 Settings, input, isotropic references, field completion, warnings, final
 completion, and errors use the same frontend-neutral event model; non-progress
 events are retained in the result envelope and native HDF5 file.

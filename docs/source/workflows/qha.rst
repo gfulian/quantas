@@ -4,11 +4,11 @@ Quasi-Harmonic Approximation: implementation and workflow
 Purpose and scope
 -----------------
 
-The QHA workflow converts a multi-volume phonon dataset into equilibrium and
+The QHA workflow turns a multi-volume phonon dataset into equilibrium and
 thermodynamic properties on a pressure-temperature grid.  The physical model is
-described in :doc:`../theory/qha`; this page explains how Quantas represents the
-free-energy surface, how the available choices differ, and how to assess their
-numerical reliability.
+introduced in :doc:`../theory/qha`; here the focus is practical: how the
+free-energy surface is represented, when the available numerical routes differ,
+and which diagnostics deserve attention.
 
 QHA contains several legitimate routes because no single representation is
 optimal for every dataset.  The main decisions are:
@@ -149,7 +149,7 @@ from the finite-strain ``wallace_delta`` term used by the QSA equations.  The
 source of every :math:`P_i` is part of the data contract: it may come from the
 output stress, a manually supplied value, an integrated energy EOS, or a
 polynomial derivative of the QHA input's static :math:`E(V)` series. For the
-latter two routes, Quantas first imports the tensors as raw, matches elastic
+latter two routes, the importer first treats the tensors as raw, matches elastic
 and phonon volumes explicitly, evaluates :math:`P(V)=-dE/dV`, and only then
 applies the CRYSTAL correction. The generated input records the selected EOS
 tag or polynomial degree, fit diagnostics, units,
@@ -182,7 +182,7 @@ thermodynamic properties are recalculated.
 Kieffer-enriched frequency QHA does not currently support the
 ``mode_gruneisen`` thermal-expansion route or the optional mode-Gruneisen
 analysis.  A phonon-only weighted average would omit the acoustic branches and
-is therefore rejected explicitly.  At the CLI, ``--kieffer`` automatically
+is therefore rejected.  At the CLI, ``--kieffer`` automatically
 turns off the otherwise enabled-by-default mode-Gruneisen output and records
 that resolution in the options; an explicit ``--mode-gruneisen`` request is an
 error.  The default ``mixed_derivative`` route and the numerical
@@ -205,8 +205,8 @@ thermal-expansion route remain available.
 The sampled harmonic stage
 --------------------------
 
-For every requested temperature, Quantas first computes HA properties at all
-sampled volumes.  The resulting total Helmholtz free energy
+For every requested temperature, the workflow first computes HA properties at
+all sampled volumes.  The resulting total Helmholtz free energy
 
 .. math::
 
@@ -214,7 +214,7 @@ sampled volumes.  The resulting total Helmholtz free energy
 
 is the common starting surface for both QHA schemes.
 
-If harmonic thermodynamics cannot be evaluated, Quantas can continue with the
+If harmonic thermodynamics cannot be evaluated, the workflow can continue with the
 static energy repeated at every temperature.  This behavior preserves a useful
 static pressure-volume minimization and records a warning, but it is a
 **degraded static-only calculation**, not a complete QHA result.  Temperature-
@@ -256,8 +256,8 @@ harmonic thermodynamics are recalculated from that interpolated spectrum. With
 Kieffer enrichment, the three acoustic cutoffs are fitted in the same way and
 must remain finite and positive over every volume reached by minimization.
 
-For ``td``, Quantas first performs the harmonic sum at each sampled volume and
-then interpolates the resulting thermodynamic quantities. This sacrifices
+With ``td``, the harmonic sum is first evaluated at each sampled volume and
+the resulting thermodynamic quantities are then interpolated. This sacrifices
 mode-resolved interpretation but avoids making the QHA result depend on a
 branch assignment that the input cannot justify.
 
@@ -268,7 +268,7 @@ are scientifically meaningful. The worked comparison belongs to
 Representing the free-energy curve
 ----------------------------------
 
-At each temperature Quantas fits one free-energy model over the sampled
+At each temperature, one free-energy model is fitted over the sampled
 volumes.  The fitted model is reused for all requested pressures at that
 temperature.  Increasing the number of pressure points therefore does not
 require refitting :math:`F(V,T)`, although later property evaluation still
@@ -301,7 +301,7 @@ minimization problem but impose different structure on :math:`F(V,T)`.
      - Sampling is dense and centered around the relevant minimum
      - A broader compression interval supports a physical EOS description
 
-For the polynomial route, Quantas solves
+For the polynomial route, the minimum follows from
 
 .. math::
 
@@ -311,7 +311,7 @@ and retains a positive-curvature stationary point connected to the sampled
 free-energy basin. Polynomial coefficients are numerical interpolation
 parameters rather than material constants.
 
-For the EOS route, Quantas fits an integrated Energy EOS at every temperature
+For the EOS route, an integrated Energy EOS is fitted at every temperature
 and evaluates it at the requested pressures. Covariance-based uncertainty
 propagation is available when the fitted covariance is usable. The default
 model is ``BM3``; alternative Energy EOS families are described in
@@ -347,7 +347,7 @@ compare the final physical properties rather than selecting a model from
 Polynomial thermoelastic derivatives
 ------------------------------------
 
-After polynomial minimization, Quantas needs the second and third volume
+After polynomial minimization, the thermoelastic reconstruction needs the second and third volume
 derivatives of free energy to obtain :math:`K_T` and :math:`K'_T`. Two routes
 are available:
 
@@ -381,7 +381,7 @@ derivative method changes.
 Three routes to volumetric thermal expansion
 --------------------------------------------
 
-Quantas stores the available estimates separately and records which method
+The available estimates are stored separately, together with the method that
 supplies the authoritative :math:`\alpha_V` at each state.
 
 .. list-table:: Thermal-expansion routes
@@ -410,7 +410,7 @@ resolution rather than to select an automatic winner.
 Derived thermodynamic quantities
 --------------------------------
 
-After selecting :math:`\alpha_V`, Quantas calculates
+After selecting :math:`\alpha_V`, the workflow calculates
 
 .. math::
 
@@ -427,7 +427,7 @@ and
    K_S=K_T\frac{C_P}{C_V}.
 
 At :math:`T=0`, and wherever :math:`C_V` is too small for a stable ratio,
-Quantas sets :math:`K_S=K_T`.
+The result then uses :math:`K_S=K_T`.
 
 The optional macroscopic Grüneisen parameter is
 
@@ -443,7 +443,7 @@ stored macroscopic value is set to zero by convention.
 Structural properties
 ---------------------
 
-When the input contains a volume-constrained structural series, Quantas builds
+When the input contains a volume-constrained structural series, the workflow builds
 a one-dimensional structural path in volume and evaluates it at
 :math:`V(P,T)`.  Cell parameters and the deformation gradient are therefore
 reconstructed from static structures, while temperature enters through the QHA
