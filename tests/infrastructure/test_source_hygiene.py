@@ -162,6 +162,7 @@ def test_developer_tools_use_public_human_readable_names() -> None:
         "benchmark_seismic_vectorization.py",
         "check_architecture.py",
         "check_distribution.py",
+        "check_release_identity.py",
         "check_repository.py",
         "compare_qha_workflows.py",
         "project_stats.py",

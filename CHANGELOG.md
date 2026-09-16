@@ -49,6 +49,10 @@ public contract; they must still be documented and validated.
 - Extended architecture and source-hygiene characterization to enforce active
   object semantics, release-version synchronization, frontend dependency
   boundaries, and public docstring contracts.
+- Hardened the publication workflow so TestPyPI remains an explicit manual
+  candidate step while production PyPI publication requires a matching GitHub
+  release tag and repeats the complete source, architecture, documentation,
+  distribution, and clean-install gates.
 - Consolidated Energy EOS, BM3 P--V, Kieffer, phonon mode-continuity, HA/QHA,
   and thermoelastic QSA validation traceability while keeping Elasticity,
   SEISMIC, V--T/P--V--T EOS, and tolerance-catalogue completion explicitly WIP.

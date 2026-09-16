@@ -6,6 +6,7 @@ public Python API or the installed ``quantas`` command.
 
 ## Routine checks
 
+- ``check_release_identity.py`` verifies that source release-facing files and an optional ``vX.Y.Z`` tag agree on one package version.
 - ``validate_release.sh`` recreates a dedicated virtual environment and runs
   the complete source, test, documentation, packaging, distribution, and Git
   validation sequence. It is the preferred final check for an unpacked source

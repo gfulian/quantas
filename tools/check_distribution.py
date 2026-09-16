@@ -88,6 +88,7 @@ def _validate_archive_contents(artifacts: Sequence[Path]) -> None:
         "/requirements/minimum.txt",
         "/requirements/typecheck.txt",
         "/tools/validate_release.sh",
+        "/tools/check_release_identity.py",
         "/examples/manifest.json",
         "/examples/MANIFEST.sha256",
         "/examples/qha/crystal-qha/mgo-b3lyp-crystal-qha.out",

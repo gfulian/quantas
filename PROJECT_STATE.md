@@ -108,7 +108,10 @@ next pre-release checkpoint.  The b12 work has focused on:
   public validation record explicit about validated versus work-in-progress
   scope;
 - preserving numerical behavior while tightening packaging, provenance, and
-  release metadata checks.
+  release metadata checks;
+- requiring production publication to originate from a GitHub release tag that
+  matches the authoritative source version, while keeping TestPyPI as the manual
+  candidate-publication path.
 
 The release gate remains the staged test runner plus static checks, Sphinx with
 warnings as errors, wheel/sdist construction, installed-distribution smoke
