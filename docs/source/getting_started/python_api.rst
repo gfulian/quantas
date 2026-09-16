@@ -24,9 +24,9 @@ Public namespaces are organized by scientific domain:
        thermoelasticity,
    )
 
-The API is deliberately not one flat collection of functions.  Each namespace
-exposes the passive data contracts and operations appropriate to that
-scientific workflow.
+The API is organized by scientific domain rather than as one flat collection
+of functions.  Each namespace exposes the passive data contracts and operations
+that belong to that workflow.
 
 The single-shot workflow pattern
 --------------------------------

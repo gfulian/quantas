@@ -33,6 +33,11 @@ def build_thermoelastic_report(
     -------
     tuple of ReportTable
         Ordered neutral tables suitable for Rich, plain text, or a GUI.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
     """
     if level not in {"standard", "extended", "debug"}:
         raise ValueError("invalid thermoelastic report level")

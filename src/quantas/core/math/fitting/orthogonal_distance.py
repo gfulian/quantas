@@ -140,7 +140,31 @@ class ODRBackend(Protocol):
         bounds: tuple[NDArray[np.float64], NDArray[np.float64]],
         options: OrthogonalDistanceOptions,
     ) -> ODRBackendResult:
-        """Execute one explicit weighted ODR problem."""
+        """Execute one explicit weighted orthogonal-distance problem.
+
+        Parameters
+        ----------
+        model : callable
+            Function accepting ``(x, free_parameters)`` and returning fitted responses.
+        x, y : ndarray
+            Selected explanatory coordinates and observed responses. ``x`` may be a
+            vector or coordinate matrix; its observation axis must align with ``y``.
+        initial_parameters : ndarray
+            Initial free-parameter vector.
+        sigma_x, sigma_y : ndarray
+            Strictly positive one-standard-deviation uncertainties aligned with the
+            explanatory coordinates and responses.
+        bounds : tuple of ndarray
+            Lower and upper bounds in free-parameter order.
+        options : OrthogonalDistanceOptions
+            Backend-neutral numerical controls.
+
+        Returns
+        -------
+        ODRBackendResult
+            Optimized free parameters, coordinate corrections, absolute covariance,
+            objective components, termination diagnostics, and backend provenance.
+        """
         ...
 
 
@@ -211,7 +235,36 @@ class ODRPackBackend:
         bounds: tuple[NDArray[np.float64], NDArray[np.float64]],
         options: OrthogonalDistanceOptions,
     ) -> ODRBackendResult:
-        """Execute explicit weighted ODR through :func:`odrpack.odr_fit`."""
+        """Execute explicit weighted ODR through the ODRPACK95 binding.
+
+        Parameters
+        ----------
+        model : callable
+            Function accepting ``(x, free_parameters)`` and returning model responses.
+        x, y : ndarray
+            Selected explanatory coordinates and observed responses.
+        initial_parameters : ndarray
+            Initial free-parameter vector.
+        sigma_x, sigma_y : ndarray
+            One-standard-deviation uncertainties converted internally to inverse-
+            variance ODRPACK weights.
+        bounds : tuple of ndarray
+            Lower and upper free-parameter bounds.
+        options : OrthogonalDistanceOptions
+            Difference scheme, tolerances, scaling, step, and iteration controls.
+
+        Returns
+        -------
+        ODRBackendResult
+            Quantas-owned copy of the ODRPACK95 result and solver provenance.
+
+        Raises
+        ------
+        Exception
+            Propagates unexpected errors raised by the loaded ODRPACK95 binding. Input
+            validation and backend availability are handled by
+            :class:`OrthogonalDistanceFitter` before this adapter is called.
+        """
         result = self._odr_fit(
             model,
             x,
@@ -263,6 +316,12 @@ def odr_backend_available() -> bool:
 
     The function does not import the extension module and therefore is suitable
     for capability checks in future CLI and GUI frontends.
+
+    Returns
+    -------
+    bool
+        ``True`` when the ``odrpack`` module is discoverable, otherwise
+        ``False``.
     """
     return importlib.util.find_spec("odrpack") is not None
 
@@ -312,6 +371,11 @@ class OrthogonalDistanceFitter:
             Complete parameters, covariance, coordinate corrections, and ODR
             diagnostics. If the required runtime backend cannot be loaded,
             ``success`` is false and the message reports the installation error.
+
+        Raises
+        ------
+        ValueError
+            If the selected observations do not outnumber the free parameters.
         """
         metadata = {**model.metadata(), **options.metadata}
         try:

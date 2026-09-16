@@ -106,13 +106,24 @@ class PressureEOSDiagnostics:
     """Evaluate finite-strain and normalized-pressure transformations."""
 
     def strain_family(self, eos: str | EOSModel) -> EOSStrainFamily:
-        """Return the diagnostic strain family supported by ``eos``.
+        """Return the normalized-pressure strain family supported by an EOS.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Pressure EOS model to classify.
+
+        Returns
+        -------
+        EOSStrainFamily
+            Diagnostic strain family used to construct finite-strain and
+            normalized-pressure coordinates.
 
         Raises
         ------
         NotImplementedError
-            If the EOS has no established normalized-pressure representation
-            in Quantas.
+            If the EOS has no established normalized-pressure representation in
+            Quantas.
         """
         model = parse_eos_model(eos)
         if model.family is EOSFamily.BIRCH_MURNAGHAN:
@@ -139,23 +150,29 @@ class PressureEOSDiagnostics:
         Parameters
         ----------
         eos : str or EOSModel
-            Pressure EOS family and order.  The order does not change the
-            diagnostic transformation.
-        pressure, coordinate : array-like
+            Pressure EOS family and order. The order does not change the diagnostic
+            transformation.
+        pressure, coordinate : array_like
             Broadcast-compatible pressure and positive volume-like coordinate.
             Linear EOS data must be supplied as cubed lengths.
         reference_coordinate : float
-            Positive reference volume-like coordinate.  For a linear EOS this
-            is ``L0**3``.
+            Positive reference volume-like coordinate. For a linear EOS this is
+            ``L0**3``.
         singular_tolerance : float or None, optional
             Absolute strain magnitude below which normalized pressure is marked
-            undefined.  The default is scale-independent and based on
-            ``sqrt(eps)``.
+            undefined. The default is scale-independent and based on ``sqrt(eps)``.
 
         Returns
         -------
         EOSStrainTransform
-            Transformation values and derivatives.
+            Transformation values and analytical first derivatives.
+
+        Raises
+        ------
+        ValueError
+            If the pressure or coordinate values are non-finite, coordinates are
+            non-positive, the reference coordinate is invalid, or
+            ``singular_tolerance`` is negative or non-finite.
         """
         model = parse_eos_model(eos)
         family = self.strain_family(model)

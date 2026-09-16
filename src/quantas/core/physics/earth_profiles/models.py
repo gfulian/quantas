@@ -36,10 +36,34 @@ class PressureDepthModel(Protocol):
         """Return depths worth preserving in generated sampling grids."""
 
     def pressure(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate pressure in GPa at the requested depths."""
+        """Evaluate pressure at requested geological depths.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Finite depths in km, normally within :attr:`depth_bounds`.
+
+        Returns
+        -------
+        ndarray
+            ``float64`` pressure in GPa with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            Concrete models raise when depths lie outside their supported domain or
+            otherwise violate the model contract.
+        """
 
     def metadata(self) -> dict[str, Any]:
-        """Return recursively serializable scientific provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing scientific provenance for the
+            pressure-depth model.
+        """
 
 
 @runtime_checkable
@@ -62,10 +86,34 @@ class TemperatureDepthModel(Protocol):
         """Return depths worth preserving in generated sampling grids."""
 
     def temperature(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate temperature in K at the requested depths."""
+        """Evaluate absolute temperature at requested depths.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Finite depths in km, normally within :attr:`depth_bounds`.
+
+        Returns
+        -------
+        ndarray
+            ``float64`` temperature in K with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            Concrete models raise when depths lie outside their supported domain or
+            otherwise violate the model contract.
+        """
 
     def metadata(self) -> dict[str, Any]:
-        """Return recursively serializable scientific provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing scientific provenance for the
+            temperature-depth model.
+        """
 
 
 @dataclass(slots=True)

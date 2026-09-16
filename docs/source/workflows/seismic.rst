@@ -19,10 +19,10 @@ The workflow addresses questions such as:
 - how do polarization axes evolve across the sphere?;
 - where does the ray mapping show strong focusing or possible caustic behavior?
 
-The physical derivation is given in :doc:`../theory/seismic`.  This page
-explains how Quantas samples and organizes that theory, how the numerical
-controls should be interpreted, and which approximations remain in a finite
-spherical grid.
+The physical derivation is given in :doc:`../theory/seismic`.  The workflow
+chapter turns that theory into a practical directional calculation: how the
+sphere is sampled, what the numerical controls change, and which limitations
+remain on a finite grid.
 
 Computational pipeline
 ----------------------
@@ -538,83 +538,35 @@ Recommended procedure:
 
 If only a few specific crystallographic directions are required, the public
 low-level physical objects can solve those directions directly, but the
-persisted workflow is intentionally organized around regular fields for maps,
-reports, export, and GUI reuse.
+persisted workflow uses regular fields because they can be reused directly
+for maps, reports, exports, and graphical frontends.
 
 Performance and memory strategy
 -------------------------------
 
-The principal costs are:
+SEISMIC cost scales approximately with the number of sampled wave normals and
+with the selected calculation level. ``phase`` is the least expensive,
+``group`` adds analytical first derivatives, and ``enhancement`` adds Hessians
+and curvature fields. HDF5 size grows with the same sampled grid and with the
+number of stored fields.
 
-``phase``
-   Batched ``3 × 3`` eigensystems and polarization storage.
+For convergence work, validate the tensor first, start from ``phase`` on a
+moderate upper-hemisphere grid, refine the angular sampling, and enable group or
+enhancement quantities only when they are part of the scientific question.
+``batch_size`` is a throughput/memory control and must not be interpreted as an
+accuracy parameter. Plot DPI, contour levels, colormap, and polarization stride
+change rendering only.
 
-``group``
-   Phase cost plus analytical gradient tensors and group vectors.
+Defaults and their role
+-----------------------
 
-``enhancement``
-   Group cost plus Hessians, pseudoinverses, ray gradients, cofactors, and area
-   factors.
-
-``polarization tracking``
-   A separate deterministic traversal after phase sampling.  Its cost is
-   usually lower than enhancement but grows with every grid position.
-
-Practical acceleration sequence:
-
-1. validate a new tensor with Elasticity first;
-2. start with ``level=phase`` and a moderate grid;
-3. disable tracking if no polarization output is needed;
-4. refine angular resolution before enabling enhancement;
-5. select the upper hemisphere unless a lower/full domain is specifically
-   required;
-6. use ``batch_size`` only to balance memory and throughput;
-7. render only the maps and surfaces required for the study.
-
-The number of contour levels, image DPI, colormap, polarization stride, and 3D
-plot geometry affect rendering only.  They do not refine the stored acoustic
-field.
-
-Defaults and rationale
-----------------------
-
-.. list-table:: SEISMIC defaults
-   :header-rows: 1
-   :widths: 28 23 49
-
-   * - Control
-     - Default
-     - Rationale
-   * - Hemisphere
-     - upper
-     - Uses antipodal symmetry without duplicating the physical axis field.
-   * - Sampling level
-     - enhancement
-     - Produces the complete persisted acoustic dataset in one run.
-   * - Polar grid
-     - 91
-     - Approximately one-degree spacing over the upper hemisphere.
-   * - Azimuthal grid
-     - 181
-     - Approximately two-degree spacing without a duplicated seam.
-   * - Batch size
-     - 512
-     - Balances vectorization, temporary memory, and progress cadence.
-   * - Polarization tracking
-     - enabled
-     - Produces continuous axes suitable for maps and branch analysis.
-   * - Eigenvalue tolerance
-     - ``1e-10`` relative, ``1e-12`` absolute
-     - Clamps only tiny negative numerical eigenvalues.
-   * - Degeneracy tolerance
-     - ``1e-8`` relative, ``1e-10`` absolute
-     - Marks near-equal eigenspaces without requiring exact equality.
-   * - Pseudoinverse cutoff
-     - ``1e-10``
-     - Regularizes analytical Hessians near singular shifted systems.
-   * - Caustic tolerance
-     - ``1e-10`` relative, ``1e-12`` absolute
-     - Identifies sampled area factors numerically consistent with zero.
+The default grid and tolerances provide a reproducible starting point, not a
+universal convergence prescription. The scientific controls that may require a
+material-specific sensitivity study are angular resolution, degeneracy
+tolerances, eigenvalue-clamping tolerances, pseudoinverse cutoff, and the
+caustic-candidate threshold. The complete option inventory and exact defaults
+belong to :doc:`../cli/seismic`; this workflow chapter explains what those
+controls change physically.
 
 Warnings and diagnostic masks
 -----------------------------
@@ -644,8 +596,8 @@ not invalidate the phase speeds there.
 
 During sampling, the calculator emits one operational ``PROGRESS`` event after
 each completed batch.  Its ``current`` and ``total`` fields are monotonic and
-the final progress value is one.  Progress events are transport state for a live
-frontend and are intentionally not duplicated in the persisted event history.
+the final progress value is one.  Progress events are transport state for a live frontend, so they are not
+duplicated in the persisted event history.
 Settings, input, isotropic references, field completion, warnings, final
 completion, and errors use the same frontend-neutral event model; non-progress
 events are retained in the result envelope and native HDF5 file.

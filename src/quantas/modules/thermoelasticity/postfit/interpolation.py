@@ -156,7 +156,26 @@ def interpolate_archived_grid(
     target_temperature: ArrayLike,
     target_pressure: ArrayLike,
 ) -> tuple[FloatArray, NDArray[np.bool_]]:
-    """Interpolate a rectilinear field through the shared numerical engine."""
+    """Interpolate a rectilinear field through the shared numerical engine.
+
+    Parameters
+    ----------
+    source_temperature : ArrayLike
+        Temperature coordinates of the source grid, in K.
+    source_pressure : ArrayLike
+        Pressure coordinates of the source grid, in GPa.
+    source_values : ArrayLike
+        Values defined on the source pressure-temperature grid.
+    target_temperature : ArrayLike
+        Temperature coordinates requested for interpolation, in K.
+    target_pressure : ArrayLike
+        Pressure coordinates requested for interpolation, in GPa.
+
+    Returns
+    -------
+    tuple[FloatArray, NDArray[np.bool_]]
+        Whether the documented condition is satisfied.
+    """
     return RectilinearFieldInterpolator(
         source_temperature, source_pressure, source_values
     ).evaluate_grid(target_temperature, target_pressure)
@@ -169,7 +188,26 @@ def interpolate_archived_points(
     target_temperature: ArrayLike,
     target_pressure: ArrayLike,
 ) -> tuple[FloatArray, NDArray[np.bool_]]:
-    """Interpolate paired states through the shared numerical engine."""
+    """Interpolate paired states through the shared numerical engine.
+
+    Parameters
+    ----------
+    source_temperature : ArrayLike
+        Temperature coordinates of the source grid, in K.
+    source_pressure : ArrayLike
+        Pressure coordinates of the source grid, in GPa.
+    source_values : ArrayLike
+        Values defined on the source pressure-temperature grid.
+    target_temperature : ArrayLike
+        Temperature coordinates requested for interpolation, in K.
+    target_pressure : ArrayLike
+        Pressure coordinates requested for interpolation, in GPa.
+
+    Returns
+    -------
+    tuple[FloatArray, NDArray[np.bool_]]
+        Whether the documented condition is satisfied.
+    """
     return RectilinearFieldInterpolator(
         source_temperature, source_pressure, source_values
     ).evaluate_points(target_temperature, target_pressure)

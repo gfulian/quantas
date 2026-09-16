@@ -280,7 +280,13 @@ class EOSFitRequest:
         self.metadata = dict(self.metadata)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready fit request."""
+        """Return a serialization-ready fit request.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready fit request.
+        """
         return {
             "request_id": self.request_id,
             "domain": self.domain.value,
@@ -355,7 +361,13 @@ class EOSFitResult:
         }
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready EOS result."""
+        """Return a serialization-ready EOS result.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready EOS result.
+        """
         return {
             "request": self.request.as_dict(),
             "fit": self.fit.as_dict(),

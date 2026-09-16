@@ -143,11 +143,88 @@ and duplicate volumes are rejected.  Nearby but genuinely distinct volumes are
 preserved.  This protects the fitted E(V) surface from combining calculations
 that are individually parseable but scientifically incompatible.
 
-Release-candidate validation still to close
+Experimental P--V reference regression
 -------------------------------------------
 
-Before ``2.0.0rc1`` the broader EOS validation matrix will also collect the
-existing P--V, V--T, and P--V--T analytical and real-data comparisons in one
-place, including EosFit7 reference cases where appropriate.  That documentation
-work does not change the already characterized Energy EOS formulas or public
-``ev/energy`` contract.
+The pressure--volume path has an external-reference regression for third-order
+Birch--Murnaghan fits. Quartz and topaz datasets are compared with frozen
+EosFit7-compatible results using both ordinary least squares and the effective
+variance treatment used for uncertainties in both pressure and volume.
+
+Representative reference parameters are:
+
+.. list-table:: BM3 P--V external-reference checkpoints
+   :header-rows: 1
+   :widths: 18 18 18 18 18 10
+
+   * - Dataset / solver
+     - ``V0``
+     - ``K0`` (GPa)
+     - ``KP``
+     - ``KPP`` (GPa :math:`^{-1}`)
+     - reduced :math:`\chi^2`
+   * - Quartz / OLS
+     - 112.96752
+     - 37.28543
+     - 5.93351
+     - -0.25642
+     - --
+   * - Quartz / effective variance
+     - 112.98088
+     - 37.12600
+     - 5.98823
+     - -0.26478
+     - 0.95
+   * - Topaz / OLS
+     - 346.97214
+     - 135.74806
+     - 4.38050
+     - -0.03252
+     - --
+   * - Topaz / effective variance
+     - 345.50726
+     - 161.99034
+     - 2.97647
+     - -0.02416
+     - 18.55
+
+The regression also checks parameter standard errors, the largest residual, and
+the inflate-only covariance policy. Parameter tolerances are typically a few
+times :math:`10^{-4}` in the reported units; the more nonlinear topaz effective-
+variance ``V0`` comparison allows an absolute tolerance of 0.002. Those values
+are regression tolerances for reproducing the external reference calculation,
+not statements about experimental accuracy.
+
+Validation still in progress
+----------------------------
+
+.. admonition:: Work in progress
+
+   The V--T and P--V--T domains already have analytical, synthetic, workflow,
+   and tutorial regressions, but their consolidated external/reference matrix
+   has not yet been assembled to the release-candidate standard defined in
+   :doc:`strategy`. They therefore remain work in progress even though the
+   implementations are extensively tested.
+
+Traceability
+------------
+
+The principal EOS validation coverage is located in:
+
+- ``tests/physics/eos/test_energy_models.py`` and
+  ``tests/physics/eos/test_energy_pressure.py`` -- integrated E(V) models,
+  analytical pressure derivatives, and energy/pressure consistency.
+- ``tests/modules/eos/test_energy_volume_workflow.py`` and
+  ``tests/modules/eos/test_energy_structural_response.py`` -- public E--V
+  fitting, structural normalization, derived properties, and secondary axial
+  response.
+- ``tests/interfaces/test_crystal_energy_volume.py`` -- CRYSTAL state extraction
+  and authoritative energy semantics.
+- ``tests/examples/test_curated_examples.py`` -- curated MgO end-to-end Energy
+  EOS regression.
+- ``tests/modules/eos/test_eosfit_reference.py`` -- quartz/topaz BM3 OLS and
+  effective-variance regression against the frozen EosFit7-compatible reference
+  results listed above.
+
+The remaining V--T and P--V--T tests protect implementation behaviour while
+their public validation record is completed.

@@ -9,7 +9,6 @@ without introducing user-interface dependencies into scientific workflows.
 from __future__ import annotations
 
 from collections.abc import Callable
-from dataclasses import dataclass, field
 from typing import Protocol
 
 from .event import Event
@@ -56,7 +55,6 @@ class NullObserver:
         return None
 
 
-@dataclass
 class ListObserver:
     """
     Observer that stores all received events in a list.
@@ -64,13 +62,28 @@ class ListObserver:
     This observer is mainly useful for testing, debugging, and workflows where
     the event log has to be saved after the calculation.
 
+    Parameters
+    ----------
+    events : list of Event or None, optional
+        Initial event list. If omitted, a new independent list is created.
+
     Attributes
     ----------
     events : list of Event
         List containing the received events.
     """
 
-    events: list[Event] = field(default_factory=list)
+    __slots__ = ("events",)
+
+    def __init__(self, events: list[Event] | None = None) -> None:
+        """Initialize an event-collecting observer.
+
+        Parameters
+        ----------
+        events : list of Event or None, optional
+            Initial event list. If omitted, a new independent list is created.
+        """
+        self.events = [] if events is None else events
 
     def __call__(self, event: Event) -> None:
         """
@@ -84,7 +97,6 @@ class ListObserver:
         self.events.append(event)
 
 
-@dataclass
 class CallbackObserver:
     """
     Observer that forwards events to a user-defined callback.
@@ -95,7 +107,17 @@ class CallbackObserver:
         Function or callable object that receives an :class:`Event` instance.
     """
 
-    callback: Callable[[Event], None]
+    __slots__ = ("callback",)
+
+    def __init__(self, callback: Callable[[Event], None]) -> None:
+        """Initialize an observer around a callback.
+
+        Parameters
+        ----------
+        callback : callable
+            Function or callable object that receives an :class:`Event`.
+        """
+        self.callback = callback
 
     def __call__(self, event: Event) -> None:
         """

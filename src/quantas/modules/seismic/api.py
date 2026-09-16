@@ -275,7 +275,24 @@ def build_seismic_report(
 
 
 def describe_seismic_plot_inventory(result: ResultData) -> PlotInventory:
-    """Describe plots that can be built from a complete seismic result."""
+    """Describe plots available for a complete seismic result.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas result containing a :class:`SeismicResult` payload.
+
+    Returns
+    -------
+    PlotInventory
+        Result-aware inventory of phase, group, power-flow and enhancement
+        representations available at the stored sampling level.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` is not a seismic result.
+    """
     payload = result.results.get("seismic")
     if result.metadata.module != "seismic" or not isinstance(payload, SeismicResult):
         raise ValueError("ResultData does not contain a valid seismic result.")

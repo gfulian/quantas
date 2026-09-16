@@ -1,19 +1,9 @@
 Citing Quantas
 ==============
 
-For the base use of Quantas, cite:
-
-   G. Ulian and G. Valdrè, “QUANTAS, a Python software for the analysis of
-   solids from ab initio quantum mechanical simulations and experimental
-   data”, *Journal of Applied Crystallography* **55**, 386--396 (2022),
-   doi:10.1107/S1600576722000085.
-
-For phase and group acoustic velocities produced by SEISMIC, cite:
-
-   G. Ulian and G. Valdrè, “SEISMIC, a Python-based code of the Quantas package
-   to calculate the phase and group acoustic velocities in crystals”,
-   *Computers & Geosciences* **188**, 105615 (2024),
-   doi:10.1016/j.cageo.2024.105615.
+For the base use of Quantas, cite the main Quantas application paper
+[#quantas_2022]_.  For phase and group acoustic velocities produced by SEISMIC,
+also cite the dedicated SEISMIC paper [#seismic_ulian_valdre_2024]_.
 
 Module reports may provide additional method-specific references. Users should
 cite both Quantas and the scientific methods used in a calculation.
@@ -22,241 +12,114 @@ cite both Quantas and the scientific methods used in a calculation.
 Harmonic and quasi-harmonic thermodynamics
 -------------------------------------------
 
-For the statistical thermodynamics of independent harmonic oscillators, cite:
+For the statistical thermodynamics of independent harmonic oscillators, cite
+McQuarrie and Simon [#mcquarrie_simon_1997]_.
 
-   D. A. McQuarrie and J. D. Simon, *Physical Chemistry: A Molecular
-   Approach*, University Science Books, Sausalito, California (1997).
-
-For the general high-pressure thermodynamic framework used in QHA, cite:
-
-   O. L. Anderson, *Equations of State of Solids for Geophysics and Ceramic
-   Science*, Oxford Monographs on Geology and Geophysics **31**, Oxford
-   University Press, New York (1995).
-
-   O. L. Anderson, K. Masuda, and D. G. Isaak, “A new thermodynamic approach
-   for high-pressure physics”, *Physics of the Earth and Planetary Interiors*
-   **91**, 3--16 (1995), doi:10.1016/0031-9201(95)03044-W.
-
-For the combination of pressure and temperature effects with standard
-first-principles calculations, and for practical assessment of QHA behaviour,
-cite:
-
-   A. Erba, “On combining temperature and pressure effects on structural
-   properties of crystals with standard ab initio techniques”, *Journal of
-   Chemical Physics* **141**, 124115 (2014), doi:10.1063/1.4896228.
-
-   A. Erba, M. Shahrokhi, R. Moradian, and R. Dovesi, “On how differently the
-   quasi-harmonic approximation works for two isostructural crystals: Thermal
-   properties of periclase and lime”, *Journal of Chemical Physics* **142**,
-   044114 (2015), doi:10.1063/1.4906422.
+For the general high-pressure thermodynamic framework used in QHA, cite
+Anderson [#anderson_1995]_ and Anderson, Masuda, and Isaak
+[#anderson_masuda_isaak_1995]_.  For the combination of pressure and
+temperature effects with standard first-principles calculations, and for
+practical assessment of QHA behaviour, cite the corresponding studies by Erba
+[#erba_2014]_ and Erba *et al.* [#erba_shahrokhi_moradian_dovesi_2015]_.
 
 Quantas reports also include the Quantas software citation and, for the QHA
-workflow, the application reference by Ulian and Valdrè (2018) registered in
-``quantas.references``.
+workflow, the Quantas QHA application paper [#qha_ulian_valdre_2018]_.
 
 
 Equation-of-state methods
 -------------------------
 
 For isothermal, thermal-expansion, P--V--T, linear-EOS conventions, and the
-effective-variance weighting used by EOS, cite:
+EosFit7 framework used as a principal EOS reference, cite Angel, Gonzalez-Platas,
+and Alvaro [#eosfit7_angel_gonzalez_platas_alvaro_2014]_.  The same reference
+defines the modified Tait pressure parameterization used by Quantas.
+Volume-integrated E--V forms retain the corresponding physical EOS parameters
+and are constrained by :math:`P(V)=-\mathrm dE/\mathrm dV`; the integrated Tait
+expression is obtained analytically from that registered pressure form.
 
-   R. J. Angel, J. Gonzalez-Platas, and M. Alvaro, “EosFit7c and a Fortran
-   module (library) for equation of state calculations”, *Zeitschrift für
-   Kristallographie* **229**, 405--419 (2014),
-   doi:10.1515/zkri-2013-1711.
+For the stabilized-jellium energy EOS (SJEOS), also cite Alchagirov *et al.*
+[#sjeos_alchagirov_perdew_boettger_albers_fiolhais_2001]_.
 
-The same reference defines the modified Tait pressure parameterization used by
-Quantas.  Volume-integrated E--V forms retain the corresponding physical EOS
-parameters and are constrained by :math:`P(V)=-\mathrm dE/\mathrm dV`; the
-integrated Tait expression is obtained analytically from that registered
-pressure form.
+The effective-variance approach is attributed to Orear [#orear_1982]_.  For
+weighted orthogonal distance regression and ODRPACK, cite the ODRPACK reference
+guide [#boggs_byrd_rogers_schnabel_1992]_ and the ODRPACK95 implementation
+paper [#zwolak_boggs_watson_2007]_.
 
-
-For the stabilized-jellium energy EOS (SJEOS), also cite:
-
-   A. B. Alchagirov, J. P. Perdew, J. C. Boettger, R. C. Albers, and
-   C. Fiolhais, “Energy and pressure versus volume: Equations of state
-   motivated by the stabilized jellium model”, *Physical Review B* **63**,
-   224115 (2001), doi:10.1103/PhysRevB.63.224115.
-
-The effective-variance approach is attributed to:
-
-   J. Orear, “Least squares when both variables have uncertainties”,
-   *American Journal of Physics* **50**, 912--916 (1982).
-
-
-For weighted orthogonal distance regression and ODRPACK, cite:
-
-   P. T. Boggs, R. H. Byrd, J. E. Rogers, and R. B. Schnabel,
-   *User's Reference Guide for ODRPACK Version 2.01: Software for Weighted
-   Orthogonal Distance Regression*, NISTIR 4834 (1992),
-   doi:10.6028/NIST.IR.4834.
-
-For the bound-constrained ODRPACK95 implementation used by the Quantas
-runtime, cite:
-
-   J. W. Zwolak, P. T. Boggs, and L. T. Watson, “Algorithm 869: ODRPACK95:
-   A weighted orthogonal distance regression code with bound constraints”,
-   *ACM Transactions on Mathematical Software* **33** (4), Article 27 (2007),
-   doi:10.1145/1268776.1268782.
 
 Thermal-expansion models audited for EOS
 ----------------------------------------
 
 The individual V--T formulations and their historical parameterizations are
-attributed to the following sources, as reviewed and revalidated by Angel,
-Gonzalez-Platas, and Alvaro (2014):
-
-* R. G. Berman, *Journal of Petrology* **29**, 445--522 (1988).
-* Y. Fei, “Thermal expansion”, in *Mineral Physics & Crystallography: A
-  Handbook of Physical Constants*, Volume 2, 29--44 (1995).
-* A. R. Pawley, S. A. T. Redfern, and T. J. B. Holland,
-  *American Mineralogist* **81**, 335--340 (1996).
-* E. K. H. Salje, B. Wruck, and H. Thomas,
-  *Zeitschrift für Physik B* **82**, 399--404 (1991).
-* T. J. B. Holland and R. Powell, *Journal of Metamorphic Geology* **29**,
-  333--383 (2011).
-* G. Hellfrich and J. A. D. Connolly, *American Mineralogist* **94**,
-  1616--1620 (2009), for Anderson--Grüneisen coupling of thermal expansion
-  and the zero-pressure bulk modulus.
-* H. Kroll, A. Kirfel, R. Heinemann, and B. Barbier,
-  *European Journal of Mineralogy* **24**, 935--956 (2012).
-
-The Angel et al. (2014) formulations and the independent EOS reference
-snapshot define the Quantas implementation target. The public validation
+attributed to Berman [#berman_1988]_, Fei [#fei_1995]_, Pawley *et al.*
+[#pawley_redfern_holland_1996]_, Salje *et al.* [#salje_wruck_thomas_1991]_,
+Holland and Powell [#holland_powell_2011]_, Helffrich and Connolly
+[#helffrich_connolly_2009]_, and Kroll *et al.*
+[#kroll_kirfel_heinemann_barbier_2012]_.  These formulations are reviewed and
+revalidated in the EosFit7 reference above
+[#eosfit7_angel_gonzalez_platas_alvaro_2014]_.  The public Quantas validation
 record is maintained in :doc:`../validation/eos`.
+
 
 Terrestrial pressure--temperature profiles
 -------------------------------------------
 
-For pressure reconstructed from the Preliminary Reference Earth Model, cite:
+For pressure reconstructed from the Preliminary Reference Earth Model, cite
+Dziewonski and Anderson [#prem_dziewonski_anderson_1981]_.  For the layered
+continental conductive framework and representative lithospheric geotherms,
+cite Hasterok and Chapman [#hasterok_chapman_2011]_.  For oceanic half-space
+and finite-plate cooling, cite Parsons and Sclater [#parsons_sclater_1977]_.
 
-   A. M. Dziewonski and D. L. Anderson, “Preliminary reference Earth model”,
-   *Physics of the Earth and Planetary Interiors* **25** (4), 297--356 (1981),
-   doi:10.1016/0031-9201(81)90046-7.
+For the dry-pyrolite mantle adiabat and its archived scripts, cite both the
+published profile [#katsura_2022]_ and the corresponding software archive
+[#katsura_software_2022]_.  The Quantas Katsura implementation is a
+deterministic reconstruction from the published temperature and gradient
+constraints. It is not a re-execution of the complete Monte Carlo MATLAB
+workflow.
 
-For the layered continental conductive framework and representative
-lithospheric geotherms, cite:
-
-   D. Hasterok and D. S. Chapman, “Heat production and geotherms for the
-   continental lithosphere”, *Earth and Planetary Science Letters* **307**
-   (1--2), 59--70 (2011), doi:10.1016/j.epsl.2011.04.034.
-
-For oceanic half-space and finite-plate cooling references, cite:
-
-   B. Parsons and J. G. Sclater, “An analysis of the variation of ocean floor
-   bathymetry and heat flow with age”, *Journal of Geophysical Research* **82**
-   (5), 803--827 (1977), doi:10.1029/JB082i005p00803.
-
-For the dry-pyrolite mantle adiabat and its archived scripts, cite both:
-
-   T. Katsura, “A revised adiabatic temperature profile for the mantle”,
-   *Journal of Geophysical Research: Solid Earth* **127** (2), e2021JB023562
-   (2022), doi:10.1029/2021JB023562.
-
-   T. Katsura, *Matlab scripts of “A revised adiabatic temperature profile for
-   the mantle”*, Version 1.1.0, Zenodo (2022),
-   doi:10.5281/zenodo.5903286.
-
-The Quantas Katsura implementation is a deterministic reconstruction from the
-published temperature and gradient constraints. It is not a re-execution of
-the complete Monte Carlo MATLAB workflow.
 
 Thermoelastic and adiabatic elastic tensors
 --------------------------------------------
 
-For the general quasi-harmonic formulation of thermoelastic stiffness,
-the quasi-static approximation, and the conversion from isothermal to
-adiabatic elastic constants, cite:
-
-   M. Destefanis, C. Ravoux, A. Cossard, and A. Erba,
-   “Thermo-Elasticity of Materials from Quasi-Harmonic Calculations”,
-   *Minerals* **9**, 16 (2019), doi:10.3390/min9010016.
+For the general quasi-harmonic formulation of thermoelastic stiffness, the
+quasi-static approximation, and the conversion from isothermal to adiabatic
+elastic constants, cite Destefanis *et al.*
+[#destefanis_ravoux_cossard_erba_2019]_.
 
 For CRYSTAL elastic tensors evaluated or reconstructed under hydrostatic
-pre-stress, cite the finite-pressure formulation implemented by CRYSTAL:
-
-   A. Erba, A. Mahmoud, D. Belmonte, and R. Dovesi,
-   “High pressure elastic properties of minerals from ab initio simulations:
-   The case of pyrope, grossular and andradite silicate garnets”,
-   *Journal of Chemical Physics* **140**, 124703 (2014),
-   doi:10.1063/1.4869144.
-
-For the thermodynamically self-consistent Eulerian finite-strain derivation of
-the cold elastic tensor and its quasi-harmonic extension, cite:
-
-   L. Stixrude and C. Lithgow-Bertelloni, “Thermodynamics of mantle
-   minerals—I. Physical properties”, *Geophysical Journal International*
-   **162**, 610--632 (2005), doi:10.1111/j.1365-246X.2005.02642.x.
+pre-stress, cite the finite-pressure formulation implemented by CRYSTAL
+[#erba_mahmoud_belmonte_dovesi_2014]_.  For the thermodynamically
+self-consistent Eulerian finite-strain derivation of the cold elastic tensor
+and its quasi-harmonic extension, cite Stixrude and Lithgow-Bertelloni
+[#stixrude_lithgow_bertelloni_2005]_.
 
 For the foundational quasi-harmonic treatment of elastic moduli under
-hydrostatic pre-stress, cite:
+hydrostatic pre-stress, cite Davies [#davies_1974]_.  For the thermodynamic
+relation between anisotropic isothermal and adiabatic elastic tensors, cite
+Waters and Bielawski [#waters_bielawski_2016]_.  The tensor thermodynamics and
+notation also follow Wallace [#wallace_1972]_.
 
-   G. F. Davies, “Effective elastic moduli under hydrostatic stress—I.
-   Quasi-harmonic theory”, *Journal of Physics and Chemistry of Solids* **35**,
-   1513--1520 (1974), doi:10.1016/S0022-3697(74)80279-9.
-
-For the thermodynamic relation between anisotropic isothermal and adiabatic
-elastic tensors, cite:
-
-   M. J. Waters and A. W. Bielawski, “Isothermal and adiabatic elastic
-   tensors”, arXiv:1605.06548 (2016), doi:10.48550/arXiv.1605.06548.
-
-The tensor thermodynamics and notation also follow:
-
-   D. C. Wallace, *Thermodynamics of Crystals*, John Wiley & Sons, New York
-   (1972).
 
 Thermoelastic validation systems
 --------------------------------
 
 For experimental and first-principles pressure-dependent elasticity of the
-cubic MgO validation system, see:
+cubic MgO validation system, see Karki *et al.*
+[#karki_stixrude_clark_warren_ackland_crain_1997]_ and Sinogeikin and Bass
+[#sinogeikin_bass_1999]_.  For ambient single-crystal elasticity of the
+low-trigonal dolomite validation system, see Jiang, Speziale, and Duffy
+[#jiang_speziale_duffy_2006]_.
 
-   B. B. Karki, L. Stixrude, S. J. Clark, M. C. Warren, G. J. Ackland, and
-   J. Crain, “Structure and elasticity of MgO at high pressure”, *American
-   Mineralogist* **82**, 51--60 (1997), doi:10.2138/am-1997-1-207.
-
-   S. V. Sinogeikin and J. D. Bass, “Single-crystal elasticity of MgO at high
-   pressure”, *Physical Review B* **59**, R14141--R14144 (1999),
-   doi:10.1103/PhysRevB.59.R14141.
-
-For ambient single-crystal elasticity of the low-trigonal dolomite validation
-system, see:
-
-   F. Jiang, S. Speziale, and T. S. Duffy, “Elasticity of magnesite and
-   dolomite from a genetic algorithm for inverting Brillouin spectroscopy
-   measurements”, *Physics of the Earth and Planetary Interiors* **155**,
-   1--20 (2006), doi:10.1016/j.pepi.2005.08.004.
 
 Elasticity and seismic-wave analysis
 -------------------------------------
 
 For tensor notation and the transformation properties of elastic coefficients,
-see:
+see Nye [#nye_1985]_.  For the Voigt--Reuss bounds and the Hill average of a
+crystalline aggregate, cite Hill [#hill_1952]_.  For directional
+elastic-property surfaces and their interpretation, cite Gaillac, Pullumbi,
+and Coudert [#elate_gaillac_pullumbi_coudert_2016]_.  For phase velocity, group
+velocity, polarization, and acoustic enhancement from the Christoffel equation,
+cite Jaeken and Cottenier [#jaeken_cottenier_2016]_.
 
-   J. F. Nye, *Physical Properties of Crystals: Their Representation by
-   Tensors and Matrices*, second edition, Oxford University Press, Oxford
-   (1985).
 
-For the Voigt--Reuss bounds and the Hill average of a crystalline aggregate,
-cite:
-
-   R. Hill, “The elastic behaviour of a crystalline aggregate”,
-   *Proceedings of the Physical Society. Section A* **65**, 349--354 (1952),
-   doi:10.1088/0370-1298/65/5/307.
-
-For directional elastic-property surfaces and their interpretation, cite:
-
-   R. Gaillac, P. Pullumbi, and F.-X. Coudert, “ELATE: an open-source online
-   application for analysis and visualization of elastic tensors”,
-   *Journal of Physics: Condensed Matter* **28**, 275201 (2016),
-   doi:10.1088/0953-8984/28/27/275201.
-
-For phase velocity, group velocity, polarization, and acoustic enhancement from
-the Christoffel equation, cite:
-
-   J. W. Jaeken and S. Cottenier, “Solving the Christoffel equation: Phase and
-   group velocities”, *Computer Physics Communications* **207**, 445--451
-   (2016), doi:10.1016/j.cpc.2016.06.014.
+.. include:: ../_generated/references/introduction_citing_quantas.inc

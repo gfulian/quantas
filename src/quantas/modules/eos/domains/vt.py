@@ -123,7 +123,22 @@ class TemperatureEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Evaluate the structural quantity at supplied temperatures."""
+        """Evaluate the structural quantity at supplied temperatures.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Temperature value or array in K.
+        parameters : np.ndarray | Sequence[float]
+            Complete parameter vector in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        np.ndarray
+            Solver structural quantity at the supplied temperatures: volume for
+            volumetric models or the auxiliary cubed length ``q=x^3`` for axial
+            models.
+        """
         mapping = self.parameter_mapping(parameters)
         return self._temperature_eos.value(self.temperature_model, mapping, x)
 
@@ -132,7 +147,21 @@ class TemperatureEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        r"""Return the analytical derivative :math:`\partial X/\partial T`."""
+        r"""Return the analytical derivative :math:`\partial X/\partial T`.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Temperature value or array in K.
+        parameters : np.ndarray | Sequence[float]
+            Complete parameter vector in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        np.ndarray
+            Analytical derivative of the solver structural quantity with respect
+            to temperature.
+        """
         mapping = self.parameter_mapping(parameters)
         return self._temperature_eos.derivative(self.temperature_model, mapping, x)
 
@@ -141,7 +170,20 @@ class TemperatureEOSFitModel(BaseFitModel):
         temperature: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return the exact expansion coefficient of the solver quantity."""
+        """Return the exact expansion coefficient of the solver quantity.
+
+        Parameters
+        ----------
+        temperature : np.ndarray | Sequence[float]
+            Temperature value or array in K.
+        parameters : np.ndarray | Sequence[float]
+            Complete parameter vector in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        np.ndarray
+            The exact expansion coefficient of the solver quantity.
+        """
         mapping = self.parameter_mapping(parameters)
         return self._temperature_eos.expansion_coefficient(
             self.temperature_model, mapping, temperature
@@ -158,6 +200,18 @@ class TemperatureEOSFitModel(BaseFitModel):
         ------
         ValueError
             If called for a volumetric model.
+
+        Parameters
+        ----------
+        temperature : np.ndarray | Sequence[float]
+            Temperature value or array in K.
+        parameters : np.ndarray | Sequence[float]
+            Complete parameter vector in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        np.ndarray
+            Physical linear expansion for an axial :math:`q=x^3` fit.
         """
         if not self.axial:
             raise ValueError("linear expansion is defined only for axial V-T fits")
@@ -169,7 +223,23 @@ class TemperatureEOSFitModel(BaseFitModel):
         self,
         parameters: np.ndarray | Sequence[float],
     ) -> dict[str, float]:
-        """Return a core-compatible parameter mapping."""
+        """Return a core-compatible parameter mapping.
+
+        Parameters
+        ----------
+        parameters : np.ndarray | Sequence[float]
+            Complete parameter vector in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        dict[str, float]
+            A core-compatible parameter mapping.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
+        """
         values = np.asarray(parameters, dtype=np.float64)
         if values.ndim != 1 or values.size != len(self._parameter_names):
             raise ValueError(
@@ -191,7 +261,20 @@ class TemperatureEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return configured complete initial values after validation."""
+        """Return configured complete initial values after validation.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Sampled temperatures in K.
+        y : np.ndarray | Sequence[float]
+            Sampled solver structural quantity aligned with ``x``.
+
+        Returns
+        -------
+        np.ndarray
+            Configured complete initial values after validation.
+        """
         _validate_temperature_data(x, y)
         return self._initial.copy()
 
@@ -200,7 +283,20 @@ class TemperatureEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Return physical default bounds in complete parameter order."""
+        """Return physical default bounds in complete parameter order.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Sampled temperatures in K.
+        y : np.ndarray | Sequence[float]
+            Sampled solver structural quantity aligned with ``x``.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            Physical default bounds in complete parameter order.
+        """
         _validate_temperature_data(x, y)
         lower = np.asarray(
             [_default_parameter_bounds(name)[0] for name in self._parameter_names],
@@ -213,7 +309,13 @@ class TemperatureEOSFitModel(BaseFitModel):
         return lower, upper
 
     def metadata(self) -> dict[str, Any]:
-        """Return thermal model and coordinate metadata."""
+        """Return thermal model and coordinate metadata.
+
+        Returns
+        -------
+        dict[str, Any]
+            Thermal model and coordinate metadata.
+        """
         return {
             **super().metadata(),
             "temperature_eos_model": {
@@ -248,6 +350,18 @@ def temperature_parameter_names(
     target. The sequence also includes fixed reference quantities and
     variant-implied coefficients so results preserve FREE/FIXED/IMPLIED
     provenance.
+
+    Parameters
+    ----------
+    model : TemperatureEOSModel | str
+        EOS or thermoelastic model used by the operation.
+    axial : bool
+        Whether the thermal model represents an axial ``q=x^3`` quantity.
+
+    Returns
+    -------
+    tuple[str, ...]
+        Complete reporting parameters for one thermal model.
     """
     spec = parse_temperature_eos_model(model)
     reference = "L0" if axial else "V0"
@@ -352,6 +466,11 @@ def build_temperature_parameter_map(
     -------
     ParameterMap
         Complete FREE/FIXED/IMPLIED parameter contract.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
     """
     spec = parse_temperature_eos_model(model)
     overrides = _temperature_constraint_overrides(constraints, axial=axial)

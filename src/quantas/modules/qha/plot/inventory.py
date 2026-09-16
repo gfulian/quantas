@@ -19,12 +19,21 @@ from quantas.modules.qha.plot.labels import available_plot_properties
 def describe_qha_plots(result: QHAResult) -> PlotInventory:
     """Describe exact-grid QHA sections and maps buildable from one result.
 
-    QHA scalar thermodynamic properties are represented on the native
-    temperature-pressure grid.  The default line family uses temperature as
-    the independent variable and pressure as the selected condition.  The
-    complementary family uses pressure as the independent variable and exact
-    stored temperatures as the selected condition.  Contour maps use the full
-    native grid.  Discovery never implies interpolation.
+    QHA scalar properties live on the native ``(temperature, pressure)`` grid.
+    Temperature curves select exact stored pressures; pressure curves select exact
+    stored temperatures; contours use the complete native grid. Discovery never
+    interpolates missing coordinates.
+
+    Parameters
+    ----------
+    result : QHAResult
+        QHA result to inspect.
+
+    Returns
+    -------
+    PlotInventory
+        Available properties, exact-grid representations, combined heat-capacity
+        capabilities, and discovery warnings.
     """
     warnings: list[str] = []
     try:

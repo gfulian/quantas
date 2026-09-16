@@ -91,7 +91,14 @@ class FitObservations:
         return int(np.count_nonzero(self.mask))
 
     def selected(self) -> FitObservations:
-        """Return a compact observation object containing selected points only."""
+        """Return only the observations selected by the current mask.
+
+        Returns
+        -------
+        FitObservations
+            Compact observation contract containing selected coordinates,
+            responses, uncertainties, and the original mask in metadata.
+        """
         assert self.mask is not None
         selected = self.mask
         return FitObservations(
@@ -144,7 +151,14 @@ class FitObservations:
         return selected.copy()
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serializable observation representation."""
+        """Return a serializable observation representation.
+
+        Returns
+        -------
+        dict
+            Mapping containing coordinates, responses, optional uncertainties and
+            mask, variable names and units, and metadata.
+        """
         return {
             "x": self.x.tolist(),
             "y": self.y.tolist(),

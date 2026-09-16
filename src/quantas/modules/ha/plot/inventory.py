@@ -24,12 +24,21 @@ from quantas.modules.ha.plot.spec import _property_array, _temperature_array
 def describe_ha_plots(result: HAResult) -> PlotInventory:
     """Describe exact-grid HA sections and maps buildable from one result.
 
-    HA properties are naturally defined on a temperature-volume grid.  The
-    standard representation keeps temperature on the independent axis and one
-    curve per sampled volume.  When physical volume coordinates match a
-    property grid, the same stored data also support volume sections at exact
-    stored temperatures and a volume-temperature contour map.  Discovery never
-    implies interpolation.
+    HA scalar properties live on a temperature-volume grid. Temperature curves use
+    one series per stored volume. Volume sections and volume-temperature contours
+    are advertised only when the stored property array can be associated with a
+    physical sampled-volume axis. Discovery never interpolates coordinates.
+
+    Parameters
+    ----------
+    result : HAResult
+        Harmonic result to inspect.
+
+    Returns
+    -------
+    PlotInventory
+        Available properties, supported exact-grid representations, and any
+        discovery warnings.
     """
     warnings: list[str] = []
     try:

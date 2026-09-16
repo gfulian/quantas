@@ -63,6 +63,47 @@ The public documentation separates:
 Do not copy the same long explanation into every section. Link to the
 authoritative discussion and repeat only the context required for readability.
 
+Information ownership
+---------------------
+
+The manual is easiest to navigate when each kind of information has one
+canonical home. Other pages may summarize the point needed for local context,
+but they should link back instead of reproducing the full explanation.
+
+.. list-table:: Canonical information ownership
+   :header-rows: 1
+   :widths: 24 38 38
+
+   * - Section
+     - Canonical content
+     - Content to avoid duplicating
+   * - Scientific Background
+     - Equations, physical assumptions, conventions, and primary references
+     - CLI syntax, file schemas, and implementation-specific option inventories
+   * - Implementation and Workflows
+     - How Quantas composes the scientific operations, default strategy,
+       diagnostics, limitations, and decision points
+     - Long theory derivations, complete tutorials, and field-by-field schemas
+   * - Tutorials
+     - Reproducible analyses and interpretation of concrete results
+     - Full option catalogues and repeated derivations
+   * - Input and Output Formats
+     - Normative fields, units, shapes, schemas, and persistence contracts
+     - Scientific motivation already covered by theory or workflows
+   * - Command / API Reference
+     - Public syntax and callable contracts
+     - Narrative workflow guidance that belongs in the manual chapters
+   * - Scientific Validation
+     - Reference data, comparison targets, tolerances, outcomes, and traceability
+     - Re-teaching the algorithm being validated
+   * - Development Guide
+     - Internal architecture, extension points, and contributor procedures
+     - User-facing workflow instructions
+
+A useful review question is: *where should a reader go for the authoritative
+version of this statement?* If the answer is unclear, the information is
+probably duplicated or placed at the wrong level.
+
 Docstrings
 ----------
 
@@ -78,6 +119,32 @@ NumPy/Sphinx-compatible docstring. Include:
 
 A public function that returns ``ndarray`` should state the array shape and
 axis order. A tolerance should state its unit and effect.
+
+Writing style
+-------------
+
+Scientific documentation should be precise without sounding like a sequence of
+software assertions.  Prose is usually easier to follow when it explains the
+reason for a choice before listing its consequences.
+
+For narrative pages such as Scientific Background, Workflows, and Tutorials:
+
+* prefer cause-and-effect sentences over repeated statements beginning with
+  ``Quantas``;
+* describe requirements positively when possible, reserving ``must`` and
+  ``do not`` for genuine constraints or warnings;
+* use phrases such as ``in practice``, ``for this dataset``, or ``use ... when``
+  when they help connect a method to a scientific decision;
+* keep implementation names out of user-facing prose unless the name itself is
+  needed to understand the workflow;
+* avoid filler such as ``explicitly``, ``deliberately``, or ``intentionally``
+  when the same meaning follows naturally from the sentence;
+* let transitions explain *why* the next step follows instead of presenting
+  every paragraph as an isolated rule.
+
+Reference pages are different.  Formats, CLI syntax, and API contracts should
+remain compact and normative; readability there comes from consistent structure
+rather than a more conversational voice.
 
 CLI reference
 -------------
@@ -102,12 +169,13 @@ tests.
 Scientific citations
 --------------------
 
-Theory pages use labelled auto-numbered footnotes backed by the canonical
-registry. Regenerate fragments with:
+Scientific documentation uses labelled auto-numbered footnotes backed by the
+canonical registry. Each page keeps its bibliography at the end, rendered in
+the same ``References`` format. Regenerate fragments with:
 
 .. code-block:: console
 
-   python docs/tools/generate_theory_bibliographies.py
+   python docs/tools/generate_bibliographies.py
 
 See :doc:`citation_registry`.
 
@@ -128,7 +196,7 @@ Asset generators must:
 * preserve source provenance;
 * be covered by manifest or existence tests.
 
-The EOS asset generator is intentionally explicit because full MGD fitting is
+The EOS asset generator keeps this step explicit because full MGD fitting is
 not appropriate for every Sphinx startup.
 
 RST quality

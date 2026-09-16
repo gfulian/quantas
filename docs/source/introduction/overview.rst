@@ -54,12 +54,13 @@ A recommended reading order is:
 #. :doc:`../workflows/index`
 #. :doc:`../tutorials/index`
 
-This structure intentionally separates:
+The manual keeps four kinds of information separate:
 
 - **scientific background**;
 - **workflow logic**;
 - **tutorial execution**;
 - **normative API and CLI reference**.
 
-That separation is essential to keep the manual readable for researchers,
-command-line users, Python users, and future contributors.
+This makes it easier to move from the physical model to a practical calculation
+without mixing equations, command syntax, and implementation details on the same
+page.

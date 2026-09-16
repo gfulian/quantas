@@ -130,6 +130,18 @@ class EnergyEOSFitModel(BaseFitModel):
         The derivative follows directly from :math:`P=-\partial E/\partial V`.
         It is returned in the natural ``energy_unit / volume_unit`` numerical
         units required by the generic effective-variance and ODR services.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Positive volumes in ``volume_unit``.
+        parameters : np.ndarray | Sequence[float]
+            Complete ``E0, K0, KP, KPP, V0`` vector in public workflow units.
+
+        Returns
+        -------
+        np.ndarray
+            Analytical :math:`\partial E/\partial V` in energy density.
         """
         volume = _validate_volume(x)
         physical = self.core_parameters(parameters)
@@ -145,7 +157,20 @@ class EnergyEOSFitModel(BaseFitModel):
         volume: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return pressure derived from the fitted energy EOS in public units."""
+        """Return pressure derived from the fitted energy EOS in public units.
+
+        Parameters
+        ----------
+        volume : np.ndarray | Sequence[float]
+            Positive volumes in ``volume_unit``.
+        parameters : np.ndarray | Sequence[float]
+            Complete ``E0, K0, KP, KPP, V0`` vector in public workflow units.
+
+        Returns
+        -------
+        np.ndarray
+            Pressure derived from the fitted energy EOS in public units.
+        """
         values = _validate_volume(volume)
         density = self._energy.pressure(
             self.eos_model,
@@ -167,7 +192,20 @@ class EnergyEOSFitModel(BaseFitModel):
         volume: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return the instantaneous bulk modulus in public pressure units."""
+        """Return the instantaneous bulk modulus in public pressure units.
+
+        Parameters
+        ----------
+        volume : np.ndarray | Sequence[float]
+            Positive volumes in ``volume_unit``.
+        parameters : np.ndarray | Sequence[float]
+            Complete ``E0, K0, KP, KPP, V0`` vector in public workflow units.
+
+        Returns
+        -------
+        np.ndarray
+            The instantaneous bulk modulus in public pressure units.
+        """
         values = _validate_volume(volume)
         core = self.core_parameters(parameters)
         density = self._energy.pressure(self.eos_model, core, values)
@@ -190,7 +228,20 @@ class EnergyEOSFitModel(BaseFitModel):
         volume: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return :math:`K'(V)` in dimensionless form."""
+        """Return :math:`K'(V)` in dimensionless form.
+
+        Parameters
+        ----------
+        volume : np.ndarray | Sequence[float]
+            Positive volumes in ``volume_unit``.
+        parameters : np.ndarray | Sequence[float]
+            Complete ``E0, K0, KP, KPP, V0`` vector in public workflow units.
+
+        Returns
+        -------
+        np.ndarray
+            :math:`K'(V)` in dimensionless form.
+        """
         from quantas.core.physics.eos import PressureEOS
 
         values = _validate_volume(volume)
@@ -208,7 +259,20 @@ class EnergyEOSFitModel(BaseFitModel):
         volume: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return :math:`K''(V)` in inverse public pressure units."""
+        """Return :math:`K''(V)` in inverse public pressure units.
+
+        Parameters
+        ----------
+        volume : np.ndarray | Sequence[float]
+            Positive volumes in ``volume_unit``.
+        parameters : np.ndarray | Sequence[float]
+            Complete ``E0, K0, KP, KPP, V0`` vector in public workflow units.
+
+        Returns
+        -------
+        np.ndarray
+            :math:`K''(V)` in inverse public pressure units.
+        """
         from quantas.core.physics.eos import PressureEOS
 
         values = _validate_volume(volume)
@@ -231,7 +295,20 @@ class EnergyEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return a complete public initial physical parameter vector."""
+        """Return a complete public initial physical parameter vector.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Positive sampled volumes in ``volume_unit``.
+        y : np.ndarray | Sequence[float]
+            Sampled energies in ``energy_unit`` aligned with ``x``.
+
+        Returns
+        -------
+        np.ndarray
+            A complete public initial physical parameter vector.
+        """
         estimates = estimate_energy_parameters(
             self.eos_model,
             x,
@@ -249,7 +326,20 @@ class EnergyEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Return minimally restrictive bounds for public parameters."""
+        """Return minimally restrictive bounds for public parameters.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Positive sampled volumes in ``volume_unit``.
+        y : np.ndarray | Sequence[float]
+            Sampled energies in ``energy_unit`` aligned with ``x``.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            Minimally restrictive bounds for public parameters.
+        """
         _validate_energy_data(x, y)
         lower = np.asarray(
             [-np.inf, _POSITIVE_LOWER_BOUND, -np.inf, -np.inf, _POSITIVE_LOWER_BOUND],
@@ -261,7 +351,19 @@ class EnergyEOSFitModel(BaseFitModel):
         self,
         parameters: np.ndarray | Sequence[float] | Mapping[str, float],
     ) -> dict[str, float]:
-        """Convert complete public parameters to core energy-density units."""
+        """Convert complete public parameters to core energy-density units.
+
+        Parameters
+        ----------
+        parameters : np.ndarray | Sequence[float] | Mapping[str, float]
+            Complete public ``E0, K0, KP, KPP, V0`` parameters.
+
+        Returns
+        -------
+        dict[str, float]
+            Core parameter mapping with ``K0`` expressed as energy density and
+            ``KPP`` expressed in the reciprocal of that energy-density unit.
+        """
         public = _parameter_mapping(parameters)
         factor = _pressure_per_energy_density(
             self.energy_unit,
@@ -283,7 +385,13 @@ class EnergyEOSFitModel(BaseFitModel):
         }
 
     def metadata(self) -> dict[str, Any]:
-        """Return model, relationship, and public-unit metadata."""
+        """Return model, relationship, and public-unit metadata.
+
+        Returns
+        -------
+        dict[str, Any]
+            Model, relationship, and public-unit metadata.
+        """
         return {
             **super().metadata(),
             "eos_model": self.eos_model.as_dict(),
@@ -326,6 +434,11 @@ def build_energy_parameter_map(
     -------
     ParameterMap
         Mapping with reporting order ``E0, K0, KP, KPP, V0``.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
     """
     eos_model = parse_eos_model(model)
     if not eos_model.supports_energy:
@@ -361,7 +474,31 @@ def estimate_energy_parameters(
     energy_unit: str = "Ha",
     pressure_unit: str = "GPa",
 ) -> dict[str, float]:
-    """Estimate complete public E-V parameters from sampled data."""
+    """Estimate complete public E-V parameters from sampled data.
+
+    Parameters
+    ----------
+    model : EOSModel | str
+        Integrated energy-EOS family and order.
+    volume : np.ndarray | Sequence[float]
+        Positive sampled volumes in angstrom cubed.
+    energy : np.ndarray | Sequence[float]
+        Sampled electronic energies in ``energy_unit`` aligned with ``volume``.
+    energy_unit : str
+        Energy unit used for public energy values.
+    pressure_unit : str
+        Pressure unit used for public pressure values.
+
+    Returns
+    -------
+    dict[str, float]
+        Complete ``E0, K0, KP, KPP, V0`` estimate in public workflow units.
+
+    Raises
+    ------
+    RuntimeError
+        If no stable initial estimate can be constructed from the sampled data.
+    """
     eos_model = parse_eos_model(model)
     volume_values, energy_values = _validate_energy_data(volume, energy)
     core = EnergyEOS()

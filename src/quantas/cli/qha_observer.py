@@ -100,7 +100,12 @@ class QHATextObserver:
         self.output.close()
 
     def text(self) -> str:
-        """Return the collected plain-text report."""
+        """Return the deterministic QHA report collected by the observer.
+
+        Returns
+        -------
+        str
+            Plain text without terminal styling or live-progress artifacts."""
         return self.output.text()
 
     @staticmethod

@@ -15,7 +15,13 @@ from quantas.core.events import EventLevel
 
 
 def quantas_title() -> str:
-    """Return the Quantas software title banner."""
+    """Return the Quantas software title banner.
+
+    Returns
+    -------
+    str
+        Plain text containing the program banner, current version, authors, and
+        copyright notice."""
     banner = r"""
 ________                       __
 \_____  \  __ _______    _____/  |______    ______
@@ -32,7 +38,12 @@ ________                       __
 
 
 def quantas_error() -> str:
-    """Return the large Quantas error banner."""
+    """Return the large Quantas error banner.
+
+    Returns
+    -------
+    str
+        Portable plain-text error banner."""
     return (
         r"""
 _______________________________ ________ __________._.
@@ -46,7 +57,12 @@ _______________________________ ________ __________._.
 
 
 def quantas_warning() -> str:
-    """Return the large Quantas warning banner."""
+    """Return the large Quantas warning banner.
+
+    Returns
+    -------
+    str
+        Portable plain-text warning banner."""
     return (
         r"""
  __      __                     .__
@@ -60,7 +76,12 @@ def quantas_warning() -> str:
 
 
 def quantas_finish() -> str:
-    """Return the Quantas closing banner."""
+    """Return the Quantas closing banner.
+
+    Returns
+    -------
+    str
+        Portable plain-text closing message."""
     return (
         r"""
 ___________.__       .__       .__
@@ -91,7 +112,18 @@ def echo(
     silent: bool = False,
     bold: bool = False,
 ) -> None:
-    """Write a standard message to the terminal and optional log file."""
+    """Write a standard message to terminal and optional log file.
+
+    Parameters
+    ----------
+    msg : str
+        Message body.
+    logfile : str, Path, or None, optional
+        Plain-text log destination. ``None`` disables file logging.
+    silent : bool, optional
+        Suppress terminal presentation while preserving optional logging.
+    bold : bool, optional
+        Request bold terminal presentation."""
     print_terminal_message(msg, bold=bold, silent=silent)
     _append_log(logfile, msg)
 
@@ -102,7 +134,18 @@ def echo_error(
     silent: bool = False,
     bold: bool = False,
 ) -> None:
-    """Write an error message to the terminal and optional log file."""
+    """Write an error message to terminal and optional log file.
+
+    Parameters
+    ----------
+    msg : str
+        Error message body.
+    logfile : str, Path, or None, optional
+        Plain-text log destination. ``None`` disables file logging.
+    silent : bool, optional
+        Suppress terminal presentation while preserving optional logging.
+    bold : bool, optional
+        Request bold terminal presentation."""
     print_terminal_message(msg, level=EventLevel.ERROR, bold=bold, silent=silent)
     _append_log(logfile, msg)
 
@@ -113,7 +156,18 @@ def echo_warning(
     silent: bool = False,
     bold: bool = False,
 ) -> None:
-    """Write a warning message to the terminal and optional log file."""
+    """Write a warning message to terminal and optional log file.
+
+    Parameters
+    ----------
+    msg : str
+        Warning message body.
+    logfile : str, Path, or None, optional
+        Plain-text log destination. ``None`` disables file logging.
+    silent : bool, optional
+        Suppress terminal presentation while preserving optional logging.
+    bold : bool, optional
+        Request bold terminal presentation."""
     print_terminal_message(msg, level=EventLevel.WARNING, bold=bold, silent=silent)
     _append_log(logfile, msg)
 
@@ -124,7 +178,18 @@ def echo_highlight(
     silent: bool = False,
     bold: bool = True,
 ) -> None:
-    """Write a highlighted message to the terminal and optional log file."""
+    """Write a highlighted message to terminal and optional log file.
+
+    Parameters
+    ----------
+    msg : str
+        Message body.
+    logfile : str, Path, or None, optional
+        Plain-text log destination. ``None`` disables file logging.
+    silent : bool, optional
+        Suppress terminal presentation while preserving optional logging.
+    bold : bool, optional
+        Request bold terminal presentation."""
     print_terminal_message(msg, bold=bold, silent=silent)
     _append_log(logfile, msg)
 

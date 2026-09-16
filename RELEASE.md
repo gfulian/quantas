@@ -6,6 +6,8 @@ reproducibility take precedence over publication speed.
 ## 1. Prepare
 
 - Confirm the version in `src/quantas/_version.py`, `CITATION.cff`, and the changelog.
+- Run `python tools/check_release_identity.py`; for a publication tag, also run
+  `python tools/check_release_identity.py --tag vX.Y.Z`.
 - Review the frozen `quantas.api` namespace snapshots and registry capabilities; every public-symbol change must be deliberate.
 - Close or explicitly defer every release-blocking item in `ROADMAP.md`.
 - Regenerate and verify the examples manifest.
@@ -31,14 +33,19 @@ results against the approved baseline.
 ## 3. Test distribution
 
 Create a GitHub Actions manual release run targeting the protected `testpypi`
-environment.  Install the uploaded version from TestPyPI in a clean environment and
-repeat the CLI/import smoke tests.  TestPyPI and PyPI are separate repositories and
+environment. Install the uploaded version from TestPyPI in a clean environment and
+repeat the CLI/import smoke tests. Manual workflow dispatch never publishes to PyPI;
+production publication is enabled only by a GitHub release whose `vX.Y.Z` tag matches
+the authoritative source version. TestPyPI and PyPI are separate repositories and
 must have separate Trusted Publisher configurations.
 
 ## 4. Publish
 
 - Create a signed `vX.Y.Z` tag on the validated commit.
-- Publish a GitHub release from that tag.
+- Verify that `python tools/check_release_identity.py --tag vX.Y.Z` succeeds.
+- Publish a GitHub release from that tag. The release workflow checks out that exact
+  tag and re-runs the source, architecture, documentation, test, build, and clean-install
+  gates before the protected PyPI publication job can start.
 - Allow the protected `pypi` environment to publish through OpenID Connect Trusted
   Publishing; no long-lived PyPI API token belongs in repository secrets.
 - Verify metadata, files, installation, `quantas --version`, and the rendered project

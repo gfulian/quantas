@@ -116,23 +116,39 @@ and its physical accuracy must still be assessed against full strain-dependent
 QHA, experiment or another finite-temperature method for the material of
 interest.
 
+Traceability
+------------
+
+The public reference matrix is reproduced primarily by:
+
+``tests/modules/thermoelasticity/test_real_reference.py``
+   Frozen MgO and dolomite source provenance, fitted targets, selected P--T
+   states, mechanical stability, frame normalization, and adiabatic checkpoints.
+
+``tests/modules/thermoelasticity/test_science.py``
+   Independent scientific identities and tensor-level reconstruction checks.
+
+``tests/modules/thermoelasticity/test_qsa.py``
+   Quasi-static fitting and evaluation contracts.
+
+``tests/modules/thermoelasticity/data/thermoelastic_reference.json``
+   Compact frozen evidence derived from the larger phase-validation archive,
+   including source identifiers and the numerical checkpoints documented above.
+
+The reference fixture is intentionally compact; it is not a replacement for the
+original electronic-structure and QHA calculations. Its stored provenance links
+the routine regression back to those larger sources.
+
 Literature context
 ------------------
 
 The MgO case is appropriate because its three independent single-crystal
 elastic constants and their pressure dependence have been extensively studied
-experimentally and by first-principles methods.  The dolomite case provides a
-low-symmetry carbonate whose ambient single-crystal tensor has also been
-measured by Brillouin spectroscopy.
+experimentally and by first-principles methods
+[#karki_stixrude_clark_warren_ackland_crain_1997]_ [#sinogeikin_bass_1999]_.
+The dolomite case provides a low-symmetry carbonate whose ambient
+single-crystal tensor has been measured by Brillouin spectroscopy
+[#jiang_speziale_duffy_2006]_.
 
-* Karki, B. B., Stixrude, L., Clark, S. J., Warren, M. C., Ackland, G. J., and
-  Crain, J. (1997). Structure and elasticity of MgO at high pressure.
-  *American Mineralogist*, **82**, 51--60.
-  https://doi.org/10.2138/am-1997-1-207
-* Sinogeikin, S. V. and Bass, J. D. (1999). Single-crystal elasticity of MgO
-  at high pressure. *Physical Review B*, **59**, R14141--R14144.
-  https://doi.org/10.1103/PhysRevB.59.R14141
-* Jiang, F., Speziale, S., and Duffy, T. S. (2006). Elasticity of magnesite and
-  dolomite from a genetic algorithm for inverting Brillouin spectroscopy
-  measurements. *Physics of the Earth and Planetary Interiors*, **155**,
-  1--20. https://doi.org/10.1016/j.pepi.2005.08.004
+
+.. include:: ../_generated/references/validation_thermoelasticity.inc

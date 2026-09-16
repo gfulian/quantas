@@ -224,7 +224,22 @@ def write_thermoelastic_hdf5(
     *,
     report_text: str | None = None,
 ) -> Path:
-    """Write a complete thermoelastic result and return the HDF5 path."""
+    """Write a complete thermoelastic result and return the HDF5 path.
+
+    Parameters
+    ----------
+    result : ResultData
+        Scientific result consumed or serialized by this operation.
+    filename : str | Path
+        Filesystem path read from or written by the operation.
+    report_text : str | None
+        Plain-text report content to write to the destination.
+
+    Returns
+    -------
+    Path
+        Destination path or output produced by the write operation.
+    """
     path = Path(filename).with_suffix(".hdf5")
     ThermoelasticityHDF5Export().export(
         result,
@@ -239,7 +254,20 @@ def thermoelastic_report(
     *,
     level: ThermoelasticReportLevel = "standard",
 ):
-    """Return neutral report tables at the requested detail level."""
+    """Return neutral report tables at the requested detail level.
+
+    Parameters
+    ----------
+    result : ResultData | ThermoelasticResult
+        Scientific result consumed or serialized by this operation.
+    level : ThermoelasticReportLevel
+        Requested frontend-neutral report detail level.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     payload = (
         result
         if isinstance(result, ThermoelasticResult)
@@ -253,7 +281,23 @@ def thermoelastic_report(
 def build_thermoelastic_plots(
     result: ResultData | ThermoelasticResult,
 ) -> PlotCollection:
-    """Build default plots appropriate for the archived workflow stage."""
+    """Build default plots appropriate for the archived workflow stage.
+
+    Parameters
+    ----------
+    result : ResultData | ThermoelasticResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    PlotCollection
+        Constructed default plots appropriate for the archived workflow stage.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     payload = (
         result
         if isinstance(result, ThermoelasticResult)

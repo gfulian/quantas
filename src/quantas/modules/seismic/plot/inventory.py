@@ -204,7 +204,19 @@ _LEVEL_ORDER = {
 def available_seismic_plot_properties(
     result: SeismicResult,
 ) -> tuple[PlotPropertyDescriptor, ...]:
-    """Return scalar properties actually available in a seismic result."""
+    """Return scalar seismic properties available at the stored sampling level.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Seismic result whose field level determines phase, group, power-flow and
+        enhancement availability.
+
+    Returns
+    -------
+    tuple of PlotPropertyDescriptor
+        Property descriptors in the canonical public inventory order.
+    """
     definitions = tuple(
         item
         for item in _PROPERTY_DEFINITIONS
@@ -235,7 +247,19 @@ def available_seismic_plot_properties(
 
 
 def describe_seismic_plots(result: SeismicResult) -> PlotInventory:
-    """Describe seismic maps, summaries, and surfaces for one result."""
+    """Describe maps, summaries and surfaces available for one seismic result.
+
+    Parameters
+    ----------
+    result : SeismicResult
+        Complete sampled result used to inspect field level, hemisphere, mode
+        tracking and available group data.
+
+    Returns
+    -------
+    PlotInventory
+        Available scalar properties, plot representations and selectable contexts.
+    """
     properties = available_seismic_plot_properties(result)
     property_keys = tuple(item.key for item in properties)
     summary_keys = tuple(

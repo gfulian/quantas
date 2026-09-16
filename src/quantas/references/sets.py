@@ -85,6 +85,20 @@ METHOD_CITATION_KEYS: dict[str, tuple[str, ...]] = {
     "thermal_expansion_equations": (
         "eosfit7_angel_gonzalez_platas_alvaro_2014",
     ),
+    "effective_variance_weighting": ("orear_1982",),
+    "orthogonal_distance_regression": (
+        "boggs_byrd_rogers_schnabel_1992",
+        "zwolak_boggs_watson_2007",
+    ),
+    "thermal_expansion_primary_sources": (
+        "berman_1988",
+        "fei_1995",
+        "pawley_redfern_holland_1996",
+        "salje_wruck_thomas_1991",
+        "holland_powell_2011",
+        "helffrich_connolly_2009",
+        "kroll_kirfel_heinemann_barbier_2012",
+    ),
     "pvt_equations_of_state": (
         "eosfit7_angel_gonzalez_platas_alvaro_2014",
         "anderson_1995",
@@ -94,6 +108,9 @@ METHOD_CITATION_KEYS: dict[str, tuple[str, ...]] = {
         "stixrude_lithgow_bertelloni_2005",
     ),
     "wallace_stress_strain": ("barron_klein_1965", "wallace_1972"),
+    "crystal_finite_pressure_elasticity": (
+        "erba_mahmoud_belmonte_dovesi_2014",
+    ),
     "cold_finite_strain": ("stixrude_lithgow_bertelloni_2005",),
     "quasi_static_thermoelasticity": (
         "destefanis_ravoux_cossard_erba_2019",

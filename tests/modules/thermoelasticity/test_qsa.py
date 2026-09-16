@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import is_dataclass
 from pathlib import Path
 
 import h5py
@@ -441,6 +442,12 @@ def test_calibration_records_static_eos_and_single_wallace_convention() -> None:
             ],
             atol=1.0e-12,
         )
+
+
+def test_analysis_engine_is_active_normal_class() -> None:
+    """The stateful analysis engine must not be a passive dataclass."""
+    assert not is_dataclass(ThermoelasticAnalysisEngine)
+    assert ThermoelasticAnalysisEngine.__slots__ == ("source", "options")
 
 
 def test_calibration_and_analysis_share_reconstruction_engine(tmp_path: Path) -> None:

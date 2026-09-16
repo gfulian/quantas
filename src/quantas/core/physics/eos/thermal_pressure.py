@@ -174,7 +174,14 @@ class ThermalPressureModel:
         return self.family_name is ThermalPressureFamily.MIE_GRUNEISEN_DEBYE
 
     def as_dict(self) -> dict[str, str | None]:
-        """Return a serialization-ready model description."""
+        """Return a serialization-ready thermal-pressure model description.
+
+        Returns
+        -------
+        dict
+            Mapping containing the thermal-pressure family, optional MGD variant,
+            and stable model tag.
+        """
         variant = self.mgd_variant
         return {
             "family": self.family_name.value,
@@ -365,7 +372,14 @@ class MGDNormalization:
         return None
 
     def as_dict(self) -> dict[str, str | float | None]:
-        """Return a serialization-ready normalization description."""
+        """Return a serialization-ready MGD normalization description.
+
+        Returns
+        -------
+        dict
+            Mapping containing the volume basis, canonical volume unit, atom-count
+            normalization, formula, and formula units per cell.
+        """
         return {
             "volume_basis": self.basis.value,
             "volume_unit": self.canonical_volume_unit,
@@ -440,7 +454,14 @@ class MGDParameters:
             raise ValueError("q-compromise MGD parameters must omit q")
 
     def as_dict(self) -> dict[str, float | None]:
-        """Return a serialization-ready parameter mapping."""
+        """Return a serialization-ready MGD parameter mapping.
+
+        Returns
+        -------
+        dict
+            Mapping containing reference temperature, Debye temperature,
+            Gruneisen parameter, and the optional volume exponent ``q``.
+        """
         return {
             "temperature_ref": self.temperature_ref,
             "theta_d0": self.theta_d0,
@@ -507,7 +528,7 @@ class MGDThermalPressure:
         reference_volume: float,
         volume: ArrayLike,
     ) -> np.ndarray:
-        """Return the thermal Grüneisen parameter at one or more volumes.
+        """Return the thermal Gruneisen parameter at one or more volumes.
 
         Parameters
         ----------
@@ -516,14 +537,21 @@ class MGDThermalPressure:
         parameters : MGDParameters
             Reference MGD parameters.
         reference_volume : float
-            Reference cell or molar volume in the normalization basis.
-        volume : array-like
+            Positive reference cell or molar volume in the normalization basis.
+        volume : array_like
             Positive volumes in the same unit as ``reference_volume``.
 
         Returns
         -------
         ndarray
-            Dimensionless Grüneisen parameters.
+            Dimensionless Gruneisen parameters with the broadcast shape of
+            ``volume``.
+
+        Raises
+        ------
+        ValueError
+            If the model inputs are invalid or the predicted Gruneisen parameter
+            is non-finite.
         """
         specification, reference, values = self._validated_volume_inputs(
             model, parameters, reference_volume, volume
@@ -555,14 +583,21 @@ class MGDThermalPressure:
         parameters : MGDParameters
             Reference MGD parameters.
         reference_volume : float
-            Reference cell or molar volume.
-        volume : array-like
+            Positive reference cell or molar volume.
+        volume : array_like
             Positive volumes in the same unit as ``reference_volume``.
 
         Returns
         -------
         ndarray
-            Positive Debye temperatures in kelvin.
+            Positive Debye temperatures in K with the broadcast shape of
+            ``volume``.
+
+        Raises
+        ------
+        ValueError
+            If the model inputs are invalid or a predicted Debye temperature is
+            non-positive or non-finite.
         """
         specification, reference, values = self._validated_volume_inputs(
             model, parameters, reference_volume, volume
@@ -589,7 +624,7 @@ class MGDThermalPressure:
         volume: ArrayLike,
         temperature: ArrayLike,
     ) -> np.ndarray:
-        r"""Return MGD thermal pressure relative to the reference isotherm.
+        """Return MGD thermal pressure relative to the reference isotherm.
 
         Parameters
         ----------
@@ -598,18 +633,25 @@ class MGDThermalPressure:
         parameters : MGDParameters
             Reference MGD parameters.
         normalization : MGDNormalization
-            Atom count and volume basis.
+            Atom-count and volume-basis normalization.
         reference_volume : float
-            Reference volume in Angstrom cubed for cell normalization or
+            Positive reference volume in Angstrom cubed for cell normalization or
             cubic centimetres per mole for molar normalization.
-        volume, temperature : array-like
-            Broadcast-compatible positive volumes and non-negative
-            temperatures.
+        volume : array_like
+            Positive evaluation volumes in the same basis as ``reference_volume``.
+        temperature : array_like
+            Non-negative temperatures in K, broadcast-compatible with ``volume``.
 
         Returns
         -------
         ndarray
             Thermal pressure in GPa.
+
+        Raises
+        ------
+        ValueError
+            If normalization or thermodynamic inputs are invalid, or if the model
+            predicts a non-finite thermal pressure.
         """
         specification, reference, volumes, temperatures = self._validated_state(
             model, parameters, reference_volume, volume, temperature
@@ -645,9 +687,33 @@ class MGDThermalPressure:
         volume: ArrayLike,
         temperature: ArrayLike,
     ) -> np.ndarray:
-        r"""Return :math:`(\partial P_{th}/\partial T)_V` in GPa K\ :sup:`-1`.
+        """Return the isochoric MGD thermal-pressure temperature derivative.
 
-        Parameters are identical to :meth:`pressure`.
+        Parameters
+        ----------
+        model : str or ThermalPressureModel
+            Mie--Grüneisen--Debye family/variant specification.
+        parameters : MGDParameters
+            Grüneisen, Debye-temperature, reference-temperature, and variant-specific
+            parameters.
+        normalization : MGDNormalization
+            Cell or molar atom-count normalization used by the thermal energy term.
+        reference_volume : float
+            Positive reference volume in the unit required by ``normalization``.
+        volume, temperature : array-like
+            Broadcast-compatible positive volumes and non-negative temperatures.
+
+        Returns
+        -------
+        ndarray
+            ``(partial P_th / partial T)_V`` in ``GPa K^-1`` with the broadcast state
+            shape.
+
+        Raises
+        ------
+        ValueError
+            If model, normalization, state coordinates, or parameters are invalid or
+            produce non-finite derivatives.
         """
         specification, reference, volumes, temperatures = self._validated_state(
             model, parameters, reference_volume, volume, temperature
@@ -678,13 +744,35 @@ class MGDThermalPressure:
         volume: ArrayLike,
         temperature: ArrayLike,
     ) -> np.ndarray:
-        r"""Return :math:`(\partial P_{th}/\partial V)_T`.
+        """Return the isothermal volume derivative of MGD thermal pressure.
 
-        The returned unit is GPa per unit of the selected volume basis:
-        GPa Angstrom\ :sup:`-3` for cell volumes and GPa per
-        cm\ :sup:`3` mol\ :sup:`-1` for molar volumes.
+        Parameters
+        ----------
+        model : str or ThermalPressureModel
+            Full or q-compromise MGD model.
+        parameters : MGDParameters
+            Reference MGD parameters.
+        normalization : MGDNormalization
+            Atom-count and volume-basis normalization.
+        reference_volume : float
+            Positive reference volume in the selected normalization basis.
+        volume : array_like
+            Positive evaluation volumes in the same basis as ``reference_volume``.
+        temperature : array_like
+            Non-negative temperatures in K, broadcast-compatible with ``volume``.
 
-        Parameters are identical to :meth:`pressure`.
+        Returns
+        -------
+        ndarray
+            ``(dP_th/dV)_T``. The unit is GPa per unit of the selected volume
+            basis: GPa Angstrom^-3 for cell volumes or GPa per cm^3 mol^-1 for
+            molar volumes.
+
+        Raises
+        ------
+        ValueError
+            If the inputs are invalid or the model predicts a non-finite
+            derivative.
         """
         specification, reference, volumes, temperatures = self._validated_state(
             model, parameters, reference_volume, volume, temperature
@@ -724,14 +812,27 @@ class MGDThermalPressure:
         volume: ArrayLike,
         temperature: ArrayLike,
     ) -> np.ndarray:
-        r"""Return the MGD contribution :math:`-V(\partial P_{th}/\partial V)_T`.
+        """Return the MGD thermal contribution to the isothermal bulk modulus.
 
-        Parameters are identical to :meth:`pressure`.
+        Parameters
+        ----------
+        model : str or ThermalPressureModel
+            Full or q-compromise MGD model.
+        parameters : MGDParameters
+            Reference MGD parameters.
+        normalization : MGDNormalization
+            Atom-count and volume-basis normalization.
+        reference_volume : float
+            Positive reference volume in the selected normalization basis.
+        volume : array_like
+            Positive evaluation volumes in the same basis as ``reference_volume``.
+        temperature : array_like
+            Non-negative temperatures in K, broadcast-compatible with ``volume``.
 
         Returns
         -------
         ndarray
-            Thermal contribution to the isothermal bulk modulus in GPa.
+            Thermal contribution ``-V (dP_th/dV)_T`` in GPa.
         """
         volumes, temperatures = np.broadcast_arrays(
             np.asarray(volume, dtype=np.float64),

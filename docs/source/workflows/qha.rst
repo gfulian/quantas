@@ -4,11 +4,11 @@ Quasi-Harmonic Approximation: implementation and workflow
 Purpose and scope
 -----------------
 
-The QHA workflow converts a multi-volume phonon dataset into equilibrium and
+The QHA workflow turns a multi-volume phonon dataset into equilibrium and
 thermodynamic properties on a pressure-temperature grid.  The physical model is
-described in :doc:`../theory/qha`; this page explains how Quantas represents the
-free-energy surface, how the available choices differ, and how to assess their
-numerical reliability.
+introduced in :doc:`../theory/qha`; here the focus is practical: how the
+free-energy surface is represented, when the available numerical routes differ,
+and which diagnostics deserve attention.
 
 QHA contains several legitimate routes because no single representation is
 optimal for every dataset.  The main decisions are:
@@ -134,8 +134,9 @@ Elastic constants obtained from a CRYSTAL energy--strain calculation without
 an explicit finite-pressure correction cannot be passed directly to the
 Christoffel solver.  Once a hydrostatic pressure has been assigned to every
 state, the CRYSTAL interface converts the raw coefficients with the same
-finite-pressure relation used by CRYSTAL ``PRESSURE``/``PRESSEOS``
-(Erba *et al.*, *J. Chem. Phys.* **140**, 124703 (2014)):
+finite-pressure relation used by CRYSTAL ``PRESSURE``/``PRESSEOS``, as
+documented for CRYSTAL finite-pressure elasticity
+[#erba_mahmoud_belmonte_dovesi_2014]_:
 
 .. math::
 
@@ -148,7 +149,7 @@ from the finite-strain ``wallace_delta`` term used by the QSA equations.  The
 source of every :math:`P_i` is part of the data contract: it may come from the
 output stress, a manually supplied value, an integrated energy EOS, or a
 polynomial derivative of the QHA input's static :math:`E(V)` series. For the
-latter two routes, Quantas first imports the tensors as raw, matches elastic
+latter two routes, the importer first treats the tensors as raw, matches elastic
 and phonon volumes explicitly, evaluates :math:`P(V)=-dE/dV`, and only then
 applies the CRYSTAL correction. The generated input records the selected EOS
 tag or polynomial degree, fit diagnostics, units,
@@ -157,13 +158,18 @@ elastic state and records the source and target tensor kinds, method, pressure
 source, and software applying it. An already incremental tensor is rejected,
 which prevents accidental double correction.
 
-The reusable Python operations are
-``hydrostatic_wallace_stiffness()``,
-``assign_hydrostatic_pressures()``,
-``correct_hydrostatic_elastic_state()``, and
-``correct_hydrostatic_elastic_series()`` in
-:mod:`quantas.core.physics.elasticity`.  The corrected series can be passed
-directly to ``build_kieffer_volume_series()``.
+The backend-neutral pressure-assignment service is
+``assign_hydrostatic_pressures()``.  Quantas also exposes the internal
+Eulerian operators ``eulerian_hydrostatic_incremental_stiffness()``,
+``convert_eulerian_hydrostatic_elastic_state()``, and
+``convert_eulerian_hydrostatic_elastic_series()`` for tensors whose derivative
+definition is explicitly compatible with that convention.  These operators
+are **not** used as a substitute for the CRYSTAL adapter: raw CRYSTAL tensors
+are converted by ``crystal_hydrostatic_stiffness()`` in
+:mod:`quantas.interfaces.crystal`.  Historical ``hydrostatic_wallace_*`` and
+``correct_hydrostatic_*`` names remain compatibility aliases only.  A
+correctly converted series can be passed directly to
+``build_kieffer_volume_series()``.
 
 Both QHA schemes include the acoustic contribution consistently.  With
 ``scheme=td``, the combined harmonic-plus-acoustic properties are fitted and
@@ -176,7 +182,7 @@ thermodynamic properties are recalculated.
 Kieffer-enriched frequency QHA does not currently support the
 ``mode_gruneisen`` thermal-expansion route or the optional mode-Gruneisen
 analysis.  A phonon-only weighted average would omit the acoustic branches and
-is therefore rejected explicitly.  At the CLI, ``--kieffer`` automatically
+is therefore rejected.  At the CLI, ``--kieffer`` automatically
 turns off the otherwise enabled-by-default mode-Gruneisen output and records
 that resolution in the options; an explicit ``--mode-gruneisen`` request is an
 error.  The default ``mixed_derivative`` route and the numerical
@@ -199,8 +205,8 @@ thermal-expansion route remain available.
 The sampled harmonic stage
 --------------------------
 
-For every requested temperature, Quantas first computes HA properties at all
-sampled volumes.  The resulting total Helmholtz free energy
+For every requested temperature, the workflow first computes HA properties at
+all sampled volumes.  The resulting total Helmholtz free energy
 
 .. math::
 
@@ -208,7 +214,7 @@ sampled volumes.  The resulting total Helmholtz free energy
 
 is the common starting surface for both QHA schemes.
 
-If harmonic thermodynamics cannot be evaluated, Quantas can continue with the
+If harmonic thermodynamics cannot be evaluated, the workflow can continue with the
 static energy repeated at every temperature.  This behavior preserves a useful
 static pressure-volume minimization and records a warning, but it is a
 **degraded static-only calculation**, not a complete QHA result.  Temperature-
@@ -218,206 +224,103 @@ predictions.
 Frequency and thermodynamic schemes
 -----------------------------------
 
-``freq``: mode-resolved frequency interpolation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For every q-point and mode, Quantas fits
-
-.. math::
-
-   \nu_{qj}(V)
-
-with a polynomial of degree ``frequency_degree``.  At each equilibrium volume,
-the frequencies are re-evaluated and all harmonic thermodynamic functions are
-recalculated from the oscillator expressions.
-
-Advantages
-^^^^^^^^^^
-
-- preserves mode-resolved information;
-- enables mode Grüneisen parameters;
-- allows thermodynamic properties to be recalculated from one internally
-  consistent interpolated spectrum;
-- for local polynomial derivatives, permits free energies to be regenerated
-  around the equilibrium volume rather than read only from a global fit.
-
-Limitations
-^^^^^^^^^^^
-
-- requires reliable branch correspondence across volumes;
-- a mode crossing or accidental reordering can corrupt an otherwise smooth
-  polynomial fit;
-- one fit is required for every q-point and mode;
-- fitted frequencies may become non-positive in extrapolation;
-- mode-resolved fitting and Grüneisen analysis increase time and memory use.
-
-Use ``freq`` when the phonon branches are continuous and mode information is
-scientifically important.
-
-For Kieffer-enriched calculations, this scheme also requires a stable positive
-fit for every cutoff over the volumes reached by local minimization.  A
-non-positive or non-finite fitted cutoff invalidates that state rather than
-being silently discarded.
-
-``td``: thermodynamic-property interpolation
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Quantas first calculates integrated HA properties at every sampled volume and
-then fits each property as a function of volume independently at every
-temperature.  The fitted property is evaluated at the QHA equilibrium volume.
-
-Advantages
-^^^^^^^^^^
-
-- does not require mode-by-mode branch continuity;
-- is insensitive to harmless permutations of phonon modes;
-- usually provides a robust route to integrated thermodynamic quantities;
-- avoids storing and differentiating mode-resolved fits.
-
-Limitations
-^^^^^^^^^^^
-
-- loses mode-resolved interpretation;
-- cannot provide mode Grüneisen parameters;
-- different thermodynamic properties are fitted separately, so consistency
-  depends on the quality of all property fits;
-- high-order volume derivatives remain sensitive to interpolation choices.
-
-Use ``td`` when branch tracking is unavailable or the scientific objective is
-limited to integrated thermodynamic properties.
-
-Comparison
-~~~~~~~~~~
+The two QHA schemes differ in **what is interpolated across volume**. The
+choice should follow the scientific question and the quality of branch
+continuity rather than a preference for one numerical route.
 
 .. list-table:: Frequency and thermodynamic QHA schemes
    :header-rows: 1
-   :widths: 28 36 36
+   :widths: 22 39 39
 
    * - Aspect
      - ``freq``
      - ``td``
    * - Interpolated object
-     - Every mode frequency
-     - Integrated HA properties
+     - Every :math:`\nu_{qj}(V)` branch
+     - Integrated HA properties after mode summation
    * - Mode continuity
      - Required
      - Not required
-   * - Mode Grüneisen parameters
-     - Available
-     - Unavailable
+   * - Main strength
+     - Preserves mode-resolved information and permits mode Gruneisen analysis
+     - Robust to harmless mode permutations and cheaper for bulk thermodynamics
    * - Main sensitivity
-     - Branch ordering and frequency fits
-     - Property-volume fits
-   * - Typical computational cost
-     - Higher
-     - Lower
-   * - Preferred use
-     - Mode-resolved analysis
-     - Robust integrated thermodynamics
+     - Branch identity, polynomial frequency fits, and extrapolated frequencies
+     - Independent property-volume fits and their derivatives
+   * - Prefer when
+     - Continuous branches and mode-resolved interpretation are part of the study
+     - Integrated properties are the goal or reliable branch tracking is absent
 
-Agreement between the two schemes for one material is evidence of robustness,
-not a universal guarantee.  The method-comparison exercise in
-:doc:`../tutorials/qha` demonstrates the recommended check.
+For ``freq``, each fitted branch is evaluated at the equilibrium volume and the
+harmonic thermodynamics are recalculated from that interpolated spectrum. With
+Kieffer enrichment, the three acoustic cutoffs are fitted in the same way and
+must remain finite and positive over every volume reached by minimization.
+
+With ``td``, the harmonic sum is first evaluated at each sampled volume and
+the resulting thermodynamic quantities are then interpolated. This sacrifices
+mode-resolved interpretation but avoids making the QHA result depend on a
+branch assignment that the input cannot justify.
+
+Agreement between ``freq`` and ``td`` is a useful robustness check when both
+are scientifically meaningful. The worked comparison belongs to
+:doc:`../tutorials/qha`, not to this implementation chapter.
 
 Representing the free-energy curve
 ----------------------------------
 
-At each temperature Quantas fits one free-energy model over the sampled
+At each temperature, one free-energy model is fitted over the sampled
 volumes.  The fitted model is reused for all requested pressures at that
 temperature.  Increasing the number of pressure points therefore does not
 require refitting :math:`F(V,T)`, although later property evaluation still
 scales with the number of pressure states.
 
-Polynomial minimization
-~~~~~~~~~~~~~~~~~~~~~~~
+Polynomial and EOS minimization
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The polynomial path fits :math:`F(V,T)` in a centered and scaled volume
-coordinate.  Scaling improves numerical conditioning without changing the
-physical volume derivatives.
+At each temperature, the fitted free-energy representation is reused for all
+requested pressures. The two available representations answer the same
+minimization problem but impose different structure on :math:`F(V,T)`.
 
-At pressure :math:`P`, Quantas finds positive-curvature roots of
+.. list-table:: Free-energy minimization choices
+   :header-rows: 1
+   :widths: 24 38 38
+
+   * - Choice
+     - Polynomial
+     - Integrated EOS
+   * - Representation
+     - Centered and scaled local polynomial
+     - Selected physical Energy EOS
+   * - Main strength
+     - Flexible description of a well-bracketed local basin
+     - Structured compression curve with interpretable parameters
+   * - Main risk
+     - Edge oscillations, extra extrema, and sensitive high derivatives
+     - Model/order correlation and apparently good fits outside useful support
+   * - Prefer when
+     - Sampling is dense and centered around the relevant minimum
+     - A broader compression interval supports a physical EOS description
+
+For the polynomial route, the minimum follows from
 
 .. math::
 
-   \frac{\partial F}{\partial V}+P=0.
+   \frac{\partial F}{\partial V}+P=0
 
-If several local minima exist, the implementation selects the one connected to
-the sampled free-energy basin: it first identifies the sampled volume with the
-lowest :math:`F+PV`, then chooses the closest stationary minimum.  Objective
-values break an exact distance tie.
+and retains a positive-curvature stationary point connected to the sampled
+free-energy basin. Polynomial coefficients are numerical interpolation
+parameters rather than material constants.
 
-Advantages
-^^^^^^^^^^
+For the EOS route, an integrated Energy EOS is fitted at every temperature
+and evaluates it at the requested pressures. Covariance-based uncertainty
+propagation is available when the fitted covariance is usable. The default
+model is ``BM3``; alternative Energy EOS families are described in
+:doc:`../theory/eos`.
 
-- flexible local representation near the sampled basin;
-- no commitment to a specific EOS family;
-- efficient when the relevant minimum is well bracketed;
-- convenient for comparing alternative interpolation degrees.
-
-Limitations
-^^^^^^^^^^^
-
-- behavior outside the sampled interval is uncontrolled;
-- high polynomial degree can produce extra extrema or edge oscillations;
-- :math:`K'_T` depends on a third volume derivative and is more sensitive than
-  the equilibrium volume;
-- polynomial coefficients are numerical parameters, not material constants.
-
-The default degree is three.  The fit requires more volume points than fitted
-coefficients, and a scientifically useful fit normally needs additional
-redundancy beyond the mathematical minimum.
-
-EOS minimization
-~~~~~~~~~~~~~~~~
-
-The EOS path fits an integrated energy EOS to :math:`F(V,T)` at every
-temperature and evaluates that fitted model at each pressure.
-
-Advantages
-^^^^^^^^^^
-
-- imposes a physically structured compression curve;
-- gives interpretable parameters such as a reference volume and bulk modulus;
-- usually behaves more regularly over a wider compression interval;
-- supports covariance-based uncertainty propagation when the fit covariance is
-  usable.
-
-Limitations
-^^^^^^^^^^^
-
-- results depend on EOS family and order;
-- parameters may be strongly correlated for a narrow volume interval;
-- a good residual norm does not guarantee reliable high-order derivatives;
-- EOS extrapolation remains extrapolation and must be flagged as such.
-
-The default EOS tag is ``BM3``.  Alternative energy EOS forms are described in
-:doc:`../theory/eos` and can be explored through the CLI reference.
-
-Choosing polynomial or EOS minimization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. list-table:: Initial minimization choice
-   :header-rows: 1
-   :widths: 42 24 34
-
-   * - Dataset or objective
-     - Start with
-     - Why
-   * - Dense, symmetric sampling around the minimum
-     - polynomial
-     - Provides a flexible local representation.
-   * - Broad compression interval
-     - EOS
-     - A structured compression law is usually more stable.
-   * - Few sampled volumes
-     - low-order model
-     - Extra parameters are not independently resolved.
-   * - Strong disagreement between polynomial and EOS preview
-     - neither blindly
-     - Reinspect input range, convergence, and outliers.
-   * - Properties requested outside sampled volume support
-     - extend the input
-     - Changing the fit form cannot create missing physical information.
+A disagreement between polynomial and EOS minimization is diagnostic evidence.
+Changing the fit form cannot replace missing volume support; inspect the sampled
+range, residuals, and location of the equilibrium state before selecting a
+production model.
 
 Polynomial degrees
 ------------------
@@ -444,255 +347,70 @@ compare the final physical properties rather than selecting a model from
 Polynomial thermoelastic derivatives
 ------------------------------------
 
-After polynomial minimization, Quantas must calculate
+After polynomial minimization, the thermoelastic reconstruction needs the second and third volume
+derivatives of free energy to obtain :math:`K_T` and :math:`K'_T`. Two routes
+are available:
 
-.. math::
-
-   K_T=V\frac{\partial^2F}{\partial V^2},
-
-and
-
-.. math::
-
-   K'_T=-1-V
-   \frac{\partial^3F/\partial V^3}{\partial^2F/\partial V^2}.
-
-Two implementations are available.
-
-``local_grid`` — default
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-A small symmetric volume grid is built around every equilibrium volume.  The
-default contains **5 points**, with adjacent points separated by **0.05%** of
-the central volume.  The local free energies are fitted again to obtain the
-bulk properties.
-
-With ``scheme=freq``, local free energies are regenerated from the fitted
-phonon frequencies and static-energy model.  With ``scheme=td``, the local
-values come from the fitted global polynomial.
-
-Advantages
-^^^^^^^^^^
-
-- evaluates curvature in the immediate neighborhood of the state;
-- provides a useful cross-check against derivatives of the global fit;
-- in the frequency scheme, uses the locally reconstructed oscillator free
-  energy.
-
-Limitations
-^^^^^^^^^^^
-
-- adds local evaluations at every pressure-temperature state;
-- too small a separation can amplify floating-point or fit noise;
-- too large a separation no longer represents a local derivative;
-- :math:`K'_T` remains intrinsically sensitive to the local polynomial degree.
-
-``analytic``
-~~~~~~~~~~~~
-
-The second and third derivatives are evaluated directly from the global
-free-energy polynomial.
-
-Advantages
-^^^^^^^^^^
-
-- fastest route;
-- exact derivative of the selected global polynomial;
-- no additional local grid settings.
-
-Limitations
-^^^^^^^^^^^
-
-- inherits every high-order feature of the global polynomial;
-- can make :math:`K'_T` especially sensitive to edge behavior or excessive
-  degree.
-
-Convergence test for local derivatives
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-At a small set of representative states, compare for example:
-
-.. list-table:: Suggested derivative convergence table
+.. list-table:: Polynomial derivative methods
    :header-rows: 1
-   :widths: 18 22 20 20 20
+   :widths: 22 39 39
 
-   * - Points
-     - Separation (%)
-     - :math:`V`
-     - :math:`K_T`
-     - :math:`K'_T`
-   * - 3
-     - 0.05
-     - …
-     - …
-     - …
-   * - 5
-     - 0.05
-     - …
-     - …
-     - …
-   * - 7
-     - 0.05
-     - …
-     - …
-     - …
-   * - 5
-     - 0.025
-     - …
-     - …
-     - …
-   * - 5
-     - 0.10
-     - …
-     - …
-     - …
-   * - analytic
-     - —
-     - …
-     - …
-     - …
+   * - Method
+     - ``local_grid`` (default)
+     - ``analytic``
+   * - Evaluation
+     - Reconstruct and refit a small volume neighborhood around each equilibrium state
+     - Differentiate the global free-energy polynomial directly
+   * - Strength
+     - Probes curvature close to the requested state and provides an independent sensitivity test
+     - Fast and exactly consistent with the selected global polynomial
+   * - Sensitivity
+     - Local spacing, local degree, and numerical noise
+     - High-order behavior of the global polynomial, especially near edges
 
-The equilibrium volume should not change when only the derivative method is
-changed.  Material changes in :math:`K_T` or :math:`K'_T` indicate that the
-curvature is not robustly resolved.
+The default local grid contains five points separated by 0.05% of the central
+volume. With ``scheme=freq`` the local free energies are regenerated from the
+fitted spectrum; with ``scheme=td`` they are evaluated from the global property
+fits.
 
-.. note::
-
-   There is no HA/QHA numerical control with a default value of ``512`` in the
-   current source.  The relevant QHA local derivative defaults are 5 points and
-   0.05% separation.  The main global resolutions are the user-defined
-   temperature and pressure grids.  Do not tune an unrelated ``512`` value as
-   though it controlled QHA convergence.
+Convergence should be checked at representative states by changing the number
+and spacing of local points and comparing :math:`K_T` and :math:`K'_T` with the
+analytic route. The equilibrium volume itself should not change when only the
+derivative method changes.
 
 Three routes to volumetric thermal expansion
 --------------------------------------------
 
-Quantas stores the available estimates separately and selects one requested
-method as the authoritative :math:`\alpha_V`.  If the requested mixed or
-mode-Grüneisen value is unresolved at an individual state, the implementation
-uses the numerical volume derivative at that state when available.  A source
-code array records which method supplied every value.
+The available estimates are stored separately, together with the method that
+supplies the authoritative :math:`\alpha_V` at each state.
 
-Mixed derivative — default
-~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The implementation uses the Maxwell relation
-
-.. math::
-
-   \alpha_V
-   =\frac{1}{K_T}\left(\frac{\partial S}{\partial V}\right)_T.
-
-At every temperature, entropy on the sampled volume grid is fitted by a
-polynomial.  Its analytical volume derivative is evaluated at every equilibrium
-volume and divided by :math:`K_T`.
-
-Why it is the default
-^^^^^^^^^^^^^^^^^^^^^
-
-- available for both ``freq`` and ``td``;
-- based directly on the fitted free-energy thermodynamics;
-- avoids differentiating the final :math:`V(T)` curve;
-- provides a smooth pressure-dependent estimate when the entropy-volume surface
-  is well resolved.
-
-Limitations
-^^^^^^^^^^^
-
-- depends on the entropy-volume polynomial and its derivative;
-- inherits uncertainty in :math:`K_T`;
-- can become unreliable near volume boundaries or with too few volumes.
-
-Mode-Grüneisen route
-~~~~~~~~~~~~~~~~~~~~
-
-For ``scheme=freq``, Quantas differentiates each fitted frequency polynomial:
-
-.. math::
-
-   \gamma_{qj}(V)
-   =-\frac{V}{\nu_{qj}}
-   \frac{\partial\nu_{qj}}{\partial V}.
-
-The modes are weighted by their harmonic contribution to :math:`C_V`, and the
-thermal expansion is obtained from
-
-.. math::
-
-   \alpha_V=\frac{\bar\gamma C_V}{K_TV}.
-
-Advantages
-^^^^^^^^^^
-
-- supplies mode-resolved interpretation;
-- identifies modes driving positive or negative expansion;
-- provides an independent thermodynamic consistency check.
-
-Limitations
-^^^^^^^^^^^
-
-- requires mode continuity and positive fitted frequencies;
-- non-positive or failed modes are excluded by default and recorded;
-- sensitive to derivatives of every frequency-volume fit;
-- more expensive than an integrated-property route.
-
-Numerical volume derivative
-~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The numerical route evaluates
-
-.. math::
-
-   \alpha_V=\frac{1}{V}
-   \left(\frac{\partial V}{\partial T}\right)_P
-
-from the final equilibrium-volume columns.
-
-Advantages
-^^^^^^^^^^
-
-- intuitive and independent of entropy or mode derivatives;
-- useful as a cross-check;
-- remains available as the pointwise fallback for unresolved primary methods.
-
-Limitations
-^^^^^^^^^^^
-
-- requires at least two temperatures;
-- depends on temperature spacing and endpoint differentiation;
-- can amplify small irregularities in the minimized volume curve;
-- cannot supply a value for a single-temperature calculation.
-
-Choosing an expansion method
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-.. list-table:: Thermal-expansion decision guide
+.. list-table:: Thermal-expansion routes
    :header-rows: 1
-   :widths: 35 25 40
+   :widths: 25 36 39
 
-   * - Situation
-     - Primary choice
-     - Recommended check
-   * - General QHA calculation
-     - mixed derivative
-     - Compare with numerical differentiation.
-   * - Verified continuous modes
-     - mode Grüneisen
-     - Compare weighted and macroscopic :math:`\gamma`.
-   * - No trustworthy mode ordering
-     - mixed derivative
-     - Use ``td`` and compare with numerical values.
-   * - Coarse temperature grid
-     - mixed derivative
-     - Numerical :math:`\alpha_V` may be too step-dependent.
-   * - Disagreement among methods
-     - no automatic winner
-     - Inspect volume support, fit degrees, mode continuity, and derivatives.
+   * - Method
+     - Definition and availability
+     - Main use and sensitivity
+   * - ``mixed_derivative`` (default)
+     - :math:`\alpha_V=K_T^{-1}(\partial S/\partial V)_T`; available for both schemes
+     - Smooth thermodynamic route; depends on the entropy-volume derivative and :math:`K_T`
+   * - ``mode_gruneisen``
+     - Heat-capacity-weighted :math:`\gamma_{qj}`; available only for ``freq`` without Kieffer enrichment
+     - Provides mode interpretation; sensitive to every frequency-volume derivative
+   * - numerical volume derivative
+     - :math:`V^{-1}(\partial V/\partial T)_P` from the final equilibrium-volume columns
+     - Independent cross-check; sensitive to temperature spacing and endpoints
+
+If the selected mixed or mode-Gruneisen value is unresolved at one state, the
+numerical volume derivative is used there when it is available and the source
+code records the fallback. A disagreement among methods is a reason to inspect
+volume support, interpolation degree, branch continuity, and derivative
+resolution rather than to select an automatic winner.
 
 Derived thermodynamic quantities
 --------------------------------
 
-After selecting :math:`\alpha_V`, Quantas calculates
+After selecting :math:`\alpha_V`, the workflow calculates
 
 .. math::
 
@@ -709,7 +427,7 @@ and
    K_S=K_T\frac{C_P}{C_V}.
 
 At :math:`T=0`, and wherever :math:`C_V` is too small for a stable ratio,
-Quantas sets :math:`K_S=K_T`.
+The result then uses :math:`K_S=K_T`.
 
 The optional macroscopic Grüneisen parameter is
 
@@ -725,7 +443,7 @@ stored macroscopic value is set to zero by convention.
 Structural properties
 ---------------------
 
-When the input contains a volume-constrained structural series, Quantas builds
+When the input contains a volume-constrained structural series, the workflow builds
 a one-dimensional structural path in volume and evaluates it at
 :math:`V(P,T)`.  Cell parameters and the deformation gradient are therefore
 reconstructed from static structures, while temperature enters through the QHA
@@ -811,54 +529,21 @@ covariance propagation for all final state quantities.  Do not compare missing
 polynomial uncertainties with EOS uncertainties as though they represented the
 same statistical model.
 
-Performance and practical acceleration
---------------------------------------
+Performance notes
+-----------------
 
-The total cost has several components.
+The dominant costs are the sampled harmonic calculation, mode fitting in
+``freq``, one free-energy fit per temperature, and reconstruction of the final
+P--T states. Adding pressure points is usually cheaper than adding temperature
+points because all pressures at one temperature share the same fitted
+free-energy representation.
 
-Sampled harmonic thermodynamics
-   Scales approximately as
-   :math:`N_TN_qN_{\mathrm{mode}}N_V`.
-
-Frequency fitting
-   In ``freq``, one volume polynomial is fitted for every q-point and mode.
-
-Free-energy fitting
-   One polynomial or EOS is fitted for every temperature, not every pressure.
-
-State evaluation
-   Scales with :math:`N_TN_P`; frequency thermodynamics and mode Grüneisen
-   analysis add mode-resolved work at these states.
-
-Structural reconstruction
-   Scales with the final pressure-temperature grid and is usually secondary.
-
-A disciplined acceleration strategy is:
-
-1. run ``qha inspect`` before any large grid;
-2. test one or a few temperatures and pressures;
-3. disable mode Grüneisen analysis when it is not required;
-4. use ``td`` when mode-resolved information is unnecessary or unreliable;
-5. compare polynomial and EOS minimization on a reduced grid;
-6. validate local derivative settings at representative states;
-7. only then expand the final pressure-temperature domain.
-
-Adding pressure points is often cheaper than adding temperature points because
-the fitted free-energy representation is shared across all pressures at one
-temperature.  Nevertheless, every final state still requires property
-reconstruction, so very dense pressure grids are not free.
-
-The following changes accelerate a run without changing the source phonon
-dataset:
-
-- coarser preliminary temperature and pressure steps;
-- ``--no-mode-gruneisen`` when mode analysis is not needed;
-- ``--no-gruneisen`` when the macroscopic ratio is not needed;
-- analytic polynomial derivatives for a controlled sensitivity test;
-- the ``td`` scheme for integrated properties.
-
-Do not accelerate a production calculation by deleting volumes until the
-impact on fitted minima and derivatives has been quantified.
+For exploratory work, use ``qha inspect`` first, test a small P--T grid, disable
+mode-Gruneisen analysis when it is not required, and prefer ``td`` when the
+scientific objective is limited to integrated thermodynamics. Expand the
+production domain only after the volume support and derivative choices have
+been checked. Do not reduce the sampled volume set merely to accelerate the
+calculation unless the effect on minima and derivatives has been quantified.
 
 Recommended staged workflow
 ---------------------------
@@ -923,3 +608,8 @@ Related documentation
 - CLI syntax: :doc:`../cli/qha`
 - Public Python surface: :doc:`../api/qha`
 - EOS background: :doc:`../theory/eos`
+
+References
+----------
+
+.. include:: ../_generated/references/workflows_qha.inc

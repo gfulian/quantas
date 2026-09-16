@@ -66,19 +66,25 @@ def create_elastic_tensor(
     input_data: ElasticityInput,
     rotation: TensorRotation | None = None,
 ) -> ElasticTensor:
-    """Create the tensor used by the elasticity analysis.
+    """Create the elastic tensor used by the analysis workflow.
 
     Parameters
     ----------
     input_data : ElasticityInput
-        Source stiffness matrix.
+        Source stiffness matrix in Voigt notation and GPa.
     rotation : TensorRotation or None, optional
-        Optional source-to-analysis component transformation.
+        Optional source-to-analysis component transformation. The transformation
+        changes tensor components, not the underlying physical tensor.
 
     Returns
     -------
     ElasticTensor
-        Source tensor or transformed tensor used by the workflow.
+        Elastic tensor expressed in the analysis Cartesian frame.
+
+    Raises
+    ------
+    ValueError
+        If the input does not contain a stiffness matrix.
     """
     stiffness = input_data.stiffness
     if stiffness is None:
@@ -93,7 +99,23 @@ def calculate_basic_properties(
     tensor: ElasticTensor,
     input_data: ElasticityInput,
 ) -> ElasticityResult:
-    """Calculate symmetry, averages, compliance, and stability."""
+    """Calculate the frame-dependent tensor representation and bulk summaries.
+
+    Parameters
+    ----------
+    tensor : ElasticTensor
+        Elastic tensor in the analysis Cartesian frame. Stiffness is expressed in
+        GPa and compliance in GPa^-1.
+    input_data : ElasticityInput
+        Workflow input providing the job description.
+
+    Returns
+    -------
+    ElasticityResult
+        Result containing copies of stiffness and compliance, the detected elastic
+        crystal system, Voigt-Reuss-Hill averages, and the positive-definiteness
+        diagnostic.
+    """
     result = ElasticityResult(
         jobname=input_data.jobname,
         stiffness=tensor.stiffness.copy(),
@@ -109,7 +131,21 @@ def specialize_tensor(
     tensor: ElasticTensor,
     result: ElasticityResult,
 ) -> ElasticTensor:
-    """Select an available symmetry-specific tensor representation."""
+    """Return the symmetry-specialized representation used for directional analysis.
+
+    Parameters
+    ----------
+    tensor : ElasticTensor
+        Elastic tensor in the analysis Cartesian frame.
+    result : ElasticityResult
+        Result whose ``crystal_system`` selects the specialization. Missing
+        symmetry information falls back to triclinic behavior.
+
+    Returns
+    -------
+    ElasticTensor
+        Symmetry-specialized tensor representation with stiffness in GPa.
+    """
     return specialize_elastic_tensor(tensor, result.crystal_system or "triclinic")
 
 
@@ -117,7 +153,22 @@ def calculate_directional_variations(
     tensor: ElasticTensor,
     result: ElasticityResult,
 ) -> None:
-    """Calculate global extrema of the four directional elastic properties."""
+    """Calculate exact global extrema of the directional elastic properties.
+
+    Parameters
+    ----------
+    tensor : ElasticTensor
+        Elastic tensor in the analysis Cartesian frame.
+    result : ElasticityResult
+        Result object updated in place under ``variations``.
+
+    Notes
+    -----
+    Young's modulus and linear compressibility depend on one direction. Shear
+    modulus and Poisson's ratio additionally optimize over an orthogonal transverse
+    direction. The routine stores the extrema returned by the shared elasticity
+    core and performs no display rounding.
+    """
     result.add_variation(
         "young_modulus",
         find_directional_extrema(
@@ -151,11 +202,32 @@ def calculate_2d_properties(
     progress_callback: ProgressCallback | None = None,
     step_callback: StepCallback | None = None,
 ) -> None:
-    """Calculate elastic properties on the principal Cartesian planes.
+    """Calculate directional elastic properties on the principal Cartesian planes.
 
-    All four property families are evaluated in one batched contraction per
-    plane.  Transverse shear and Poisson extrema are solved algebraically and
-    therefore do not depend on local optimizer convergence.
+    All property families are evaluated through the shared vectorized directional
+    field sampler. Transverse shear and Poisson extrema are solved algebraically
+    and therefore do not depend on local optimizer convergence.
+
+    Parameters
+    ----------
+    tensor : ElasticTensor
+        Elastic tensor in the analysis Cartesian frame.
+    result : ElasticityResult
+        Result updated in place under ``properties_2d`` and sampling diagnostics.
+    options : ElasticityOptions
+        Workflow options. No work is performed when ``calculate_2d`` is false.
+    progress_callback : callable or None, optional
+        Workflow callback receiving ``(label, current, total)`` for numerical
+        sampling progress.
+    step_callback : callable or None, optional
+        Callback receiving ``(plane, property_name)`` before each reported
+        property family.
+
+    Notes
+    -----
+    Angles are stored in radians. Young's modulus and shear modulus are stored in
+    GPa, linear compressibility is stored as separated positive and negative
+    branches in TPa^-1, and Poisson's ratio is dimensionless.
     """
     if not options.calculate_2d:
         return
@@ -232,7 +304,20 @@ def calculate_2d_properties(
 
 
 def create_principal_plane_grids(points: int) -> dict[str, dict[str, np.ndarray]]:
-    """Create closed angular grids for the ``xy``, ``xz``, and ``yz`` planes."""
+    """Create closed angular grids for the Cartesian principal planes.
+
+    Parameters
+    ----------
+    points : int
+        Number of angular samples per plane, including both equivalent endpoints
+        at 0 and 2*pi.
+
+    Returns
+    -------
+    dict
+        Mapping for ``xy``, ``xz`` and ``yz``. Each entry contains ``theta`` and
+        ``phi`` arrays of shape ``(points,)`` in radians.
+    """
     angles = np.linspace(0.0, 2.0 * np.pi, points, endpoint=True)
     return {
         "xy": {

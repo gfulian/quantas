@@ -46,10 +46,18 @@ from .quasistatic import (
     wallace_hydrostatic_delta_voigt,
 )
 from .prestress import (
+    EULERIAN_HYDROSTATIC_PRESTRESS_METHOD,
     assign_hydrostatic_pressures,
+    convert_eulerian_hydrostatic_elastic_series,
+    convert_eulerian_hydrostatic_elastic_state,
+    eulerian_hydrostatic_incremental_stiffness,
     correct_hydrostatic_elastic_series,
     correct_hydrostatic_elastic_state,
     hydrostatic_wallace_stiffness,
+)
+from .pressure_resolution import (
+    EnergyPressureResolution,
+    resolve_energy_derived_pressures,
 )
 from .sampling import (
     SUPPORTED_DIRECTIONAL_PROPERTIES,
@@ -111,6 +119,8 @@ __all__ = [
     "ELASTIC_SYMMETRY_PATTERNS",
     "ENGINEERING_SHEAR_FACTORS",
     "ElasticAverages",
+    "EnergyPressureResolution",
+    "EULERIAN_HYDROSTATIC_PRESTRESS_METHOD",
     "FiniteStrainOrder",
     "ElasticSurfaceProperty",
     "ElasticTensor",
@@ -131,6 +141,9 @@ __all__ = [
     "evaluate_stability_field",
     "compute_elastic_averages",
     "assign_hydrostatic_pressures",
+    "convert_eulerian_hydrostatic_elastic_series",
+    "convert_eulerian_hydrostatic_elastic_state",
+    "eulerian_hydrostatic_incremental_stiffness",
     "correct_hydrostatic_elastic_series",
     "correct_hydrostatic_elastic_state",
     "cold_finite_strain_component",
@@ -151,6 +164,7 @@ __all__ = [
     "linear_compressibility",
     "poisson_ratio",
     "reconstruct_stiffness_from_components",
+    "resolve_energy_derived_pressures",
     "stiffness_component_linear_coefficients",
     "rotate_voigt_stiffness",
     "sample_elasticity_surfaces",

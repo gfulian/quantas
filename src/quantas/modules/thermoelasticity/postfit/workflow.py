@@ -38,7 +38,31 @@ def analyze_thermoelastic_result(
     profiles: Sequence[ThermoelasticDepthProfile] = (),
     extrapolation_policy: str | None = None,
 ) -> ResultData:
-    """Create a post-fit archive for a grid and optional depth profiles."""
+    """Create a post-fit archive for a grid and optional depth profiles.
+
+    Parameters
+    ----------
+    result_data : ResultData
+        Accepted thermoelastic calibration result used for post-fit evaluation.
+    temperature : ArrayLike | None
+        Temperature value or array in K.
+    pressure : ArrayLike | None
+        Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+    profiles : Sequence[ThermoelasticDepthProfile]
+        Pressure-temperature depth profiles to evaluate.
+    extrapolation_policy : str | None
+        Policy applied when requested states lie outside calibrated elastic-volume support.
+
+    Returns
+    -------
+    ResultData
+        Created a post-fit archive for a grid and optional depth profiles.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     source = result_data.results.get("thermoelasticity")
     if not isinstance(source, ThermoelasticResult):
         raise ValueError("result does not contain a thermoelasticity payload")

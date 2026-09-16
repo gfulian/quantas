@@ -316,7 +316,13 @@ def stiffness_component_linear_coefficients(
     Returns
     -------
     ndarray
-        Array with shape ``(6, 6, ncomponents)``.
+        Coefficient array with shape ``(6, 6, ncomponents)``.
+
+    Raises
+    ------
+    KeyError
+        If ``labels`` does not contain a component required by the selected
+        symmetry.
     """
     order = tuple(str(label) for label in labels)
     index = {label: position for position, label in enumerate(order)}

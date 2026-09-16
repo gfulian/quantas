@@ -95,12 +95,17 @@ def fold_supercell_positions(
     fractional_positions : array_like
         Supercell fractional coordinates with shape ``(natoms, 3)``.
     expansion_matrix : array_like
-        Primitive-to-supercell expansion matrix.
+        Primitive-to-supercell expansion matrix with shape ``(3, 3)``.
 
     Returns
     -------
     ndarray
         Primitive fractional coordinates wrapped into ``[0, 1)``.
+
+    Raises
+    ------
+    ValueError
+        If either input has an incompatible shape.
     """
     positions = np.asarray(fractional_positions, dtype=np.float64)
     expansion = np.asarray(expansion_matrix, dtype=np.float64)

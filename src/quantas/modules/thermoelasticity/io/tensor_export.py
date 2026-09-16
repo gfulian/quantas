@@ -23,7 +23,18 @@ _UPPER_VOIGT = tuple((i, j) for i in range(6) for j in range(i, 6))
 
 
 def thermoelastic_grid_info_table(result: ThermoelasticResult) -> ReportTable:
-    """Return the archived pressure-temperature coverage summary."""
+    """Return the archived pressure-temperature coverage summary.
+
+    Parameters
+    ----------
+    result : ThermoelasticResult
+        Scientific result consumed or serialized by this operation.
+
+    Returns
+    -------
+    ReportTable
+        The archived pressure-temperature coverage summary.
+    """
     temperature_step = grid_step(result.temperature)
     pressure_step = grid_step(result.pressure)
     rows: list[list[Any]] = [
@@ -112,6 +123,13 @@ def write_thermoelastic_tensor_export(
     -------
     Path
         Written destination.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    FileExistsError
+        If the destination exists and replacement is not permitted.
     """
     payload = result_data.results.get("thermoelasticity")
     if not isinstance(payload, ThermoelasticResult):
@@ -154,7 +172,26 @@ def format_thermoelastic_tensors_text(
     include_grid: bool = True,
     include_profiles: bool = True,
 ) -> str:
-    """Return a deterministic plain-text tensor export."""
+    """Return a deterministic plain-text tensor export.
+
+    Parameters
+    ----------
+    result : ThermoelasticResult
+        Scientific result consumed or serialized by this operation.
+    tensor_condition : TensorExportCondition
+        Requested elastic-tensor thermodynamic condition.
+    include_uncertainties : bool
+        Whether to include uncertainties in the result.
+    include_grid : bool
+        Whether to include grid in the result.
+    include_profiles : bool
+        Whether to include profiles in the result.
+
+    Returns
+    -------
+    str
+        A deterministic plain-text tensor export.
+    """
     conditions = _selected_conditions(result, tensor_condition)
     _validate_sections(result, include_grid, include_profiles)
     lines = [

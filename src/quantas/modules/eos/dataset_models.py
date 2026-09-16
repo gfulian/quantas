@@ -261,7 +261,13 @@ class EOSCoordinateProfile:
         return self.variation is EOSCoordinateVariation.VARIABLE
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready representation of the profile."""
+        """Return a serialization-ready representation of the profile.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready representation of the profile.
+        """
         return {
             "name": self.name,
             "variation": self.variation.value,
@@ -308,11 +314,28 @@ class EOSDatasetClassification:
     reference_temperature: float | None
 
     def profile(self, name: str) -> EOSCoordinateProfile:
-        """Return the profile for one available canonical coordinate."""
+        """Return the profile for one available canonical coordinate.
+
+        Parameters
+        ----------
+        name : str
+            Stable name or identifier.
+
+        Returns
+        -------
+        EOSCoordinateProfile
+            The profile for one available canonical coordinate.
+        """
         return self.profiles[name]
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready dataset classification."""
+        """Return a serialization-ready dataset classification.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready dataset classification.
+        """
         return {
             "profiles": {
                 name: profile.as_dict() for name, profile in self.profiles.items()
@@ -397,7 +420,13 @@ class EOSSeries:
         return int(np.count_nonzero(self.mask))
 
     def observations(self) -> FitObservations:
-        """Return observations in the stored independent/target orientation."""
+        """Return observations in the stored independent/target orientation.
+
+        Returns
+        -------
+        FitObservations
+            Observations in the stored independent/target orientation.
+        """
         return FitObservations(
             x=self.x,
             y=self.y,
@@ -423,6 +452,11 @@ class EOSSeries:
         ------
         ValueError
             If the series is not pressure against a volume or linear target.
+
+        Returns
+        -------
+        FitObservations
+            Experimental data in the ``P(structural quantity)`` form.
         """
         if self.independent != "pressure" or self.target not in {
             "volume",
@@ -768,6 +802,13 @@ class EOSDataset:
         -------
         ndarray
             Detached one-dimensional boolean selection.
+
+        Raises
+        ------
+        RuntimeError
+            If the supplied data or workflow state violates the documented contract.
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         if mask is None:
             if self.default_mask is None:  # Defensive guard.
@@ -783,7 +824,18 @@ class EOSDataset:
     def group_summary(
         self, mask: np.ndarray | None = None
     ) -> tuple[dict[str, int], ...]:
-        """Return total, selected, and excluded counts for each data group."""
+        """Return total, selected, and excluded counts for each data group.
+
+        Parameters
+        ----------
+        mask : np.ndarray | None
+            Boolean selection or validity mask.
+
+        Returns
+        -------
+        tuple[dict[str, int], ...]
+            Total, selected, and excluded counts for each data group.
+        """
         selected = self.selection_mask(mask)
         groups = self.groups
         if groups is None:
@@ -809,7 +861,18 @@ class EOSDataset:
         return tuple(self.columns)
 
     def has(self, name: str) -> bool:
-        """Return whether a canonical column is present."""
+        """Return whether a canonical column is present.
+
+        Parameters
+        ----------
+        name : str
+            Stable name or identifier.
+
+        Returns
+        -------
+        bool
+            Whether a canonical column is present.
+        """
         return name in self.columns
 
     def column(self, name: str) -> np.ndarray:

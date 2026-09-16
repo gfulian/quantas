@@ -77,7 +77,18 @@ def build_rich_table(table: ReportTable) -> Table:
 
 
 def build_rich_renderable(table: ReportTable) -> RenderableType:
-    """Return a Rich table together with optional neutral notes."""
+    """Build a Rich renderable for one neutral Quantas table.
+
+    Parameters
+    ----------
+    table : ReportTable
+        Frontend-neutral table specification with optional metadata notes.
+
+    Returns
+    -------
+    rich.console.RenderableType
+        Rich group containing the terminal table followed by any neutral notes.
+        Scientific values and units remain those stored in ``table``."""
     renderables: list[RenderableType] = [build_rich_table(table)]
     for note in table.metadata.get("notes", []):
         renderables.append(Text(f"Note: {note}", style="dim"))

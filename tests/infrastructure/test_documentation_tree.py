@@ -331,43 +331,54 @@ def test_eos_background_is_scientific_and_follows_angel_order() -> None:
         assert forbidden not in text
 
 
-def test_scientific_background_bibliographies_are_canonical() -> None:
-    """Theory citations use page-local numbers generated from the registry."""
+def test_page_local_bibliographies_are_canonical_and_at_page_end() -> None:
+    """Scientific citations use one numbered page-local bibliography format."""
     import importlib.util
 
     from quantas.references.registry import get_citation
     from quantas.references.render import render_rst_bibliography
 
-    script = Path("docs/tools/generate_theory_bibliographies.py")
-    spec = importlib.util.spec_from_file_location("theory_bibliographies", script)
+    script = Path("docs/tools/generate_bibliographies.py")
+    spec = importlib.util.spec_from_file_location("bibliographies", script)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
 
-    for page, keys in module.THEORY_REFERENCE_KEYS.items():
-        theory_path = DOCS_ROOT / "theory" / f"{page}.rst"
-        fragment_path = DOCS_ROOT / "_generated" / "references" / f"{page}.inc"
-        text = theory_path.read_text(encoding="utf-8")
+    for page, keys in module.PAGE_REFERENCE_KEYS.items():
+        page_path = DOCS_ROOT / page
+        fragment_name = module.fragment_name(page)
+        fragment_path = DOCS_ROOT / "_generated" / "references" / fragment_name
+        text = page_path.read_text(encoding="utf-8")
         inline_keys = tuple(dict.fromkeys(re.findall(r"\[#([A-Za-z0-9_]+)\]_", text)))
         assert inline_keys == keys
-        assert fragment_path.read_text(encoding="utf-8") == render_rst_bibliography(keys)
-        assert f".. include:: ../_generated/references/{page}.inc" in text
+
+        fragment = fragment_path.read_text(encoding="utf-8")
+        assert fragment == render_rst_bibliography(keys)
+        assert fragment.startswith("References\n----------\n")
+
+        include_target = posixpath.relpath(
+            fragment_path.relative_to(DOCS_ROOT).as_posix(),
+            start=page_path.relative_to(DOCS_ROOT).parent.as_posix(),
+        )
+        include = f".. include:: {include_target}"
+        assert text.rstrip().endswith(include)
+
         for key in keys:
             citation = get_citation(key)
-            assert f".. [#{key}]" in fragment_path.read_text(encoding="utf-8")
+            assert f".. [#{key}]" in fragment
             if citation.doi:
-                assert f"https://doi.org/{citation.doi}" in fragment_path.read_text(
-                    encoding="utf-8"
-                )
+                assert f"https://doi.org/{citation.doi}" in fragment
 
 
-def test_theory_pages_do_not_embed_free_form_bibliographies() -> None:
-    """Scientific citations remain linked to the canonical registry."""
-    for path in (DOCS_ROOT / "theory").glob("*.rst"):
+def test_documentation_does_not_embed_free_form_bibliographies() -> None:
+    """Bibliographic records outside generated fragments remain registry-backed."""
+    registry_guide = DOCS_ROOT / "developer" / "citation_registry.rst"
+    for path in DOCS_ROOT.rglob("*.rst"):
+        if path == registry_guide:
+            continue
         text = path.read_text(encoding="utf-8")
-        assert "doi:" not in text.lower()
         assert "https://doi.org/" not in text
-
+        assert re.search(r"^\.\. \[[A-Za-z0-9_]+\]", text, re.MULTILINE) is None
 
 def test_eos_tutorial_assets_and_downloads_exist() -> None:
     """The complete EOS tutorial retains its generated figures and files."""
@@ -511,19 +522,17 @@ def test_ha_qha_workflow_pages_are_complete() -> None:
     for phrase in (
         "Preflight inspection",
         "Frequency and thermodynamic schemes",
-        "Polynomial minimization",
-        "EOS minimization",
+        "Polynomial and EOS minimization",
         "Polynomial thermoelastic derivatives",
         "Three routes to volumetric thermal expansion",
         "Failure policies and partial results",
-        "Performance and practical acceleration",
-        "There is no HA/QHA numerical control with a default value of",
+        "Performance notes",
     ):
         assert phrase in qha
 
-    assert "**5 points**" in qha
-    assert "**0.05%**" in qha
-    assert "mixed derivative — default".lower() in qha.lower()
+    assert "five points" in qha
+    assert "0.05%" in qha
+    assert "``mixed_derivative`` (default)" in qha
 
 
 def test_elasticity_seismic_workflow_pages_are_complete() -> None:
@@ -565,32 +574,31 @@ def test_thermoelasticity_workflow_page_is_complete() -> None:
     )
 
     for phrase in (
-        "CRYSTAL pressure resolution and Wallace tensors",
-        "Reference point and frame normalization",
-        "What is and is not fitted from the elastic outputs",
+        "Preparing the elastic-volume series",
+        "CRYSTAL finite-pressure tensors",
+        "Structural continuity and reference frame",
+        "What the elastic outputs contribute",
         "Cold reference EOS",
-        "Choosing BM2, BM3, or BM4",
-        "Second- and third-order finite strain",
+        "Reference EOS and cold-component model",
         "Scientific support diagnostics",
         "Validation presets",
         "Shared reference-EOS covariance",
         "Two independent extrapolation masks",
         "Isothermal-to-adiabatic conversion",
-        "Recommended sensitivity study",
-        "Performance and acceleration",
-        "No ``512`` convergence parameter",
+        "Sensitivity checks",
+        "Performance and reuse",
         "Common interpretation errors",
     ):
         assert phrase in text
 
     for value in (
-        "0.05 GPa",
-        "0.5 Å",
-        "1.0e-10 GPa",
+        "zero_tolerance",
         "0.005",
         ":math:`10^6`",
         "piecewise-linear interpolation",
         "C^S=C^T",
+        ":doc:`../formats/thermoelastic_input`",
+        ":doc:`../developer/interfaces`",
     ):
         assert value in text
 
@@ -796,3 +804,47 @@ def test_format_pages_use_only_public_quantas_namespaces() -> None:
         text = path.read_text(encoding="utf-8")
         for name in forbidden:
             assert name not in text, f"{path}: public format page exposes {name}"
+
+
+def test_validation_status_matches_public_evidence() -> None:
+    """Validation status reflects public evidence, not raw test-count alone."""
+    validation = DOCS_ROOT / "validation"
+    strategy = (validation / "strategy.rst").read_text(encoding="utf-8")
+    matrix = (validation / "matrix.rst").read_text(encoding="utf-8")
+
+    for phrase in (
+        "Validation status",
+        "``validated``",
+        "``work in progress``",
+        "Test coverage is necessary for validation",
+        "Regression tolerance is not physical acceptance",
+    ):
+        assert phrase in strategy
+
+    for phrase in (
+        "Energy EOS E--V",
+        "Experimental P--V BM3 reference scope",
+        "Kieffer acoustic thermodynamics",
+        "Thermoelastic QSA",
+        "Elasticity",
+        "SEISMIC",
+        "Numerical precision and tolerance policy",
+    ):
+        assert phrase in matrix
+    assert "**validated**" in matrix
+    assert "**work in progress**" in matrix
+
+    for name in ("elasticity", "seismic", "precision"):
+        text = (validation / f"{name}.rst").read_text(encoding="utf-8")
+        assert "Work in progress" in text
+        assert "Current traceability" in text or name == "precision"
+
+    eos = (validation / "eos.rst").read_text(encoding="utf-8")
+    assert "Experimental P--V reference regression" in eos
+    assert "Work in progress" in eos
+    assert "tests/modules/eos/test_eosfit_reference.py" in eos
+
+    for name in ("ha_qha", "thermoelasticity"):
+        text = (validation / f"{name}.rst").read_text(encoding="utf-8")
+        assert "Work in progress" not in text
+        assert "Traceability" in text

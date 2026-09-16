@@ -110,7 +110,13 @@ class EOSCalculationResult:
         return int(next(iter(self.columns.values())).size)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready representation."""
+        """Return a serialization-ready representation.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready representation.
+        """
         return {
             "record_id": self.record_id,
             "slot": self.slot.as_dict(),
@@ -185,6 +191,25 @@ class EOSCalculator:
         If ``record_id`` is omitted, ``slot`` identifies the current accepted
         result.  If both are omitted, the archive must contain exactly one
         accepted result.
+
+        Parameters
+        ----------
+        path : str | Path
+            Filesystem path read from or written by the operation.
+        slot : str | EOSResultSlot | None
+            Scientific result slot addressed by the operation.
+        record_id : int | None
+            Stable identifier of an immutable EOS fit record.
+
+        Returns
+        -------
+        EOSCalculator
+            Result described by the operation.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         with EOSArchive(path) as archive:
             if record_id is not None:
@@ -239,6 +264,29 @@ class EOSCalculator:
         axial target, ``volume`` represents the physical fitted length.  V--T
         records require ``temperature`` only.  P--V--T records require
         ``temperature`` and exactly one of ``pressure`` or ``volume``.
+
+        Parameters
+        ----------
+        pressure : np.ndarray | Sequence[float] | float | None
+            Pressure value or array in GPa unless the surrounding EOS contract states otherwise.
+        volume : np.ndarray | Sequence[float] | float | None
+            Volume value or array in the units documented by the surrounding model.
+        temperature : np.ndarray | Sequence[float] | float | None
+            Temperature value or array in K.
+        propagate_uncertainty : bool
+            Whether available parameter covariance is propagated to derived values.
+        relative_step : float
+            Relative finite-difference step used for numerical uncertainty propagation.
+
+        Returns
+        -------
+        EOSCalculationResult
+            Evaluated states for the fitted scientific domain.
+
+        Raises
+        ------
+        NotImplementedError
+            If the supplied data or workflow state violates the documented contract.
         """
         pressure_values = (
             None if pressure is None else np.asarray(pressure, dtype=np.float64)

@@ -98,6 +98,11 @@ class PressureEOSFitModel(BaseFitModel):
         -------
         ndarray
             Calculated pressures as a ``float64`` array.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         values = np.asarray(parameters, dtype=np.float64)
         if values.ndim != 1 or values.size != len(_PRESSURE_PARAMETER_ORDER):
@@ -129,6 +134,11 @@ class PressureEOSFitModel(BaseFitModel):
         -------
         ndarray
             Analytical :math:`\partial P/\partial V` values.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         volume = np.asarray(x, dtype=np.float64)
         values = np.asarray(parameters, dtype=np.float64)
@@ -143,7 +153,20 @@ class PressureEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return configured complete initial values after data validation."""
+        """Return configured complete initial values after data validation.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Positive sampled volumes in the same volume unit as ``V0``.
+        y : np.ndarray | Sequence[float]
+            Sampled pressures in the same pressure unit as ``K0``.
+
+        Returns
+        -------
+        np.ndarray
+            Configured complete initial values after data validation.
+        """
         volume, pressure = _validate_pressure_data(x, y)
         del volume, pressure
         return self._initial.copy()
@@ -153,7 +176,20 @@ class PressureEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Return minimally restrictive physical bounds for the full model."""
+        """Return minimally restrictive physical bounds for the full model.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Positive sampled volumes in the same volume unit as ``V0``.
+        y : np.ndarray | Sequence[float]
+            Sampled pressures in the same pressure unit as ``K0``.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            Minimally restrictive physical bounds for the full model.
+        """
         volume, pressure = _validate_pressure_data(x, y)
         del volume, pressure
         lower: np.ndarray = np.asarray(
@@ -164,7 +200,13 @@ class PressureEOSFitModel(BaseFitModel):
         return lower, upper
 
     def metadata(self) -> dict[str, Any]:
-        """Return EOS family, order, and physical parameter metadata."""
+        """Return EOS family, order, and physical parameter metadata.
+
+        Returns
+        -------
+        dict[str, Any]
+            EOS family, order, and physical parameter metadata.
+        """
         return {
             **super().metadata(),
             "eos_model": self.eos_model.as_dict(),
@@ -255,6 +297,11 @@ class AxialEOSFitModel(BaseFitModel):
         -------
         ndarray
             Calculated pressures as a ``float64`` array.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         coordinate = np.asarray(x, dtype=np.float64)
         if np.any(coordinate <= 0.0):
@@ -267,7 +314,21 @@ class AxialEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        r"""Return :math:`\partial P/\partial q` for :math:`q=x^3`."""
+        r"""Return :math:`\partial P/\partial q` for :math:`q=x^3`.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Positive auxiliary cubed lengths ``q=x_axis^3`` in the cube of the
+            length unit used by ``L0``.
+        parameters : np.ndarray | Sequence[float]
+            Complete ``M0, MP, MPP, L0`` linear parameter vector.
+
+        Returns
+        -------
+        np.ndarray
+            :math:`\partial P/\partial q` for :math:`q=x^3`.
+        """
         coordinate = np.asarray(x, dtype=np.float64)
         physical = axial_to_volume_parameters(parameters)
         bulk = self._pressure.bulk_modulus(self.eos_model, physical, coordinate)
@@ -287,6 +348,23 @@ class AxialEOSFitModel(BaseFitModel):
             \frac{\partial P}{\partial x}
             = 3x^2 \frac{\partial P}{\partial q}
             = -\frac{M(x)}{x}.
+
+        Parameters
+        ----------
+        length : np.ndarray | Sequence[float]
+            Positive axis lengths in the same length unit as ``L0``.
+        parameters : np.ndarray | Sequence[float]
+            Complete ``M0, MP, MPP, L0`` linear parameter vector.
+
+        Returns
+        -------
+        np.ndarray
+            The analytical derivative :math:`\partial P/\partial x`.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         axis = np.asarray(length, dtype=np.float64)
         if np.any(axis <= 0.0):
@@ -298,7 +376,20 @@ class AxialEOSFitModel(BaseFitModel):
         length: np.ndarray | Sequence[float],
         parameters: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return the instantaneous linear modulus along the fitted axis."""
+        """Return the instantaneous linear modulus along the fitted axis.
+
+        Parameters
+        ----------
+        length : np.ndarray | Sequence[float]
+            Positive axis lengths in the same length unit as ``L0``.
+        parameters : np.ndarray | Sequence[float]
+            Complete ``M0, MP, MPP, L0`` linear parameter vector.
+
+        Returns
+        -------
+        np.ndarray
+            The instantaneous linear modulus along the fitted axis.
+        """
         axis = np.asarray(length, dtype=np.float64)
         physical = axial_to_volume_parameters(parameters)
         bulk = self._pressure.bulk_modulus(self.eos_model, physical, axis**3)
@@ -309,7 +400,20 @@ class AxialEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> np.ndarray:
-        """Return configured complete initial values after validation."""
+        """Return configured complete initial values after validation.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Positive sampled auxiliary coordinates ``q=x_axis^3``.
+        y : np.ndarray | Sequence[float]
+            Sampled pressures in the same pressure unit as ``M0``.
+
+        Returns
+        -------
+        np.ndarray
+            Configured complete initial values after validation.
+        """
         coordinate, pressure = _validate_pressure_data(x, y)
         del coordinate, pressure
         return self._initial.copy()
@@ -319,7 +423,20 @@ class AxialEOSFitModel(BaseFitModel):
         x: np.ndarray | Sequence[float],
         y: np.ndarray | Sequence[float],
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Return minimally restrictive bounds for linear parameters."""
+        """Return minimally restrictive bounds for linear parameters.
+
+        Parameters
+        ----------
+        x : np.ndarray | Sequence[float]
+            Positive sampled auxiliary coordinates ``q=x_axis^3``.
+        y : np.ndarray | Sequence[float]
+            Sampled pressures in the same pressure unit as ``M0``.
+
+        Returns
+        -------
+        tuple[np.ndarray, np.ndarray]
+            Minimally restrictive bounds for linear parameters.
+        """
         coordinate, pressure = _validate_pressure_data(x, y)
         del coordinate, pressure
         lower = np.asarray(
@@ -329,7 +446,13 @@ class AxialEOSFitModel(BaseFitModel):
         return lower, np.full(4, np.inf, dtype=np.float64)
 
     def metadata(self) -> dict[str, Any]:
-        """Return EOS, target, and coordinate-transformation metadata."""
+        """Return EOS, target, and coordinate-transformation metadata.
+
+        Returns
+        -------
+        dict[str, Any]
+            EOS, target, and coordinate-transformation metadata.
+        """
         return {
             **super().metadata(),
             "eos_model": self.eos_model.as_dict(),
@@ -359,6 +482,11 @@ def axial_to_volume_parameters(
     -------
     dict
         ``K0, KP, KPP, V0`` values consumed by the shared pressure EOS core.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
     """
     if isinstance(parameters, Mapping):
         values = {name: float(parameters[name]) for name in _AXIAL_PARAMETER_ORDER}

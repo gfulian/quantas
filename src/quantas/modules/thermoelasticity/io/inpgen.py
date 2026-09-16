@@ -9,16 +9,10 @@ from typing import Any, Sequence
 
 import numpy as np
 import yaml
-from numpy.typing import NDArray
-
 from quantas.core.physics.elasticity import (
-    assign_hydrostatic_pressures,
+    EnergyPressureResolution,
     detect_elastic_symmetry,
-)
-from quantas.core.physics.eos import (
-    PressureEstimate,
-    pressure_from_energy_eos,
-    pressure_from_energy_polynomial,
+    resolve_energy_derived_pressures,
 )
 from quantas.interfaces.crystal import (
     CrystalPressurePolicy,
@@ -33,7 +27,6 @@ from quantas.models.elastic_states import (
     ElasticTensorKind,
     PressureSource,
 )
-from quantas.models.volume_matching import match_sampled_volumes
 from quantas.references import method_citation_keys, render_citation_inline
 from quantas.models.structures import CrystalStructure, SymmetryMetadata
 from quantas.modules.thermoelasticity.models import (
@@ -119,11 +112,13 @@ class ThermoelasticInputCreator:
     ) -> ThermoelasticInput:
         """Read CRYSTAL outputs and return normalized thermoelastic input.
 
-        CRYSTAL ``PRESSURE`` and ``PRESSEOS`` outputs already contain the
-        hydrostatic Barron--Klein/Wallace correction and are preserved.  Raw
-        energy--strain tensors are corrected exactly once after resolving the
-        hydrostatic pressure from output stress, explicit values, or an
-        energy-volume relation.
+        CRYSTAL ``PRESSURE`` and ``PRESSEOS`` outputs are treated as already
+        containing the finite-pressure stress--strain coefficients appropriate
+        to the stressed state and are therefore preserved.  Raw CRYSTAL
+        energy--strain tensors are converted exactly once with the finite-
+        prestress transformation used by CRYSTAL/Erba et al. after resolving
+        the hydrostatic pressure from output stress, explicit values, or an
+        energy-volume relation.  QSA does not repeat that conversion.
 
         Parameters
         ----------
@@ -158,8 +153,8 @@ class ThermoelasticInputCreator:
         Returns
         -------
         ThermoelasticInput
-            Validated input contract containing only Wallace/incremental
-            stiffness tensors.
+            Validated input contract containing only finite-pressure
+            stress--strain stiffness tensors suitable for QSA calibration.
 
         Raises
         ------
@@ -548,7 +543,7 @@ def _resolve_pressure_series(
     symprec: float,
     angle_tolerance: float,
 ) -> tuple[ElasticStateSeries, dict[str, Any]]:
-    """Return Wallace tensors and complete pressure-resolution provenance."""
+    """Return finite-pressure CRYSTAL stiffness tensors and pressure provenance."""
     if pressure_source not in _ENERGY_PRESSURE_SOURCES:
         if energy_input is not None:
             raise ValueError(
@@ -573,7 +568,8 @@ def _resolve_pressure_series(
             if pressure_source == "auto" and "lacks pressure" in str(exc):
                 raise ValueError(
                     f"{exc}. The tensor is raw and cannot enter QSA without a "
-                    "hydrostatic Barron-Klein/Wallace correction. Select an "
+                    "CRYSTAL finite-prestress conversion (Erba/Barron-Klein). "
+                    "Select an "
                     "explicit pressure source: output-stress, manual, energy-eos, "
                     "or energy-polynomial."
                 ) from exc
@@ -595,7 +591,7 @@ def _resolve_pressure_series(
         symprec=symprec,
         angle_tolerance=angle_tolerance,
     )
-    estimate, model, pressures = _energy_pressure_for_elastic_series(
+    resolution, model = _energy_pressure_for_elastic_series(
         raw_series,
         pressure_source=pressure_source,
         eos=eos,
@@ -603,28 +599,14 @@ def _resolve_pressure_series(
         maxfev=maxfev,
         energy_input=energy_input,
     )
-    pressure_enum = (
-        PressureSource.ENERGY_EOS
-        if pressure_source == "energy_eos"
-        else PressureSource.ENERGY_POLYNOMIAL
-    )
-    assigned = assign_hydrostatic_pressures(
-        raw_series,
-        pressures,
-        pressure_source=pressure_enum,
-        assignment_method=pressure_source,
-        metadata=model,
-    )
     corrected = correct_crystal_hydrostatic_elastic_series(
-        assigned,
+        resolution.series,
         correction_applied_by="quantas-thermoelastic-inpgen",
     )
-    model["evaluated_pressures_gpa"] = np.asarray(
-        estimate.pressure, dtype=np.float64
-    ).tolist()
-    model["elastic_pressures_gpa"] = np.asarray(
-        pressures, dtype=np.float64
-    ).tolist()
+    model["evaluated_pressures_gpa"] = (
+        resolution.estimate.pressure.tolist()
+    )
+    model["elastic_pressures_gpa"] = resolution.pressures_gpa.tolist()
     return corrected, _series_pressure_resolution(
         corrected,
         requested_source=pressure_source,
@@ -640,17 +622,20 @@ def _energy_pressure_for_elastic_series(
     polynomial_degree: int,
     maxfev: int | None,
     energy_input: str | Path | None,
-) -> tuple[PressureEstimate, dict[str, Any], NDArray[np.float64]]:
-    """Fit an energy-volume relation and evaluate it at elastic volumes."""
+) -> tuple[EnergyPressureResolution, dict[str, Any]]:
+    """Resolve energy-derived pressures for a raw elastic volume series."""
     source_dataset = "elastic_outputs_static_energy"
     volume = raw_series.volumes
     energy = np.asarray(
-        [state.energy if state.energy is not None else np.nan for state in raw_series.states],
+        [
+            state.energy if state.energy is not None else np.nan
+            for state in raw_series.states
+        ],
         dtype=np.float64,
     )
     energy_unit = "hartree"
     length_unit = "angstrom"
-    matches = None
+    external_energy_input = energy_input is not None
     if energy_input is not None:
         input_path = Path(energy_input)
         reader = PhononInputFileReader(input_path)
@@ -658,50 +643,33 @@ def _energy_pressure_for_elastic_series(
             raise ValueError(reader.error or f"unable to read energy input {input_path}")
         phonon_input = reader.to_input(source=input_path)
         if phonon_input.volume is None or phonon_input.energy is None:
-            raise ValueError("energy input does not contain sampled static volume-energy data")
+            raise ValueError(
+                "energy input does not contain sampled static volume-energy data"
+            )
         volume = np.asarray(phonon_input.volume, dtype=np.float64)
         energy = np.asarray(phonon_input.energy, dtype=np.float64)
         energy_unit = str(phonon_input.units.get("energy", "Ha"))
         length_unit = str(phonon_input.units.get("length", "angstrom"))
         source_dataset = str(input_path)
-        matches = match_sampled_volumes(raw_series.volumes, volume)
     if volume.size < 3 or energy.shape != volume.shape or not np.all(np.isfinite(energy)):
         raise ValueError(
             "energy-derived pressure requires at least three finite aligned "
             "volume-energy points; select output-stress or manual pressure instead"
         )
-    if pressure_source == "energy_eos":
-        estimate = pressure_from_energy_eos(
-            volume,
-            energy,
-            eos=eos,
-            energy_unit=energy_unit,
-            volume_unit=length_unit,
-            pressure_unit="GPa",
-            maxfev=maxfev,
-        )
-    else:
-        estimate = pressure_from_energy_polynomial(
-            volume,
-            energy,
-            degree=polynomial_degree,
-            energy_unit=energy_unit,
-            volume_unit=length_unit,
-            pressure_unit="GPa",
-        )
-    if not estimate.success:
-        detail = estimate.fit.message or "fit did not return finite pressures"
-        raise ValueError(f"{pressure_source} pressure fit failed: {detail}")
-    if matches is None:
-        pressures = np.asarray(estimate.pressure, dtype=np.float64)
-        if pressures.shape != (raw_series.nstates,):
-            raise ValueError("energy-pressure fit is not aligned with elastic volumes")
-        volume_matches: list[dict[str, Any]] = []
-    else:
-        pressures = np.asarray(
-            [estimate.pressure[match.source_index] for match in matches],
-            dtype=np.float64,
-        )
+
+    resolution = resolve_energy_derived_pressures(
+        raw_series,
+        volume,
+        energy,
+        pressure_source=pressure_source,
+        source_dataset=source_dataset,
+        energy_unit=energy_unit,
+        volume_length_unit=length_unit,
+        eos=eos,
+        polynomial_degree=polynomial_degree,
+        maxfev=maxfev,
+    )
+    if external_energy_input:
         volume_matches = [
             {
                 "elastic_index": match.target_index,
@@ -711,23 +679,17 @@ def _energy_pressure_for_elastic_series(
                 "absolute_difference": match.absolute_difference,
                 "relative_difference": match.relative_difference,
             }
-            for match in matches
+            for match in resolution.matches
         ]
+    else:
+        volume_matches = []
     model = _plain_data(
         {
-            "method": pressure_source,
-            "relation": "P(V) = -dE/dV",
-            "source_dataset": source_dataset,
-            "energy_unit": energy_unit,
-            "volume_length_unit": length_unit,
-            "pressure_unit": estimate.unit,
-            "settings": dict(estimate.metadata),
-            "fit": estimate.fit.as_dict(),
-            "warnings": list(estimate.warnings),
+            **resolution.provenance,
             "volume_matches": volume_matches,
         }
     )
-    return estimate, model, pressures
+    return resolution, model
 
 
 def _prestress_mapping(state: ElasticState) -> dict[str, Any]:

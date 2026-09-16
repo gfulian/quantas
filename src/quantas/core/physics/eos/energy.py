@@ -48,18 +48,74 @@ class EnergyEOS:
     """
 
     def model(self, eos: str | EOSModel, order: int | None = None) -> EOSModel:
-        """Return a canonical family-and-order specification."""
+        """Return a validated energy-EOS model specification.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Family name, alias, compact tag, or existing model specification.
+        order : int or None, optional
+            Explicit EOS order when it is not embedded in ``eos``.
+
+        Returns
+        -------
+        EOSModel
+            Canonical family-and-order specification supporting an integrated energy
+            representation.
+
+        Raises
+        ------
+        ValueError
+            If the model is unknown, the requested order is unsupported, or the model
+            has no implemented energy-volume form.
+        """
         model = parse_eos_model(eos, order)
         if not model.supports_energy:
             raise ValueError(f"{model.tag} has no implemented energy-volume form")
         return model
 
     def canonical_name(self, eos: str | EOSModel, order: int | None = None) -> str:
-        """Return the canonical EOS family name."""
+        """Return the canonical family name of an energy EOS.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Energy-EOS family, alias, tag, or specification.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        str
+            Canonical family value, independent of the requested order.
+
+        Raises
+        ------
+        ValueError
+            If the requested energy model is unsupported.
+        """
         return self.model(eos, order).family.value
 
     def canonical_tag(self, eos: str | EOSModel, order: int | None = None) -> str:
-        """Return the compact canonical EOS tag."""
+        """Return the canonical family-and-order tag of an energy EOS.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Energy-EOS family, alias, tag, or specification.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        str
+            Stable compact model tag used in metadata and reports.
+
+        Raises
+        ------
+        ValueError
+            If the requested energy model is unsupported.
+        """
         return self.model(eos, order).tag
 
     _canonical_name = canonical_name
@@ -69,7 +125,26 @@ class EnergyEOS:
         eos: str | EOSModel,
         order: int | None = None,
     ) -> Callable[..., np.ndarray]:
-        """Return a ``curve_fit`` compatible energy function."""
+        """Return a ``curve_fit``-compatible integrated EOS callable.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Energy-EOS family, tag, or specification.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        callable
+            Function with signature ``f(volume, *free_parameters)`` using the free
+            parameter order of the selected energy model.
+
+        Raises
+        ------
+        ValueError
+            If the requested energy model is unsupported.
+        """
         return EnergyEOSFitModel(self, self.model(eos, order)).curve_function()
 
     def evaluate(
@@ -80,7 +155,33 @@ class EnergyEOS:
         *,
         order: int | None = None,
     ) -> np.ndarray:
-        """Evaluate an integrated energy EOS."""
+        """Evaluate an integrated energy equation of state.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Energy-EOS family, tag, or specification.
+        volume : array-like
+            Positive finite volumes. Values must use the same volume unit and
+            normalization as ``V0``.
+        parameters : array-like, mapping, or EOSParameters
+            Free or resolved physical parameters accepted by the selected model.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        ndarray
+            ``float64`` energies with the same array shape as ``volume``. ``E0`` and
+            ``K0 * V`` must use a common energy unit; the core performs no unit
+            conversion.
+
+        Raises
+        ------
+        ValueError
+            If the model, parameters, or volumes are invalid or the requested EOS is
+            outside its mathematical domain.
+        """
         model = self.model(eos, order)
         pars = resolve_energy_parameters(model, parameters)
         values = self._validate_volume(volume)
@@ -110,7 +211,36 @@ class EnergyEOS:
         p0: Sequence[float] | Mapping[str, float] | EOSParameters | None = None,
         maxfev: int | None = None,
     ) -> FitResult:
-        """Fit energy-volume data with a selected EOS family and order."""
+        """Fit an integrated EOS to energy-volume observations.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Energy-EOS family, tag, or specification.
+        volume, energy : array-like
+            Aligned one-dimensional observations. Volumes must be positive and use one
+            consistent normalization; energies use an arbitrary but consistent unit.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+        p0 : sequence, mapping, EOSParameters, or None, optional
+            Initial physical parameters. ``None`` derives an order-aware estimate from
+            the sampled E(V) curve.
+        maxfev : int or None, optional
+            Maximum nonlinear least-squares function evaluations.
+
+        Returns
+        -------
+        FitResult
+            Structured result in the model's free-parameter order. Successful results
+            also contain resolved ``E0, K0, KP, KPP, V0`` metadata and propagated
+            covariance when statistically available.
+
+        Notes
+        -----
+        Expected request or initialization failures are represented by an unsuccessful
+        :class:`FitResult`; they are not raised as frontend exceptions. Exactly
+        determined fits may converge while lacking a statistically defined covariance.
+        """
         try:
             model_spec = self.model(eos, order)
         except ValueError as exc:
@@ -230,7 +360,33 @@ class EnergyEOS:
         p0: Sequence[float] | Mapping[str, float] | EOSParameters | None = None,
         maxfev: int | None = None,
     ) -> tuple[np.ndarray, np.ndarray]:
-        """Return optimized free parameters and one-sigma errors."""
+        """Return optimized free parameters and one-sigma uncertainties.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Energy-EOS family, tag, or specification.
+        volume, energy : array-like
+            Aligned energy-volume observations.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+        p0 : sequence, mapping, EOSParameters, or None, optional
+            Optional initial physical parameters.
+        maxfev : int or None, optional
+            Maximum nonlinear least-squares function evaluations.
+
+        Returns
+        -------
+        tuple of ndarray
+            Optimized free parameters and one-standard-deviation errors in the selected
+            model's free-parameter order. Errors are ``NaN`` when covariance is
+            unavailable.
+
+        Raises
+        ------
+        RuntimeError
+            If the underlying fit does not return usable optimized parameters.
+        """
         result = self.fit(eos, volume, energy, order=order, p0=p0, maxfev=maxfev)
         if not result.success or result.parameters is None:
             raise RuntimeError(result.message)
@@ -244,7 +400,25 @@ class EnergyEOS:
     def guess(
         self, volume: ParameterArrayLike, energy: ParameterArrayLike
     ) -> EOSParameters:
-        """Estimate a complete physical parameter set from a polynomial fit."""
+        """Estimate a complete EOS parameter set from an E(V) curve.
+
+        Parameters
+        ----------
+        volume, energy : array-like
+            Aligned one-dimensional observations containing at least four points.
+
+        Returns
+        -------
+        EOSParameters
+            Heuristic ``E0, K0, KP, KPP, V0`` estimate suitable for initializing an
+            energy-EOS fit.
+
+        Raises
+        ------
+        ValueError
+            If observations are invalid, fewer than four points are supplied, or a
+            physically usable polynomial minimum/curvature cannot be constructed.
+        """
         volume_array, energy_array = validate_xy(volume, energy)
         if volume_array.size < 4:
             raise ValueError(
@@ -282,7 +456,30 @@ class EnergyEOS:
         *,
         order: int | None = None,
     ) -> np.ndarray:
-        """Evaluate the matching pressure EOS from energy-fit parameters."""
+        """Evaluate pressure implied by fitted energy-EOS parameters.
+
+        Parameters
+        ----------
+        eos : str or EOSModel
+            Energy-EOS family, tag, or specification.
+        parameters : array-like, mapping, or EOSParameters
+            Free or resolved parameters of the integrated energy EOS.
+        volume : array-like
+            Positive volumes in the same unit as ``V0``.
+        order : int or None, optional
+            Explicit order when not encoded in ``eos``.
+
+        Returns
+        -------
+        ndarray
+            ``-dE/dV`` at ``volume``. The pressure unit is the energy unit divided by
+            the volume unit used by the supplied parameters; no conversion is applied.
+
+        Raises
+        ------
+        ValueError
+            If the model, parameters, or volumes are invalid.
+        """
         model = self.model(eos, order)
         resolved = resolve_energy_parameters(model, parameters)
         return PressureEOS().pressure(model, resolved, volume)
@@ -645,11 +842,47 @@ class EnergyEOSFitModel(BaseFitModel):
     def evaluate(
         self, x: ParameterArrayLike, parameters: ParameterArrayLike
     ) -> np.ndarray:
-        """Evaluate the integrated EOS."""
+        """Evaluate the integrated EOS through the fitting contract.
+
+        Parameters
+        ----------
+        x : array-like
+            Positive volume coordinates.
+        parameters : array-like
+            Free energy-EOS parameters in :attr:`parameter_names` order.
+
+        Returns
+        -------
+        ndarray
+            Integrated EOS energies at ``x``.
+
+        Raises
+        ------
+        ValueError
+            If volumes or parameters violate the selected EOS contract.
+        """
         return self._eos.evaluate(self._model, x, parameters)
 
     def initial_guess(self, x: ParameterArrayLike, y: ParameterArrayLike) -> np.ndarray:
-        """Return an order-aware initial parameter vector."""
+        """Return an order-aware initial free-parameter vector.
+
+        Parameters
+        ----------
+        x, y : array-like
+            Aligned volume and energy observations.
+
+        Returns
+        -------
+        ndarray
+            Initial free parameters in :attr:`parameter_names` order. SJEOS uses its
+            inverse-length polynomial construction; other models use the common
+            physical E(V) estimate and apply order-specific implied parameters.
+
+        Raises
+        ------
+        ValueError
+            If the observations cannot produce a physically usable initial estimate.
+        """
         if self._model.family is EOSFamily.STABILIZED_JELLIUM:
             return self._sjeos_initial_guess(x, y)
 
@@ -725,7 +958,14 @@ class EnergyEOSFitModel(BaseFitModel):
         return np.asarray([e0, k0, kp, v0], dtype=np.float64)
 
     def metadata(self) -> dict[str, object]:
-        """Return model metadata for fit results."""
+        """Return model metadata for fit results.
+
+        Returns
+        -------
+        dict
+            Serialization-ready metadata identifying the canonical EnergyEOS
+            family, order, tag, and parameter conventions.
+        """
         return EnergyEOS._fit_metadata(self._model)
 
 

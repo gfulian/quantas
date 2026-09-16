@@ -10,7 +10,6 @@ frontend and workflow uses the same numerical path.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TypeAlias
 
 import numpy as np
@@ -20,7 +19,6 @@ FloatArray: TypeAlias = NDArray[np.float64]
 BoolArray: TypeAlias = NDArray[np.bool_]
 
 
-@dataclass(frozen=True, slots=True)
 class RectilinearFieldInterpolator:
     """Interpolate fields sampled on increasing ``x`` and ``y`` axes.
 
@@ -42,6 +40,9 @@ class RectilinearFieldInterpolator:
     x: FloatArray
     y: FloatArray
     values: FloatArray
+    _initialized: bool
+
+    __slots__ = ("x", "y", "values", "_initialized")
 
     def __init__(self, x: ArrayLike, y: ArrayLike, values: ArrayLike) -> None:
         x_axis = validated_axis(x, "x")
@@ -54,6 +55,26 @@ class RectilinearFieldInterpolator:
         object.__setattr__(self, "x", x_axis)
         object.__setattr__(self, "y", y_axis)
         object.__setattr__(self, "values", field.copy())
+        object.__setattr__(self, "_initialized", True)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        """Prevent rebinding source arrays after initialization.
+
+        Parameters
+        ----------
+        name : str
+            Attribute name.
+        value : object
+            Candidate new attribute value.
+
+        Raises
+        ------
+        AttributeError
+            If an initialized interpolator attribute is rebound.
+        """
+        if getattr(self, "_initialized", False):
+            raise AttributeError("RectilinearFieldInterpolator is immutable")
+        object.__setattr__(self, name, value)
 
     def evaluate_grid(
         self,
@@ -103,6 +124,11 @@ class RectilinearFieldInterpolator:
         tuple of ndarray
             Interpolated values with shape ``(npoints, ...)`` and a Boolean
             extrapolation mask with shape ``(npoints,)``.
+
+        Raises
+        ------
+        ValueError
+            If the target coordinates are not aligned finite vectors.
         """
         tx = np.asarray(target_x, dtype=np.float64)
         ty = np.asarray(target_y, dtype=np.float64)
@@ -134,7 +160,26 @@ class RectilinearFieldInterpolator:
 
 
 def validated_axis(values: ArrayLike, name: str) -> FloatArray:
-    """Return a copied finite, strictly increasing coordinate axis."""
+    """Return a copied finite, strictly increasing coordinate axis.
+
+    Parameters
+    ----------
+    values : array-like
+        Candidate coordinate values.
+    name : str
+        Human-readable axis name used in validation errors.
+
+    Returns
+    -------
+    ndarray
+        One-dimensional ``float64`` copy containing at least one value.
+
+    Raises
+    ------
+    ValueError
+        If the axis is empty, multidimensional, non-finite, or not strictly
+        increasing.
+    """
     axis = np.asarray(values, dtype=np.float64)
     if axis.ndim != 1 or axis.size < 1 or np.any(~np.isfinite(axis)):
         raise ValueError(f"{name} must be a non-empty finite vector")
@@ -144,7 +189,28 @@ def validated_axis(values: ArrayLike, name: str) -> FloatArray:
 
 
 def regular_grid(start: float, stop: float, step: float) -> FloatArray:
-    """Return an inclusive validated ``float64`` grid."""
+    """Return an inclusive validated ``float64`` grid.
+
+    Parameters
+    ----------
+    start, stop : float
+        Inclusive lower and upper coordinate bounds.
+    step : float
+        Positive nominal grid spacing.
+
+    Returns
+    -------
+    ndarray
+        One-dimensional grid beginning at ``start`` and ending exactly at
+        ``stop``. A final shorter interval is appended when ``step`` does not divide
+        the requested range.
+
+    Raises
+    ------
+    ValueError
+        If bounds or step are non-finite, ``step`` is non-positive, or ``stop`` is
+        smaller than ``start``.
+    """
     if not all(np.isfinite(value) for value in (start, stop, step)):
         raise ValueError("grid bounds and step must be finite")
     if step <= 0.0:
@@ -161,7 +227,19 @@ def regular_grid(start: float, stop: float, step: float) -> FloatArray:
 
 
 def grid_step(values: ArrayLike) -> float | None:
-    """Return the uniform spacing of an axis, when one exists."""
+    """Return the uniform spacing of an axis, when one exists.
+
+    Parameters
+    ----------
+    values : array-like
+        Candidate one-dimensional coordinate axis.
+
+    Returns
+    -------
+    float or None
+        Common spacing when at least two values are uniformly separated within the
+        numerical tolerance; otherwise ``None``.
+    """
     axis = np.asarray(values, dtype=np.float64)
     if axis.ndim != 1 or axis.size < 2:
         return None

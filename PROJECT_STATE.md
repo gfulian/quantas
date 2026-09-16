@@ -14,11 +14,11 @@ state.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-09-13 |
-| Current development version | `2.0.0b11` |
-| Stable development baseline | `2.0.0b10`, `dev/refactor` |
-| Active scientific branch | `dev/energyeos` |
-| Current focus | Standalone Energy EOS closure: crystallographic structural response, CRYSTAL reference normalization, validation, and release documentation |
+| Last updated | 2026-09-16 |
+| Current development version | `2.0.0b12` |
+| Stable development baseline | `2.0.0b11`, `dev/energyeos` |
+| Active engineering branch | `dev/prerelease-hardening` |
+| Current focus | Pre-release hardening: architecture consistency, documentation, validation traceability, packaging, and release readiness |
 | Development status | Pre-RC scientific closure and validation |
 | Numerical precision | `float64` for real calculations and native HDF5 values; `complex128` for complex quantities |
 | Persistence | Native HDF5 envelope retained; HA/QHA and Thermoelasticity payloads have been extended additively with Kieffer and pressure/provenance data |
@@ -86,11 +86,44 @@ The `2.0.0b9` baseline already provides:
 Python support remains 3.10 through 3.13 until the complete scientific
 stack is validated on Python 3.14.
 
-## Current `2.0.0b11` / `dev/energyeos` tranche
+## Current `2.0.0b12` / `dev/prerelease-hardening` tranche
 
-The Kieffer/QSA branch has been merged into ``dev/refactor`` with the complete
-CI matrix green.  The current branch promotes the already shared Energy EOS
-numerical core into a complete standalone EOS workflow without making QHA or
+The Energy EOS feature work is complete.  The current branch does not add a
+new scientific workflow; it hardens the existing Quantas 2 surface before the
+next pre-release checkpoint.  The b12 work has focused on:
+
+- keeping request/input failures distinct from unexpected numerical or
+  programming errors in EOS workflows;
+- sharing one backend-neutral E(V)-to-pressure/provenance path between Kieffer
+  enrichment and thermoelastic input generation;
+- enforcing the architectural distinction between active runtime objects and
+  passive dataclass contracts;
+- separating CRYSTAL Erba/Barron--Klein finite-prestress conversion from the
+  Wallace finite-strain term used inside QSA;
+- completing public docstring contracts across core, models, interfaces,
+  scientific modules, API, renderers, and CLI helpers;
+- normalizing citations and page-local bibliographies through the shared
+  citation registry;
+- reducing overlap in the manual, improving prose readability, and making the
+  public validation record explicit about validated versus work-in-progress
+  scope;
+- preserving numerical behavior while tightening packaging, provenance, and
+  release metadata checks;
+- requiring production publication to originate from a GitHub release tag that
+  matches the authoritative source version, while keeping TestPyPI as the manual
+  candidate-publication path.
+
+The release gate remains the staged test runner plus static checks, Sphinx with
+warnings as errors, wheel/sdist construction, installed-distribution smoke
+tests, and archive inspection.  VASP/Phonopy interface cleanup and common MgO
+cross-backend characterization are intentionally deferred to a small b13
+follow-up rather than being folded into this hardening branch.
+
+## Previous `2.0.0b11` / `dev/energyeos` tranche
+
+The Kieffer/QSA branch was merged into ``dev/refactor`` with the complete CI
+matrix green.  The b11 branch promoted the already shared Energy EOS numerical
+core into a complete standalone EOS workflow without making QHA or
 Thermoelasticity depend on a frontend module.
 
 The first scientific step is model parity between pressure and integrated

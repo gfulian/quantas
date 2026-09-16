@@ -1,12 +1,13 @@
 Your first calculation
 ======================
 
-This page runs one small calculation twice: first from the command line and
-then through the public Python API.  Both paths use the same calcite stiffness
-tensor and must reproduce the same scientific result.
+A small calculation is enough to show the full Quantas workflow.  We will run
+it once from the command line and once through the public Python API, using the
+same calcite stiffness tensor so that both paths must reproduce the same
+scientific result.
 
-The example is intentionally short.  Its purpose is to show the complete
-Quantas pattern:
+The example stays short so that the complete pattern is visible before we add
+more scientific options:
 
 .. code-block:: text
 

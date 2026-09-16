@@ -111,7 +111,14 @@ _PROPERTY_DETAILS: dict[str, tuple[str, str, str, str, str]] = {
 
 
 def available_plot_properties() -> dict[str, HAPlotProperty]:
-    """Return the authoritative standard HA plot-property catalogue."""
+    """Return the authoritative standard HA plot-property catalogue.
+
+    Returns
+    -------
+    dict of str to HAPlotProperty
+        Mapping from stable public plot keys to result attributes, symbols, units,
+        descriptions, and default rendering metadata.
+    """
     labels = {"static_energy": ("U0", "Static energy"), **THERMODYNAMIC_LABELS}
     properties: dict[str, HAPlotProperty] = {}
     for attribute, (key, name) in labels.items():
@@ -132,7 +139,23 @@ def available_plot_properties() -> dict[str, HAPlotProperty]:
 
 
 def resolve_plot_property(name: str) -> HAPlotProperty:
-    """Resolve one HA result attribute or stable short plotting key."""
+    """Resolve one HA result attribute or stable short plotting key.
+
+    Parameters
+    ----------
+    name : str
+        Stable plot key or supported HA result attribute.
+
+    Returns
+    -------
+    HAPlotProperty
+        Canonical plotting metadata for the requested property.
+
+    Raises
+    ------
+    KeyError
+        If ``name`` does not identify a supported HA plotting property.
+    """
     properties = available_plot_properties()
     if name in properties:
         return properties[name]

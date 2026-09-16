@@ -79,6 +79,35 @@ class ThermoelasticDepthProfile:
         """Build a profile from constant pressure and temperature gradients.
 
         Gradients are expressed in GPa km^-1 and K km^-1.
+
+        Parameters
+        ----------
+        name : str
+            Stable name or identifier.
+        depth_min : float
+            Minimum profile depth.
+        depth_max : float
+            Maximum profile depth.
+        npoints : int
+            Number of depth samples in the generated profile.
+        pressure_at_depth_min : float
+            Pressure at the minimum depth.
+        pressure_gradient : float
+            Linear pressure gradient with depth.
+        temperature_at_depth_min : float
+            Temperature at the minimum depth.
+        temperature_gradient : float
+            Linear temperature gradient with depth.
+
+        Returns
+        -------
+        'ThermoelasticDepthProfile'
+            Constructed a profile from constant pressure and temperature gradients.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         if npoints < 2:
             raise ValueError("npoints must be at least 2")

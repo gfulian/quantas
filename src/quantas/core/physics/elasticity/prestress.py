@@ -40,9 +40,9 @@ def assign_hydrostatic_pressures(
     """Attach externally derived pressures to an explicitly raw series.
 
     This operation does not alter any stiffness coefficient.  It prepares raw
-    energy--strain tensors for a subsequent, separately auditable hydrostatic
-    Wallace correction.  Existing pressure or correction provenance cannot be
-    replaced.
+    energy--strain tensors for a subsequent, separately auditable finite-
+    prestress conversion.  Existing pressure or correction provenance cannot
+    be replaced.
 
     Parameters
     ----------
@@ -140,13 +140,16 @@ def assign_hydrostatic_pressures(
     )
 
 
-def hydrostatic_wallace_stiffness(
+EULERIAN_HYDROSTATIC_PRESTRESS_METHOD = "quantas-eulerian-hydrostatic-incremental"
+
+
+def eulerian_hydrostatic_incremental_stiffness(
     raw_stiffness: ArrayLike,
     pressure_gpa: float,
 ) -> NDArray[np.float64]:
-    r"""Return hydrostatic Wallace coefficients from a raw stiffness tensor.
+    r"""Apply Quantas' Eulerian hydrostatic incremental-stiffness operator.
 
-    Quantas uses the Eulerian finite-strain convention
+    The internal finite-strain convention used by Quantas is
 
     .. math::
 
@@ -158,14 +161,15 @@ def hydrostatic_wallace_stiffness(
     Parameters
     ----------
     raw_stiffness : array_like
-        Finite symmetric ``(6, 6)`` energy--strain stiffness matrix in GPa.
+        Finite symmetric ``(6, 6)`` stiffness matrix in GPa defined in the
+        Eulerian convention expected by this operator.
     pressure_gpa : float
         Hydrostatic pressure in GPa, positive in compression.
 
     Returns
     -------
     ndarray
-        Corrected symmetric stiffness matrix in GPa.
+        Symmetric incremental stiffness matrix in GPa.
 
     Raises
     ------
@@ -174,10 +178,13 @@ def hydrostatic_wallace_stiffness(
 
     Notes
     -----
-    This operator is part of Quantas' Eulerian finite-strain convention.
-    External-code raw stiffness tensors may obey a different finite-pressure
-    transformation and must be handled by their interface.  CRYSTAL is one
-    such case.
+    This is an internal Quantas finite-strain operator, not a universal
+    external-code ingestion rule.  A backend may define its raw elastic
+    derivatives with a different strain measure and therefore require a
+    backend-specific finite-pressure transformation.  In particular, raw
+    CRYSTAL energy--strain coefficients are converted by
+    :func:`quantas.interfaces.crystal.crystal_hydrostatic_stiffness` using the
+    Erba/Barron--Klein relation implemented by CRYSTAL itself.
     """
     stiffness = np.asarray(raw_stiffness, dtype=np.float64)
     pressure = float(pressure_gpa)
@@ -191,25 +198,26 @@ def hydrostatic_wallace_stiffness(
     return np.asarray(0.5 * (corrected + corrected.T), dtype=np.float64)
 
 
-def correct_hydrostatic_elastic_state(
+def convert_eulerian_hydrostatic_elastic_state(
     state: ElasticState,
     *,
     correction_applied_by: str = "quantas",
 ) -> ElasticState:
-    """Return one raw elastic state corrected at its recorded pressure.
+    """Convert one compatible raw state to Eulerian incremental coefficients.
 
     Parameters
     ----------
     state : ElasticState
         State whose tensor is explicitly marked ``raw_energy_strain`` and
-        whose pressure value and source are available.
+        whose pressure value and source are available.  The tensor definition
+        must be compatible with Quantas' Eulerian hydrostatic operator.
     correction_applied_by : str, optional
-        Provenance label for the software or caller applying the correction.
+        Provenance label for the software or caller applying the conversion.
 
     Returns
     -------
     ElasticState
-        Independent state containing Wallace hydrostatic coefficients.
+        Independent state containing hydrostatic incremental coefficients.
 
     Raises
     ------
@@ -218,23 +226,31 @@ def correct_hydrostatic_elastic_state(
     ValueError
         If the source tensor is not raw, pressure is unavailable, or the
         provenance label is empty.
+
+    Notes
+    -----
+    External-code adapters must not call this conversion merely because a
+    tensor is labelled ``raw_energy_strain``.  They must first establish that
+    the backend's raw derivative convention matches this Eulerian operator.
+    CRYSTAL raw tensors deliberately use the CRYSTAL-specific conversion in
+    :mod:`quantas.interfaces.crystal` instead.
     """
     if not isinstance(state, ElasticState):
         raise TypeError("state must be an ElasticState")
     source_kind = ElasticTensorKind(state.prestress.tensor_kind)
     if source_kind is not ElasticTensorKind.RAW_ENERGY_STRAIN:
         raise ValueError(
-            "hydrostatic correction requires an explicitly raw energy-strain tensor"
+            "hydrostatic conversion requires an explicitly raw energy-strain tensor"
         )
     pressure = state.prestress.pressure_gpa
     pressure_source = PressureSource(state.prestress.pressure_source)
     if pressure is None or pressure_source is PressureSource.UNAVAILABLE:
-        raise ValueError("hydrostatic correction requires pressure provenance")
+        raise ValueError("hydrostatic conversion requires pressure provenance")
     applied_by = str(correction_applied_by).strip()
     if not applied_by:
         raise ValueError("correction_applied_by must be non-empty")
 
-    method = "barron-klein-wallace-hydrostatic"
+    method = EULERIAN_HYDROSTATIC_PRESTRESS_METHOD
     metadata = dict(state.metadata)
     metadata["prestress_correction"] = {
         "method": method,
@@ -247,7 +263,10 @@ def correct_hydrostatic_elastic_state(
     return ElasticState(
         volume=state.volume,
         density=state.density,
-        stiffness=hydrostatic_wallace_stiffness(state.stiffness, pressure),
+        stiffness=eulerian_hydrostatic_incremental_stiffness(
+            state.stiffness,
+            pressure,
+        ),
         prestress=PrestressProvenance(
             tensor_kind=ElasticTensorKind.WALLACE_HYDROSTATIC,
             pressure_gpa=pressure,
@@ -264,32 +283,33 @@ def correct_hydrostatic_elastic_state(
     )
 
 
-def correct_hydrostatic_elastic_series(
+def convert_eulerian_hydrostatic_elastic_series(
     series: ElasticStateSeries,
     *,
     correction_applied_by: str = "quantas",
 ) -> ElasticStateSeries:
-    """Correct every raw state in a hydrostatic elastic volume series.
+    """Convert a compatible raw series to Eulerian incremental coefficients.
 
     Parameters
     ----------
     series : ElasticStateSeries
         Increasing raw elastic-state series with pressure provenance at every
-        volume.
+        volume and a tensor convention compatible with Quantas' Eulerian
+        hydrostatic operator.
     correction_applied_by : str, optional
-        Provenance label recorded in every corrected state.
+        Provenance label recorded in every converted state.
 
     Returns
     -------
     ElasticStateSeries
-        New series containing only Wallace hydrostatic tensors.
+        New series containing hydrostatic incremental tensors.
 
     Raises
     ------
     TypeError
         If ``series`` has an unsupported type.
     ValueError
-        If any state cannot be corrected exactly once.
+        If any state cannot be converted exactly once.
     """
     if not isinstance(series, ElasticStateSeries):
         raise TypeError("series must be an ElasticStateSeries")
@@ -297,7 +317,7 @@ def correct_hydrostatic_elastic_series(
     for index, state in enumerate(series.states):
         try:
             corrected_states.append(
-                correct_hydrostatic_elastic_state(
+                convert_eulerian_hydrostatic_elastic_state(
                     state,
                     correction_applied_by=correction_applied_by,
                 )
@@ -307,7 +327,7 @@ def correct_hydrostatic_elastic_series(
     states = tuple(corrected_states)
     metadata = dict(series.metadata)
     metadata["prestress_correction"] = {
-        "method": "barron-klein-wallace-hydrostatic",
+        "method": EULERIAN_HYDROSTATIC_PRESTRESS_METHOD,
         "applied_by": str(correction_applied_by).strip(),
         "state_count": len(states),
     }
@@ -319,8 +339,97 @@ def correct_hydrostatic_elastic_series(
     )
 
 
+def hydrostatic_wallace_stiffness(
+    raw_stiffness: ArrayLike,
+    pressure_gpa: float,
+) -> NDArray[np.float64]:
+    """Compatibility alias for the Eulerian hydrostatic stiffness operator.
+
+    Parameters
+    ----------
+    raw_stiffness : array_like
+        Finite symmetric ``(6, 6)`` stiffness matrix in GPa.
+    pressure_gpa : float
+        Hydrostatic pressure in GPa, positive in compression.
+
+    Returns
+    -------
+    ndarray
+        Symmetric incremental stiffness matrix in GPa.
+
+    Notes
+    -----
+    New code should use :func:`eulerian_hydrostatic_incremental_stiffness`.
+    The historical name is retained for source compatibility only; it must not
+    be interpreted as the CRYSTAL/Erba finite-pressure transformation.
+    """
+    return eulerian_hydrostatic_incremental_stiffness(raw_stiffness, pressure_gpa)
+
+
+def correct_hydrostatic_elastic_state(
+    state: ElasticState,
+    *,
+    correction_applied_by: str = "quantas",
+) -> ElasticState:
+    """Compatibility alias for the Eulerian hydrostatic state conversion.
+
+    Parameters
+    ----------
+    state : ElasticState
+        Compatible raw elastic state with pressure provenance.
+    correction_applied_by : str, optional
+        Provenance label recorded on the converted state.
+
+    Returns
+    -------
+    ElasticState
+        Independent hydrostatic incremental state.
+
+    Notes
+    -----
+    New code should use :func:`convert_eulerian_hydrostatic_elastic_state`.
+    """
+    return convert_eulerian_hydrostatic_elastic_state(
+        state,
+        correction_applied_by=correction_applied_by,
+    )
+
+
+def correct_hydrostatic_elastic_series(
+    series: ElasticStateSeries,
+    *,
+    correction_applied_by: str = "quantas",
+) -> ElasticStateSeries:
+    """Compatibility alias for the Eulerian hydrostatic series conversion.
+
+    Parameters
+    ----------
+    series : ElasticStateSeries
+        Compatible raw elastic-state series with pressure provenance.
+    correction_applied_by : str, optional
+        Provenance label recorded on each converted state.
+
+    Returns
+    -------
+    ElasticStateSeries
+        Independent series of hydrostatic incremental tensors.
+
+    Notes
+    -----
+    New code should use :func:`convert_eulerian_hydrostatic_elastic_series`.
+    """
+    return convert_eulerian_hydrostatic_elastic_series(
+        series,
+        correction_applied_by=correction_applied_by,
+    )
+
+
 __all__ = [
+    "EULERIAN_HYDROSTATIC_PRESTRESS_METHOD",
     "assign_hydrostatic_pressures",
+    "convert_eulerian_hydrostatic_elastic_series",
+    "convert_eulerian_hydrostatic_elastic_state",
+    "eulerian_hydrostatic_incremental_stiffness",
     "correct_hydrostatic_elastic_series",
     "correct_hydrostatic_elastic_state",
     "hydrostatic_wallace_stiffness",

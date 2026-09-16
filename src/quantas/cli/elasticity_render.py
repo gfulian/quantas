@@ -18,7 +18,21 @@ def render_elasticity_cli_report(
     options: ElasticityOptions,
     result: ElasticityResult,
 ) -> str:
-    """Render the complete elasticity report with the shared text backend."""
+    """Render the complete elasticity report with the shared text backend.
+
+    Parameters
+    ----------
+    input_data : ElasticityInput
+        Normalized elasticity input contract.
+    options : ElasticityOptions
+        Scientific calculation options.
+    result : ElasticityResult
+        Completed elasticity result contract.
+
+    Returns
+    -------
+    str
+        Deterministic plain-text report assembled from neutral report tables."""
     return render_tables(build_elasticity_report(input_data, options, result))
 
 

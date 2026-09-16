@@ -84,6 +84,11 @@ class EOSResultSlot:
         -------
         EOSResultSlot
             Canonical slot object.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         if isinstance(value, cls):
             return value
@@ -94,11 +99,28 @@ class EOSResultSlot:
 
     @classmethod
     def from_request(cls, request: EOSFitRequest) -> EOSResultSlot:
-        """Construct the slot addressed by a fit request."""
+        """Construct the slot addressed by a fit request.
+
+        Parameters
+        ----------
+        request : EOSFitRequest
+            Validated fitting or calculation request.
+
+        Returns
+        -------
+        EOSResultSlot
+            Result described by the operation.
+        """
         return cls(request.domain, request.target)
 
     def as_dict(self) -> dict[str, str]:
-        """Return a serialization-ready slot mapping."""
+        """Return a serialization-ready slot mapping.
+
+        Returns
+        -------
+        dict[str, str]
+            A serialization-ready slot mapping.
+        """
         return {"domain": self.domain.value, "target": self.target, "key": self.key}
 
 
@@ -171,7 +193,13 @@ class EOSFitRecord:
         return bool(self.result.fit.success)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready complete record."""
+        """Return a serialization-ready complete record.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready complete record.
+        """
         return {
             "record_id": self.record_id,
             "dataset_id": self.dataset_id,
@@ -218,7 +246,13 @@ class EOSStateEvent:
         object.__setattr__(self, "metadata", dict(self.metadata))
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready state event."""
+        """Return a serialization-ready state event.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready state event.
+        """
         return {
             "event_id": self.event_id,
             "event_type": self.event_type.value,
@@ -278,7 +312,13 @@ class EOSSlotState:
             raise ValueError("last record must appear among attempted records")
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready compact slot state."""
+        """Return a serialization-ready compact slot state.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready compact slot state.
+        """
         return {
             "slot": self.slot.as_dict(),
             "status": self.status.value,

@@ -114,6 +114,16 @@ def format_unit(unit: str | None) -> str | None:
     This formatter is intended primarily for figure labels. Text reports and
     terminal output use :func:`format_text_unit` to avoid Unicode-dependent
     scientific notation.
+
+    Parameters
+    ----------
+    unit : str | None
+        Unit symbol or canonical unit name.
+
+    Returns
+    -------
+    str | None
+        A compact typographic representation of one EOS unit.
     """
     if unit is None:
         return None
@@ -138,6 +148,16 @@ def format_text_unit(unit: str | None) -> str | None:
 
     Machine-readable units are left unchanged elsewhere. This function is
     strictly a text-presentation boundary for terminal and plain-text reports.
+
+    Parameters
+    ----------
+    unit : str | None
+        Unit symbol or canonical unit name.
+
+    Returns
+    -------
+    str | None
+        A portable ASCII representation of one EOS unit.
     """
     if unit is None:
         return None
@@ -167,31 +187,86 @@ def format_text_unit(unit: str | None) -> str | None:
 
 
 def domain_label(domain: EOSFitDomain | str) -> str:
-    """Return a human-readable scientific-domain name."""
+    """Return a human-readable scientific-domain name.
+
+    Parameters
+    ----------
+    domain : EOSFitDomain | str
+        EOS domain identifier.
+
+    Returns
+    -------
+    str
+        A human-readable scientific-domain name.
+    """
     return _DOMAIN_LABELS[EOSFitDomain(domain)]
 
 
 def target_label(name: str) -> str:
-    """Return a human-readable property or target name."""
+    """Return a human-readable property or target name.
+
+    Parameters
+    ----------
+    name : str
+        Stable name or identifier.
+
+    Returns
+    -------
+    str
+        A human-readable property or target name.
+    """
     normalized = str(name).strip()
     return _TARGET_LABELS.get(normalized, normalized.replace("_", " ").title())
 
 
 def parameter_label(name: str) -> str:
-    """Return a compact scientific symbol for one EOS parameter."""
+    """Return a compact scientific symbol for one EOS parameter.
+
+    Parameters
+    ----------
+    name : str
+        Stable name or identifier.
+
+    Returns
+    -------
+    str
+        A compact scientific symbol for one EOS parameter.
+    """
     normalized = str(name).strip()
     return _PARAMETER_LABELS.get(normalized, normalized.replace("_", " "))
 
 
 def solver_label(method: Any) -> str:
-    """Return the human-readable name of one numerical solver."""
+    """Return the human-readable name of one numerical solver.
+
+    Parameters
+    ----------
+    method : Any
+        Stable numerical or scientific method identifier.
+
+    Returns
+    -------
+    str
+        The human-readable name of one numerical solver.
+    """
     value = getattr(method, "value", method)
     normalized = str(value)
     return _SOLVER_LABELS.get(normalized, normalized.replace("_", " ").title())
 
 
 def model_label(model: Any) -> str:
-    """Return a human-readable label for an EOS model specification."""
+    """Return a human-readable label for an EOS model specification.
+
+    Parameters
+    ----------
+    model : Any
+        EOS or thermoelastic model used by the operation.
+
+    Returns
+    -------
+    str
+        A human-readable label for an EOS model specification.
+    """
     if isinstance(model, EOSModel):
         return f"{model.name} [{model.tag}]"
     if isinstance(model, TemperatureEOSModel):
@@ -230,7 +305,20 @@ def model_label(model: Any) -> str:
 
 
 def property_label(name: str, unit: str | None = None) -> str:
-    """Return a clean property label with an optional parenthesized unit."""
+    """Return a clean property label with an optional parenthesized unit.
+
+    Parameters
+    ----------
+    name : str
+        Stable name or identifier.
+    unit : str | None
+        Unit symbol or canonical unit name.
+
+    Returns
+    -------
+    str
+        A clean property label with an optional parenthesized unit.
+    """
     label = target_label(name)
     rendered = format_unit(unit)
     return label if rendered is None else f"{label} ({rendered})"

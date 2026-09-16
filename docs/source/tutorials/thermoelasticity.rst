@@ -7,7 +7,7 @@ a series of static elastic tensors, calibrates a reusable cold finite-strain
 model, and then evaluates that model at a single state, on a rectangular
 pressure-temperature grid, and along a continental depth profile.
 
-The tutorial deliberately follows the staged design of Quantas:
+The tutorial follows the same staged design used by the workflow:
 
 .. code-block:: text
 
@@ -127,7 +127,8 @@ names.  Check the following scientific conditions first.
 #. The QHA result contains :math:`C_V` and the thermal-expansion tensor if an
    adiabatic tensor is required.
 #. The requested pressure-temperature states are meaningful for the material;
-   Quantas does not determine phase stability or decomposition boundaries.
+   phase stability and decomposition boundaries remain outside the scope of the
+   thermoelastic workflow.
 
 Stage 1: generating the thermoelastic input
 -------------------------------------------
@@ -169,8 +170,8 @@ The beginning of the resulting file records the scientific conventions:
      prestress: applied-by-crystal-pressure-keyword
      tensor_orientation: crystal
 
-The YAML is intentionally readable.  It is also the normalized contract used by
-both CLI and Python frontends.
+The YAML is meant to remain readable while also serving as the normalized
+contract shared by the CLI and Python API.
 
 Stage 2: preparing the QHA result
 ---------------------------------
@@ -592,7 +593,7 @@ normal/coupled subspace.
 Stage 7: evaluating a geological profile
 ----------------------------------------
 
-The profile is deliberately separated from the rectangular grid.  It evaluates
+The profile is kept separate from the rectangular grid because it evaluates
 only the states required by the geological path.
 
 Profile definition
@@ -845,7 +846,7 @@ component order.
 Interpreting warnings and quality flags
 ---------------------------------------
 
-A production analysis should explicitly inspect:
+Before treating the reconstruction as a production result, inspect:
 
 - component-fit quality and residuals;
 - QHA-coordinate extrapolation masks;

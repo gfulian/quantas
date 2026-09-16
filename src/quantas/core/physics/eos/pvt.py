@@ -236,7 +236,14 @@ class PVTModel:
         return f"{self.pressure_spec.tag}+{thermal_tag}+{self.coupling_family.value}"
 
     def as_dict(self) -> dict[str, object]:
-        """Return a serialization-ready model description."""
+        """Return a serialization-ready P-V-T model description.
+
+        Returns
+        -------
+        dict
+            Mapping containing the pressure EOS, temperature model, coupling
+            family, stable tag, and MGD normalization when applicable.
+        """
         thermal = self.thermal_spec
         description: dict[str, object] = {
             "pressure_model": self.pressure_spec.as_dict(),
@@ -296,7 +303,13 @@ def parse_pvt_coupling(
 
 
 def available_pvt_couplings() -> tuple[PVTCouplingFamily, ...]:
-    """Return all implemented P--V--T coupling prescriptions."""
+    """Return all implemented P-V-T coupling prescriptions.
+
+    Returns
+    -------
+    tuple of PVTCouplingFamily
+        Canonical coupling families supported by :class:`PVTEOS`.
+    """
     return tuple(PVTCouplingFamily)
 
 
@@ -393,7 +406,33 @@ class PVTEOS:
         coupling_parameters: Mapping[str, float],
         temperature: ArrayLike,
     ) -> np.ndarray:
-        """Return the zero-pressure volume at temperature ``T``."""
+        """Return the zero-pressure reference volume at temperature ``T``.
+
+        Parameters
+        ----------
+        model : PVTModel
+            Composite P--V--T model.
+        pressure_parameters : mapping, sequence, or EOSParameters
+            Reference isothermal EOS parameters.
+        temperature_parameters : mapping, TemperatureEOSParameters, or None
+            V--T parameters for non-thermal-pressure couplings; ``None`` for thermal
+            pressure.
+        coupling_parameters : mapping
+            Parameters required by the selected coupling prescription.
+        temperature : array-like
+            Scalar or array of absolute temperatures in kelvin.
+
+        Returns
+        -------
+        ndarray
+            ``V0(T)`` in the same volume unit and normalization as reference ``V0``.
+
+        Raises
+        ------
+        ValueError
+            If component parameters are inconsistent, temperatures are invalid, or a
+            zero-pressure state cannot be solved.
+        """
         temp = self._validate_temperature(temperature)
         pressure_spec = model.pressure_spec
         coupling = model.coupling_family
@@ -431,7 +470,32 @@ class PVTEOS:
         coupling_parameters: Mapping[str, float],
         temperature: ArrayLike,
     ) -> np.ndarray:
-        """Return :math:`K_{0T}` at one or more temperatures."""
+        """Return the isothermal zero-pressure bulk modulus ``K0(T)``.
+
+        Parameters
+        ----------
+        model : PVTModel
+            Composite P--V--T model.
+        pressure_parameters : mapping, sequence, or EOSParameters
+            Reference isothermal EOS parameters.
+        temperature_parameters : mapping, TemperatureEOSParameters, or None
+            V--T parameters where required by the coupling.
+        coupling_parameters : mapping
+            Coupling-specific parameters such as ``dK0_dT`` or ``delta``.
+        temperature : array-like
+            Absolute temperatures in kelvin.
+
+        Returns
+        -------
+        ndarray
+            ``K0(T)`` in the same pressure unit as reference ``K0``.
+
+        Raises
+        ------
+        ValueError
+            If component/reference parameters are inconsistent or the coupling predicts
+            a non-positive/non-finite bulk modulus.
+        """
         temp = self._validate_temperature(temperature)
         pressure_spec = model.pressure_spec
         coupling = model.coupling_family
@@ -495,7 +559,32 @@ class PVTEOS:
         coupling_parameters: Mapping[str, float],
         temperature: ArrayLike,
     ) -> np.ndarray:
-        r"""Return :math:`\partial K_{0T}/\partial T` at zero pressure."""
+        """Return ``dK0(T)/dT`` at zero pressure.
+
+        Parameters
+        ----------
+        model : PVTModel
+            Composite P--V--T model.
+        pressure_parameters : mapping, sequence, or EOSParameters
+            Reference isothermal EOS parameters.
+        temperature_parameters : mapping, TemperatureEOSParameters, or None
+            V--T parameters where required by the coupling.
+        coupling_parameters : mapping
+            Coupling-specific parameters.
+        temperature : array-like
+            Absolute temperatures in kelvin.
+
+        Returns
+        -------
+        ndarray
+            Temperature derivative in pressure units per kelvin. Thermal-pressure
+            coupling uses a stable finite difference of the analytical ``K0(T)`` path.
+
+        Raises
+        ------
+        ValueError
+            If parameters, temperatures, or the composed P--V--T state are invalid.
+        """
         temp = self._validate_temperature(temperature)
         coupling = model.coupling_family
         assert isinstance(coupling, PVTCouplingFamily)
@@ -541,7 +630,31 @@ class PVTEOS:
         coupling_parameters: Mapping[str, float],
         temperature: ArrayLike,
     ) -> np.ndarray:
-        """Return the zero-pressure volume expansion coefficient."""
+        """Return the zero-pressure volumetric expansion coefficient.
+
+        Parameters
+        ----------
+        model : PVTModel
+            Composite P--V--T model.
+        pressure_parameters : mapping, sequence, or EOSParameters
+            Reference isothermal EOS parameters.
+        temperature_parameters : mapping, TemperatureEOSParameters, or None
+            V--T parameters where required by the coupling.
+        coupling_parameters : mapping
+            Coupling-specific parameters.
+        temperature : array-like
+            Absolute temperatures in kelvin.
+
+        Returns
+        -------
+        ndarray
+            ``alpha_V(P=0,T)`` in ``K^-1``.
+
+        Raises
+        ------
+        ValueError
+            If parameters or temperatures violate the selected coupling contract.
+        """
         temp = self._validate_temperature(temperature)
         coupling = model.coupling_family
         assert isinstance(coupling, PVTCouplingFamily)
@@ -579,7 +692,31 @@ class PVTEOS:
         volume: ArrayLike,
         temperature: ArrayLike,
     ) -> np.ndarray:
-        """Return the isothermal bulk modulus at ``V`` and ``T``."""
+        """Return the isothermal bulk modulus at paired ``V, T`` states.
+
+        Parameters
+        ----------
+        model : PVTModel
+            Composite P--V--T model.
+        pressure_parameters : mapping, sequence, or EOSParameters
+            Reference isothermal EOS parameters.
+        temperature_parameters : mapping, TemperatureEOSParameters, or None
+            V--T parameters for non-thermal-pressure couplings.
+        coupling_parameters : mapping
+            Coupling-specific parameters.
+        volume, temperature : array-like
+            Broadcast-compatible volumes and absolute temperatures.
+
+        Returns
+        -------
+        ndarray
+            ``K_T(V,T)`` in the same pressure unit as reference ``K0``.
+
+        Raises
+        ------
+        ValueError
+            If state coordinates or component parameters are invalid.
+        """
         volume_array, temperature_array = self._broadcast_state(volume, temperature)
         pressure_spec = model.pressure_spec
         coupling = model.coupling_family
@@ -633,7 +770,32 @@ class PVTEOS:
         pressure: ArrayLike,
         temperature: ArrayLike,
     ) -> np.ndarray:
-        """Invert the P--V--T model and return volume at paired ``P, T``."""
+        """Invert the P--V--T model at paired pressure-temperature states.
+
+        Parameters
+        ----------
+        model : PVTModel
+            Composite P--V--T model.
+        pressure_parameters : mapping, sequence, or EOSParameters
+            Reference isothermal EOS parameters.
+        temperature_parameters : mapping, TemperatureEOSParameters, or None
+            V--T parameters for non-thermal-pressure couplings.
+        coupling_parameters : mapping
+            Coupling-specific parameters.
+        pressure, temperature : array-like
+            Broadcast-compatible target pressures and temperatures.
+
+        Returns
+        -------
+        ndarray
+            Positive equilibrium volumes in the unit/normalization of reference ``V0``.
+
+        Raises
+        ------
+        ValueError
+            If state coordinates are invalid or a positive volume root cannot be
+            obtained for any paired state.
+        """
         pressure_array, temperature_array = self._broadcast_state(pressure, temperature)
         pressure_spec = model.pressure_spec
         assert isinstance(pressure_spec, EOSModel)
@@ -782,23 +944,31 @@ class PVTEOS:
         volume: ArrayLike,
         temperature: ArrayLike,
     ) -> np.ndarray:
-        r"""Return :math:`(\partial P_{th}/\partial T)_V`.
+        """Return the constant-volume temperature derivative of thermal pressure.
 
         Parameters
         ----------
         model : PVTModel
-            Composite model using the thermal-pressure coupling.
-        pressure_parameters : mapping, sequence, or EOSParameters
+            P-V-T model using a thermal-pressure coupling.
+        pressure_parameters : EOSParameters
             Reference pressure-EOS parameters.
-        coupling_parameters : mapping
-            Parameters of the selected Einstein or MGD thermal-pressure model.
-        volume, temperature : array-like
-            Broadcast-compatible state coordinates.
+        coupling_parameters : PVTCouplingParameters
+            Parameters required by the selected P-V-T coupling.
+        volume : array_like
+            Positive evaluation volumes in the model volume basis.
+        temperature : array_like
+            Non-negative temperatures in K, broadcast-compatible with ``volume``.
 
         Returns
         -------
         ndarray
-            Temperature derivative in pressure per kelvin.
+            ``(dP_th/dT)_V`` in GPa K^-1.
+
+        Raises
+        ------
+        ValueError
+            If ``model`` does not use a thermal-pressure coupling or the supplied
+            thermodynamic inputs are invalid.
         """
         if model.coupling_family is not PVTCouplingFamily.THERMAL_PRESSURE:
             raise ValueError(
@@ -820,7 +990,29 @@ class PVTEOS:
         coupling_parameters: Mapping[str, float],
         temperature: ArrayLike,
     ) -> np.ndarray:
-        """Return the Holland--Powell Einstein thermal pressure."""
+        """Return Holland--Powell Einstein thermal pressure.
+
+        Parameters
+        ----------
+        pressure_parameters : mapping, sequence, or EOSParameters
+            Reference EOS parameters providing ``K0``.
+        coupling_parameters : mapping
+            Must provide finite ``alpha_ref`` and positive ``temperature_ref`` and
+            ``theta_e``.
+        temperature : array-like
+            Absolute temperatures in kelvin.
+
+        Returns
+        -------
+        ndarray
+            Thermal pressure relative to ``temperature_ref`` in the pressure unit of
+            reference ``K0``.
+
+        Raises
+        ------
+        ValueError
+            If required parameters or temperatures are invalid.
+        """
         reference_k0 = self._reference_bulk_modulus(pressure_parameters)
         temp = self._validate_temperature(temperature)
         temperature_ref = self._required_positive(
@@ -845,7 +1037,28 @@ class PVTEOS:
         coupling_parameters: Mapping[str, float],
         temperature: ArrayLike,
     ) -> np.ndarray:
-        """Return the analytical derivative ``dP_th/dT``."""
+        """Return the analytical Einstein ``dP_th/dT``.
+
+        Parameters
+        ----------
+        pressure_parameters : mapping, sequence, or EOSParameters
+            Reference EOS parameters providing ``K0``.
+        coupling_parameters : mapping
+            Einstein thermal-pressure parameters ``temperature_ref``, ``alpha_ref``,
+            and ``theta_e``.
+        temperature : array-like
+            Absolute temperatures in kelvin.
+
+        Returns
+        -------
+        ndarray
+            Thermal-pressure derivative in pressure units per kelvin.
+
+        Raises
+        ------
+        ValueError
+            If required parameters or temperatures are invalid.
+        """
         reference_k0 = self._reference_bulk_modulus(pressure_parameters)
         temp = self._validate_temperature(temperature)
         temperature_ref = self._required_positive(

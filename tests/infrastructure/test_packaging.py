@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import importlib.util
+import os
 import subprocess
 import sys
 
@@ -61,6 +62,25 @@ def test_typecheck_extra_pins_numpy_stub_generation() -> None:
     assert "numpy>=1.24,<2.3" in extras["typecheck"]
     assert (PROJECT_ROOT / "requirements" / "typecheck.txt").is_file()
 
+def test_distribution_smoke_program_keeps_installed_metadata_checks() -> None:
+    """Artifact validation must still verify installed distribution metadata."""
+    script_path = PROJECT_ROOT / "tools" / "check_distribution.py"
+    specification = importlib.util.spec_from_file_location(
+        "quantas_distribution_check_metadata",
+        script_path,
+    )
+    assert specification is not None
+    assert specification.loader is not None
+
+    module = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(module)
+    smoke_script = module._smoke_script()
+
+    assert 'metadata.version("quantas")' in smoke_script
+    assert "assert version == quantas.__version__" in smoke_script
+    assert 'metadata.requires("quantas")' in smoke_script
+
+
 def test_distribution_smoke_program_matches_current_public_registry() -> None:
     """The installed-package smoke program must reflect current capabilities."""
     script_path = PROJECT_ROOT / "tools" / "check_distribution.py"
@@ -76,8 +96,12 @@ def test_distribution_smoke_program_matches_current_public_registry() -> None:
     smoke_script = module._smoke_script
 
     completed = subprocess.run(
-        [sys.executable, "-c", smoke_script()],
+        [sys.executable, "-c", smoke_script(verify_distribution_metadata=False)],
         cwd=PROJECT_ROOT,
+        env={
+            **os.environ,
+            "PYTHONPATH": str(PROJECT_ROOT / "src"),
+        },
         check=False,
         capture_output=True,
         text=True,

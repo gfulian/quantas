@@ -43,7 +43,18 @@ FloatArray: TypeAlias = NDArray[np.float64]
 def collect_component_observations(
     series: ElasticVolumeSeries,
 ) -> tuple[dict[str, FloatArray], dict[str, FloatArray]]:
-    """Return symmetry-averaged component series and equivalence spreads."""
+    """Return symmetry-averaged component series and equivalence spreads.
+
+    Parameters
+    ----------
+    series : ElasticVolumeSeries
+        Volume-dependent elastic series consumed by the operation.
+
+    Returns
+    -------
+    tuple[dict[str, FloatArray], dict[str, FloatArray]]
+        Symmetry-averaged component series and equivalence spreads.
+    """
     value_rows: list[dict[str, float]] = []
     spread_rows: list[dict[str, float]] = []
     for matrix in series.stiffness:
@@ -75,6 +86,20 @@ def fit_elastic_components(
     Symmetry-equivalent values are sign-corrected and averaged at each volume.
     Components below ``zero_tolerance`` remain exact zeros and receive a full
     point table but no numerical optimizer result.
+
+    Parameters
+    ----------
+    series : ElasticVolumeSeries
+        Volume-dependent elastic series consumed by the operation.
+    reference_eos : ReferenceEOSFit
+        Static reference EOS shared by the thermoelastic component fits.
+    options : ThermoelasticOptions
+        Validated options controlling this operation.
+
+    Returns
+    -------
+    dict[str, ElasticComponentFit]
+        Mapping containing the normalized values described by this contract.
     """
     observations, spreads = collect_component_observations(series)
     definitions = {
@@ -377,7 +402,22 @@ def exact_component_parameters(
     volume: ArrayLike,
     observed: ArrayLike,
 ) -> FloatArray | None:
-    """Return the exact conditional OLS parameters or ``None`` if singular."""
+    """Return the exact conditional OLS parameters or ``None`` if singular.
+
+    Parameters
+    ----------
+    model : ColdFiniteStrainComponentModel
+        EOS or thermoelastic model used by the operation.
+    volume : ArrayLike
+        Volume value or array in the units documented by the surrounding model.
+    observed : ArrayLike
+        Observed stiffness-component values used by the fit diagnostics.
+
+    Returns
+    -------
+    FloatArray | None
+        The exact conditional OLS parameters or ``None`` if singular.
+    """
     volumes = np.asarray(volume, dtype=np.float64)
     values = np.asarray(observed, dtype=np.float64)
     design = component_design_matrix(model, volumes)
@@ -393,7 +433,22 @@ def leave_one_out_component_parameters(
     volume: ArrayLike,
     observed: ArrayLike,
 ) -> FloatArray | None:
-    """Return exact leave-one-out estimates for support diagnostics."""
+    """Return exact leave-one-out estimates for support diagnostics.
+
+    Parameters
+    ----------
+    model : ColdFiniteStrainComponentModel
+        EOS or thermoelastic model used by the operation.
+    volume : ArrayLike
+        Volume value or array in the units documented by the surrounding model.
+    observed : ArrayLike
+        Observed stiffness-component values used by the fit diagnostics.
+
+    Returns
+    -------
+    FloatArray | None
+        Exact leave-one-out estimates for support diagnostics.
+    """
     volumes = np.asarray(volume, dtype=np.float64)
     values = np.asarray(observed, dtype=np.float64)
     if volumes.size <= 2:
@@ -414,7 +469,22 @@ def alternate_order_component_parameters(
     volume: ArrayLike,
     observed: ArrayLike,
 ) -> FloatArray | None:
-    """Return the exact estimate for the other supported strain order."""
+    """Return the exact estimate for the other supported strain order.
+
+    Parameters
+    ----------
+    model : ColdFiniteStrainComponentModel
+        EOS or thermoelastic model used by the operation.
+    volume : ArrayLike
+        Volume value or array in the units documented by the surrounding model.
+    observed : ArrayLike
+        Observed stiffness-component values used by the fit diagnostics.
+
+    Returns
+    -------
+    FloatArray | None
+        The exact estimate for the other supported strain order.
+    """
     alternate = ColdFiniteStrainComponentModel(
         reference_volume=model.reference_volume,
         bulk_modulus=model.bulk_modulus,
@@ -520,6 +590,26 @@ def evaluate_component_predictions(
         Values, one-sigma uncertainties, and covariance matrices with shapes
         ``volume.shape + (ncomponents,)`` and
         ``volume.shape + (ncomponents, ncomponents)``.
+
+    Parameters
+    ----------
+    fits : Mapping[str, ElasticComponentFit]
+        Component fits consumed by the operation.
+    labels : tuple[str, ...]
+        Ordered elastic-component labels.
+    volume : ArrayLike
+        Volume value or array in the units documented by the surrounding model.
+    reference_eos : ReferenceEOSFit
+        Static reference EOS shared by the thermoelastic component fits.
+    options : ThermoelasticOptions
+        Validated options controlling this operation.
+    sigma_volume : ArrayLike | None
+        One-sigma uncertainty associated with the corresponding quantity.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
     """
     volumes = np.asarray(volume, dtype=np.float64)
     flat = volumes.ravel()

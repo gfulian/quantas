@@ -39,16 +39,23 @@ def write_mapping(group: h5py.Group, values: Mapping[str, Any]) -> None:
 
 
 def write_value(group: h5py.Group, key: str, value: Any) -> None:
-    """Write one recursively serializable value.
+    """Write one value using the shared recursive HDF5 representation.
+
+    Dataclasses are converted to mappings, enums to their stored values, paths
+    and datetimes to text, mappings/sequences recursively to groups or datasets,
+    and NumPy arrays to native datasets. Floating scalars and arrays pass through
+    the Quantas precision caster before storage. Unsupported objects fall back to
+    their string representation and should therefore not be used for scientific
+    machine-readable payloads.
 
     Parameters
     ----------
     group : h5py.Group
         Destination group.
     key : str
-        Child name or attribute name.
+        Child or attribute name.
     value : Any
-        Value to serialize.
+        Passive value to serialize.
     """
     if is_dataclass(value) and not isinstance(value, type):
         value = asdict(cast(Any, value))
@@ -89,7 +96,18 @@ def write_numeric_attribute(
     key: str,
     value: Any,
 ) -> None:
-    """Write one numeric HDF5 attribute using Quantas double precision."""
+    """Write one numeric HDF5 attribute using Quantas native precision.
+
+    Parameters
+    ----------
+    group : h5py.Group or h5py.Dataset
+        HDF5 object receiving the attribute.
+    key : str
+        Attribute name.
+    value : Any
+        Numeric scalar accepted by the shared precision caster. Real floating
+        values are stored as float64 and complex floating values as complex128.
+    """
     group.attrs[key] = cast_floating_scalar(value)
 
 
@@ -148,15 +166,15 @@ def write_array_dataset(
     description : str or None, optional
         Human-readable dataset description stored as attribute.
     compression : bool or None, optional
-        If ``True``, use gzip chunked compression for non-scalar arrays. If
-        ``None``, compression is enabled only for arrays with more than one
-        element when ``unit`` or ``description`` is supplied by module payload
-        writers that requested shared dataset options.
+        If ``True``, use gzip level-4 chunked compression with shuffle for
+        non-scalar arrays containing more than one element. ``False`` or
+        ``None`` stores the dataset without compression.
 
     Returns
     -------
     h5py.Dataset
-        Created dataset.
+        Created dataset. Floating real/complex arrays are normalized to the
+        native float64/complex128 storage policy before writing.
     """
     array = np.asarray(value)
     array = cast_floating_array(array)

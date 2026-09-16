@@ -52,7 +52,14 @@ class EOSParameters:
             raise ValueError("V0 must be positive")
 
     def as_dict(self) -> dict[str, float | None]:
-        """Return parameters as a serializable dictionary."""
+        """Return EOS parameters as a serializable dictionary.
+
+        Returns
+        -------
+        dict
+            Mapping containing ``E0``, ``K0``, ``KP``, ``KPP``, and ``V0``;
+            unavailable parameters are represented by ``None``.
+        """
         return {
             "E0": self.E0,
             "K0": self.K0,
@@ -202,7 +209,28 @@ def resolve_energy_parameters(
     eos: str | EOSModel,
     parameters: ArrayLike | Mapping[str, float] | EOSParameters,
 ) -> EOSParameters:
-    """Resolve free energy-fit parameters to a physical parameter set."""
+    """Resolve energy-EOS input to complete physical parameters.
+
+    Parameters
+    ----------
+    eos : str or EOSModel
+        EOS family-and-order specification.
+    parameters : array-like, mapping, or EOSParameters
+        Free energy-fit values, a named parameter mapping, or an already resolved
+        parameter object.
+
+    Returns
+    -------
+    EOSParameters
+        Complete ``E0, K0, KP, KPP, V0`` parameter set with truncation-implied
+        derivatives filled in.
+
+    Raises
+    ------
+    ValueError
+        If parameter dimensionality, required names, values, or model/order rules
+        are inconsistent.
+    """
     model = parse_eos_model(eos)
     if isinstance(parameters, EOSParameters):
         return parameters
@@ -249,7 +277,27 @@ def resolve_pressure_parameters(
     eos: str | EOSModel,
     parameters: ArrayLike | Mapping[str, float] | EOSParameters,
 ) -> EOSParameters:
-    """Resolve free pressure-fit parameters to a physical parameter set."""
+    """Resolve pressure-EOS input to complete physical parameters.
+
+    Parameters
+    ----------
+    eos : str or EOSModel
+        EOS family-and-order specification.
+    parameters : array-like, mapping, or EOSParameters
+        Free pressure-fit values, compatible energy-fit values, a named mapping,
+        or an already resolved parameter object.
+
+    Returns
+    -------
+    EOSParameters
+        Complete ``K0, KP, KPP, V0`` parameter set; ``E0`` is unused.
+
+    Raises
+    ------
+    ValueError
+        If parameter dimensionality, required names, values, or model/order rules
+        are inconsistent.
+    """
     model = parse_eos_model(eos)
     if isinstance(parameters, EOSParameters):
         return parameters
@@ -405,7 +453,26 @@ def resolved_energy_parameter_covariance(
 
 
 def free_energy_parameters(model: EOSModel, parameters: EOSParameters) -> np.ndarray:
-    """Return the free energy-fit vector for ``model``."""
+    """Return the free energy-fit vector for one EOS model.
+
+    Parameters
+    ----------
+    model : str or EOSModel
+        Energy-EOS model specification.
+    parameters : EOSParameters
+        Complete resolved physical parameter set.
+
+    Returns
+    -------
+    ndarray
+        ``float64`` values in :attr:`EOSModel.energy_parameter_names` order.
+
+    Raises
+    ------
+    ValueError
+        If the selected model has no energy form or a required physical parameter
+        is unavailable.
+    """
     values = parameters.as_dict()
     return np.asarray(
         [values[name] for name in model.energy_parameter_names], dtype=np.float64
@@ -413,7 +480,26 @@ def free_energy_parameters(model: EOSModel, parameters: EOSParameters) -> np.nda
 
 
 def free_pressure_parameters(model: EOSModel, parameters: EOSParameters) -> np.ndarray:
-    """Return the free pressure-fit vector for ``model``."""
+    """Return the free pressure-fit vector for one EOS model.
+
+    Parameters
+    ----------
+    model : str or EOSModel
+        Pressure-EOS model specification.
+    parameters : EOSParameters
+        Complete resolved physical parameter set.
+
+    Returns
+    -------
+    ndarray
+        ``float64`` values in :attr:`EOSModel.pressure_parameter_names` order.
+
+    Raises
+    ------
+    ValueError
+        If the selected model is not exposed for direct pressure fitting or a
+        required physical parameter is unavailable.
+    """
     values = parameters.as_dict()
     return np.asarray(
         [values[name] for name in model.pressure_parameter_names], dtype=np.float64

@@ -101,7 +101,17 @@ class PowerShellComplete(ShellComplete):
         return words, os.environ.get("QUANTAS_COMPLETE_WORD", "")
 
     def format_completion(self, item: CompletionItem) -> str:
-        """Serialize one completion item as one JSON object."""
+        """Serialize one PowerShell completion candidate as JSON.
+
+        Parameters
+        ----------
+        item : CompletionItem
+            Click completion item containing candidate type, value, and optional help.
+
+        Returns
+        -------
+        str
+            Compact UTF-8 JSON object consumed by the generated PowerShell script."""
         return json.dumps(
             {"type": item.type, "value": item.value, "help": item.help},
             ensure_ascii=False,

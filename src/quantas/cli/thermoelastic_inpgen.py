@@ -250,7 +250,7 @@ def inpgen(
                 ["Elastic symmetry", series.elastic_symmetry],
                 [
                     "Pre-stress convention",
-                    "Wallace hydrostatic (backend-preserved or Quantas-corrected)",
+                    "Hydrostatic incremental (backend-preserved or CRYSTAL-converted)",
                 ],
                 [
                     "Pressure resolution",

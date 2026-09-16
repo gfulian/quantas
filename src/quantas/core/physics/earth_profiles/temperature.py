@@ -163,7 +163,23 @@ class ContinentalConductiveGeotherm:
         return tuple(float(value) for value in self._boundaries[:-1])
 
     def temperature(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate the layered conductive temperature in K."""
+        """Evaluate the layered steady conductive geotherm.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km within the configured conductive stack.
+
+        Returns
+        -------
+        ndarray
+            Absolute temperature in K with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside :attr:`depth_bounds`.
+        """
         depth = _validated_depth(depth_km, self.depth_bounds, self.name)
         flat = depth.ravel()
         result = np.full_like(flat, self.surface_temperature_K)
@@ -187,7 +203,14 @@ class ContinentalConductiveGeotherm:
         return result.reshape(depth.shape).astype(np.float64)
 
     def metadata(self) -> dict[str, Any]:
-        """Return conductive parameters and complete bibliographic provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing conductive parameters, units,
+            scientific scope, and bibliographic provenance.
+        """
         return {
             "model": self.name,
             "kind": "steady_layered_conduction",
@@ -300,7 +323,23 @@ class OceanicHalfSpaceGeotherm:
         return ()
 
     def temperature(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate half-space cooling temperature in K."""
+        """Evaluate the oceanic half-space cooling solution.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km within the exposed numerical domain.
+
+        Returns
+        -------
+        ndarray
+            Absolute temperature in K with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside :attr:`depth_bounds`.
+        """
         depth = _validated_depth(depth_km, self.depth_bounds, self.name)
         age_seconds = self.age_Ma * 1.0e6 * 365.25 * 24.0 * 3600.0
         argument = depth * 1000.0 / (2.0 * np.sqrt(self.diffusivity_m2_s * age_seconds))
@@ -310,7 +349,14 @@ class OceanicHalfSpaceGeotherm:
         ).astype(np.float64)
 
     def metadata(self) -> dict[str, Any]:
-        """Return model parameters and complete bibliographic provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing half-space cooling parameters,
+            units, scientific scope, and bibliographic provenance.
+        """
         return {
             "model": self.name,
             "kind": "oceanic_half_space_cooling",
@@ -432,7 +478,24 @@ class OceanicPlateGeotherm:
         return (self.plate_thickness_km,)
 
     def temperature(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate finite-plate cooling temperature in K."""
+        """Evaluate the finite-thickness oceanic plate cooling solution.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km within the exposed model domain.
+
+        Returns
+        -------
+        ndarray
+            Absolute temperature in K with the same shape as ``depth_km``. Values at
+            and below the plate base are fixed to the mantle temperature.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside :attr:`depth_bounds`.
+        """
         depth = _validated_depth(depth_km, self.depth_bounds, self.name)
         flat = depth.ravel()
         normalized = np.clip(flat / self.plate_thickness_km, 0.0, 1.0)
@@ -457,7 +520,14 @@ class OceanicPlateGeotherm:
         return result.reshape(depth.shape).astype(np.float64)
 
     def metadata(self) -> dict[str, Any]:
-        """Return model parameters and complete bibliographic provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing finite-plate parameters, units,
+            scientific scope, and bibliographic provenance.
+        """
         return {
             "model": self.name,
             "kind": "oceanic_finite_plate_cooling",
@@ -547,7 +617,23 @@ class Katsura2022MantleAdiabat:
         return tuple(values)
 
     def temperature(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate the reconstructed mantle adiabat in K."""
+        """Evaluate the reconstructed Katsura et al. mantle adiabat.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km over the published-profile reconstruction domain.
+
+        Returns
+        -------
+        ndarray
+            Absolute temperature in K with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside the supported 50--2800 km domain.
+        """
         depth = _validated_depth(depth_km, self.depth_bounds, self.name)
         flat = depth.ravel()
         result = np.empty_like(flat)
@@ -563,7 +649,14 @@ class Katsura2022MantleAdiabat:
         return result.reshape(depth.shape).astype(np.float64)
 
     def metadata(self) -> dict[str, Any]:
-        """Return reconstruction constraints and complete provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing reconstruction constraints,
+            transition policy, and bibliographic provenance.
+        """
         return {
             "model": self.name,
             "kind": "published_constraint_mantle_adiabat",
@@ -673,7 +766,23 @@ class LinearThermalBoundaryLayer:
         return (self.depth_top_km, self.depth_bottom_km)
 
     def temperature(self, depth_km: NDArray[np.float64]) -> FloatArray:
-        """Evaluate the parameterized boundary-layer temperature in K."""
+        """Evaluate the parameterized thermal boundary layer.
+
+        Parameters
+        ----------
+        depth_km : ndarray
+            Geological depths in km between the configured top and bottom boundaries.
+
+        Returns
+        -------
+        ndarray
+            Absolute temperature in K with the same shape as ``depth_km``.
+
+        Raises
+        ------
+        ValueError
+            If depths are non-finite or outside :attr:`depth_bounds`.
+        """
         depth = _validated_depth(depth_km, self.depth_bounds, self.name)
         fraction = (depth - self.depth_top_km) / (
             self.depth_bottom_km - self.depth_top_km
@@ -685,7 +794,14 @@ class LinearThermalBoundaryLayer:
         ).astype(np.float64)
 
     def metadata(self) -> dict[str, Any]:
-        """Return endpoint parameters and user-supplied provenance."""
+        """Return model metadata and scientific provenance.
+
+        Returns
+        -------
+        dict
+            Serialization-ready mapping describing boundary-layer endpoints, exponent,
+            and user-supplied provenance.
+        """
         return {
             "model": self.name,
             "kind": "parameterized_thermal_boundary_layer",

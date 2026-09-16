@@ -22,9 +22,9 @@ The presentation follows the order used by Angel *et al.* (2014):
 #. pressure--volume--temperature equations obtained by coupling compression
    and thermal expansion.
 
-The equations below define the scientific models.  Parameter estimation,
-uncertainty treatment, diagnostics, and command-line options belong to the
-:doc:`../workflows/eos` workflow rather than to this chapter.
+The equations below define the scientific models.  Questions of parameter
+estimation, uncertainty treatment, diagnostics, and command-line use are taken
+up in :doc:`../workflows/eos`.
 
 Reference state and notation
 ----------------------------
@@ -374,59 +374,32 @@ introducing a reference energy :math:`E_0=E(V_0)` and requiring
 
 The physical pressure parameters :math:`V_0`, :math:`K_0`, :math:`K'_0`, and,
 where applicable, :math:`K''_0` therefore retain the same meaning as in the
-matching P--V equation.  Lower-order integrated models use the same implied
-parameter rules as their pressure counterparts.  The EOS implementation uses
-this identity directly when reconstructing pressure from a fitted static
-energy--volume curve.
+matching P--V equation. Lower-order integrated models use the same implied
+parameter rules as their pressure counterparts. The currently available model
+set and its workflow-level capabilities are listed in :doc:`../workflows/eos`
+and by ``quantas eos show-models``.
 
-At the current ``2.0.0b11`` checkpoint, the numerical core provides integrated
-forms for Murnaghan, Birch--Murnaghan orders 2--4, natural-strain
-Poirier--Tarantola orders 2--4, Vinet orders 2--3, modified Tait orders 2--4,
-and SJEOS.  The standalone ``ev/energy`` workflow exposes these integrated
-models through the ordinary EOS fitting, HDF5, diagnostics, calculator, and
-plotting surfaces.  QHA and Thermoelasticity continue to consume the common
-numerical implementation rather than depending on the standalone workflow.
+Linear response along a structural path
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Theoretical crystallographic response from E--V data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When the E--V dataset also contains a complete lattice path, Quantas derives
-crystallographic response from the same fitted pressure relation instead of
-fitting a fictitious energy equation to :math:`a^3`, :math:`b^3`, or
-:math:`c^3`.  The shared ``StructuralPathModel``
-represents crystal shape as a volume-constrained logarithmic stretch and
-provides
+If a family of structures is parameterized by volume, a linear lattice
+quantity :math:`l_i` can be described through
 
 .. math::
 
-   \eta_i(V)=\frac{\partial\ln l_i}{\partial\ln V},
+   \eta_i(V)=\frac{\partial\ln l_i}{\partial\ln V}.
 
-for :math:`l_i=a,b,c`.  Combining this geometrical response with the bulk
-modulus of the Energy EOS gives the axial modulus
+Combining this geometrical response with the bulk modulus gives the associated
+axial modulus
 
 .. math::
 
    M_i(V)=\frac{K(V)}{\eta_i(V)}.
 
-For a cubic crystal :math:`\eta_a=1/3`, so :math:`M_a=3K` exactly.  This route
-is model-independent at the workflow level: any integrated Energy EOS with an
-analytical pressure and bulk-modulus derivative, including SJEOS, can provide
-the primary axial response.
-
-The E--V parameter covariance and the structural-path fit covariance are
-propagated independently by first-order delta methods and added under an
-explicit zero cross-covariance assumption.  The assumption is recorded in the
-result metadata rather than being hidden by the reporting layer.
-
-An optional secondary pressure-form axial EOS parameterization can then fit the
-derived pressures against :math:`l_i^3`.  This is a *secondary* representation
-of the theoretical path, not the definition of the primary axial response.  It
-is requested with a separate pressure-form EOS (for example BM3) and therefore
-can be combined with an Energy EOS such as SJEOS.  Because all derived pressure
-points share the covariance of the same E--V parameter vector, Quantas stores
-the complete pressure covariance matrix.  The current WLS solver consumes its
-marginal standard uncertainties only; this diagonal approximation is recorded
-explicitly until a full generalized least-squares backend is available.
+For a cubic crystal :math:`\eta_a=1/3`, so :math:`M_a=3K`. This relation is
+independent of how a particular software package represents the structural
+path. Quantas implementation details, uncertainty assumptions, and the optional
+secondary pressure-form axial fit belong to :doc:`../workflows/eos`.
 
 Integrated modified Tait equation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -32,7 +32,9 @@ class ResultSchema:
     version : str, optional
         Schema version identifier.
     required_groups : tuple of str, optional
-        Required top-level groups in a native result file.
+        Required top-level HDF5 groups. This structural contract is independent
+        of the Quantas package version and changes only for incompatible native
+        result-schema revisions.
     """
 
     version: str = RESULT_SCHEMA_VERSION

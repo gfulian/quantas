@@ -39,11 +39,24 @@ QHAModeContinuity = Literal["verified", "assumed", "unknown", "unreliable"]
 class QHAInput(PhononInputData):
     """Input data for a quasi-harmonic approximation calculation.
 
+    ``QHAInput`` extends :class:`~quantas.models.phonons.PhononInputData` with an
+    explicit statement about branch continuity across sampled volumes. The phonon
+    array has shape ``(qpoints, modes, volumes)``; for the frequency QHA scheme the
+    mode index is treated as the identity of a branch along the volume axis.
+
     Parameters
     ----------
     mode_continuity : {"verified", "assumed", "unknown", "unreliable"}, optional
-        Status describing whether phonon-mode ordering is continuous across the
-        sampled volume sequence.
+        Scientific status of branch continuity across volume. ``verified`` means
+        Quantas has explicit continuity evidence, ``assumed`` permits the workflow
+        but records that continuity was not verified, while ``unknown`` and
+        ``unreliable`` prohibit analyses that require branch identity.
+
+    Notes
+    -----
+    Mode-continuous QHA does not sort modes independently by frequency at each
+    volume. Inputs generated from eigenvectors may use global assignment and
+    subspace treatment of degeneracies before this passive contract is created.
     """
 
     mode_continuity: QHAModeContinuity = "assumed"
@@ -161,99 +174,90 @@ class QHAOptions:
 
     Parameters
     ----------
-    temperature_min : float, optional
-        Minimum temperature of the calculation range.
-    temperature_max : float, optional
-        Maximum temperature of the calculation range.
-    temperature_step : float, optional
-        Temperature increment.
-    pressure_min : float, optional
-        Minimum pressure of the calculation range.
-    pressure_max : float, optional
-        Maximum pressure of the calculation range.
-    pressure_step : float, optional
-        Pressure increment.
+    temperature_min, temperature_max, temperature_step : float, optional
+        Temperature-grid bounds and increment in ``temperature_unit``.
+    pressure_min, pressure_max, pressure_step : float, optional
+        Pressure-grid bounds and increment in ``pressure_unit``.
     scheme : {"freq", "td"}, optional
-        QHA scheme used for volume-dependent thermodynamics.
+        Volume-dependent thermodynamic scheme. ``"freq"`` fits each mode frequency
+        against volume and recalculates harmonic thermodynamics at each equilibrium
+        volume; it therefore requires meaningful branch continuity. ``"td"`` first
+        calculates thermodynamic functions on the sampled volume grid and then
+        interpolates those scalar functions to equilibrium volume.
     minimization : {"poly", "eos"}, optional
-        Method used to determine equilibrium volumes at each ``P, T`` point.
+        Free-energy minimization model used at every ``(T, P)`` state.
     eos : str, optional
-        Equation of state used when ``minimization`` is ``"eos"``.
+        Energy-EOS family used when ``minimization="eos"``.
     energy_degree : int, optional
         Polynomial degree used for static energy fits.
     free_energy_degree : int, optional
         Polynomial degree used for Helmholtz free-energy fits.
     frequency_degree : int, optional
-        Polynomial degree used for mode-resolved frequency fits.
+        Polynomial degree used for mode-frequency and Kieffer-cutoff fits.
     structural_degree : int, optional
-        Polynomial degree used for the deviatoric logarithmic-strain path when
-        structural cells are available. Axial and tensorial thermal expansion
-        are calculated automatically from this path.
+        Degree used by the shared volume-constrained structural path.
     polynomial_derivative_method : {"local_grid", "analytic"}, optional
-        Method used to calculate polynomial ``K_T`` and ``K'_T`` values.
+        Method used to derive polynomial ``K_T`` and ``K'_T`` values.
     polynomial_grid_points : int, optional
-        Number of volumes in the local derivative grid.
+        Odd number of local volumes used by ``local_grid`` derivatives.
     polynomial_grid_separation : float, optional
-        Adjacent local-grid spacing as a percentage of the equilibrium volume.
+        Adjacent local-grid spacing as a percentage of equilibrium volume.
     energy_unit : str, optional
-        Energy unit used for input static energies and final energy-like
-        results.
+        Unit of static and thermodynamic energies.
     volume_unit : str, optional
-        Length unit used to express unit-cell volumes.
+        Length unit whose cube defines the QHA volume unit.
     frequency_unit : str, optional
-        Frequency unit used by the input phonon data.
+        Unit of the stored ordinary phonon frequencies ``nu``. Angular frequency
+        ``omega`` is not used as the public QHA frequency convention.
     temperature_unit : str, optional
-        Temperature unit used by the input temperature range.
+        Unit of the temperature grid.
     pressure_unit : str, optional
-        Pressure unit used by the input pressure range.
+        Unit of the pressure grid and reported bulk moduli.
     debug : bool, optional
-        If ``True``, store and expose detailed fit diagnostics.
+        Retain additional fitting diagnostics.
     store_fit_diagnostics : bool, optional
-        If ``True``, retain structured diagnostics from local fits.
+        Store structured local-fit records.
     estimate_uncertainties : bool, optional
-        If ``True``, request uncertainty estimates where supported.
-    uncertainty_method : str, optional
-        Method requested for uncertainty estimates.
+        Request supported uncertainty propagation.
+    uncertainty_method : {"none", "covariance", "bootstrap", "montecarlo"}, optional
+        Requested uncertainty method.
     uncertainty_relative_step : float, optional
-        Relative EOS-parameter step used by linear covariance propagation.
+        Relative EOS-parameter step used by covariance propagation.
     uncertainty_confidence_level : float, optional
-        Confidence probability used for propagated EOS intervals.
+        Confidence probability for propagated intervals.
     uncertainty_samples : int, optional
-        Number of correlated EOS parameter samples used by Monte Carlo
-        propagation.
+        Number of correlated EOS samples for Monte Carlo propagation.
     uncertainty_seed : int or None, optional
-        Random seed used by Monte Carlo propagation.
+        Random seed for Monte Carlo propagation.
     uncertainty_minimum_success_fraction : float, optional
-        Minimum accepted fraction of physical Monte Carlo EOS states.
+        Minimum accepted fraction of physical Monte Carlo states.
     extrapolation_policy : {"warn", "fail", "allow"}, optional
-        Policy applied when an equilibrium volume is outside the sampled
-        volume interval.
+        Policy for equilibrium volumes outside the sampled volume interval.
     fit_failure_policy : {"continue", "stop", "raise"}, optional
-        Policy applied when a local fit fails.
+        Policy for failed local minimizations.
     fit_quality_policy : {"warn", "stop"}, optional
-        Policy applied when a local fit is successful but poor.
+        Policy for successful but poor-quality local fits.
     max_consecutive_failures : int, optional
-        Maximum number of consecutive local fit failures before a workflow
-        stops when the failure policy is ``"stop"``.
+        Failure threshold used when ``fit_failure_policy="stop"``.
     calculate_gruneisen : bool, optional
-        If ``True``, calculate the thermodynamic Grüneisen parameter from
+        Calculate the macroscopic thermodynamic Gruneisen parameter from
         ``alpha_V K_T V / C_V``.
     calculate_mode_gruneisen : bool, optional
-        If ``True`` and the frequency scheme is selected, calculate
-        mode-resolved and heat-capacity-weighted Grüneisen parameters.
+        Calculate mode-resolved and heat-capacity-weighted Gruneisen quantities
+        when the frequency scheme and continuity contract permit them.
     thermal_expansion_method : {"mixed_derivative", "mode_gruneisen", "numerical"}, optional
-        Method used to calculate the volumetric thermal-expansion coefficient.
-        The mixed derivative of the fitted free-energy surface is the default.
-        The mode-Grüneisen method is available only for the frequency scheme,
-        while the numerical volume derivative is retained as a fallback.
+        Primary volumetric thermal-expansion method. Mixed free-energy derivatives
+        are the default; mode Gruneisen is restricted to compatible frequency-QHA
+        calculations; numerical volume differentiation remains available as a
+        fallback/reference.
     gruneisen_allow_nonpositive : bool, optional
-        If ``True``, non-positive modes are excluded from mode averages rather
-        than invalidating the full calculation.
+        Exclude non-positive modes from mode averages instead of invalidating the
+        complete average.
     gruneisen_min_cv_fraction : float, optional
         Minimum fraction of the Dulong-Petit heat capacity required before the
-        macroscopic ``alpha_V K_T V / C_V`` ratio is considered resolved.
+        macroscopic Gruneisen ratio is considered resolved.
     metadata : dict, optional
-        Additional caller-defined options.
+        Additional caller-defined workflow metadata.
     """
 
     temperature_min: float = 298.15
@@ -535,7 +539,14 @@ class QHAFailedPoint:
 
 @dataclass(slots=True)
 class QHASampledThermodynamicResult(HarmonicThermodynamicResult):
-    """Harmonic sampled-volume surface with an optional acoustic component."""
+    """Harmonic thermodynamic surface evaluated at the sampled QHA volumes.
+
+    The inherited arrays use the native sampled temperature-volume grid rather than
+    the final pressure-temperature equilibrium grid. ``kieffer_contribution`` is
+    retained separately when the three additive acoustic branches are enabled, even
+    though its energy, entropy, and heat-capacity contributions are also included in
+    the corresponding total sampled arrays.
+    """
 
     kieffer_contribution: KiefferThermodynamicContribution | None = None
 
@@ -641,6 +652,20 @@ class QHAResult:
         Whether the workflow reached the end of the requested grid.
     metadata : dict, optional
         Additional module-specific metadata.
+
+    Notes
+    -----
+    Scalar equilibrium properties are stored on the pressure-temperature workflow
+    grid with shape ``(nT, nP)`` unless a field documents another shape explicitly.
+    ``volume`` and ``static_energy`` retain the sampled input states, whereas
+    ``equilibrium_volume`` contains the free-energy minima. Mode-resolved
+    ``mode_gruneisen`` remains on the sampled volume axis; it is not a
+    pressure-temperature scalar field. Energies, pressure, and lengths follow the
+    units recorded in ``metadata["units"]``.
+
+    Kieffer acoustic thermodynamics, when present, is additive. The three continuum
+    branches supplement the primitive Gamma phonons and are never interpreted as
+    replacement oscillators for stored phonon modes.
     """
 
     jobname: str = "Unknown"

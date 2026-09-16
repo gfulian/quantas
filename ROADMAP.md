@@ -2,12 +2,30 @@
 
 ## Current pre-RC development
 
-The ``2.0.0b10`` Kieffer, CRYSTAL phonon-continuity, and generalized QSA
-pressure/provenance tranche has been merged into ``dev/refactor`` with the CI
-matrix green.  Development has moved to ``2.0.0b11`` on ``dev/energyeos``.
+The standalone Energy EOS work completed the ``2.0.0b11`` scientific tranche.
+Development is now on ``2.0.0b12`` in ``dev/prerelease-hardening``.  This branch
+adds no new scientific workflow: it is closing architecture, documentation,
+validation, packaging, and release-readiness gaps before the next pre-release
+checkpoint.
 
-The standalone Energy EOS workflow is now functionally complete on
-``dev/energyeos``.  The b11 tranche has:
+The b12 hardening tranche has:
+
+- separated documented EOS request errors from unexpected failures;
+- unified energy-derived pressure assignment and provenance across Kieffer and
+  thermoelastic workflows;
+- clarified CRYSTAL finite-prestress conversion versus the Wallace QSA
+  finite-strain term;
+- completed the public docstring audit and active-object cleanup;
+- normalized citation/bibliography handling and simplified documentation
+  information ownership;
+- made the validation record explicit about completed and work-in-progress
+  scopes;
+- prepared synchronized release metadata and final distribution checks.
+
+VASP/Phonopy cleanup and common MgO cross-backend characterization are planned
+for a small b13 follow-up rather than being mixed into b12.
+
+The completed b11 Energy EOS tranche:
 
 - completed parity between the registered P(V) families and their integrated
   E(V) forms where scientifically defined, including modified Tait;
@@ -35,8 +53,8 @@ The standalone Energy EOS workflow is now functionally complete on
 - kept QHA and Thermoelasticity coupled to the shared numerical Energy EOS
   service rather than to the standalone workflow layer.
 
-The remaining b11 decisions are deliberately narrow: complete the combined EOS
-validation/manual pass, decide the release timing of VASP Energy EOS ingestion,
+The remaining pre-RC decisions are deliberately narrow: complete the final
+release-readiness gate, keep unfinished validation scopes labelled explicitly,
 and freeze the public API and native archive contracts before ``2.0.0rc1``.
 
 ## Before 2.0.0rc1

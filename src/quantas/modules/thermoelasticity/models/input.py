@@ -23,8 +23,10 @@ class ElasticVolumePoint:
     source : str or Path
         Source CRYSTAL output file.
     pressure : float
-        Pressure used by CRYSTAL for the hydrostatic pre-stress correction, in
-        GPa.
+        Hydrostatic pressure associated with the finite-prestress elastic state,
+        in GPa and positive on compression.  Depending on input provenance, the
+        pressure may be supplied by the electronic-structure backend or resolved
+        by Quantas from stress data, explicit values, or a static E(V) relation.
     stress_pressure : float
         Pressure calculated from the final unstrained stress tensor, in GPa.
         ``NaN`` records that the backend did not provide this diagnostic.
@@ -35,13 +37,16 @@ class ElasticVolumePoint:
     energy : float
         Static DFT energy in hartree.
     stiffness : array_like
-        Symmetric ``(6, 6)`` Wallace stiffness matrix in GPa.
+        Symmetric ``(6, 6)`` finite-pressure stress--strain stiffness matrix in
+        GPa, expressed in Quantas Voigt order.
     lattice : array_like
         Final primitive direct-lattice vectors, stored by rows in angstrom.
     prestress_applied : bool, optional
-        Whether the stored stiffness includes the hydrostatic pre-stress terms
-        required by QSA.  The correction may have been applied by CRYSTAL or
-        by Quantas during input generation.
+        Whether the stored stiffness has already been converted to the
+        finite-pressure stress--strain coefficients required by QSA.  For
+        CRYSTAL data this may be supplied directly by ``PRESSURE``/``PRESSEOS``
+        or obtained exactly once from the raw energy--strain tensor during
+        Quantas input generation.  QSA does not apply this conversion again.
     metadata : dict, optional
         Frame-normalization diagnostics and source provenance.
 
@@ -94,7 +99,13 @@ class ElasticVolumePoint:
         self.metadata = dict(self.metadata)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a recursively serializable point mapping."""
+        """Return a recursively serializable point mapping.
+
+        Returns
+        -------
+        dict[str, Any]
+            A recursively serializable point mapping.
+        """
         return {
             "source": str(self.source),
             "pressure": float(self.pressure),
@@ -111,7 +122,7 @@ class ElasticVolumePoint:
 
 @dataclass(slots=True)
 class ElasticVolumeSeries:
-    """Volume-dependent second-order elastic data in a common CRYSTAL frame.
+    """Volume-dependent finite-pressure elastic data in one Cartesian frame.
 
     Parameters
     ----------
@@ -167,7 +178,8 @@ class ElasticVolumeSeries:
             )
         if not all(point.prestress_applied for point in self.points):
             raise ValueError(
-                "all elastic points must include hydrostatic Wallace pre-stress terms"
+                "all elastic points must contain finite-pressure incremental "
+                "stress-strain coefficients"
             )
 
     @property
@@ -182,7 +194,7 @@ class ElasticVolumeSeries:
 
     @property
     def pressures(self) -> FloatArray:
-        """Return CRYSTAL elastic pre-stress pressures in GPa."""
+        """Return sampled hydrostatic pressures in GPa, positive on compression."""
         return np.asarray([point.pressure for point in self.points], dtype=np.float64)
 
     @property

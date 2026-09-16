@@ -183,7 +183,7 @@ both quantities at the interface boundary:
 The generic :class:`quantas.interfaces.crystal.output.CrystalOutputParser`
 resolves these values state by state and does not attach a correction printed
 for one SCF calculation to a later state.  The corrected total printed by the
-backend is authoritative; Quantas does not reconstruct it by summing empirical
+backend is authoritative; the interface does not reconstruct it by summing empirical
 components.  Correction labels and the difference between total and SCF
 energy are retained as provenance.
 
@@ -260,7 +260,8 @@ Pressure selection is explicit:
    pressure source.
 
 By default, raw CRYSTAL energy--strain tensors are converted once with the
-finite-pressure transformation implemented by CRYSTAL itself [Erba2014]_:
+finite-pressure transformation implemented by CRYSTAL itself
+[#erba_mahmoud_belmonte_dovesi_2014]_:
 
 .. math::
 
@@ -276,8 +277,6 @@ correction are retained in each state. Passing a non-auto pressure policy for
 a tensor already corrected by CRYSTAL is an error, preventing an accidental
 second correction.
 
-.. [Erba2014] A. Erba, A. Mahmoud, D. Belmonte, and R. Dovesi,
-   *J. Chem. Phys.* **140**, 124703 (2014), doi:10.1063/1.4869144.
 
 .. code-block:: python
 
@@ -338,11 +337,16 @@ energy-volume arrays already present in the phonon input:
        --interface crystal --pressure-source energy-polynomial --degree 3 \
        -o qha-kieffer.yaml
 
-The reusable fit operations live in :mod:`quantas.core.physics.eos`; pressure
-assignment and hydrostatic correction remain separate operations in
-:mod:`quantas.core.physics.elasticity`. This boundary lets tests verify that
-``P(V)`` is attached to an unmodified raw tensor before the tensor is corrected
-exactly once.
+The reusable fit operations live in :mod:`quantas.core.physics.eos`.  The
+backend-neutral
+:func:`quantas.core.physics.elasticity.resolve_energy_derived_pressures`
+service combines the selected E(V) fit with explicit volume matching and
+pressure assignment while leaving the raw stiffness coefficients unchanged.
+Both Kieffer enrichment and thermoelastic input generation use this same
+pressure-resolution path.  The subsequent hydrostatic tensor correction
+remains interface-specific, so CRYSTAL conventions do not leak into the shared
+core.  This boundary lets tests verify that ``P(V)`` is attached to an
+unmodified raw tensor before the tensor is corrected exactly once.
 
 The destination defaults to ``<input-stem>-kieffer.yaml`` and must differ from
 the source path. An existing Kieffer block is never replaced silently.  The
@@ -413,3 +417,6 @@ Adding support for a new code
 
 Do not create a large universal parser hierarchy before the external formats
 have demonstrated a stable common structure.
+
+
+.. include:: ../_generated/references/developer_interfaces.inc

@@ -267,7 +267,7 @@ def test_qha_run_activates_embedded_kieffer_and_disables_modal_default(
     }
     report = filename.with_suffix(".log").read_text(encoding="utf-8")
     assert "Mode-Gruneisen analysis disabled" in report
-    assert "Susan Werner Kieffer" in report
+    assert "S. W. Kieffer" in report
 
 
 @pytest.mark.parametrize(

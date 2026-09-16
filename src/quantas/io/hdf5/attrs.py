@@ -93,7 +93,8 @@ def decode_optional_text(value: Any) -> str | None:
     Returns
     -------
     str or None
-        Decoded text, or ``None`` for missing/placeholder values.
+        Decoded text, or ``None`` for missing values and the schema placeholders
+        ``""``, ``"none"``, and ``"unknown"``.
     """
     if value is None:
         return None
@@ -102,17 +103,24 @@ def decode_optional_text(value: Any) -> str | None:
 
 
 def datetime_to_string(value: datetime | str | None) -> str:
-    """Return a UTC-aware ISO-8601 timestamp string.
+    """Return timestamp text suitable for native Quantas metadata.
 
     Parameters
     ----------
     value : datetime, str, or None
-        Timestamp to serialize.
+        Timestamp to serialize. ``None`` generates the current UTC timestamp.
+        Datetime instances and preformatted strings are otherwise preserved
+        semantically rather than being coerced to a different timezone.
 
     Returns
     -------
     str
-        ISO-8601 timestamp string.
+        ISO-8601 text for datetime inputs, or the supplied string unchanged.
+
+    Notes
+    -----
+    Callers that require an explicitly UTC-aware stored timestamp should supply
+    an aware datetime. Only the ``None`` case creates one automatically.
     """
     if value is None:
         return datetime.now(timezone.utc).isoformat()

@@ -280,6 +280,16 @@ class PlotInventory:
     def property_by_key(self, key: str) -> PlotPropertyDescriptor:
         """Return one property descriptor by stable key.
 
+        Parameters
+        ----------
+        key : str
+            Machine-readable property key advertised by this inventory.
+
+        Returns
+        -------
+        PlotPropertyDescriptor
+            Matching property descriptor.
+
         Raises
         ------
         KeyError
@@ -291,7 +301,23 @@ class PlotInventory:
         raise KeyError(f"unknown plot property {key!r} for module {self.module!r}")
 
     def representation_by_key(self, key: str) -> PlotRepresentationDescriptor:
-        """Return one representation descriptor by stable key."""
+        """Return one representation descriptor by stable key.
+
+        Parameters
+        ----------
+        key : str
+            Machine-readable representation key advertised by this inventory.
+
+        Returns
+        -------
+        PlotRepresentationDescriptor
+            Matching representation descriptor.
+
+        Raises
+        ------
+        KeyError
+            If the key is not present in this inventory.
+        """
         for item in self.representations:
             if item.key == key:
                 return item
@@ -300,7 +326,23 @@ class PlotInventory:
         )
 
     def context_by_key(self, key: str) -> PlotContextDescriptor:
-        """Return one context descriptor by stable key."""
+        """Return one context descriptor by stable key.
+
+        Parameters
+        ----------
+        key : str
+            Machine-readable context key advertised by this inventory.
+
+        Returns
+        -------
+        PlotContextDescriptor
+            Matching scientific context descriptor.
+
+        Raises
+        ------
+        KeyError
+            If the key is not present in this inventory.
+        """
         for item in self.contexts:
             if item.key == key:
                 return item

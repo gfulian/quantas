@@ -120,7 +120,13 @@ class ThermoelasticityCalculator(BasicCalculator):
         )
 
     def prepare(self) -> None:
-        """Validate the static and QHA fields required by calibration."""
+        """Validate the static and QHA fields required by calibration.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
+        """
         super().prepare()
         if not self.context.has_complete_quasistatic_inputs:
             missing = ", ".join(self.context.missing_qha_fields)

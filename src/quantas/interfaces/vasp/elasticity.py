@@ -38,7 +38,19 @@ class _ElasticityData(TypedDict):
 
 
 class VASPElasticityReader(BasicReader[None]):
-    """Read a stiffness matrix from a VASP OUTCAR file."""
+    """Read second-order elastic constants from a VASP OUTCAR.
+
+    The reader prefers the relaxed-ion ``TOTAL ELASTIC MODULI`` table when it is
+    available after the clamped-ion section, converts VASP's kbar values to GPa,
+    and reorders shear components to the Voigt convention used by Quantas.
+    Density is reconstructed from ``POMASS``, ``ions per type``, and the final cell
+    volume when all three are available; missing density metadata does not
+    invalidate an otherwise usable stiffness tensor.
+
+    Parameters
+    ----------
+    filename : str or pathlib.Path or None, optional
+        OUTCAR file to load immediately."""
 
     def __init__(self, filename: str | Path | None = None) -> None:
         super().__init__()
@@ -153,18 +165,38 @@ class VASPElasticityReader(BasicReader[None]):
         return float(density) if np.isfinite(density) and density > 0.0 else 0.0
 
     def is_elasticity_output(self, filename: str | Path) -> bool:
-        """Return whether a VASP OUTCAR contains an elastic-moduli section."""
+        """Return whether an OUTCAR contains VASP elastic moduli.
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            VASP OUTCAR file.
+
+        Returns
+        -------
+        bool
+            ``True`` when the clamped-ion elastic-moduli header is present."""
         with Path(filename).open("r", encoding="utf-8") as stream:
             return any(_CLAMPED_ELASTIC_MODULI in line for line in stream)
 
     def elasticity_start_line(self, filename: str | Path) -> int:
-        """Return the first data row, preferring relaxed-ion elastic moduli.
+        """Return the first row of the preferred VASP stiffness table.
+
+        Parameters
+        ----------
+        filename : str or pathlib.Path
+            VASP OUTCAR file.
+
+        Returns
+        -------
+        int
+            Zero-based line index of the first elastic-data row. Relaxed-ion elastic
+            moduli are preferred when both relaxed- and clamped-ion tables are present.
 
         Raises
         ------
         ValueError
-            If no elastic-moduli section is found.
-        """
+            If no elastic-moduli section is present."""
         clamped_line: int | None = None
         relaxed_line: int | None = None
         with Path(filename).open("r", encoding="utf-8") as stream:

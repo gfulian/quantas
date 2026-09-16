@@ -143,7 +143,33 @@ class ParameterDefinition:
         description: str = "",
         metadata: Mapping[str, Any] | None = None,
     ) -> ParameterDefinitionT:
-        """Construct a free parameter definition."""
+        """Construct a parameter optimized directly by the solver.
+
+        Parameters
+        ----------
+        name : str
+            Stable parameter identifier.
+        initial_value : float
+            Finite starting value for optimization.
+        lower_bound, upper_bound : float, optional
+            Admissible optimization interval.
+        unit : str or None, optional
+            Reporting unit.
+        description : str, optional
+            Technical description of the parameter.
+        metadata : mapping or None, optional
+            Additional passive metadata.
+
+        Returns
+        -------
+        ParameterDefinition
+            Validated definition with state :attr:`ParameterState.FREE`.
+
+        Raises
+        ------
+        ValueError
+            If the name, initial value, or bounds violate the parameter contract.
+        """
         return cls(
             name=name,
             state=ParameterState.FREE,
@@ -167,7 +193,33 @@ class ParameterDefinition:
         description: str = "",
         metadata: Mapping[str, Any] | None = None,
     ) -> ParameterDefinitionT:
-        """Construct a fixed parameter definition."""
+        """Construct a parameter held fixed during optimization.
+
+        Parameters
+        ----------
+        name : str
+            Stable parameter identifier.
+        value : float
+            Finite constant physical value.
+        lower_bound, upper_bound : float, optional
+            Admissible interval used to validate ``value``.
+        unit : str or None, optional
+            Reporting unit.
+        description : str, optional
+            Technical description of the parameter.
+        metadata : mapping or None, optional
+            Additional passive metadata.
+
+        Returns
+        -------
+        ParameterDefinition
+            Validated definition with state :attr:`ParameterState.FIXED`.
+
+        Raises
+        ------
+        ValueError
+            If the name, value, or bounds violate the parameter contract.
+        """
         return cls(
             name=name,
             state=ParameterState.FIXED,
@@ -191,7 +243,33 @@ class ParameterDefinition:
         description: str = "",
         metadata: Mapping[str, Any] | None = None,
     ) -> ParameterDefinitionT:
-        """Construct an implied parameter definition."""
+        """Construct a model-required parameter resolved from conventions.
+
+        Parameters
+        ----------
+        name : str
+            Stable parameter identifier.
+        value : float or None, optional
+            Optional constant fallback when no resolver supplies the value.
+        lower_bound, upper_bound : float, optional
+            Admissible interval for the resolved value.
+        unit : str or None, optional
+            Reporting unit.
+        description : str, optional
+            Technical description of the parameter.
+        metadata : mapping or None, optional
+            Additional passive metadata.
+
+        Returns
+        -------
+        ParameterDefinition
+            Validated definition with state :attr:`ParameterState.IMPLIED`.
+
+        Raises
+        ------
+        ValueError
+            If the name, optional value, or bounds violate the parameter contract.
+        """
         return cls(
             name=name,
             state=ParameterState.IMPLIED,
@@ -215,7 +293,33 @@ class ParameterDefinition:
         description: str = "",
         metadata: Mapping[str, Any] | None = None,
     ) -> ParameterDefinitionT:
-        """Construct a derived parameter definition."""
+        """Construct a reported parameter not passed to the model equation.
+
+        Parameters
+        ----------
+        name : str
+            Stable parameter identifier.
+        value : float or None, optional
+            Optional constant fallback for the derived value.
+        lower_bound, upper_bound : float, optional
+            Admissible interval for the reported value.
+        unit : str or None, optional
+            Reporting unit.
+        description : str, optional
+            Technical description of the parameter.
+        metadata : mapping or None, optional
+            Additional passive metadata.
+
+        Returns
+        -------
+        ParameterDefinition
+            Validated definition with state :attr:`ParameterState.DERIVED`.
+
+        Raises
+        ------
+        ValueError
+            If the name, optional value, or bounds violate the parameter contract.
+        """
         return cls(
             name=name,
             state=ParameterState.DERIVED,
@@ -228,7 +332,14 @@ class ParameterDefinition:
         )
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serializable parameter definition."""
+        """Return a serializable parameter definition.
+
+        Returns
+        -------
+        dict
+            Mapping containing parameter state, initial/resolved values, bounds,
+            unit, description, and metadata.
+        """
         return {
             "name": self.name,
             "state": self.state.value,
@@ -281,14 +392,27 @@ class ParameterSet:
         object.__setattr__(self, "units", units)
 
     def as_mapping(self) -> dict[str, float]:
-        """Return resolved values keyed by parameter name."""
+        """Return resolved parameter values keyed by name.
+
+        Returns
+        -------
+        dict
+            Mapping from each parameter name to its resolved floating-point value.
+        """
         return {
             name: float(value)
             for name, value in zip(self.names, self.values, strict=True)
         }
 
     def model_values(self) -> NDArray[np.float64]:
-        """Return parameters required by the model, excluding derived values."""
+        """Return parameters required directly by the physical model.
+
+        Returns
+        -------
+        ndarray
+            One-dimensional ``float64`` array in parameter order, excluding values
+            whose state is :attr:`ParameterState.DERIVED`.
+        """
         return np.asarray(
             [
                 value
@@ -299,7 +423,14 @@ class ParameterSet:
         )
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serializable resolved parameter set."""
+        """Return a serializable resolved parameter set.
+
+        Returns
+        -------
+        dict
+            Mapping containing parameter names, values, states, and units in their
+            canonical order.
+        """
         return {
             "names": list(self.names),
             "values": self.values.tolist(),
@@ -390,14 +521,26 @@ class ParameterMap:
         return len(self._free_indices)
 
     def initial_free_values(self) -> NDArray[np.float64]:
-        """Return the optimizer initial vector."""
+        """Return optimizer initial values for free parameters.
+
+        Returns
+        -------
+        ndarray
+            One-dimensional ``float64`` vector in ``free_names`` order.
+        """
         return np.asarray(
             [self._definitions[index].initial_value for index in self._free_indices],
             dtype=np.float64,
         )
 
     def free_bounds(self) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
-        """Return lower and upper bounds in optimizer order."""
+        """Return optimizer bounds for free parameters.
+
+        Returns
+        -------
+        tuple of ndarray
+            Lower and upper ``float64`` bound vectors in ``free_names`` order.
+        """
         lower = np.asarray(
             [self._definitions[index].lower_bound for index in self._free_indices],
             dtype=np.float64,
@@ -485,7 +628,26 @@ class ParameterMap:
     def reduce(
         self, parameters: Mapping[str, float] | ArrayLike
     ) -> NDArray[np.float64]:
-        """Extract optimizer values from a complete parameter representation."""
+        """Extract the free optimizer vector from complete parameters.
+
+        Parameters
+        ----------
+        parameters : mapping or array-like
+            Complete physical representation. A mapping must contain every name in
+            :attr:`free_names`; an array must follow complete reporting order and have
+            length :attr:`n_parameters`.
+
+        Returns
+        -------
+        ndarray
+            Finite ``float64`` vector in free-parameter solver order.
+
+        Raises
+        ------
+        ValueError
+            If required names are missing, the complete vector has the wrong shape,
+            or extracted free values are non-finite.
+        """
         if isinstance(parameters, Mapping):
             try:
                 values = [float(parameters[name]) for name in self.free_names]
@@ -511,11 +673,31 @@ class ParameterMap:
         *,
         relative_step: float | None = None,
     ) -> NDArray[np.float64]:
-        """Return the Jacobian of complete values with respect to free values.
+        """Return the Jacobian of complete parameters with respect to free values.
 
-        Free rows are set analytically to the identity and fixed rows to zero.
-        Implied and derived rows are evaluated with bound-aware numerical
-        differences through the resolver.
+        Free rows are inserted analytically as the identity and fixed rows as zero.
+        Implied and derived rows are evaluated through the resolver using bound-aware
+        finite differences.
+
+        Parameters
+        ----------
+        free_parameters : array-like
+            Free parameter values in :attr:`free_names` order.
+        relative_step : float or None, optional
+            Relative finite-difference scale. ``None`` uses the cube root of machine
+            epsilon for ``float64``.
+
+        Returns
+        -------
+        ndarray
+            Matrix with shape ``(n_parameters, n_free)`` mapping local free-parameter
+            perturbations to complete physical-parameter perturbations.
+
+        Raises
+        ------
+        ValueError
+            If the free vector cannot be resolved, ``relative_step`` is invalid, or a
+            parameter cannot be perturbed inside its declared bounds.
         """
         free = np.asarray(free_parameters, dtype=np.float64)
         base = self.expand(free).values
@@ -568,7 +750,28 @@ class ParameterMap:
         free_covariance: ArrayLike,
         free_parameters: ArrayLike,
     ) -> NDArray[np.float64]:
-        """Propagate optimizer covariance to complete physical parameters."""
+        """Propagate free-parameter covariance to complete physical parameters.
+
+        Parameters
+        ----------
+        free_covariance : array-like
+            Finite covariance matrix with shape ``(n_free, n_free)``.
+        free_parameters : array-like
+            Free parameter values at which the resolved-parameter Jacobian is
+            evaluated.
+
+        Returns
+        -------
+        ndarray
+            Symmetrized complete covariance with shape
+            ``(n_parameters, n_parameters)``.
+
+        Raises
+        ------
+        ValueError
+            If the covariance has the wrong shape, contains non-finite values, or the
+            resolved Jacobian cannot be evaluated.
+        """
         covariance = np.asarray(free_covariance, dtype=np.float64)
         expected = (self.n_free, self.n_free)
         if covariance.shape != expected:
@@ -580,7 +783,14 @@ class ParameterMap:
         return np.asarray(0.5 * (propagated + propagated.T), dtype=np.float64)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serializable mapping definition."""
+        """Return a serializable parameter-map definition.
+
+        Returns
+        -------
+        dict
+            Mapping containing all serialized parameter definitions and the ordered
+            list of free parameter names.
+        """
         return {
             "definitions": [definition.as_dict() for definition in self._definitions],
             "free_names": list(self.free_names),

@@ -22,7 +22,23 @@ from quantas.modules.thermoelasticity.io.hdf5_payload import (
 
 
 def read_thermoelastic_hdf5(filename: str | Path) -> ResultData:
-    """Read a native thermoelasticity result file."""
+    """Read a native thermoelasticity result file.
+
+    Parameters
+    ----------
+    filename : str | Path
+        Filesystem path read from or written by the operation.
+
+    Returns
+    -------
+    ResultData
+        Parsed a native thermoelasticity result file.
+
+    Raises
+    ------
+    ValueError
+        If the supplied data or workflow state violates the documented contract.
+    """
     path = Path(filename)
     with h5py.File(path, "r") as h5:
         metadata = read_result_metadata(h5)

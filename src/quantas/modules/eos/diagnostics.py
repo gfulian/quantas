@@ -81,7 +81,13 @@ class EOSDiagnosticResult:
         return int(next(iter(self.columns.values())).size)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready representation."""
+        """Return a serialization-ready representation.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready representation.
+        """
         return {
             "record_id": self.record_id,
             "slot": self.slot.as_dict(),
@@ -110,7 +116,27 @@ class EOSDiagnostics:
         slot: str | EOSResultSlot | None = None,
         record_id: int | None = None,
     ) -> EOSDiagnostics:
-        """Construct diagnostics from an explicit or accepted archive record."""
+        """Construct diagnostics from an explicit or accepted archive record.
+
+        Parameters
+        ----------
+        path : str | Path
+            Filesystem path read from or written by the operation.
+        slot : str | EOSResultSlot | None
+            Scientific result slot addressed by the operation.
+        record_id : int | None
+            Stable identifier of an immutable EOS fit record.
+
+        Returns
+        -------
+        EOSDiagnostics
+            Result described by the operation.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
+        """
         with EOSArchive(path) as archive:
             if record_id is not None:
                 record = archive.record(int(record_id))
@@ -140,7 +166,18 @@ class EOSDiagnostics:
         return cls(record, dataset)
 
     def build(self, *, include_normalized_pressure: bool = True) -> EOSDiagnosticResult:
-        """Return residual diagnostics and optional normalized-pressure data."""
+        """Return residual diagnostics and optional normalized-pressure data.
+
+        Parameters
+        ----------
+        include_normalized_pressure : bool
+            Whether to include normalized pressure in the result.
+
+        Returns
+        -------
+        EOSDiagnosticResult
+            Residual diagnostics and optional normalized-pressure data.
+        """
         request = self.record.request
         result = self.record.result
         mask = self.dataset.selection_mask(request.mask)

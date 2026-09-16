@@ -64,6 +64,7 @@ for directory in src tests tools examples docs/tools; do
 done
 
 python tools/update_examples_manifest.py --check
+python tools/check_release_identity.py
 
 ruff check src tests tools docs/tools
 mypy

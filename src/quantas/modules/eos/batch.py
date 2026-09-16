@@ -17,8 +17,11 @@ from pathlib import Path
 from typing import Any
 
 from quantas.core.events import Event, EventLevel, EventRecord, NullObserver
-from quantas.core.math.fitting import FitResult, FitStatus
 
+from ._fit_failures import (
+    EXPECTED_EOS_FIT_EXCEPTIONS,
+    eos_invalid_request_result,
+)
 from .api import EOSFitter
 from .archive import EOSArchive
 from .history import EOSResultSlot
@@ -80,7 +83,13 @@ class EOSBatchJob:
         return EOSResultSlot.from_request(self.request)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready job description."""
+        """Return a serialization-ready job description.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready job description.
+        """
         return {
             "job_id": self.job_id,
             "slot": self.slot.as_dict(),
@@ -125,7 +134,13 @@ class EOSBatchPlan:
             accepted.add(key)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a serialization-ready batch manifest."""
+        """Return a serialization-ready batch manifest.
+
+        Returns
+        -------
+        dict[str, Any]
+            A serialization-ready batch manifest.
+        """
         return {
             "failure_policy": self.failure_policy.value,
             "metadata": dict(self.metadata),
@@ -221,6 +236,11 @@ class EOSBatchWorkflow:
         -------
         EOSBatchResult
             Dataset, records, archive path, and meaningful workflow events.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         self._events = []
         dataset = self._read_source(
@@ -338,24 +358,11 @@ class EOSBatchWorkflow:
                 )
 
     def _execute_job(self, dataset: EOSDataset, request: EOSFitRequest) -> EOSFitResult:
+        """Execute one fit while preserving workflow failure semantics."""
         try:
             return self.fitter.fit(dataset, request)
-        except Exception as exc:
-            fit = FitResult.failed(
-                str(exc),
-                status=FitStatus.INVALID_INPUT,
-                method=(
-                    None
-                    if request.options.solver_options is None
-                    else request.options.solver_options.method
-                ),
-            )
-            return EOSFitResult(
-                request=request,
-                fit=fit,
-                warnings=[str(exc)],
-                metadata={"workflow_exception": type(exc).__name__},
-            )
+        except EXPECTED_EOS_FIT_EXCEPTIONS as exc:
+            return eos_invalid_request_result(request, exc)
 
     def _emit(
         self,
@@ -383,7 +390,24 @@ def run_eos_batch(
     archive_path: str | Path,
     **kwargs: Any,
 ) -> EOSBatchResult:
-    """Execute one EOS batch using the default workflow service."""
+    """Execute one EOS batch using the default workflow service.
+
+    Parameters
+    ----------
+    source : str | Path | EOSDataset
+        Normalized scientific source object consumed by the operation.
+    plan : EOSBatchPlan
+        Validated EOS batch plan defining the requested jobs.
+    archive_path : str | Path
+        Path to the EOS or thermoelastic HDF5 archive.
+    kwargs : Any
+        Additional keyword arguments forwarded to the batch execution call.
+
+    Returns
+    -------
+    EOSBatchResult
+        Result described by the operation.
+    """
     return EOSBatchWorkflow().run(source, plan, archive_path, **kwargs)
 
 

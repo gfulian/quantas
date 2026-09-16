@@ -3,9 +3,8 @@
 Introduction
 ============
 
-This section introduces Quantas as a scientific project, summarizes its current
-capabilities, explains the transition from the historical 0.9 series, and gives
-the citation guidance required for published work.
+Start here for the scientific scope of Quantas, the capabilities available in
+the 2.0 series, and the main differences from the historical program.
 
 - :doc:`overview`
 - :doc:`capabilities`

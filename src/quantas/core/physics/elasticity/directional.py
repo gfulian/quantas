@@ -274,7 +274,29 @@ def sample_young_modulus(
     phi: Sequence[float],
     progress_callback: ProgressCallback | None = None,
 ) -> np.ndarray:
-    """Sample Young's modulus on paired angular arrays in one batch."""
+    """Sample directional Young's modulus on paired angles.
+
+    Parameters
+    ----------
+    tensor : ElasticTensor
+        Elastic stiffness tensor using Quantas GPa conventions.
+    theta, phi : sequence of float
+        Paired polar and azimuthal angles in radians. Arrays must have identical
+        shape and are traversed element by element.
+    progress_callback : callable or None, optional
+        Legacy callback receiving ``(current, total)`` once per sampled direction.
+
+    Returns
+    -------
+    ndarray
+        Young's modulus in GPa with the same flattened traversal shape as the
+        paired angular inputs.
+
+    Raises
+    ------
+    ValueError
+        If ``theta`` and ``phi`` have incompatible shapes.
+    """
     theta_array, phi_array = _paired_angles(theta, phi)
     field = sample_elastic_directional_field(
         tensor,
@@ -293,7 +315,29 @@ def sample_linear_compressibility(
     phi: Sequence[float],
     progress_callback: ProgressCallback | None = None,
 ) -> np.ndarray:
-    """Sample signed linear compressibility in one batch."""
+    """Sample signed linear compressibility on paired angles.
+
+    Parameters
+    ----------
+    tensor : ElasticTensor
+        Elastic stiffness tensor using Quantas GPa conventions.
+    theta, phi : sequence of float
+        Paired polar and azimuthal angles in radians with identical shape.
+    progress_callback : callable or None, optional
+        Legacy callback receiving ``(current, total)`` once per sampled direction.
+
+    Returns
+    -------
+    ndarray
+        Array with shape ``(n_points, 2)`` in ``TPa^-1``. Column 0 stores the
+        positive compressibility part and column 1 the magnitude of negative
+        linear compressibility.
+
+    Raises
+    ------
+    ValueError
+        If ``theta`` and ``phi`` have incompatible shapes.
+    """
     theta_array, phi_array = _paired_angles(theta, phi)
     field = sample_elastic_directional_field(
         tensor,
@@ -313,7 +357,28 @@ def sample_shear_modulus(
     phi: Sequence[float],
     progress_callback: ProgressCallback | None = None,
 ) -> np.ndarray:
-    """Sample exact transverse shear-modulus extrema in one batch."""
+    """Sample exact transverse shear-modulus extrema.
+
+    Parameters
+    ----------
+    tensor : ElasticTensor
+        Elastic stiffness tensor using Quantas GPa conventions.
+    theta, phi : sequence of float
+        Paired polar and azimuthal angles in radians with identical shape.
+    progress_callback : callable or None, optional
+        Legacy callback receiving ``(current, total)`` once per sampled direction.
+
+    Returns
+    -------
+    ndarray
+        Array with shape ``(n_points, 2)`` containing minimum and maximum
+        transverse shear moduli in GPa for each propagation direction.
+
+    Raises
+    ------
+    ValueError
+        If ``theta`` and ``phi`` have incompatible shapes.
+    """
     theta_array, phi_array = _paired_angles(theta, phi)
     field = sample_elastic_directional_field(
         tensor,
@@ -333,7 +398,29 @@ def sample_poisson_ratio(
     phi: Sequence[float],
     progress_callback: ProgressCallback | None = None,
 ) -> np.ndarray:
-    """Sample exact transverse Poisson-ratio extrema in one batch."""
+    """Sample exact transverse Poisson-ratio extrema.
+
+    Parameters
+    ----------
+    tensor : ElasticTensor
+        Elastic stiffness tensor.
+    theta, phi : sequence of float
+        Paired polar and azimuthal angles in radians with identical shape.
+    progress_callback : callable or None, optional
+        Legacy callback receiving ``(current, total)`` once per sampled direction.
+
+    Returns
+    -------
+    ndarray
+        Dimensionless array with shape ``(n_points, 3)``. Columns contain the
+        negative part of the minimum, the positive part of the minimum, and the
+        maximum Poisson ratio, matching the historical polar-plot contract.
+
+    Raises
+    ------
+    ValueError
+        If ``theta`` and ``phi`` have incompatible shapes.
+    """
     theta_array, phi_array = _paired_angles(theta, phi)
     field = sample_elastic_directional_field(
         tensor,

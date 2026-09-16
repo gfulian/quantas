@@ -123,7 +123,13 @@ class ThermoelasticFitQuality:
         self.thresholds = dict(self.thresholds)
 
     def as_dict(self) -> dict[str, Any]:
-        """Return a recursively serializable diagnostic mapping."""
+        """Return a recursively serializable diagnostic mapping.
+
+        Returns
+        -------
+        dict[str, Any]
+            A recursively serializable diagnostic mapping.
+        """
         return {
             "level": self.level,
             "issues": list(self.issues),
@@ -223,7 +229,9 @@ class ElasticComponentFit:
     entries : tuple of tuple
         Symmetry-equivalent ``(row, column, multiplier)`` entries.
     wallace_delta : float
-        Wallace hydrostatic-delta entry used by the model.
+        Voigt entry of the Eulerian finite-strain delta tensor used by the cold
+        constitutive model.  It is not a second prestress conversion of the
+        sampled stiffness values.
     volumes, pressures : ndarray
         Sampled primitive volumes and CRYSTAL pressures.
     observed, fitted, residuals, relative_residuals : ndarray

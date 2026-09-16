@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Passive helpers for solver failure analysis and optional debug traces.
+"""Backend-neutral helpers for solver failure analysis and optional debug traces.
 
 The numerical fitting services use this module to collect backend-neutral
 summaries without depending on terminal or GUI objects.  Detailed model-
@@ -12,7 +12,6 @@ are always retained.
 from __future__ import annotations
 
 from collections import deque
-from dataclasses import dataclass, field
 from typing import Any, Mapping, Sequence
 
 import numpy as np
@@ -123,7 +122,6 @@ def problem_summary(
     return payload
 
 
-@dataclass(slots=True)
 class ModelEvaluationRecorder:
     """Record compact nonlinear model-evaluation diagnostics.
 
@@ -140,22 +138,50 @@ class ModelEvaluationRecorder:
         evaluation.  The total backend evaluation count is never truncated.
     """
 
-    observed: np.ndarray
-    sigma: np.ndarray | None = None
-    detailed: bool = False
-    max_trace_length: int = _DEFAULT_TRACE_LENGTH
-    n_evaluations: int = 0
-    first_record: dict[str, Any] | None = None
-    last_record: dict[str, Any] | None = None
-    _recent: deque[dict[str, Any]] = field(init=False, repr=False)
+    __slots__ = (
+        "observed",
+        "sigma",
+        "detailed",
+        "max_trace_length",
+        "n_evaluations",
+        "first_record",
+        "last_record",
+        "_recent",
+    )
 
-    def __post_init__(self) -> None:
-        """Normalize arrays and initialize the bounded trace container."""
-        self.observed = np.asarray(self.observed, dtype=np.float64).copy()
-        if self.sigma is not None:
-            self.sigma = np.asarray(self.sigma, dtype=np.float64).copy()
-        self.max_trace_length = max(int(self.max_trace_length), 1)
-        self._recent = deque(maxlen=self.max_trace_length)
+    def __init__(
+        self,
+        observed: np.ndarray,
+        sigma: np.ndarray | None = None,
+        detailed: bool = False,
+        max_trace_length: int = _DEFAULT_TRACE_LENGTH,
+    ) -> None:
+        """Initialize a bounded recorder for model evaluations.
+
+        Parameters
+        ----------
+        observed : array-like
+            Dependent observations used by the objective.
+        sigma : array-like or None, optional
+            Standard uncertainties used to standardize residuals.
+        detailed : bool, optional
+            Retain a bounded trace of individual evaluations.
+        max_trace_length : int, optional
+            Number of most-recent evaluations retained in addition to the first
+            evaluation. The total backend evaluation count is never truncated.
+        """
+        self.observed = np.asarray(observed, dtype=np.float64).copy()
+        self.sigma = (
+            None
+            if sigma is None
+            else np.asarray(sigma, dtype=np.float64).copy()
+        )
+        self.detailed = bool(detailed)
+        self.max_trace_length = max(int(max_trace_length), 1)
+        self.n_evaluations = 0
+        self.first_record: dict[str, Any] | None = None
+        self.last_record: dict[str, Any] | None = None
+        self._recent: deque[dict[str, Any]] = deque(maxlen=self.max_trace_length)
 
     def evaluate(self, parameters: Sequence[float], fitted: Any) -> None:
         """Record one completed model evaluation.
@@ -194,7 +220,14 @@ class ModelEvaluationRecorder:
             self._recent.append(dict(record))
 
     def as_metadata(self) -> dict[str, Any]:
-        """Return a serialization-ready recorder summary."""
+        """Return a serialization-ready recorder summary.
+
+        Returns
+        -------
+        dict
+            Mapping containing evaluation counts, first/last evaluations, and the
+            optional bounded detailed trace.
+        """
         payload: dict[str, Any] = {
             "recorded_model_evaluations": self.n_evaluations,
             "first_evaluation": None

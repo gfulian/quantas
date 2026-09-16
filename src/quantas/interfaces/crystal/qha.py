@@ -2,6 +2,8 @@
 
 """Read CRYSTAL quasi-harmonic outputs and structural volume paths."""
 
+from __future__ import annotations
+
 import numpy as np
 
 from quantas.core.geometry import (
@@ -19,20 +21,25 @@ from quantas.models.structures import (
 
 
 class CrystalQHAReader(BasicReader):
-    """
-    Reader for CRYSTAL17 output file obtained via the QHA keyword.
+    """Read a native CRYSTAL quasi-harmonic calculation.
 
-    .. seealso:: CRYSTAL17 tutorial on QHA_ calculation.
+    The reader collects the volume-energy series, optimized structures, and
+    volume-resolved phonon frequencies printed by CRYSTAL's native QHA workflow.
+    Source supercells are reduced to a compact primitive structural path for
+    Quantas, while the original expansion matrix and reconstruction provenance are
+    retained.
 
-    .. _QHA: http://tutorials.crystalsolutions.eu/tutorial.html?td=Tutorial_QHA&tf=QHA
+    CRYSTAL follows supercell Gamma eigenmodes with volume but does not provide a
+    reliable primitive-cell q-point label for every stored mode block. The reader
+    therefore preserves equal-weight historical storage blocks while exposing
+    ``qcoords_fractional=None`` and explicit q-position provenance rather than
+    inventing physical q-point coordinates.
 
     Parameters
     ----------
-
-    crystal_output: str
-        Path to the CRYSTAL output file.
-
-    """
+    crystal_output : str or pathlib.Path or None, optional
+        CRYSTAL QHA output to load immediately. If ``None``, create an empty
+        reader and call :meth:`load` later."""
 
     _is_supercell = False
     _is_restarted = False
@@ -86,14 +93,19 @@ class CrystalQHAReader(BasicReader):
         }
 
     def load(self, file):
-        """
-        Read and store information from a CRYSTAL QHA output file.
+        """Read one native CRYSTAL QHA output into the reader state.
 
         Parameters
         ----------
         file : str or pathlib.Path
-            Path to the CRYSTAL QHA output file.
-        """
+            CRYSTAL QHA output file.
+
+        Notes
+        -----
+        The reader rejects restarted native-QHA outputs and requires at least four
+        volume states. Recognition and supported-workflow failures are stored in
+        ``error`` with ``completed=False``; structural inconsistencies that would make
+        primitive reconstruction ambiguous raise explicitly."""
         self.completed = False
         self.error = None
         self._data = self._empty_data()
@@ -147,24 +159,17 @@ class CrystalQHAReader(BasicReader):
         return
 
     def is_qha(self, file):
-        """
-        This method checks if the CRYSTAL14/17 output file is related to
-        a QHA calculation.
+        """Return whether an output contains a native CRYSTAL QHA calculation.
 
         Parameters
         ----------
-
-        file: str
-            Path to the CRYSTAL14/17 output file.
-
+        file : str or pathlib.Path
+            CRYSTAL output file.
 
         Returns
         -------
-
         bool
-            Returns True if the output is correct, otherwise False.
-
-        """
+            ``True`` when the native QHA header is present."""
         with open(file, "r") as f:
             for line in f:
                 if markers.QHA_HEADER in line:
@@ -199,24 +204,17 @@ class CrystalQHAReader(BasicReader):
         return dict(self._data.get("mode_continuity_metadata", {}))
 
     def is_restarted(self, file):
-        """
-        This method checks if the CRYSTAL14/17 output file is related to
-        a restarted QHA calculation.
+        """Return whether a native CRYSTAL QHA calculation was restarted.
 
         Parameters
         ----------
-
-        file: str
-            Path to the CRYSTAL14/17 output file.
-
+        file : str or pathlib.Path
+            CRYSTAL QHA output file.
 
         Returns
         -------
-
         bool
-            Returns True if the output is correct, otherwise False.
-
-        """
+            ``True`` when the QHA restart marker is present."""
         with open(file, "r") as f:
             for line in f:
                 if markers.QHA_RESTART in line:
@@ -225,24 +223,17 @@ class CrystalQHAReader(BasicReader):
         return
 
     def is_supercell(self, file):
-        """
-        This method checks if the CRYSTAL14/17 output file is related to
-        a FREQCALC calculation using the a supercell approach.
+        """Return whether the QHA phonons use an explicit CRYSTAL supercell.
 
         Parameters
         ----------
-
-        file: str
-            Path to the CRYSTAL14/17 output file.
-
+        file : str or pathlib.Path
+            CRYSTAL QHA output file.
 
         Returns
         -------
-
         bool
-            Returns True if the output is correct, otherwise False.
-
-        """
+            ``True`` when the ``SUPERCELL`` option is present."""
         with open(file, "r") as f:
             for line in f:
                 if markers.SUPERCELL_OPTION in line:
@@ -251,78 +242,94 @@ class CrystalQHAReader(BasicReader):
 
     @property
     def results(self):
-        """
-        Get the data collected from the CRYSTAL17 output with `dict` type.
-        """
+        """Return the internal parsed CRYSTAL QHA payload.
+
+        Notes
+        -----
+        This property exposes the historical reader mapping for compatibility. New
+        workflow code should prefer the typed/public properties such as :attr:`energy`,
+        :attr:`volume`, :attr:`phonons_array`, and :attr:`structure_series`."""
         return self._data
 
     @property
     def supercell_on(self):
         """
-        Get the flag that tells if the input file is related to a supercell.
+        Return the flag that tells if the input file is related to a supercell.
         """
         return self._is_supercell
 
     @supercell_on.setter
     def supercell_on(self, bool_value):
-        """
-        Set the flag that tells if the input file is related to a supercell.
-        """
+        """Store whether the native QHA run uses a phonon supercell.
+
+        Parameters
+        ----------
+        bool_value : bool
+            Supercell-state flag."""
         self._is_supercell = bool_value
         return
 
     @property
     def restarted_on(self):
         """
-        Get the flag that tells if the input file is related to a restarted
+        Return the flag that tells if the input file is related to a restarted
         calculation.
         """
         return self._is_restarted
 
     @restarted_on.setter
     def restarted_on(self, bool_value):
-        """
-        Set the flag that tells if the input file is related to a restarted
-        calculation.
-        """
+        """Store whether the native QHA output is a restarted run.
+
+        Parameters
+        ----------
+        bool_value : bool
+            Restart-state flag."""
         self._is_restarted = bool_value
         return
 
     @property
     def points(self):
         """
-        Get the number of unit cell volumes explored in QHA analysis.
+        Return the number of unit cell volumes explored in QHA analysis.
         """
         return self._data["points"]
 
     @points.setter
     def points(self, value: int):
-        """
-        Set the number of unit cell volumes explored in QHA analysis.
-        """
+        """Store the number of QHA volume states.
+
+        Parameters
+        ----------
+        value : int
+            Number of sampled volume states."""
         self._data["points"] = value
         return
 
     @property
     def dim(self):
         """
-        Get the expansion matrix employed to build the supercell.
+        Return the expansion matrix employed to build the supercell.
         """
         return self._data["expansion"]
 
     @dim.setter
     def dim(self, expansion):
-        """
-        Set the expansion matrix employed to build the supercell.
-        """
+        """Store the primitive-to-supercell expansion matrix.
+
+        Parameters
+        ----------
+        expansion : array-like
+            ``(3, 3)`` expansion matrix. A copy is retained by the reader."""
         self._data["expansion"] = expansion.copy()
         return
 
     @property
     def natom(self):
-        """
-        Get the number of atoms in the unit cell.
-        """
+        """Return the primitive-cell atom count represented by the QHA modes.
+
+        The source optimized cells may be supercells; their atom count is divided by
+        the expansion determinant to obtain the primitive normalization."""
         return int(self._data["unitcell"][0]["natom"] / self.kpoints)
 
     @property
@@ -343,25 +350,31 @@ class CrystalQHAReader(BasicReader):
 
     @property
     def kpoints(self):
-        """
-        Get the number of sampled *k*-points, determined from the expansion
-        matrix.
-        """
+        """Return the number of primitive-cell repetitions in the QHA supercell.
+
+        The historical property name is retained for compatibility; numerically this
+        is the rounded determinant of the expansion matrix, not an electronic
+        Brillouin-zone k-point count."""
         return int(np.around(np.linalg.det(self._data["expansion"]), 0))
 
     @property
     def energy(self):
-        """
-        Get the unit cell (if phonon dispersion relations or if
-        :math:`\\Gamma`-point frequencies) or the supercell energy.
-        """
+        """Return primitive-normalized QHA static energies in hartree.
+
+        The native QHA table stores source-cell energies. Quantas divides the full
+        ``(points,)`` series by the expansion determinant so energies and primitive
+        volumes share the same normalization."""
         return self._data["energy"] / self.kpoints
 
     @property
     def volume(self):
-        """
-        Get the unit cell volumes
-        """
+        """Return primitive-normalized QHA volumes in ``angstrom^3``.
+
+        Returns
+        -------
+        numpy.ndarray
+            Array with shape ``(points,)`` ordered consistently with the native QHA
+            energy and phonon series."""
         volumes = np.zeros(self.points, dtype=float)
         for i in range(self.points):
             volumes[i] = np.linalg.det(self._data["unitcell"][i]["lattice"])
@@ -369,73 +382,84 @@ class CrystalQHAReader(BasicReader):
 
     @property
     def nphonon(self):
-        """
-        Get the number of frequencies per band in unit cell (if phonon
-        dispersion relations or if :math:`\\Gamma`-point frequencies)
-        or in the supercell.
-        """
+        """Return the number of primitive phonon branches per storage block.
+
+        The value is ``3 * natom`` after primitive-cell normalization."""
         return self.natom * 3
 
     @property
     def qpoints(self):
-        """
-        Get the number of sampled **q**-points. For QHA, this is the same as
-        the number of *k*-points.
-        """
+        """Return the number of equal-weight native-QHA storage blocks.
+
+        For a supercell calculation this equals the expansion determinant for
+        historical thermodynamic normalization. These blocks are not reliable
+        primitive-cell q-point labels; :attr:`qcoords_fractional` therefore returns
+        ``None``."""
         return self._data["qpoints"]
 
     @qpoints.setter
     def qpoints(self, value: int):
-        """
-        Set the number of sampled **q**-points.
-        """
+        """Store the number of native-QHA frequency blocks.
+
+        Parameters
+        ----------
+        value : int
+            Number of equal-weight storage blocks."""
         self._data["qpoints"] = value
         return
 
     @property
     def qcoords(self):
-        """
-        Get the coordinates of sampled **q**-points, in dict format.
-        """
+        """Return placeholder coordinates for native-QHA storage blocks.
+
+        The zero vectors preserve the historical array layout only and must not be
+        interpreted as physical primitive-cell q-point labels. See
+        :attr:`q_position_source`."""
         return self._data["qcoords"]
 
     @qcoords.setter
     def qcoords(self, array):
-        """
-        Set the coordinates of sampled **q**-points, in dict format.
-        """
+        """Store placeholder coordinates for native-QHA blocks.
+
+        Parameters
+        ----------
+        array : array-like
+            Coordinate rows ordered by storage-block index. These placeholders are not
+            physical primitive q-point labels."""
         for i in range(len(array)):
             self._data["qcoords"][i] = array[i]
         return
 
     @property
     def weights(self):
-        """
-        Get the weights of each phonon band, in dict format.
-        """
+        """Return equal integration weights for native-QHA storage blocks."""
         return self._data["weights"]
 
     @weights.setter
     def weights(self, array):
-        """
-        Set the weights of each phonon band.
-        """
+        """Store integration weights for native-QHA blocks.
+
+        Parameters
+        ----------
+        array : array-like
+            Weight values ordered by storage-block index."""
         for i in range(len(array)):
             self._data["weights"][i] = array[i]
         return
 
     @property
     def shrinkf(self):
-        """
-        Get the Hessian interpolation mesh used in the INTERPHESS keyword.
-        """
+        """Return the historical reciprocal-space shrinking-factor storage."""
         return self._data["shrinkf"]
 
     @shrinkf.setter
     def shrinkf(self, array):
-        """
-        Set the Hessian interpolation mesh used in the INTERPHESS keyword.
-        """
+        """Store the historical reciprocal shrinking factors.
+
+        Parameters
+        ----------
+        array : array-like
+            Three shrinking factors. A copy is retained by the reader."""
         self._data["shrinkf"] = array.copy()
         return
 
@@ -466,16 +490,21 @@ class CrystalQHAReader(BasicReader):
 
     @property
     def phonons(self):
-        """
-        Get the phonon bands, in dict format.
-        """
+        """Return volume-resolved frequencies keyed by storage-block index.
+
+        Each value has shape ``(nphonon, points)`` and contains frequencies in
+        ``cm^-1`` ordered along the QHA volume path."""
         return self._data["phonons"]
 
     @phonons.setter
     def phonons(self, dictionary):
-        """
-        Set the phonon bands, in dict format.
-        """
+        """Store volume-resolved phonon-frequency blocks.
+
+        Parameters
+        ----------
+        dictionary : dict
+            Mapping from storage-block index to arrays with shape
+            ``(nphonon, points)`` in ``cm^-1``."""
         self._data["phonons"] = dictionary
         return
 
@@ -626,25 +655,17 @@ class CrystalQHAReader(BasicReader):
         )
 
     def set_qha_points(self, file):
-        """
-        This method sets the number of points (number of unit cell volumes)
-        explored during the QHA analysis.
-
-        They are taken from the number of lines in the EOS output section.
+        """Return the number of volume states in the native QHA table.
 
         Parameters
         ----------
-
-        file: str
-            Path of the CRYSTAL14/17 output file.
+        file : str or pathlib.Path
+            CRYSTAL QHA output file.
 
         Returns
         -------
-
-        points: int
-            Number of unit cell volumes considered.
-
-        """
+        int
+            Number of contiguous volume-energy rows printed by CRYSTAL."""
         sline = self._get_start_line(file, markers.QHA_VOLUME_ENERGY_TABLE) + 4
 
         with open(file, "r") as f:
@@ -659,29 +680,18 @@ class CrystalQHAReader(BasicReader):
         return points
 
     def set_expansion(self, file):
-        """
-        This method sets the expasion matrix used to build the supercell.
-
-        Thus, it could be:
-
-          - a unit cell, if the CRYSTAL output is related to a
-            :math:`\\Gamma`-point frequency calculation, or
-
-          - a supercell, if either SUPERCELL of SCELPHONO were employed.
+        """Return the CRYSTAL primitive-to-supercell expansion matrix.
 
         Parameters
         ----------
-
-        file: str
-            Path of the CRYSTAL14/17 output file.
+        file : str or pathlib.Path
+            CRYSTAL QHA output file.
 
         Returns
         -------
-
-        expansion: ndarray
-            :math:`3 \\times 3` array of the expansion matrix.
-
-        """
+        numpy.ndarray
+            ``(3, 3)`` expansion matrix. Its determinant defines the number of
+            primitive-cell repetitions used to normalize source energies and volumes."""
         sline = self._get_start_line(file, markers.SUPERCELL_EXPANSION) + 1
 
         with open(file, "r") as f:
@@ -696,24 +706,19 @@ class CrystalQHAReader(BasicReader):
         return expansion
 
     def set_energy(self, file):
-        """
-        This method sets the energy values for each unit cell.
-
-        They are taken from the number of lines in the EOS output section.
+        """Return source-cell energies from the native QHA table.
 
         Parameters
         ----------
-
-        file: str
-            Path of the CRYSTAL14/17 output file.
+        file : str or pathlib.Path
+            CRYSTAL QHA output file.
 
         Returns
         -------
-
-        energy: ndarray
-            Unit cell energy values with `float` type.
-
-        """
+        numpy.ndarray
+            Array with shape ``(points,)`` containing energies in hartree as printed
+            by CRYSTAL. The public :attr:`energy` property divides these values by the
+            supercell repetition count to expose primitive-normalized energies."""
         sline = self._get_start_line(file, markers.QHA_VOLUME_ENERGY_TABLE) + 4
 
         with open(file, "r") as f:
@@ -726,24 +731,19 @@ class CrystalQHAReader(BasicReader):
         return energy
 
     def set_volume(self, file):
-        """
-        This method sets the unit cell volume values, retrieved from
-        the number of lines in the EOS output section. They are used to
-        re-order the unit cell data.
+        """Return source-cell volumes from the native QHA table.
 
         Parameters
         ----------
-
-        file: str
-            Path of the CRYSTAL14/17 output file.
+        file : str or pathlib.Path
+            CRYSTAL QHA output file.
 
         Returns
         -------
-
-        volume: ndarray
-            Unit cell volumes with `float` type.
-
-        """
+        numpy.ndarray
+            Array with shape ``(points,)`` containing source volumes in
+            ``angstrom^3``. The public :attr:`volume` property exposes the corresponding
+            primitive-normalized volumes."""
         sline = self._get_start_line(file, markers.QHA_VOLUME_ENERGY_TABLE) + 4
 
         with open(file, "r") as f:
@@ -781,27 +781,19 @@ class CrystalQHAReader(BasicReader):
         return cells
 
     def set_ordered_cells(self, cells, ordered_volumes):
-        """
-        This method reorders the collected unit cell data according to the
-        sorted volumes reported in the CRYSTAL output.
+        """Order optimized CRYSTAL cells by the native QHA volume sequence.
 
         Parameters
         ----------
-
-        cells: list
-            List containing the unit cell data, each element with `dict`
-            type.
-
-        ordered_volumes: ndarray
-            Array containing the sorted unit cell volumes.
+        cells : list of dict
+            Parsed optimized source-cell mappings.
+        ordered_volumes : array-like
+            Source-cell volumes in the order printed by the native QHA summary.
 
         Returns
         -------
-
-        ordered_cells: list
-            List of ordered unit cell data by increasing unit cell volume.
-
-        """
+        list of dict
+            Cell mappings reordered to match ``ordered_volumes``."""
         indexes = []
         for i in range(len(cells)):
             volume = np.linalg.det(cells[i]["lattice"])
@@ -843,7 +835,27 @@ class CrystalQHAReader(BasicReader):
         )
 
     def set_phonons(self, file):
-        """ """
+        """Parse volume-resolved phonon frequencies from CRYSTAL QHA output.
+
+        Parameters
+        ----------
+        file : str or pathlib.Path
+            CRYSTAL output produced by a native QHA calculation.
+
+        Returns
+        -------
+        dict[int, numpy.ndarray]
+            Mapping from equal-weight phonon block index to an array with shape
+            ``(self.natom * 3, self.points)`` containing frequencies in cm^-1
+            along the sampled volume path.
+
+        Raises
+        ------
+        OSError
+            If the output file cannot be opened.
+        ValueError
+            If a parsed frequency value is not numeric.
+        """
         phonons = {}
         nfreq = self.natom * self.qpoints * 3
         phonon_matrix = np.zeros((nfreq, self.points), dtype=float)

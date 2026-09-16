@@ -252,6 +252,7 @@ def test_elasticity_core_has_separated_scientific_responsibilities() -> None:
         "directional.py",
         "extrema.py",
         "prestress.py",
+        "pressure_resolution.py",
         "quasistatic.py",
         "sampling.py",
         "validation.py",
@@ -352,3 +353,23 @@ def test_old_soec_public_class_names_are_absent_from_source() -> None:
                             f"{path.relative_to(PACKAGE_ROOT)} -> {target.id}"
                         )
     assert not definitions, "old SOEC API aliases found:\n" + "\n".join(definitions)
+
+
+def test_active_runtime_objects_are_normal_classes() -> None:
+    """Active runtime helpers use normal class semantics."""
+    from dataclasses import is_dataclass
+
+    from quantas.core.events import CallbackObserver, ListObserver
+    from quantas.core.math.fitting.solver_debug import ModelEvaluationRecorder
+    from quantas.core.numerics import RectilinearFieldInterpolator
+    from quantas.modules.qha.io.export import QHAHDF5Export
+
+    active_types = (
+        ListObserver,
+        CallbackObserver,
+        ModelEvaluationRecorder,
+        RectilinearFieldInterpolator,
+        QHAHDF5Export,
+    )
+
+    assert all(not is_dataclass(active_type) for active_type in active_types)

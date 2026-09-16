@@ -25,11 +25,11 @@ at the neighbouring volumes.
 
 .. important::
 
-   A YAML file can be syntactically valid while being scientifically unsuitable
-   for mode-resolved QHA.  Rectangular frequency arrays do not by themselves
-   establish phonon-mode continuity.  Quantas therefore treats input generation,
-   structural normalization, and mode-continuity assessment as part of the
-   scientific workflow rather than as formatting conveniences.
+   A YAML file can be syntactically valid while still being unsuitable for
+   mode-resolved QHA.  Rectangular frequency arrays do not establish branch
+   continuity by themselves.  Input generation therefore includes structural
+   normalization and continuity assessment as scientific steps, not merely file
+   conversion.
 
 Supported input routes
 ----------------------
@@ -117,7 +117,7 @@ With direct vectors stored by rows, CRYSTAL uses
 
    B = D A.
 
-Quantas therefore reconstructs the primitive lattice as
+The primitive lattice is therefore reconstructed as
 
 .. math::
 
@@ -143,7 +143,7 @@ corresponding primitive coordinate is obtained from
    = \left(\mathbf f_s D\right) \bmod 1.
 
 Folded atoms are associated with atoms in the reference primitive structure
-only among candidates of the same chemical species.  Quantas uses
+only among candidates of the same chemical species.  The matcher uses
 minimum-image Cartesian distances to identify the closest reference atom.
 Every primitive atom must receive exactly :math:`N_{\mathrm{rep}}`
 translational copies.
@@ -166,7 +166,7 @@ and the residual Cartesian displacement of replica :math:`r` is
    = \left(\Delta\mathbf f_r
      - \overline{\Delta\mathbf f}\right) A.
 
-Quantas records both
+The normalized input records both
 
 .. math::
 
@@ -239,8 +239,8 @@ For q-point coordinates and weights, the current comparison uses
 
    |x_a-x_b| \le 10^{-12}
 
-with zero relative tolerance.  This is intentionally a strict consistency
-check: the mode tracker is not a tool for reconciling different q meshes.
+with zero relative tolerance.  The check is strict because mode tracking is not
+meant to reconcile different q meshes.
 
 .. warning::
 
@@ -257,9 +257,9 @@ Real and complex modes
 
 At Gamma, CRYSTAL prints real normal-mode displacement vectors.  In dispersion
 calculations CRYSTAL distinguishes real (``R``) and complex (``C``) q-points.
-A real q-point may contain only ``MODES IN PHASE``; Quantas then uses that
+A real q-point may contain only ``MODES IN PHASE``; the parser then uses that
 printed component as a real eigenvector.  A complex q-point contains separate
-in-phase and anti-phase components, and Quantas reconstructs the complex
+in-phase and anti-phase components, and the parser reconstructs the complex
 displacement vector as
 
 .. math::
@@ -278,7 +278,7 @@ Mass weighting and unit normalization
 
 CRYSTAL prints displacements normalized to classical amplitudes.  Let
 :math:`u_{qj,\kappa\alpha}` be the printed displacement of atom :math:`\kappa`
-in Cartesian direction :math:`\alpha`.  Quantas restores the mass weighting as
+in Cartesian direction :math:`\alpha`.  The parser restores the mass weighting as
 
 .. math::
 
@@ -312,7 +312,7 @@ Local mode tracking across volume
 Volume ordering
 ~~~~~~~~~~~~~~~
 
-The supplied files need not be ordered by volume.  Quantas first constructs
+The supplied files need not be ordered by volume.  The generator first constructs
 
 .. math::
 
@@ -353,8 +353,8 @@ The absolute value makes the comparison invariant to an arbitrary complex
 phase of either eigenvector.  For normalized vectors,
 :math:`0\le O_{ij}\le1`.
 
-Quantas does not independently select the largest value in every row.  A
-one-to-one mode mapping is required, so it determines the permutation
+A one-to-one mode mapping is required.  Instead of selecting the largest
+overlap independently in every row, the tracker determines the permutation
 :math:`\pi` that maximizes the total overlap
 
 .. math::
@@ -414,7 +414,7 @@ unique: any unitary rotation of the basis spans the same physical eigenspace.
 Comparing one vector to one vector would therefore make the result depend on an
 arbitrary diagonalization basis.
 
-Quantas groups modes into a numerical degeneracy when their frequencies satisfy
+The tracker groups modes into a numerical degeneracy when their frequencies satisfy
 
 .. math::
 
@@ -436,7 +436,7 @@ Subspace overlap
 ~~~~~~~~~~~~~~~~
 
 Let :math:`E_a` and :math:`E_b` contain orthonormal basis vectors spanning the
-matched degenerate manifolds at adjacent volumes.  Quantas forms
+matched degenerate manifolds at adjacent volumes.  The tracker forms
 
 .. math::
 
@@ -478,7 +478,7 @@ subspace criterion tests this physically meaningful object directly.
 Reference-labelled branch composition
 -------------------------------------
 
-After every adjacent pair has been matched independently, Quantas composes the
+After every adjacent pair has been matched independently, the tracker composes the
 local permutations away from the reference state.  If
 :math:`\pi_{12},\pi_{23},\ldots` are the local mappings, a branch label can be
 propagated through the chain, schematically,
@@ -507,7 +507,7 @@ through several later states.
 Global frequency-path diagnostics
 ---------------------------------
 
-Once branch identities have been constructed from eigenvectors, Quantas checks
+Once branch identities have been constructed from eigenvectors, the tracker checks
 how smoothly every tracked frequency path behaves with volume.  These fits are
 **diagnostics**; they do not participate in the initial Hungarian assignment.
 
@@ -523,8 +523,8 @@ provided at least three volumes are available.  The fitted model is
 
    \widehat\nu(V)=\sum_{k=0}^{d}a_k x(V)^k,
 
-where :math:`x(V)` is a centered and scaled volume coordinate.  Quantas reports
-for each q-point and branch:
+where :math:`x(V)` is a centered and scaled volume coordinate.  The diagnostic
+reports, for each q-point and branch:
 
 .. math::
 
@@ -557,7 +557,7 @@ overlap is accepted.
 
    A global polynomial fit is not an independent validation of one suspicious
    point because that point also contributes to the fitted coefficients.
-   Quantas therefore never uses the global fit alone to rescue a low-overlap
+   The global fit is therefore never used by itself to rescue a low-overlap
    assignment.  Independent leave-one-out prediction is required instead.
 
 Leave-one-out validation of low overlaps
@@ -570,7 +570,7 @@ A non-degenerate assignment is classified as low-overlap when
    O_{i,\pi(i)} < 0.5.
 
 Such an assignment is not accepted from the eigenvector evidence alone.  For
-each endpoint of that adjacent-volume link, Quantas removes the endpoint under
+each endpoint of that adjacent-volume link, the test removes the endpoint under
 test, fits the tracked branch to all remaining volumes, and predicts the
 omitted frequency.
 
@@ -614,8 +614,8 @@ A low-overlap link remains usable only when both endpoints satisfy
 Passing links are retained as ``caution``.  If either endpoint fails, the local
 assignment is ``unresolved``.
 
-The two-endpoint test is intentionally symmetric.  Continuity must not depend
-on whether a series is mentally traversed toward compression or expansion.
+The two-endpoint test is symmetric by construction: continuity should not
+depend on whether the series is traversed toward compression or expansion.
 
 .. warning::
 
@@ -672,8 +672,8 @@ while any unresolved assignment gives
    \quad\Longrightarrow\quad
    \texttt{mode\_continuity: unreliable}.
 
-Cautions are intentionally compatible with ``verified``: they report difficult
-but still defensible assignments rather than erasing useful scientific
+A ``caution`` can coexist with ``verified``.  It marks a difficult but still
+defensible assignment without discarding otherwise useful continuity
 information.
 
 The broader YAML contract also accepts ``assumed`` and ``unknown``.  Their
@@ -689,7 +689,7 @@ If the CRYSTAL QHA output contains the native statement
 
    FOUND CONTINUITY OF FREQUENCIES WITH VOLUME
 
-Quantas records
+The generated metadata record is
 
 .. code-block:: yaml
 
@@ -699,8 +699,8 @@ Quantas records
      source: crystal
 
 This is a provenance statement: continuity was established by the source QHA
-workflow.  Quantas does not relabel it as though its own adjacent-volume
-tracker had performed the assessment.
+workflow, so the metadata retain that source-managed origin instead of
+attributing the assessment to the adjacent-volume tracker.
 
 .. note::
 
@@ -731,7 +731,7 @@ precision printed in the characterized CRYSTAL phonon outputs.  This is a
 renderer choice only; YAML values and in-memory ``float64`` data are not rounded
 for calculation.
 
-When terminal output is redirected to a file, Quantas uses deterministic plain
+When terminal output is redirected to a file, the renderer uses deterministic plain
 text rather than Rich table compression.  This prevents Unicode ellipses or
 terminal-width truncation from altering numeric diagnostics.
 
@@ -766,9 +766,9 @@ The standard terminal summary reports the parsed source count, selected energy
 quantity and empirical corrections, q-point provenance, and a compact preview
 of q-point coordinates when they are available. Long q meshes are truncated in
 the terminal only; the complete sampling remains in the generated YAML file.
-Use ``--debug`` when the continuity diagnostics need to be inspected in detail.
-Use ``--quiet`` for successful batch generation with no normal terminal output.
-The two options are intentionally mutually exclusive.
+Use ``--debug`` when the continuity diagnostics need to be inspected in detail,
+and ``--quiet`` for successful batch generation with no normal terminal output.
+The two modes are mutually exclusive.
 
 Native CRYSTAL QHA output
 ~~~~~~~~~~~~~~~~~~~~~~~~~

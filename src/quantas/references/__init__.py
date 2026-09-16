@@ -3,7 +3,7 @@
 """Canonical bibliography and citation sets for Quantas."""
 
 from .models import Citation, CitationKind
-from .registry import CITATIONS, get_citation
+from .registry import CITATIONS, get_citation, validate_citation_registry
 from .render import (
     render_citation,
     render_citation_inline,
@@ -26,6 +26,7 @@ __all__ = [
     "Citation",
     "CitationKind",
     "get_citation",
+    "validate_citation_registry",
     "method_citation_keys",
     "module_citation_keys",
     "render_citation",

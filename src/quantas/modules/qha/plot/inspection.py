@@ -65,11 +65,30 @@ def build_pressure_volume_preview_plots(
     *,
     sample_points: int = 201,
 ) -> PlotCollection:
-    """Build an energy-volume plot from a QHA inspection preview.
+    """Build an energy-volume plot from a QHA input inspection preview.
 
-    The observed input values are always included. Successful polynomial and
-    EOS fits are sampled only between the minimum and maximum input volumes.
-    No extrapolation is performed.
+    Observed points are always retained. Successful polynomial and EOS fits are
+    sampled only inside the minimum/maximum observed-volume interval; this helper
+    does not extrapolate the inspection fit.
+
+    Parameters
+    ----------
+    preview : PressureVolumePreview
+        Static energy-volume inspection result.
+    sample_points : int, optional
+        Number of equally spaced volume coordinates used for each successful fit.
+
+    Returns
+    -------
+    PlotCollection
+        One frontend-neutral energy-volume line specification and any sampling
+        warnings.
+
+    Raises
+    ------
+    ValueError
+        If ``sample_points`` is outside the supported range or the preview contains
+        no energy-volume data.
     """
     if sample_points < 2:
         raise ValueError("sample_points must be at least 2")

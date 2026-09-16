@@ -6,6 +6,8 @@ New internal code should import from :mod:`quantas.modules.eos.domains.pvt`.
 The historical module path remains stable for third-party callers.
 """
 
+from __future__ import annotations
+
 from .domains import pvt as _domain
 from .domains.pvt import *  # noqa: F403
 

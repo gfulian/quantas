@@ -158,7 +158,25 @@ def write_elasticity_hdf5(
 
 
 def build_elasticity_report(result: ResultData) -> list[ReportTable]:
-    """Build neutral report tables from a complete elasticity result."""
+    """Build frontend-neutral report tables from a complete elasticity result.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas result containing an :class:`ElasticityResult` payload.
+
+    Returns
+    -------
+    list of ReportTable
+        Ordered input, option, tensor, average, stability and directional-extrema
+        tables. Source- and analysis-frame tensor tables are both included when a
+        component transformation was applied.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` is not an elasticity result.
+    """
     payload = result.results.get("elasticity")
     if result.metadata.module != "elasticity" or not isinstance(
         payload, ElasticityResult
@@ -198,7 +216,24 @@ def build_elasticity_report(result: ResultData) -> list[ReportTable]:
 
 
 def describe_elasticity_plot_inventory(result: ResultData) -> PlotInventory:
-    """Describe plots that can be built from a complete elasticity result."""
+    """Describe plot representations available for an elasticity result.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas result containing an :class:`ElasticityResult` payload.
+
+    Returns
+    -------
+    PlotInventory
+        Result-aware inventory of available two- and three-dimensional elastic
+        properties and plotting contexts.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` is not an elasticity result.
+    """
     payload = result.results.get("elasticity")
     if result.metadata.module != "elasticity" or not isinstance(
         payload, ElasticityResult
@@ -208,7 +243,23 @@ def describe_elasticity_plot_inventory(result: ResultData) -> PlotInventory:
 
 
 def build_elasticity_plots(result: ResultData) -> PlotCollection:
-    """Build neutral elasticity plot specifications from a complete result."""
+    """Build the default frontend-neutral elasticity plots.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas result containing persisted elasticity data.
+
+    Returns
+    -------
+    PlotCollection
+        Polar plot specifications built from persisted principal-plane data.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` is not an elasticity result.
+    """
     payload = result.results.get("elasticity")
     if result.metadata.module != "elasticity" or not isinstance(
         payload, ElasticityResult
@@ -221,7 +272,27 @@ def build_elasticity_2d_plots(
     result: ResultData,
     properties: tuple[ElasticityPlotProperty, ...] | None = None,
 ) -> PlotCollection:
-    """Build selected neutral two-dimensional elasticity plots."""
+    """Build selected principal-plane elasticity plot specifications.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas result containing persisted two-dimensional elasticity
+        data.
+    properties : tuple of str or None, optional
+        Requested plot-property keys. ``None`` selects all available properties.
+
+    Returns
+    -------
+    PlotCollection
+        Frontend-neutral three-plane polar specifications and any preparation
+        warnings.
+
+    Raises
+    ------
+    ValueError
+        If ``result`` is not an elasticity result.
+    """
     payload = result.results.get("elasticity")
     if result.metadata.module != "elasticity" or not isinstance(
         payload, ElasticityResult
@@ -242,11 +313,39 @@ def build_elasticity_3d_plots(
     mesh_color: str = "black",
     mesh_line_width: float = 0.5,
 ) -> PlotCollection:
-    """Build neutral three-dimensional elasticity plot specifications.
+    """Build frontend-neutral three-dimensional elasticity surfaces.
 
-    Persisted 3D data are reused when ``options`` is ``None``. Supplying
-    explicit sampling options requests a fresh in-memory calculation and does
-    not modify the source result.
+    Persisted surfaces are reused when ``options`` is ``None``. Supplying explicit
+    sampling options requests a fresh in-memory calculation and does not modify the
+    source result.
+
+    Parameters
+    ----------
+    result : ResultData
+        Generic Quantas elasticity result providing stiffness and, when available,
+        persisted surfaces.
+    options : ElasticitySurfaceOptions or None, optional
+        Sampling options for a transient surface calculation.
+    properties : tuple of ElasticSurfaceProperty or None, optional
+        Selected directional property families.
+    geometry : {"physical", "unit_sphere", "normalized"}, optional
+        Radial representation. ``"normalized"`` is accepted as a compatibility
+        alias of ``"physical"``.
+    color_mode : {"solid", "property"}, optional
+        Whether surfaces use semantic solid colors or property-value coloring.
+    colormap : str, optional
+        Matplotlib-compatible colormap name used for property coloring.
+    show_mesh : bool, optional
+        Whether a surface mesh overlay is requested.
+    mesh_color : str, optional
+        Mesh-line color passed to frontend renderers.
+    mesh_line_width : float, optional
+        Mesh-line width passed to frontend renderers.
+
+    Returns
+    -------
+    PlotCollection
+        One frontend-neutral surface specification for each selected branch.
     """
     surfaces = resolve_elasticity_surfaces(
         result,

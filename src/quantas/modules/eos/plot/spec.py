@@ -136,12 +136,33 @@ class EOSPlotter:
         slot: str | EOSResultSlot | None = None,
         record_id: int | None = None,
     ) -> "EOSPlotter":
-        """Construct a plotter from an explicit or accepted archive record."""
+        """Construct a plotter from an explicit or accepted archive record.
+
+        Parameters
+        ----------
+        path : str | Path
+            Filesystem path read from or written by the operation.
+        slot : str | EOSResultSlot | None
+            Scientific result slot addressed by the operation.
+        record_id : int | None
+            Stable identifier of an immutable EOS fit record.
+
+        Returns
+        -------
+        'EOSPlotter'
+            Result described by the operation.
+        """
         calculator = EOSCalculator.from_archive(path, slot=slot, record_id=record_id)
         return cls(calculator.record, calculator.dataset)
 
     def available_plot_types(self) -> tuple[str, ...]:
-        """Return plot types supported by the selected scientific domain."""
+        """Return plot types supported by the selected scientific domain.
+
+        Returns
+        -------
+        tuple[str, ...]
+            Plot types supported by the selected scientific domain.
+        """
         domain = self.record.request.domain
         try:
             diagnostic = self._diagnostics.build(include_normalized_pressure=True)
@@ -198,6 +219,11 @@ class EOSPlotter:
         -------
         PlotCollection
             Neutral specifications and non-fatal warnings.
+
+        Raises
+        ------
+        ValueError
+            If the supplied data or workflow state violates the documented contract.
         """
         opts = options or EOSPlotOptions()
         available = self.available_plot_types()

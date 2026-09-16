@@ -107,7 +107,22 @@ def validate_seismic_payload_for_persistence(result: SeismicResult) -> None:
 
 
 def write_seismic_payload(h5: h5py.File, result: SeismicResult) -> h5py.Group:
-    """Write the module-specific result tree."""
+    """Write the SEISMIC-specific native HDF5 result tree.
+
+    Parameters
+    ----------
+    h5 : h5py.File
+        Open Quantas HDF5 file. Generic envelope metadata are written elsewhere.
+    result : SeismicResult
+        Valid sampled seismic result. Stiffness is stored in GPa, density in
+        kg m^-3 and acoustic speeds in km s^-1.
+
+    Returns
+    -------
+    h5py.Group
+        Created ``/results`` group containing elastic references, spherical grid,
+        acoustic fields and persistence metadata.
+    """
     group = h5.create_group("results")
     group.attrs["jobname"] = result.jobname
     write_numeric_attribute(group, "density", result.density)
@@ -404,7 +419,25 @@ def _write_array(
 
 
 def read_seismic_payload(h5: h5py.File) -> SeismicResult:
-    """Reconstruct the module-specific seismic result payload."""
+    """Reconstruct and validate the SEISMIC-specific HDF5 payload.
+
+    Parameters
+    ----------
+    h5 : h5py.File
+        Open native Quantas HDF5 file containing a seismic ``/results`` tree.
+
+    Returns
+    -------
+    SeismicResult
+        Typed result with stiffness in GPa, density in kg m^-3 and acoustic modes
+        restored in canonical order ``V_S2``, ``V_S1``, ``V_P``.
+
+    Raises
+    ------
+    ValueError
+        If required attributes, units, shapes, mode ordering, stability diagnostics
+        or stored numerical invariants are inconsistent.
+    """
     group = h5["results"]
     require_attr(group, "jobname")
     require_attr(group, "density")

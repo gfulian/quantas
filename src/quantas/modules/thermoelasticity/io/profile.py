@@ -139,6 +139,11 @@ def write_thermoelastic_profile_template(
     user-editable continental conductive lithosphere and the Katsura (2022)
     mantle adiabat.  All values are examples and should be reviewed for the
     intended tectonic setting.
+
+    Raises
+    ------
+    FileExistsError
+        If the destination exists and replacement is not permitted.
     """
     path = Path(filename).with_suffix(".yaml")
     if path.exists() and not overwrite:

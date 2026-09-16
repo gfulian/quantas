@@ -2,6 +2,8 @@
 
 """Read CRYSTAL phonon outputs for Quantas HA and QHA workflows."""
 
+from __future__ import annotations
+
 import re
 from pathlib import Path
 from typing import Sequence
@@ -27,17 +29,28 @@ from quantas.models.structures import (
 
 
 class CrystalPhononReader(BasicReader):
-    """
-    This class reads and stores phonon properties of crystals obtained
-    through the CRYSTAL14/17 code.
+    """Read a CRYSTAL phonon calculation for Quantas thermodynamics.
+
+    The reader supports Gamma-only calculations, explicit phonon supercells, and
+    ``SCELPHONO`` dispersion calculations. It preserves CRYSTAL-specific parsing at
+    the interface boundary while exposing normalized energies, structures,
+    q-point metadata, and frequencies to HA/QHA consumers. When a supercell is
+    present, :attr:`energy`, :attr:`lattice`, and :attr:`natom` follow the physical
+    normalization implied by the CRYSTAL calculation; :attr:`structure_series`
+    provides the corresponding primitive structural representation and provenance.
 
     Parameters
     ----------
+    crystal_output : str or pathlib.Path or None, optional
+        CRYSTAL output file to load immediately. If ``None``, create an empty
+        reader and call :meth:`load` later.
 
-    file: str
-        Path to the CRYSTAL output file.
-
-    """
+    Notes
+    -----
+    Ordinary recognition or completeness failures are reported through
+    :attr:`~quantas.models.reader.BasicReader.error` and leave ``completed=False``.
+    Malformed scientific records that cannot be interpreted unambiguously may
+    raise ``ValueError`` from the specialized parser helpers."""
 
     _is_supercell = False
     _is_scelphono = False
@@ -92,16 +105,22 @@ class CrystalPhononReader(BasicReader):
         }
 
     def load(self, file):
-        """
-        Read and store the information collected in the CRYSTAL output file.
+        """Read one CRYSTAL phonon output into the reader state.
+
+        The existing state is reset before parsing. Geometry, cell normalization,
+        q-point metadata, authoritative total energy, phonon frequencies, and compact
+        structural provenance are collected in one pass.
 
         Parameters
         ----------
+        file : str or pathlib.Path
+            CRYSTAL phonon output file.
 
-        file: str
-            Path to the CRYSTAL output file.
-
-        """
+        Notes
+        -----
+        An unrecognized or incomplete phonon output is represented by ``error`` and
+        ``completed=False``. Parser inconsistencies that would require guessing, such
+        as contradictory q-point tables, are allowed to propagate as explicit errors."""
         self._data = self._empty_data()
         self._data["source_path"] = Path(file)
         geometry = CrystalGeometryParser(file)
@@ -161,24 +180,17 @@ class CrystalPhononReader(BasicReader):
         return
 
     def is_frequency_calculation(self, file):
-        """
-        This method checks if the CRYSTAL14/17 output file is related to
-        a FREQCALC calculation.
+        """Return whether an output contains a CRYSTAL frequency calculation.
 
         Parameters
         ----------
-
-        file: str
-            Path to the CRYSTAL14/17 output file.
-
+        file : str or pathlib.Path
+            CRYSTAL output file.
 
         Returns
         -------
-
         bool
-            Returns True if the output is correct, otherwise False.
-
-        """
+            ``True`` when the CRYSTAL frequency-calculation marker is present."""
         with open(file, "r") as f:
             for line in f:
                 if markers.FREQUENCY_CALCULATION in line:
@@ -186,24 +198,17 @@ class CrystalPhononReader(BasicReader):
             return False
 
     def is_supercell(self, file):
-        """
-        This method checks if the CRYSTAL14/17 output file is related to
-        a FREQCALC calculation using the a supercell approach.
+        """Return whether CRYSTAL used an explicit phonon supercell.
 
         Parameters
         ----------
-
-        file: str
-            Path to the CRYSTAL14/17 output file.
-
+        file : str or pathlib.Path
+            CRYSTAL phonon output file.
 
         Returns
         -------
-
         bool
-            Returns True if the output is correct, otherwise False.
-
-        """
+            ``True`` when the ``SUPERCELL`` option is present in the output."""
         with open(file, "r") as f:
             for line in f:
                 if markers.SUPERCELL_OPTION in line:
@@ -213,38 +218,33 @@ class CrystalPhononReader(BasicReader):
     @property
     def supercell_on(self):
         """
-        Get the flag that tells if the input file is related to a supercell.
+        Return the flag that tells if the input file is related to a supercell.
         """
         return self._is_supercell
 
     @supercell_on.setter
     def supercell_on(self, bool_value):
-        """
-        Set the flag that tells if the input file is related to a supercell.
-        """
+        """Store whether an explicit phonon supercell is active.
+
+        Parameters
+        ----------
+        bool_value : bool
+            Supercell-state flag."""
         self._is_supercell = bool_value
         return
 
     def is_phonon_dispersion(self, file):
-        """
-        This method checks if the CRYSTAL14/17 output file is related to
-        a FREQCALC calculation using the SCELPHONO keyword (phonon
-        dispersion relations).
+        """Return whether CRYSTAL used ``SCELPHONO`` phonon dispersion.
 
         Parameters
         ----------
-
-        file: str
-            Path to the CRYSTAL14/17 output file.
-
+        file : str or pathlib.Path
+            CRYSTAL phonon output file.
 
         Returns
         -------
-
         bool
-            Returns True if the output is correct, otherwise False.
-
-        """
+            ``True`` when the ``SCELPHONO`` option is present."""
         with open(file, "r") as f:
             for line in f:
                 if markers.SCELPHONO_OPTION in line:
@@ -254,39 +254,34 @@ class CrystalPhononReader(BasicReader):
     @property
     def scelphono_on(self):
         """
-        Get the flag that tells if the input file is related to phonon
+        Return the flag that tells if the input file is related to phonon
         dispersion relations calculation.
         """
         return self._is_scelphono
 
     @scelphono_on.setter
     def scelphono_on(self, bool_value):
-        """
-        Set the flag that tells if the input file is related to phonon
-        dispersion relations calculation.
-        """
+        """Store whether the calculation uses ``SCELPHONO`` dispersion.
+
+        Parameters
+        ----------
+        bool_value : bool
+            Dispersion-state flag."""
         self._is_scelphono = bool_value
         return
 
     def is_hessian_interpolated(self, file):
-        """
-        This method checks if FREQCALC calculation used Hessian interpolation
-        scheme.
+        """Return whether CRYSTAL used Hessian interpolation.
 
         Parameters
         ----------
-
-        file: str
-            Path to the CRYSTAL14/17 output file.
-
+        file : str or pathlib.Path
+            CRYSTAL phonon output file.
 
         Returns
         -------
-
         bool
-            Returns True if the output is correct, otherwise False.
-
-        """
+            ``True`` when the Hessian-interpolation marker is present."""
         with open(file, "r") as f:
             for line in f:
                 if markers.HESSIAN_INTERPOLATION in line:
@@ -295,11 +290,11 @@ class CrystalPhononReader(BasicReader):
 
     @property
     def natom(self):
-        """
-        Get the number of atoms in the unit cell (if phonon dispersion
-        relations or if :math:`\\Gamma`-point frequencies) or in the
-        supercell.
-        """
+        """Return the atom count represented by each stored phonon spectrum.
+
+        For ``SCELPHONO`` dispersion and primitive Gamma calculations this is the
+        primitive-cell atom count. For an explicit supercell Gamma calculation it is
+        the supercell atom count, matching the number of frequencies actually stored."""
         if self.supercell_on:
             if self.scelphono_on:
                 return self._data["unitcell"]["natom"]
@@ -310,10 +305,11 @@ class CrystalPhononReader(BasicReader):
 
     @property
     def lattice(self):
-        """
-        Get the unit cell (if phonon dispersion relations or if
-        :math:`\\Gamma`-point frequencies) or the supercell lattice vectors.
-        """
+        """Return the lattice associated with the stored phonon spectrum.
+
+        Returns the primitive lattice for ``SCELPHONO`` dispersion and primitive
+        Gamma calculations, and the explicit supercell lattice for a supercell Gamma
+        calculation. Lattice vectors are expressed in angstrom."""
         if self.supercell_on:
             if self.scelphono_on:
                 return self._data["unitcell"]["lattice"]
@@ -324,10 +320,7 @@ class CrystalPhononReader(BasicReader):
 
     @property
     def volume(self):
-        """
-        Get the unit cell (if phonon dispersion relations or if
-        :math:`\\Gamma`-point frequencies) or the supercell volume.
-        """
+        """Return the volume associated with :attr:`lattice` in ``angstrom^3``."""
         if self.supercell_on:
             if self.scelphono_on:
                 return np.linalg.det(self._data["unitcell"]["lattice"])
@@ -339,7 +332,7 @@ class CrystalPhononReader(BasicReader):
     @property
     def energy(self):
         """
-        Get the total unit-cell or supercell energy used by the phonon state.
+        Return the total unit-cell or supercell energy used by the phonon state.
 
         CRYSTAL ``CENTRAL POINT`` energies are treated as the physical total
         energy and therefore include any empirical corrections already
@@ -403,11 +396,10 @@ class CrystalPhononReader(BasicReader):
 
     @property
     def nphonon(self):
-        """
-        Get the number of frequencies per band in unit cell (if phonon
-        dispersion relations or if :math:`\\Gamma`-point frequencies)
-        or in the supercell.
-        """
+        """Return the number of stored phonon branches per q-point.
+
+        The value is ``3 * natom`` using the same primitive/supercell normalization as
+        :attr:`natom`."""
         if self.supercell_on:
             if self.scelphono_on:
                 return self._data["unitcell"]["natom"] * 3
@@ -419,7 +411,7 @@ class CrystalPhononReader(BasicReader):
     @property
     def unitcell(self):
         """
-        Get the crystal unit cell in tuple format.
+        Return the crystal unit cell in tuple format.
         """
         return (
             self._data["unitcell"]["natom"],
@@ -430,9 +422,13 @@ class CrystalPhononReader(BasicReader):
 
     @unitcell.setter
     def unitcell(self, cell_data):
-        """
-        Set the crystal unit cell in tuple format.
-        """
+        """Store primitive/unit-cell data in the historical tuple layout.
+
+        Parameters
+        ----------
+        cell_data : tuple
+            ``(natom, numbers, positions, lattice)`` with fractional positions and
+            lattice vectors in angstrom."""
         self._data["unitcell"]["natom"] = cell_data[0]
         self._data["unitcell"]["numbers"] = cell_data[1]
         self._data["unitcell"]["positions"] = cell_data[2]
@@ -442,7 +438,7 @@ class CrystalPhononReader(BasicReader):
     @property
     def supercell(self):
         """
-        Get the crystal supercell in tuple format.
+        Return the crystal supercell in tuple format.
         """
         return (
             self._data["supercell"]["natom"],
@@ -453,9 +449,13 @@ class CrystalPhononReader(BasicReader):
 
     @supercell.setter
     def supercell(self, cell_data):
-        """
-        Set the crystal supercell in tuple format.
-        """
+        """Store supercell data in the historical tuple layout.
+
+        Parameters
+        ----------
+        cell_data : tuple
+            ``(natom, numbers, positions, lattice)`` with fractional positions and
+            lattice vectors in angstrom."""
         self._data["supercell"]["natom"] = cell_data[0]
         self._data["supercell"]["numbers"] = cell_data[1]
         self._data["supercell"]["positions"] = cell_data[2]
@@ -465,15 +465,18 @@ class CrystalPhononReader(BasicReader):
     @property
     def dim(self):
         """
-        Get the expansion matrix employed to build the supercell.
+        Return the expansion matrix employed to build the supercell.
         """
         return self._data["expansion"]
 
     @dim.setter
     def dim(self, expansion):
-        """
-        Set the expansion matrix employed to build the supercell.
-        """
+        """Store the primitive-to-supercell expansion matrix.
+
+        Parameters
+        ----------
+        expansion : array-like
+            ``(3, 3)`` expansion matrix. A copy is retained by the reader."""
         self._data["expansion"] = expansion.copy()
         return
 
@@ -495,71 +498,80 @@ class CrystalPhononReader(BasicReader):
 
     @property
     def kpoints(self):
-        """
-        Get the number of sampled *k*-points, determined from the expansion
-        matrix.
-        """
+        """Return the number of primitive-cell repetitions in the expansion.
+
+        The value is the rounded determinant of the ``(3, 3)`` expansion matrix and is
+        used to normalize supercell quantities where appropriate."""
         return int(np.around(np.linalg.det(self._data["expansion"]), 0))
 
     @property
     def qpoints(self):
         """
-        Get the number of sampled **q**-points.
+        Return the number of sampled **q**-points.
         """
         return self._data["qpoints"]
 
     @qpoints.setter
     def qpoints(self, value: int):
-        """
-        Set the number of sampled **q**-points.
-        """
+        """Store the number of sampled phonon q-points.
+
+        Parameters
+        ----------
+        value : int
+            Number of q-points."""
         self._data["qpoints"] = value
         return
 
     @property
     def qcoords(self):
-        """
-        Get the coordinates of sampled **q**-points, in dict format.
-        """
+        """Return CRYSTAL q-point coordinate numerators keyed by q-point index.
+
+        Use :attr:`qcoords_fractional` for primitive reciprocal fractional coordinates.
+        For Gamma-only calculations the sole coordinate is ``(0, 0, 0)``."""
         return self._data["qcoords"]
 
     @qcoords.setter
     def qcoords(self, array):
-        """
-        Set the coordinates of sampled **q**-points, in dict format.
-        """
+        """Store CRYSTAL q-point coordinate numerators.
+
+        Parameters
+        ----------
+        array : array-like
+            Coordinate rows ordered by q-point index, with shape ``(qpoints, 3)``."""
         for i in range(len(array)):
             self._data["qcoords"][i] = array[i]
         return
 
     @property
     def weights(self):
-        """
-        Get the weights of each phonon band, in dict format.
-        """
+        """Return CRYSTAL q-point integration weights keyed by q-point index."""
         return self._data["weights"]
 
     @weights.setter
     def weights(self, array):
-        """
-        Set the weights of each phonon band.
-        """
+        """Store q-point integration weights.
+
+        Parameters
+        ----------
+        array : array-like
+            Weight values ordered by q-point index."""
         for i in range(len(array)):
             self._data["weights"][i] = array[i]
         return
 
     @property
     def shrinkf(self):
-        """
-        Get the Hessian interpolation mesh used in the INTERPHESS keyword.
-        """
+        """Return the three CRYSTAL reciprocal-space shrinking factors."""
         return self._data["shrinkf"]
 
     @shrinkf.setter
     def shrinkf(self, array):
-        """
-        Set the Hessian interpolation mesh used in the INTERPHESS keyword.
-        """
+        """Store the CRYSTAL reciprocal shrinking factors.
+
+        Parameters
+        ----------
+        array : array-like
+            Three shrinking factors. A copy is retained by the reader."""
         self._data["shrinkf"] = array.copy()
         return
 
@@ -598,16 +610,19 @@ class CrystalPhononReader(BasicReader):
 
     @property
     def phonons(self):
-        """
-        Get the phonon bands, in dict format.
-        """
+        """Return phonon frequencies keyed by q-point index.
+
+        Each value contains ``nphonon`` frequencies in ``cm^-1``."""
         return self._data["phonons"]
 
     @phonons.setter
     def phonons(self, dictionary):
-        """
-        Set the phonon bands, in dict format.
-        """
+        """Store phonon-frequency blocks keyed by q-point index.
+
+        Parameters
+        ----------
+        dictionary : dict
+            Mapping whose values contain frequencies in ``cm^-1``."""
         self._data["phonons"] = dictionary
         return
 
@@ -801,29 +816,18 @@ class CrystalPhononReader(BasicReader):
         )
 
     def set_expansion(self, file):
-        """
-        This method sets the expasion matrix used to build the supercell.
-
-        Thus, it could be:
-
-          - a unit cell, if the CRYSTAL output is related to a
-            :math:`\\Gamma`-point frequency calculation, or
-
-          - a supercell, if either SUPERCELL of SCELPHONO were employed.
+        """Return the CRYSTAL primitive-to-supercell expansion matrix.
 
         Parameters
         ----------
-
-        file: str
-            Path of the CRYSTAL14/17 output file.
+        file : str or pathlib.Path
+            CRYSTAL phonon output file.
 
         Returns
         -------
-
-        expansion: ndarray
-            :math:`3 \\times 3` array of the expansion matrix.
-
-        """
+        numpy.ndarray
+            ``(3, 3)`` expansion matrix printed by CRYSTAL. The determinant gives the
+            number of primitive-cell repetitions represented by the supercell."""
         sline = self._get_start_line(file, markers.SUPERCELL_EXPANSION) + 1
 
         with open(file, "r") as f:
@@ -1119,25 +1123,24 @@ class CrystalPhononReader(BasicReader):
         return qpoints, qcoords, qweight, qmesh
 
     def set_energy(self, file):
-        """
-        This method sets the energy of the cell. It reads the value from the
-        central point (equilibrium) of displacement.  CRYSTAL propagates the
-        total energy of the reference state to this table, including optional
-        a-posteriori corrections when they are active.
+        """Return the authoritative CRYSTAL central-point phonon energy.
 
         Parameters
         ----------
-
-        file: str
-            Path of the CRYSTAL14/17 output file.
+        file : str or pathlib.Path
+            CRYSTAL phonon output file.
 
         Returns
         -------
-
         float
-            Energy of the crystal cell.
+            Central-point total energy in hartree, in the cell normalization printed
+            by CRYSTAL. The public :attr:`energy` property applies the reader's
+            primitive/supercell normalization.
 
-        """
+        Raises
+        ------
+        ValueError
+            If the central-point energy cannot be identified unambiguously."""
         with open(file, "r") as f:
             for line in f:
                 match = patterns.CENTRAL_POINT_RE.search(line)
@@ -1227,7 +1230,26 @@ class CrystalPhononReader(BasicReader):
         return scf_energy, provenance
 
     def set_phonons(self, file):
-        """ """
+        """Parse phonon-frequency blocks from a CRYSTAL output file.
+
+        Parameters
+        ----------
+        file : str or pathlib.Path
+            CRYSTAL frequency-calculation output file.
+
+        Returns
+        -------
+        dict[int, numpy.ndarray]
+            Mapping from sequential q-point block index to a one-dimensional
+            array of ``self.nphonon`` frequencies in cm^-1.
+
+        Raises
+        ------
+        OSError
+            If the output file cannot be opened.
+        ValueError
+            If a parsed mode index or frequency is not numeric.
+        """
         phonons = {}
         band_counter = 0
 

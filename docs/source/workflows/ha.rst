@@ -137,8 +137,9 @@ The stored q-point weights are normalized internally by their sum before any
 oscillator sum is evaluated.  Multiplying all weights by the same positive
 constant therefore does not change the result.
 
-Quantas does not currently perform an independent symmetry analysis to infer
-q-point equivalence or multiplicity.  Consequently:
+Q-point equivalence and multiplicity are taken from the supplied sampling; the
+HA workflow does not reconstruct them from an independent symmetry analysis.
+Consequently:
 
 - a full q-point set may use equal weights when scientifically appropriate;
 - an irreducible set must carry the correct multiplicities from its source;
@@ -164,9 +165,10 @@ A non-positive frequency may represent:
 - an inconsistent supercell or sampling setup;
 - a genuine dynamical instability.
 
-Quantas does not decide which interpretation is correct.  Before accepting a
-thermodynamic result, inspect how many modes were omitted, their magnitude,
-their q-point location, and whether the behavior persists across volumes.
+The workflow cannot decide which physical interpretation is correct.  Before
+accepting a thermodynamic result, inspect how many modes were omitted, their
+magnitude, their q-point location, and whether the behavior persists across
+volumes.
 Removing a genuinely unstable mode can make a table finite without making the
 harmonic model scientifically valid.
 

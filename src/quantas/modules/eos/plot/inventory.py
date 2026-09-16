@@ -84,7 +84,18 @@ class EOSDatasetPlotDescriptor:
             raise ValueError("EOS dataset descriptor slots must be unique")
 
     def unit_for(self, column: str) -> str | None:
-        """Return the normalized unit associated with one column."""
+        """Return the normalized unit associated with one column.
+
+        Parameters
+        ----------
+        column : str
+            Column identifier or metadata key to resolve.
+
+        Returns
+        -------
+        str | None
+            The normalized unit associated with one column.
+        """
         return dict(self.units).get(column)
 
 
@@ -218,14 +229,46 @@ class EOSArchivePlotInventory:
         object.__setattr__(self, "event_count", int(self.event_count))
 
     def dataset_by_id(self, dataset_id: int) -> EOSDatasetPlotDescriptor:
-        """Return one embedded dataset descriptor."""
+        """Return one embedded dataset descriptor.
+
+        Parameters
+        ----------
+        dataset_id : int
+            Stable identifier of the archived EOS dataset.
+
+        Returns
+        -------
+        EOSDatasetPlotDescriptor
+            One embedded dataset descriptor.
+
+        Raises
+        ------
+        KeyError
+            If a requested identifier or field is not available.
+        """
         for item in self.datasets:
             if item.dataset_id == int(dataset_id):
                 return item
         raise KeyError(f"unknown EOS dataset {dataset_id}")
 
     def slot_by_key(self, key: str) -> EOSSlotPlotDescriptor:
-        """Return one result-slot descriptor."""
+        """Return one result-slot descriptor.
+
+        Parameters
+        ----------
+        key : str
+            Stable lookup key.
+
+        Returns
+        -------
+        EOSSlotPlotDescriptor
+            One result-slot descriptor.
+
+        Raises
+        ------
+        KeyError
+            If a requested identifier or field is not available.
+        """
         canonical = EOSResultSlot.parse(key).key
         for item in self.slots:
             if item.key == canonical:
@@ -233,7 +276,23 @@ class EOSArchivePlotInventory:
         raise KeyError(f"unknown EOS result slot {canonical!r}")
 
     def record_by_id(self, record_id: int) -> EOSRecordPlotDescriptor:
-        """Return one immutable record descriptor."""
+        """Return one immutable record descriptor.
+
+        Parameters
+        ----------
+        record_id : int
+            Stable identifier of an immutable EOS fit record.
+
+        Returns
+        -------
+        EOSRecordPlotDescriptor
+            One immutable record descriptor.
+
+        Raises
+        ------
+        KeyError
+            If a requested identifier or field is not available.
+        """
         for item in self.records:
             if item.record_id == int(record_id):
                 return item

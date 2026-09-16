@@ -71,7 +71,14 @@ TableFileFormat = Literal["txt", "csv"]
 
 
 def available_energy_eos() -> tuple[str, ...]:
-    """Return EOS tags accepted by QHA energy minimization options."""
+    """Return EnergyEOS model tags supported by QHA minimization.
+
+    Returns
+    -------
+    tuple of str
+        Stable public model identifiers accepted by QHA energy minimization
+        options. The tuple is derived from the shared EOS registry rather than a
+        QHA-specific formula catalogue."""
     return available_eos_tags(require_energy=True, include_default_aliases=True)
 
 
@@ -190,7 +197,22 @@ def add_kieffer_input(
 
 
 def read_kieffer_input(source: str | Path) -> KiefferVolumeSeries:
-    """Read the Kieffer cutoff series embedded in a QHA YAML input."""
+    """Read the Kieffer cutoff series embedded in a QHA YAML input.
+
+    Parameters
+    ----------
+    source : str or Path
+        Multi-volume QHA input file containing a validated ``kieffer`` block.
+
+    Returns
+    -------
+    KiefferVolumeSeries
+        Volume-resolved acoustic cutoff data in the normalized public contract.
+
+    Raises
+    ------
+    ValueError
+        If the input does not contain a valid Kieffer block."""
     return _read_kieffer_input(source)
 
 
