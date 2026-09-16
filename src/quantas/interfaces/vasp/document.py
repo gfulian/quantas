@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import hashlib
 from pathlib import Path
 from typing import Any
 import xml.etree.ElementTree as ET
@@ -208,6 +209,31 @@ class VaspRunDocument:
                 return _typed_xml_value(item)
         return default
 
+    def parameter_vector(self, name: str) -> tuple[Any, ...] | None:
+        """Return one effective VASP vector parameter when available.
+
+        Parameters
+        ----------
+        name : str
+            Exact VASP vector parameter name.
+
+        Returns
+        -------
+        tuple or None
+            Parsed vector values, or ``None`` when absent.
+        """
+        return _parameter_vector(self.root, name)
+
+    def kpoint_signature(self) -> tuple[str, ...]:
+        """Return a stable description of the Brillouin-zone sampling.
+
+        Returns
+        -------
+        tuple of str
+            Generated-mesh fields or a digest of an explicit k-point list.
+        """
+        return _kpoint_signature(self.root)
+
     def atom_symbols(self) -> tuple[str, ...]:
         """Return atom symbols in the exact VASP atom order.
 
@@ -244,6 +270,31 @@ class VaspRunDocument:
         if not symbols:
             raise ValueError("VASP atominfo/atoms table contains no atoms")
         return tuple(symbols)
+
+    def pseudopotential_labels(self) -> tuple[str, ...]:
+        """Return VASP pseudopotential labels recorded in ``atominfo``.
+
+        Returns
+        -------
+        tuple of str
+            One label per VASP atom type, for example ``"PAW_PBE Mg_pv
+            13Apr2007"`` as recorded by ``vasprun.xml``.  Empty tuple is
+            returned when the atom-type table does not expose labels.
+        """
+        atominfo = self.root.find("atominfo")
+        array = None if atominfo is None else atominfo.find("array[@name='atomtypes']")
+        rows = None if array is None else array.find("set")
+        if rows is None:
+            return ()
+        labels: list[str] = []
+        for row in rows.findall("rc"):
+            cells = row.findall("c")
+            if len(cells) < 5:
+                continue
+            label = _text(cells[4])
+            if label:
+                labels.append(label)
+        return tuple(labels)
 
     def atomic_numbers(self) -> NDArray[np.int64]:
         """Return atomic numbers in VASP atom order.
@@ -317,6 +368,54 @@ class VaspRunDocument:
 
 
 
+def _parameter_vector(root: ET.Element, name: str) -> tuple[Any, ...] | None:
+    """Return one effective vector parameter from parameters or INCAR."""
+    parameters = root.find("parameters")
+    if parameters is not None:
+        for item in parameters.iter("v"):
+            if item.get("name") == name:
+                return _typed_xml_vector(item)
+    incar = root.find("incar")
+    if incar is not None:
+        item = incar.find(f"v[@name='{name}']")
+        if item is not None:
+            return _typed_xml_vector(item)
+    return None
+
+
+def _kpoint_signature(root: ET.Element) -> tuple[str, ...]:
+    """Return generated-mesh fields or an explicit-list digest."""
+    node = root.find("kpoints")
+    if node is None:
+        return ()
+    generation = node.find("generation")
+    if generation is not None:
+        fields = [f"mode={generation.get('param', '').strip() or 'unknown'}"]
+        for item in generation.findall("v"):
+            name = item.get("name")
+            if not name:
+                continue
+            rendered = ",".join(
+                _stable_value(value) for value in _typed_xml_vector(item)
+            )
+            fields.append(f"{name}={rendered}")
+        return tuple(fields)
+
+    points = node.find("varray[@name='kpointlist']")
+    weights = node.find("varray[@name='weights']")
+    if points is None:
+        return ()
+    point_rows = tuple(_numeric_row(item) for item in points.findall("v"))
+    weight_rows = (
+        tuple(_numeric_row(item) for item in weights.findall("v"))
+        if weights is not None
+        else ()
+    )
+    payload = repr((point_rows, weight_rows)).encode("ascii")
+    digest = hashlib.sha256(payload).hexdigest()
+    return ("mode=explicit", f"nkpoints={len(point_rows)}", f"sha256={digest}")
+
+
 def _text(node: ET.Element) -> str:
     """Return stripped XML element text."""
     return "" if node.text is None else node.text.strip()
@@ -341,3 +440,36 @@ def _typed_xml_value(node: ET.Element) -> Any:
         return _as_float(value)
     except ValueError:
         return value
+
+
+def _typed_xml_vector(node: ET.Element) -> tuple[Any, ...]:
+    """Parse one VASP XML vector according to its declared scalar type."""
+    tokens = _text(node).split()
+    kind = (node.get("type") or "").casefold()
+    if kind == "int":
+        return tuple(int(token) for token in tokens)
+    if kind == "logical":
+        return tuple(token.casefold() in {"t", ".true.", "true"} for token in tokens)
+    if kind == "string":
+        return tuple(tokens)
+    values: list[Any] = []
+    for token in tokens:
+        try:
+            values.append(_as_float(token))
+        except ValueError:
+            values.append(token)
+    return tuple(values)
+
+
+def _stable_value(value: Any) -> str:
+    """Render one XML value deterministically for provenance signatures."""
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, (float, np.floating)):
+        return format(float(value), ".15g")
+    return str(value).strip()
+
+
+def _numeric_row(node: ET.Element) -> tuple[float, ...]:
+    """Return one numerical VASP varray row for deterministic hashing."""
+    return tuple(_as_float(token) for token in _text(node).split())

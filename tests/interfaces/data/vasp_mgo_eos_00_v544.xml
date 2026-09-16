@@ -27,6 +27,7 @@
     <i type="logical" name="LREAL"> F  </i>
     <i type="logical" name="LPLANE"> T  </i>
     <i type="int" name="ISMEAR">    -5</i>
+    <i name="SIGMA">0.20000000</i>
     <i type="int" name="NWRITE">     2</i>
     <i type="logical" name="LWAVE"> F  </i>
     <i type="logical" name="LCHARG"> F  </i>
@@ -38,6 +39,13 @@
     <i type="int" name="NELM">    60</i>
     <i type="string" name="GGA"> PE</i>
   </incar>
+  <kpoints>
+    <generation param="Gamma">
+      <v type="int" name="divisions">12 12 12</v>
+      <v name="usershift">0.0 0.0 0.0</v>
+      <v name="shift">0.0 0.0 0.0</v>
+    </generation>
+  </kpoints>
   <atominfo>
     <atoms>       2 </atoms>
     <types>       2 </types>

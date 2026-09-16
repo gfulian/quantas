@@ -86,9 +86,19 @@ Energy EOS input generation uses the backend-neutral
 :class:`~quantas.models.computation.StructureEnergySeries` contract.  An
 interface may return one or several states from each source file; the EOS input
 generator then flattens compatible sources before writing the ordinary EOS text
-format.  CRYSTAL is the first supported backend because one native ``EOS`` run
-can contain a complete volume series, while an additional single-volume output
-can be appended through the same ``--list`` workflow.
+format.  CRYSTAL and VASP both feed this contract without placing parser logic inside
+the EOS module.  A CRYSTAL native ``EOS`` run can contain a complete volume
+series, whereas one VASP calculation directory contributes one independent
+state and a directory list builds the series.
+
+For VASP, ``vasprun.xml`` is the structured source and ``OUTCAR`` is optional
+complementary evidence.  The b13 ground-state Energy EOS adapter selects
+``e_0_energy`` / ``energy(sigma->0)``, reduces a non-primitive source cell with
+the shared spglib helper, and divides the source energy by the same primitive
+cell multiplicity.  Already primitive VASP cells keep their original basis.
+Independent states are merged only when their selected energy quantity,
+Brillouin-zone sampling, pseudopotential labels, smearing semantics, and other
+relevant electronic settings form one compatible signature.
 
 For CRYSTAL native EOS output, the final sorted volume--energy table defines
 which states belong to the curve.  The collector independently matches those volumes

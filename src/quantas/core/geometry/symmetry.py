@@ -8,7 +8,11 @@ from typing import Any
 
 import numpy as np
 
-from quantas.models.structures import CrystalStructure, SymmetryMetadata
+from quantas.models.structures import (
+    CrystalStructure,
+    PrimitiveCellReduction,
+    SymmetryMetadata,
+)
 
 
 def _dataset_value(dataset: Any, name: str, default: Any = None) -> Any:
@@ -172,3 +176,149 @@ def find_primitive_structure(
         label=f"spglib primitive of {structure.label}".strip(),
         metadata={"symprec": float(symprec), "no_idealize": bool(no_idealize)},
     )
+
+
+def reduce_to_primitive_cell(
+    structure: CrystalStructure,
+    *,
+    symprec: float = 1.0e-5,
+    angle_tolerance: float = -1.0,
+    no_idealize: bool = True,
+) -> PrimitiveCellReduction:
+    """Reduce a structure to a validated primitive thermodynamic normalization.
+
+    The helper validates atom/composition and volume multiplicities around
+    :func:`find_primitive_structure`.  If the source is already primitive, its
+    backend lattice basis is retained; otherwise the spglib primitive cell is
+    returned together with the integer source-cell multiplicity.
+
+    Parameters
+    ----------
+    structure : CrystalStructure
+        Source periodic structure.
+    symprec : float, optional
+        Cartesian symmetry tolerance in angstrom.
+    angle_tolerance : float, optional
+        Angular tolerance in degrees.
+    no_idealize : bool, optional
+        Preserve non-idealized geometry as far as spglib allows.
+
+    Returns
+    -------
+    PrimitiveCellReduction
+        Primitive structure, source multiplicity, and row-basis transform.
+
+    Raises
+    ------
+    ImportError
+        If spglib is unavailable.
+    ValueError
+        If primitive standardization is not an integer compositional/volume
+        reduction of the source cell.
+    """
+    primitive = find_primitive_structure(
+        structure,
+        symprec=symprec,
+        angle_tolerance=angle_tolerance,
+        no_idealize=no_idealize,
+    )
+    repetitions = _primitive_repetitions(structure, primitive)
+    _validate_primitive_composition(structure, primitive, repetitions)
+    _validate_primitive_volume(structure, primitive, repetitions)
+    normalized, transform = _primitive_basis(structure, primitive, repetitions)
+    _validate_primitive_transform(transform, repetitions)
+    normalized.metadata.update(
+        {
+            "normalization_basis": "primitive",
+            "source_atoms": int(structure.natoms),
+            "source_volume_angstrom3": float(structure.volume),
+            "primitive_repetitions": int(repetitions),
+            "source_basis_preserved": bool(repetitions == 1),
+        }
+    )
+    return PrimitiveCellReduction(
+        structure=normalized,
+        repetitions=repetitions,
+        source_to_primitive=transform,
+        source_atoms=structure.natoms,
+        source_volume=structure.volume,
+    )
+
+
+def _primitive_repetitions(
+    source: CrystalStructure,
+    primitive: CrystalStructure,
+) -> int:
+    """Return the integer primitive-cell count represented by ``source``."""
+    if primitive.natoms <= 0 or source.natoms % primitive.natoms != 0:
+        raise ValueError(
+            "spglib primitive atom count is not an integer reduction of the "
+            "source structure"
+        )
+    return source.natoms // primitive.natoms
+
+
+def _validate_primitive_composition(
+    source: CrystalStructure,
+    primitive: CrystalStructure,
+    repetitions: int,
+) -> None:
+    """Require primitive composition to reproduce the source composition."""
+    source_numbers, source_counts = np.unique(source.atomic_numbers, return_counts=True)
+    primitive_numbers, primitive_counts = np.unique(
+        primitive.atomic_numbers, return_counts=True
+    )
+    if not np.array_equal(source_numbers, primitive_numbers) or not np.array_equal(
+        source_counts, primitive_counts * repetitions
+    ):
+        raise ValueError(
+            "spglib primitive composition is inconsistent with the source cell"
+        )
+
+
+def _validate_primitive_volume(
+    source: CrystalStructure,
+    primitive: CrystalStructure,
+    repetitions: int,
+) -> None:
+    """Require the primitive/source volume ratio to match atom multiplicity."""
+    volume_ratio = source.volume / primitive.volume
+    if not np.isclose(volume_ratio, repetitions, rtol=1.0e-7, atol=1.0e-7):
+        raise ValueError(
+            "spglib primitive volume is inconsistent with the atom-count "
+            f"multiplicity: Vsource/Vprimitive={volume_ratio:.12g}, "
+            f"repetitions={repetitions}"
+        )
+
+
+def _primitive_basis(
+    source: CrystalStructure,
+    primitive: CrystalStructure,
+    repetitions: int,
+) -> tuple[CrystalStructure, np.ndarray]:
+    """Return the normalized structure and source-to-primitive row transform."""
+    if repetitions == 1:
+        normalized = CrystalStructure(
+            lattice=source.lattice.copy(),
+            fractional_positions=source.fractional_positions.copy(),
+            atomic_numbers=source.atomic_numbers.copy(),
+            label=source.label,
+            metadata=dict(source.metadata),
+        )
+        return normalized, np.eye(3, dtype=np.float64)
+    transform = np.asarray(
+        primitive.lattice @ np.linalg.inv(source.lattice),
+        dtype=np.float64,
+    )
+    return primitive, transform
+
+
+def _validate_primitive_transform(transform: np.ndarray, repetitions: int) -> None:
+    """Require the basis-transform determinant to match cell multiplicity."""
+    determinant = abs(float(np.linalg.det(transform)))
+    expected = 1.0 / float(repetitions)
+    if not np.isclose(determinant, expected, rtol=1.0e-7, atol=1.0e-10):
+        raise ValueError(
+            "source-to-primitive basis determinant is inconsistent with the "
+            f"cell multiplicity: det={determinant:.12g}, expected={expected:.12g}"
+        )

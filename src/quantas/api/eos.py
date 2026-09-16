@@ -118,7 +118,7 @@ from .plotting import PlotCollection
 
 
 
-InputInterface = Literal["crystal"]
+InputInterface = Literal["crystal", "vasp"]
 
 
 def create_input(
@@ -138,11 +138,12 @@ def create_input(
     source : str, Path, or sequence of path-like
         One backend output, a direct sequence of outputs, or a list-file path
         when ``is_list`` is true. One CRYSTAL output may contribute either one
-        state or a complete native EOS volume series.
+        state or a complete native EOS volume series; one VASP calculation
+        directory contributes one normalized single-state observation.
     destination : str or Path
         Destination EOS text path. The ``.dat`` suffix is applied when absent.
-    interface : {"crystal"}, optional
-        Electronic-structure interface used to interpret the source files.
+    interface : {"crystal", "vasp"}, optional
+        Electronic-structure interface used to interpret the source paths.
     is_list : bool, optional
         Interpret a scalar source as a text file listing backend outputs.
     jobname : str, optional

@@ -115,6 +115,14 @@ The b13 work is focused on:
   can be consolidated on top of the generic run interface without changing
   scientific tensor semantics silently.
 
+The first b13 layers are now characterized: the generic run parser resolves
+VASP 5.4.4 geometry and energy semantics, and the Energy EOS adapter maps one
+single-state run to the shared ``StructureEnergySeries`` contract.  The adapter
+uses ``energy(sigma->0)`` for the static ground-state E--V surface, normalizes
+non-primitive source cells and their energies to one primitive cell, preserves
+already primitive VASP bases, and rejects incompatible electronic-setting
+signatures across independent runs.
+
 DFT-code + Phonopy interoperability, including a common cross-backend phonon
 contract, is deliberately deferred to a separate branch after the VASP run
 interface is stable.

@@ -16,6 +16,13 @@ public contract; they must still be documented and validated.
 - Added MgO/periclase VASP 5.4.4 characterization fixtures derived from real
   optimization and Energy-EOS calculations, including regression coverage for
   the documented VASP-5 outer ``vasprun.xml`` energy-tag bug.
+- Added VASP Energy-EOS adaptation from calculation directories to the shared
+  ``StructureEnergySeries`` contract, including ``energy(sigma->0)`` selection,
+  primitive-cell energy/volume normalization, electronic-setting compatibility
+  checks, and direct ``quantas eos inpgen --interface vasp`` support.
+- Added a backend-neutral primitive-cell reduction contract that preserves an
+  already primitive source basis and records the integer thermodynamic
+  multiplicity when a source cell is reduced.
 
 ### Changed
 
@@ -25,12 +32,21 @@ public contract; they must still be documented and validated.
 - Scoped b13 specifically to direct VASP run-output ingestion and normalization;
   DFT-code + Phonopy interoperability is deferred to a separate follow-up
   branch.
+- Extended the existing backend-neutral Energy EOS input generator to accept
+  VASP calculation directories as sources while retaining CRYSTAL-specific
+  correction diagnostics and established error semantics.
 
 ### Scientific compatibility
 
-- This baseline patch changes release/development metadata only.  It does not
-  alter numerical formulas, units, array conventions, parsers, or persisted
-  scientific results.
+- VASP Energy-EOS ingestion is additive.  Existing CRYSTAL Energy-EOS behavior
+  and correction semantics are retained.  VASP observations are normalized to
+  the primitive cell before entering the shared EOS collector; generated eV
+  energies are converted by the existing EOS reader to its native Hartree
+  representation.
+- The VASP Energy-EOS policy is explicitly a ground-state/static E--V policy.
+  It uses ``e_0_energy`` / ``energy(sigma->0)`` and rejects mixed electronic
+  settings rather than treating optimization and static-run energies as
+  interchangeable.
 
 ## [2.0.0b12] - Unreleased
 

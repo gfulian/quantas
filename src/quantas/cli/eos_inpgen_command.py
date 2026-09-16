@@ -21,7 +21,7 @@ from quantas.models import ReportTable
 @click.command(name="inpgen", cls=GroupedCommand)
 @click.argument(
     "source",
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path),
 )
 @grouped_option(
     "-o",
@@ -43,7 +43,7 @@ from quantas.models import ReportTable
 @grouped_option(
     "--interface",
     group="Input selection",
-    type=click.Choice(["crystal"], case_sensitive=False),
+    type=click.Choice(["crystal", "vasp"], case_sensitive=False),
     default="crystal",
     show_default=True,
     help="Electronic-structure output interface.",
@@ -55,8 +55,9 @@ from quantas.models import ReportTable
     is_flag=True,
     default=False,
     help=(
-        "Interpret SOURCE as a text file listing backend outputs. Each output "
-        "may contribute one or several Energy EOS states."
+        "Interpret SOURCE as a text file listing backend sources. CRYSTAL "
+        "entries are output files; VASP entries are calculation directories or "
+        "their vasprun.xml/OUTCAR primary files."
     ),
 )
 @grouped_option(
@@ -89,8 +90,10 @@ def inpgen(
     """Generate an Energy EOS dataset from electronic-structure output.
 
     CRYSTAL sources may contain one static/optimized state or a complete native
-    multi-volume EOS series; ``--list`` flattens compatible sources into one
-    volume-sorted table containing cell metrics and total energies.
+    multi-volume EOS series. VASP sources are calculation directories (or their
+    ``vasprun.xml``/``OUTCAR`` paths) that contribute one primitive-normalized
+    state each. ``--list`` flattens compatible sources into one volume-sorted
+    table containing cell metrics and static energies.
     """
     destination = ensure_suffix(outfile, ".dat")
     if destination.exists() and not force and not confirm(

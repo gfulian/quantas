@@ -26,6 +26,11 @@ The b13 VASP tranche is intended to:
 - consolidate specialized readers, such as elasticity, only after the generic
   VASP run contract is characterized.
 
+The generic VASP run contract and its first Energy EOS adapter are now under
+characterization.  Remaining b13 work should harden the direct VASP surface,
+add real-version fixtures where needed, and only then decide whether existing
+specialized VASP readers should consume the shared run layer.
+
 Phonopy support is explicitly outside this branch.  DFT-code + Phonopy
 interoperability and cross-backend phonon normalization will be developed as a
 separate follow-up once the direct VASP interface is stable.

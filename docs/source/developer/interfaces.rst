@@ -212,9 +212,43 @@ unambiguously, the resolved XML energies are checked against its final
 
 This resolution policy follows the VASP developers' description of the VASP
 5.4.4 XML issue and its correction in VASP 6 [#vasp_xml_energy_bug]_.  It is an
-interface-level source correction, not an EOS energy-selection policy.  The
-future VASP Energy-EOS adapter must still state explicitly which resolved VASP
-quantity it uses.
+interface-level source correction; workflow adapters select scientific
+quantities only after the three VASP energy values have been resolved.
+
+VASP Energy EOS adaptation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`quantas.interfaces.vasp.energy_volume.VaspEnergyVolumeReader` adapts one
+completed VASP run to one backend-neutral
+:class:`~quantas.models.computation.StructureEnergyPoint`.  The current b13
+scope is a zero-electronic-temperature/static E--V dataset, so the adapter
+selects VASP ``e_0_energy`` / ``energy(sigma->0)``.  This is not a statement
+that ``E0`` is the appropriate quantity for every VASP workflow: a calculation
+that intentionally represents finite electronic temperature has different
+thermodynamic semantics.  For accurate bulk total-energy calculations VASP
+recommends the tetrahedron method with Blöchl corrections (``ISMEAR=-5``);
+when Gaussian or Methfessel--Paxton smearing is used, ``energy(sigma->0)`` is
+an extrapolation and convergence with respect to ``SIGMA`` remains the user's
+scientific responsibility [#vasp_smearing]_.
+
+Each Energy EOS source must resolve to exactly one ionic state.  An optimization
+history is therefore never flattened into the E--V series.  The source cell is
+passed through the shared spglib primitive-cell normalization.  If the VASP
+cell is already primitive, its lattice basis and orientation are preserved.  If
+it contains multiple primitive repetitions, structure and volume are reduced
+and the source-cell energy is divided by the same integer multiplicity.  This
+produces the same primitive normalization expected by the backend-neutral EOS
+collector; ``--crystal-reference crystallographic`` may subsequently scale the
+complete series to one fixed crystallographic cell.
+
+Before independent runs are merged, Quantas requires one explicit VASP energy
+compatibility signature.  It records the selected quantity, ``ISMEAR`` and
+``SIGMA`` where active, relevant exchange-correlation/spin/charge/hybrid/DFT+U
+settings, plane-wave precision/cutoff, Brillouin-zone sampling, and the
+pseudopotential labels stored in ``vasprun.xml``.  A mismatch is rejected rather
+than silently mixing energies computed on different electronic surfaces.  The
+check is intentionally conservative; a future workflow may relax individual
+fields only with an explicit scientific policy and characterization tests.
 
 The first characterization fixture is MgO/periclase calculated with VASP
 ``5.4.4.18Apr17-6-g9f103f2a35``.  Full user calculations were used to verify
@@ -227,6 +261,9 @@ force, stress, and convergence records needed by the repository tests.
 .. [#vasp_xml_energy_bug] VASP Forum, *Bug in vasprun.xml energies*, report and
    developer response confirming the behavior in VASP 5.4.4 and its correction
    in VASP 6.1.1: https://vasp.at/forum/viewtopic.php?t=17839
+.. [#vasp_smearing] VASP Wiki, *Smearing technique*: guidance for total-energy
+   Brillouin-zone integration, ``ISMEAR=-5``, and zero-smearing extrapolation:
+   https://www.vasp.at/wiki/index.php/Smearing_technique
 
 CRYSTAL static-energy semantics
 -------------------------------

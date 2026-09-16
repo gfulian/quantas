@@ -82,6 +82,34 @@ def test_vasp_document_characterizes_real_v544_metadata(tmp_path: Path) -> None:
 
 
 @pytest.mark.interfaces
+def test_vasp_document_exposes_vector_parameters_and_kpoint_sampling(
+    tmp_path: Path,
+) -> None:
+    """Run provenance should retain vector settings and generated k-point grids."""
+    tree = ET.parse(EOS_XML)
+    root = tree.getroot()
+    parameters = root.find("parameters")
+    if parameters is None:
+        parameters = ET.SubElement(root, "parameters")
+    separator = ET.SubElement(parameters, "separator", {"name": "test"})
+    ldauu = ET.SubElement(separator, "v", {"name": "LDAUU"})
+    ldauu.text = "4.0 0.0"
+
+    run = tmp_path / "vasp_run"
+    run.mkdir()
+    tree.write(run / "vasprun.xml", encoding="utf-8", xml_declaration=True)
+    document = VaspRunDocument(run)
+
+    assert document.parameter_vector("LDAUU") == pytest.approx((4.0, 0.0))
+    assert document.kpoint_signature() == (
+        "mode=Gamma",
+        "divisions=12,12,12",
+        "usershift=0,0,0",
+        "shift=0,0,0",
+    )
+
+
+@pytest.mark.interfaces
 def test_vasp_parser_reconstructs_real_mgo_structures(tmp_path: Path) -> None:
     """VASP fractional coordinates must remain float64 and preserve atom order."""
     run = _run_directory(tmp_path)

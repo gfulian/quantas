@@ -14,6 +14,13 @@ float64 fractional coordinates, old and flat ionic-state XML layouts,
 VASP-5 energy-tag repair, OUTCAR energy cross-checks, forces, stress, and
 explicit convergence markers.
 
+The Energy EOS adapter is characterized separately from the generic parser.
+It selects ``e_0_energy`` for the ground-state E--V contract, checks a
+conservative electronic-energy signature (including k-point sampling and
+pseudopotential labels), rejects optimization histories, and exercises the
+shared primitive-cell normalization.  spglib-backed tests also cover an
+already primitive structure and a conventional rocksalt MgO cell.
+
 The compact fixtures do not establish scientific validation for every VASP 6
 minor version.  Additional real-version fixtures should be added before making
 such a claim.

@@ -62,6 +62,15 @@ primitive-to-crystallographic transformation printed by the code has priority;
 spglib supplies the general symmetry/standard-setting fallback used by the
 backend-neutral workflow.
 
+For VASP sources, each calculation directory is first normalized to one
+primitive-cell structure--energy observation.  If the source cell contains
+``N`` primitive repetitions, its total energy and volume are both divided by
+``N``; an already primitive cell retains its original VASP basis.  The generated
+text therefore has the same primitive/crystallographic meaning as a CRYSTAL-
+derived table.  VASP energies are written in eV in the generated text and are
+converted by the EOS reader to the native Energy-EOS Hartree representation,
+just as other declared input units are normalized at the reader boundary.
+
 Minimal examples
 ----------------
 
