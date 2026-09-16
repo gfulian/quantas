@@ -163,6 +163,71 @@ elastic pressure are scientifically relevant because they establish whether
 the output contains the stress-corrected coefficients required under
 hydrostatic pre-stress.
 
+VASP run documents
+------------------
+
+The generic VASP interface treats one calculation directory as one run source.
+:func:`quantas.interfaces.vasp.resolve_vasp_run_source` accepts the directory
+itself, ``vasprun.xml``, or ``OUTCAR`` and resolves the sibling files.  During
+the b13 interface-maintenance tranche, ``vasprun.xml`` is the required primary
+structured document and ``OUTCAR`` is optional complementary evidence.  An
+``OUTCAR`` without the sibling XML file is therefore not silently promoted to a
+complete run source.
+
+:class:`quantas.interfaces.vasp.document.VaspRunDocument` owns XML/text syntax.
+It exposes generator metadata, explicitly recorded INCAR values, effective
+scalar parameters, atom ordering, and ionic-state containers without deciding
+which state or energy should feed a Quantas scientific workflow.
+:class:`quantas.interfaces.vasp.output.VaspOutputParser` converts these records
+to canonical :class:`quantas.models.structures.CrystalStructure` objects and
+VASP-specific ionic-state records containing:
+
+* lattice vectors in angstrom and fractional coordinates as ``float64``;
+* atomic numbers in the exact VASP atom order;
+* ``e_fr_energy``, ``e_wo_entrp``, and ``e_0_energy`` as separate values in eV;
+* forces in eV/angstrom;
+* stress tensors in kbar, without a premature sign or pressure conversion;
+* electronic/ionic convergence facts that can be established explicitly;
+* source and resolution provenance.
+
+The parser accepts the older layout in which each ionic state is enclosed by a
+``<calculation>`` element and the current documented flat ionic-state layout.
+Support for a layout means that Quantas understands its structure; scientific
+validation against a specific VASP version still requires a real reference
+output for that version.
+
+VASP energy semantics require special care.  In VASP 5.4.4 the outer
+``calculation/energy`` record is affected by a documented output bug: the
+``e_wo_entrp`` and ``e_0_energy`` tags can contain the extrapolated energy and
+electronic entropy term, respectively, instead of their nominal quantities.
+The b13 parser does not branch on a hard-coded version string.  For
+``<calculation>``-style output it instead takes the relative values of ``F``,
+``E``, and ``E0`` from the final electronic ``scstep`` and transfers only the
+shift in the outer ``e_fr_energy``.  This preserves an additive correction that
+is present only in the ionic-state total while avoiding the mislabeled outer
+tags.  The raw outer values, the applied shift, and whether the known VASP-5
+pattern was observed remain in metadata.  When an ``OUTCAR`` can be paired
+unambiguously, the resolved XML energies are checked against its final
+``TOTEN``, ``energy without entropy``, and ``energy(sigma->0)`` values.
+
+This resolution policy follows the VASP developers' description of the VASP
+5.4.4 XML issue and its correction in VASP 6 [#vasp_xml_energy_bug]_.  It is an
+interface-level source correction, not an EOS energy-selection policy.  The
+future VASP Energy-EOS adapter must still state explicitly which resolved VASP
+quantity it uses.
+
+The first characterization fixture is MgO/periclase calculated with VASP
+``5.4.4.18Apr17-6-g9f103f2a35``.  Full user calculations were used to verify
+three consecutive cell optimizations and seven fixed-cell EOS states; compact
+fixtures retain the real generator, INCAR, atom, structure, electronic-energy,
+force, stress, and convergence records needed by the repository tests.
+
+.. rubric:: VASP references
+
+.. [#vasp_xml_energy_bug] VASP Forum, *Bug in vasprun.xml energies*, report and
+   developer response confirming the behavior in VASP 5.4.4 and its correction
+   in VASP 6.1.1: https://vasp.at/forum/viewtopic.php?t=17839
+
 CRYSTAL static-energy semantics
 -------------------------------
 

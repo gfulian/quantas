@@ -7,6 +7,16 @@ public contract; they must still be documented and validated.
 
 ## [2.0.0b13] - Unreleased
 
+### Added
+
+- Added a generic VASP run-document interface that resolves calculation
+  directories, reads ``vasprun.xml`` with optional ``OUTCAR`` cross-checks,
+  reconstructs canonical structures, and preserves VASP energy, force, stress,
+  run-version, and convergence provenance without coupling the parser to EOS.
+- Added MgO/periclase VASP 5.4.4 characterization fixtures derived from real
+  optimization and Energy-EOS calculations, including regression coverage for
+  the documented VASP-5 outer ``vasprun.xml`` energy-tag bug.
+
 ### Changed
 
 - Advanced the development baseline to ``2.0.0b13`` on
