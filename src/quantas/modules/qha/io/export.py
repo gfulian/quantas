@@ -10,7 +10,6 @@ Quantas 2.0 HDF5 schema.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, TextIO
 
@@ -52,9 +51,6 @@ from quantas.modules.qha.formatting import (
 
 
 
-
-
-@dataclass(slots=True)
 
 
 class QHAHDF5Export(BasicHDF5Export):

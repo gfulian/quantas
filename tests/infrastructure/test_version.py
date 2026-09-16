@@ -66,3 +66,26 @@ def test_root_namespace_exposes_only_the_version() -> None:
     assert quantas.__all__ == ["__version__"]
     assert not hasattr(quantas, "__author__")
     assert not hasattr(quantas, "__citation_key__")
+
+
+def test_release_metadata_matches_authoritative_version() -> None:
+    """Current release-facing metadata must track the source version."""
+    root = Path(__file__).resolve().parents[2]
+    version = authoritative_version
+
+    citation = (root / "CITATION.cff").read_text(encoding="utf-8")
+    project_state = (root / "PROJECT_STATE.md").read_text(encoding="utf-8")
+    roadmap = (root / "ROADMAP.md").read_text(encoding="utf-8")
+    changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    lifecycle_tool = (
+        root / "tools" / "validate_public_lifecycle_api.ps1"
+    ).read_text(encoding="utf-8")
+    tools_readme = (root / "tools" / "README.md").read_text(encoding="utf-8")
+
+    assert f"version: {version}" in citation
+    assert f"| Current development version | `{version}` |" in project_state
+    assert f"Development is now on ``{version}``" in roadmap
+    assert f"## [{version}] - Unreleased" in changelog
+    assert version in lifecycle_tool
+    assert version in tools_readme
+    assert not (root / "tools" / "validate_public_lifecycle_api_step6.ps1").exists()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
+import pytest
 
 from quantas.core.numerics import RectilinearFieldInterpolator
 
@@ -30,3 +31,14 @@ def test_rectilinear_interpolator_handles_singletons_and_marks_extrapolation() -
     values, extrapolated = interpolator.evaluate_grid([300.0, 400.0], [-1.0, 2.5])
     np.testing.assert_allclose(values, [[8.0, 15.0], [8.0, 15.0]])
     assert extrapolated.tolist() == [[True, False], [True, True]]
+
+
+def test_rectilinear_interpolator_keeps_source_attributes_read_only():
+    interpolator = RectilinearFieldInterpolator(
+        [0.0, 1.0],
+        [0.0, 1.0],
+        np.zeros((2, 2)),
+    )
+
+    with pytest.raises(AttributeError, match="immutable"):
+        interpolator.x = np.array([0.0, 2.0])

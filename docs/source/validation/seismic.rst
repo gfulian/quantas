@@ -67,30 +67,24 @@ Current traceability
 
 The main automated evidence is distributed across:
 
-``tests/physics/seismic/test_solver_reference.py`` and
-``tests/physics/seismic/test_invariants.py``
-   Christoffel eigenpairs, analytical derivatives, isotropic limits, and
-   phase/group/enhancement invariants.
-
-``tests/physics/seismic/test_group_velocity.py`` and
-``tests/physics/seismic/test_derivatives.py``
-   Group-velocity identities and finite-difference verification of derivatives.
-
-``tests/physics/seismic/test_polarization.py`` and
-``tests/physics/seismic/test_acoustic_axes.py``
-   Sign continuity, local branch exchange, degeneracies, subspace alignment,
-   and acoustic-axis behaviour.
-
-``tests/physics/seismic/test_enhancement.py``
-   Enhancement, curvature, density and antipodal invariance, and caustic
-   diagnostics.
-
-``tests/physics/seismic/test_reference_baseline.py``
-   Frozen hydroxylapatite directional regression data and logarithmic
-   enhancement convention.
-
-``tests/modules/seismic/``
-   End-to-end workflow, reports, HDF5, export, rendering, CLI, and API parity.
+- ``tests/physics/seismic/test_solver_reference.py`` and
+  ``tests/physics/seismic/test_invariants.py`` -- Christoffel eigenpairs,
+  analytical derivatives, isotropic limits, and phase/group/enhancement
+  invariants.
+- ``tests/physics/seismic/test_group_velocity.py`` and
+  ``tests/physics/seismic/test_derivatives.py`` -- group-velocity identities and
+  finite-difference verification of derivatives.
+- ``tests/physics/seismic/test_polarization.py`` and
+  ``tests/physics/seismic/test_acoustic_axes.py`` -- sign continuity, local
+  branch exchange, degeneracies, subspace alignment, and acoustic-axis
+  behaviour.
+- ``tests/physics/seismic/test_enhancement.py`` -- enhancement, curvature,
+  density and antipodal invariance, and caustic diagnostics.
+- ``tests/physics/seismic/test_reference_baseline.py`` -- frozen
+  hydroxylapatite directional regression data and logarithmic enhancement
+  convention.
+- ``tests/modules/seismic/`` -- end-to-end workflow, reports, HDF5, export,
+  rendering, CLI, and API parity.
 
 Until the remaining public matrix is assembled, these tests establish strong
 numerical and architectural characterization but do not by themselves establish

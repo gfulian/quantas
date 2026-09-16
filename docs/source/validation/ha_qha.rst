@@ -158,8 +158,8 @@ Elastic-state and cutoff provenance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The shared model layer distinguishes raw energy--strain stiffness matrices
-from hydrostatic Wallace and full-stress incremental tensors.  A correction
-record contains the source tensor convention, pressure value and origin,
+from hydrostatic and full-stress finite-pressure incremental tensors.  A
+correction record contains the source tensor convention, pressure value and origin,
 correction method, and the component that applied it.  Validation rejects a
 correction whose source is already incremental, preventing silent double
 application before the data reach Christoffel acoustics.

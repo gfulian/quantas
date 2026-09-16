@@ -5,6 +5,54 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
+## [2.0.0b12] - Unreleased
+
+### Added
+
+- Added a shared energy-derived pressure-resolution service used by Kieffer and
+  thermoelastic workflows, preserving volume matching and pressure provenance
+  without coupling numerical code to a frontend module.
+- Added canonical citation-registry coverage and one page-local numbered
+  bibliography format across the scientific manual.
+- Added validation-status criteria and traceability pages that distinguish
+  completed scientific validation records from work-in-progress scopes.
+
+### Changed
+
+- Completed the public docstring audit across core, models, I/O, interfaces,
+  Elasticity, SEISMIC, HA, QHA, EOS, Thermoelasticity, API, renderers, and CLI
+  helpers while preserving Click command help as user-facing text.
+- Simplified documentation information ownership and prose so theory, workflow,
+  tutorials, formats, reference material, and validation no longer repeat the
+  same explanation unnecessarily.
+- Renamed the generic Eulerian hydrostatic incremental-stiffness helpers so they
+  cannot be confused with the backend-specific CRYSTAL finite-prestress
+  conversion; historical helper names remain compatibility aliases.
+- Converted remaining active runtime helpers from passive dataclass semantics
+  to normal classes while preserving their numerical behavior and public use.
+
+### Fixed
+
+- Kept documented EOS request/input failures as ``INVALID_INPUT`` while allowing
+  unexpected implementation or numerical-layer exceptions to propagate instead
+  of being persisted as user scientific failures.
+- Clarified CRYSTAL Erba/Barron--Klein finite-prestress conversion versus the
+  distinct Wallace delta used by the QSA finite-strain formulation, preventing
+  the two operations from being interpreted as interchangeable corrections.
+- Synchronized source, citation, project-state, roadmap, and release metadata
+  with the ``2.0.0b12`` development version.
+- Corrected validation-page reStructuredText indentation so Sphinx builds cleanly
+  with warnings treated as errors.
+
+### Validation
+
+- Extended architecture and source-hygiene characterization to enforce active
+  object semantics, release-version synchronization, frontend dependency
+  boundaries, and public docstring contracts.
+- Consolidated Energy EOS, BM3 P--V, Kieffer, phonon mode-continuity, HA/QHA,
+  and thermoelastic QSA validation traceability while keeping Elasticity,
+  SEISMIC, V--T/P--V--T EOS, and tolerance-catalogue completion explicitly WIP.
+
 ## [2.0.0b11] - Unreleased
 
 ### Added
@@ -208,7 +256,7 @@ public contract; they must still be documented and validated.
 - Made the Windows documentation batch entry point retain the repository root
   as its working directory so Git-aware documentation components remain
   portable.
-- Added explicit hydrostatic Wallace correction for raw energy--strain
+- Added explicit hydrostatic finite-prestress conversion for raw energy--strain
   stiffness tensors and complete state/series provenance.  Corrected series
   feed directly into the Kieffer acoustic workflow, while missing pressure and
   repeated correction are rejected.
@@ -226,7 +274,7 @@ public contract; they must still be documented and validated.
   ``--pressure-source energy-eos --eos MODEL`` and
   ``--pressure-source energy-polynomial --degree N`` record the fitted model,
   diagnostics, evaluated pressures, units, and elastic-to-phonon volume matches
-  before applying the Wallace correction exactly once.
+  before applying the backend-specific finite-prestress conversion exactly once.
 - Added explicit ``--kieffer`` activation to ``ha run`` and ``qha run``.  Both
   commands read the cutoff series embedded by ``add-kieffer``, retain the
   acoustic component separately in HDF5, record activation in reports, and add
@@ -308,9 +356,10 @@ public contract; they must still be documented and validated.
 
 - Generalized CRYSTAL quasi-static thermoelastic input generation around an
   explicit pressure-resolution contract. ``PRESSURE`` and ``PRESSEOS`` tensors
-  are preserved as backend-corrected Wallace coefficients; raw energy--strain
-  tensors can instead use output-stress, manual, energy-EOS, or
-  energy-polynomial pressures before one Barron--Klein/Wallace correction.
+  are preserved as backend-corrected finite-pressure incremental coefficients;
+  raw energy--strain tensors can instead use output-stress, manual, energy-EOS,
+  or energy-polynomial pressures before one CRYSTAL Erba/Barron--Klein
+  finite-prestress conversion.
   Energy-derived pressure may reuse the static ``E(V)`` dataset from an HA/QHA
   YAML, independently of whether that thermodynamic input is Gamma-only,
   Kieffer-enriched, or based on explicit phonon dispersion. Pressure and tensor
@@ -749,6 +798,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b12]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b12
 [2.0.0b11]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b11
 [2.0.0b10]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b10
 [2.0.0b9]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b9

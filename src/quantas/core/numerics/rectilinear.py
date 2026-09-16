@@ -10,7 +10,6 @@ frontend and workflow uses the same numerical path.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TypeAlias
 
 import numpy as np
@@ -20,7 +19,6 @@ FloatArray: TypeAlias = NDArray[np.float64]
 BoolArray: TypeAlias = NDArray[np.bool_]
 
 
-@dataclass(frozen=True, slots=True)
 class RectilinearFieldInterpolator:
     """Interpolate fields sampled on increasing ``x`` and ``y`` axes.
 
@@ -42,6 +40,9 @@ class RectilinearFieldInterpolator:
     x: FloatArray
     y: FloatArray
     values: FloatArray
+    _initialized: bool
+
+    __slots__ = ("x", "y", "values", "_initialized")
 
     def __init__(self, x: ArrayLike, y: ArrayLike, values: ArrayLike) -> None:
         x_axis = validated_axis(x, "x")
@@ -54,6 +55,26 @@ class RectilinearFieldInterpolator:
         object.__setattr__(self, "x", x_axis)
         object.__setattr__(self, "y", y_axis)
         object.__setattr__(self, "values", field.copy())
+        object.__setattr__(self, "_initialized", True)
+
+    def __setattr__(self, name: str, value: object) -> None:
+        """Prevent rebinding source arrays after initialization.
+
+        Parameters
+        ----------
+        name : str
+            Attribute name.
+        value : object
+            Candidate new attribute value.
+
+        Raises
+        ------
+        AttributeError
+            If an initialized interpolator attribute is rebound.
+        """
+        if getattr(self, "_initialized", False):
+            raise AttributeError("RectilinearFieldInterpolator is immutable")
+        object.__setattr__(self, name, value)
 
     def evaluate_grid(
         self,

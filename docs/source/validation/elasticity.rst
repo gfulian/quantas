@@ -67,24 +67,19 @@ Current traceability
 
 The main automated evidence is distributed across:
 
-``tests/physics/elasticity/test_tensor_formulas.py``
-   Tensor conversion, symmetry, directional formulas, isotropic rotation
-   invariance, and trigonal frame conventions.
-
-``tests/physics/elasticity/test_directional.py`` and
-``tests/physics/elasticity/test_surface_formulas.py``
-   Independent directional formulas, transverse extrema, surface sampling, and
-   the frozen hydroxylapatite baseline.
-
-``tests/physics/elasticity/test_frames.py``
-   Rotation covariance, provenance, and reference-frame validation.
-
-``tests/physics/elasticity/test_averages_stability.py``
-   VRH aggregates and positive-definiteness diagnostics.
-
-``tests/modules/elasticity/``
-   End-to-end analysis, reports, rotations, persistence, export, plotting, CLI,
-   and public-API behaviour.
+- ``tests/physics/elasticity/test_tensor_formulas.py`` -- tensor conversion,
+  symmetry, directional formulas, isotropic rotation invariance, and trigonal
+  frame conventions.
+- ``tests/physics/elasticity/test_directional.py`` and
+  ``tests/physics/elasticity/test_surface_formulas.py`` -- independent
+  directional formulas, transverse extrema, surface sampling, and the frozen
+  hydroxylapatite baseline.
+- ``tests/physics/elasticity/test_frames.py`` -- rotation covariance,
+  provenance, and reference-frame validation.
+- ``tests/physics/elasticity/test_averages_stability.py`` -- VRH aggregates and
+  positive-definiteness diagnostics.
+- ``tests/modules/elasticity/`` -- end-to-end analysis, reports, rotations,
+  persistence, export, plotting, CLI, and public-API behaviour.
 
 Until the remaining public reference/tolerance matrix is assembled, the
 existing tests establish implementation consistency but should not be read as a

@@ -211,25 +211,20 @@ Traceability
 
 The principal EOS validation coverage is located in:
 
-``tests/physics/eos/test_energy_models.py`` and
-``tests/physics/eos/test_energy_pressure.py``
-   Integrated E(V) models, analytical pressure derivatives, and energy/pressure
-   consistency.
-
-``tests/modules/eos/test_energy_volume_workflow.py`` and
-``tests/modules/eos/test_energy_structural_response.py``
-   Public E--V fitting, structural normalization, derived properties, and
-   secondary axial response.
-
-``tests/interfaces/test_crystal_energy_volume.py``
-   CRYSTAL state extraction and authoritative energy semantics.
-
-``tests/examples/test_curated_examples.py``
-   Curated MgO end-to-end Energy EOS regression.
-
-``tests/modules/eos/test_eosfit_reference.py``
-   Quartz/topaz BM3 OLS and effective-variance regression against the frozen
-   EosFit7-compatible reference results listed above.
+- ``tests/physics/eos/test_energy_models.py`` and
+  ``tests/physics/eos/test_energy_pressure.py`` -- integrated E(V) models,
+  analytical pressure derivatives, and energy/pressure consistency.
+- ``tests/modules/eos/test_energy_volume_workflow.py`` and
+  ``tests/modules/eos/test_energy_structural_response.py`` -- public E--V
+  fitting, structural normalization, derived properties, and secondary axial
+  response.
+- ``tests/interfaces/test_crystal_energy_volume.py`` -- CRYSTAL state extraction
+  and authoritative energy semantics.
+- ``tests/examples/test_curated_examples.py`` -- curated MgO end-to-end Energy
+  EOS regression.
+- ``tests/modules/eos/test_eosfit_reference.py`` -- quartz/topaz BM3 OLS and
+  effective-variance regression against the frozen EosFit7-compatible reference
+  results listed above.
 
 The remaining V--T and P--V--T tests protect implementation behaviour while
 their public validation record is completed.
