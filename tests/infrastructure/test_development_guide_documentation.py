@@ -157,3 +157,17 @@ def test_review_checklist_covers_lifecycle() -> None:
         "Packaging",
     ):
         assert heading in content
+
+
+def test_documentation_ownership_is_defined() -> None:
+    """The documentation guide assigns one canonical home to each content type."""
+    text = (ROOT / "documentation.rst").read_text(encoding="utf-8")
+    for phrase in (
+        "Information ownership",
+        "Canonical information ownership",
+        "Scientific Background",
+        "Implementation and Workflows",
+        "Scientific Validation",
+        "Re-teaching the algorithm being validated",
+    ):
+        assert phrase in text

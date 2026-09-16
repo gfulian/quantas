@@ -118,170 +118,55 @@ It does not calculate:
 - phase stability or phase transformations along a profile;
 - systematic electronic-structure uncertainty.
 
-Input normalization
--------------------
+Preparing the elastic-volume series
+-----------------------------------
 
-CRYSTAL pressure resolution and finite-pressure tensors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The QSA calibration requires one structurally continuous elastic-volume series
+expressed in a common Cartesian frame and using finite-pressure incremental
+stiffness coefficients. Input generation owns the backend-specific work needed
+to establish that contract. The normative YAML fields are defined in
+:doc:`../formats/thermoelastic_input`, and CRYSTAL parsing details belong to
+:doc:`../developer/interfaces`.
 
-The elastic tensors supplied to QSA must be the incremental stress--strain
-coefficients appropriate to each hydrostatically pre-stressed state.  The
-CRYSTAL interface can establish that condition in several explicit ways.
+CRYSTAL finite-pressure tensors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``PRESSURE`` or ``PRESSEOS``
-   CRYSTAL has already evaluated the elastic coefficients with the requested
-   hydrostatic finite-stress correction.  Quantas preserves the reported
-   tensor and records the keyword, pressure, and backend correction provenance.
-   No second correction is applied.  When the corrected elastic pressure is
-   printed, its value is checked against the keyword value within 0.05 GPa by
-   default.
+A tensor produced with CRYSTAL ``PRESSURE`` or ``PRESSEOS`` is already in the
+required finite-pressure form and is preserved. A raw energy--strain tensor
+needs a hydrostatic pressure before the CRYSTAL Erba/Barron--Klein conversion
+can be applied. The pressure may come from the output stress, a manual value,
+an integrated Energy EOS, or a polynomial derivative of the static :math:`E(V)`
+series.
 
-``output-stress``
-   For a raw CRYSTAL energy--strain tensor, Quantas uses the pressure of the
-   final unstrained stress tensor and applies the CRYSTAL finite-pressure
-   transformation of Erba *et al.* (2014), Eq. 6--7, exactly once.  In Voigt
-   notation the normal diagonals are unchanged, the normal off-diagonal terms
-   receive ``+P``, and the shear diagonals receive ``-P/2``.  This is the
-   default fallback selected by ``--pressure-source auto`` when no CRYSTAL
-   pre-stress keyword is present.
+The generated input records the pressure source, tensor kind, correction
+method, and software that applied it. An already incremental tensor is rejected
+by the conversion path, preventing accidental double correction. This external
+tensor-ingestion step is distinct from ``wallace_delta`` inside the QSA
+finite-strain equations.
 
-``manual``
-   One pressure is supplied explicitly for each elastic output.  This route is
-   useful when the pressure is known independently but is not recoverable from
-   the native output.
-
-``energy-eos`` or ``energy-polynomial``
-   Quantas evaluates :math:`P(V)=-dE/dV` from a multi-volume static energy
-   series, assigns the resulting pressures to the raw tensors, and then applies
-   the same CRYSTAL finite-pressure transformation exactly once.  The
-   energy-volume data may come
-   from the elastic outputs themselves or from ``--energy-input`` pointing to
-   an HA/QHA YAML.  Only the static :math:`E(V)` arrays are consumed, so the
-   thermodynamic input may be Gamma-only, Gamma plus Kieffer, or based on an
-   explicit phonon dispersion without changing this pressure-resolution step.
-   For CRYSTAL elastic outputs, :math:`E(V)` is the resolved total energy: an
-   explicitly printed DFT-D and/or gCP corrected total is preferred over the
-   uncorrected SCF energy, with the latter used only when no correction is
-   present.
-
-For raw tensors, a pressure source is not optional.  If ``auto`` cannot find a
-finite output-stress pressure, input generation stops and asks for an explicit
-``output-stress``, ``manual``, ``energy-eos``, or ``energy-polynomial`` policy.
-Quantas never writes a QSA input whose tensor convention or finite-stress
-correction history is ambiguous.  The CRYSTAL adapter transformation must not
-be confused with ``wallace_delta`` in the QSA cold finite-strain equations:
-the latter belongs to the Stixrude--Lithgow-Bertelloni thermodynamic model and
-is not an external-code tensor-ingestion rule.
-
-The normalized YAML records the pressure source, tensor kind, correction
-method, software that applied the correction, source tensor convention, and
-energy-fit diagnostics when relevant.  This ``pressure_resolution`` provenance
-is propagated into the native thermoelastic HDF5 calibration result.
-
-The pressure-dependent term in the cold finite-strain formula remains part of
-the constitutive expansion.  It is **not** a second pressure correction applied
-to the sampled observations.
-
-Consistency of the elastic-volume series
+Structural continuity and reference frame
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The input creator sorts all points by increasing primitive-cell volume and
-requires:
+All elastic states must represent the same ordered structural branch. Quantas
+sorts them by primitive-cell volume, checks composition and crystallographic
+compatibility, and selects the state with the smallest absolute pressure as the
+reference frame unless another reference is requested.
 
-- unique resolved volumes;
-- identical primitive atomic species and atom ordering;
-- the same space-group number;
-- compatible Hall number and crystallographic setting when available;
-- the same detected elastic symmetry;
-- a common structural branch rather than unrelated polymorphs.
+Equivalent structures printed in different Cartesian orientations are
+co-rotated into that reference frame through the polar decomposition of the
+lattice deformation gradient. The symmetric stretch is retained; the rigid
+rotation is removed from the lattice and stiffness components. The rotation,
+source lattice, and strain diagnostics are preserved as provenance.
 
-The default maximum ordered-atom displacement along the path is 0.5 Å.  The
-displacement is evaluated after wrapping fractional differences into the
-nearest periodic image and expressing them in the reference lattice.  This
-criterion allows ordinary internal relaxation while rejecting a structurally
-unrelated path.
+What the elastic outputs contribute
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-A phase transformation, symmetry change, change in atom order, or discontinuous
-reconstruction must be treated as a separate calibration domain.  A single
-finite-strain fit is not intended to bridge such a discontinuity.
-
-The input-generation defaults are:
-
-.. list-table:: Input-normalization tolerances
-   :header-rows: 1
-   :widths: 38 22 40
-
-   * - Control
-     - Default
-     - Role
-   * - Structural symmetry ``symprec``
-     - :math:`10^{-5}` Å
-     - Cartesian tolerance passed to structural symmetry analysis
-   * - Angle tolerance
-     - -1 degree
-     - Request the symmetry library's automatic angle treatment
-   * - Elastic-symmetry tolerance
-     - :math:`10^{-3}` GPa
-     - Detect one common elastic crystal-system pattern
-   * - Backend pre-stress consistency tolerance
-     - 0.05 GPa
-     - Compare the keyword and reported corrected-tensor pressures
-   * - Ordered-atom path tolerance
-     - 0.5 Å
-     - Reject a structurally unrelated volume path
-
-These values are validation tolerances, not uncertainty estimates.  Loosening
-them can permit incompatible source calculations to enter the same fit.
-
-Reference point and frame normalization
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-When no reference point is specified, Quantas selects the volume-sorted elastic
-point with the smallest absolute applied pressure.  This point defines:
-
-- the reference Cartesian frame;
-- the compact reference structure;
-- the atom-order comparison;
-- the crystallographic labels attached to later directions.
-
-It does **not** define the fitted static :math:`V_0`.  The thermodynamic
-reference volume comes from the QHA static energy EOS described below.
-
-Different electronic-structure calculations can print equivalent structures
-in Cartesian frames related by a rigid rotation.  Component-wise fitting would
-be meaningless if :math:`C_{11}` at one volume referred to a different axis
-than :math:`C_{11}` at another volume.  Quantas therefore constructs the
-lattice deformation gradient relative to the selected reference and performs
-a right polar decomposition:
-
-.. math::
-
-   \mathbf F = \mathbf R\mathbf U.
-
-The proper rotation :math:`\mathbf R` is removed from the lattice and stiffness
-components, while the symmetric stretch :math:`\mathbf U` is retained.  The
-normalization verifies that:
-
-- :math:`\det\mathbf R=1` within numerical tolerance;
-- the stretch is positive definite;
-- the sampled cell volume is preserved;
-- every co-rotated tensor remains expressed in the same reference frame.
-
-The removed rotation, principal logarithmic strains, source lattice, and
-rotation matrix are stored in the YAML and HDF5 provenance.
-
-What is and is not fitted from the elastic outputs
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The elastic-component regressions use **volume** as the independent variable.
-The CRYSTAL pressures are retained for validation, provenance, and physical
-inspection, but are not the regression coordinate.
-
-Likewise, the static energies printed in the individual SOEC outputs are
-retained in the normalized input but do not define the authoritative reference
-EOS.  The EOS is fitted to the sampled static energy-volume field stored by
-the QHA workflow.  This keeps the cold reference state, cell normalization,
-and QHA equilibrium-volume surface internally consistent.
+The elastic regressions use **volume** as their independent variable. Pressures
+and static energies printed in the individual elastic outputs remain useful
+for validation and provenance, but they do not define the QSA reference EOS.
+The authoritative cold :math:`E(V)` relation comes from the QHA static energy
+series so that the reference state and the thermodynamic volume path use the
+same normalization.
 
 Coupling to QHA
 ---------------
@@ -406,135 +291,49 @@ Consequently the reference is a cold static 0 K, 0 GPa state.  Thermal effects
 enter later through :math:`V_{\mathrm{QHA}}(P,T)` and, for :math:`C^S`, through
 :math:`C_V` and :math:`\boldsymbol\alpha`.
 
-Choosing BM2, BM3, or BM4
-~~~~~~~~~~~~~~~~~~~~~~~~~
+Reference EOS and cold-component model
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The CLI exposes three reference EOS choices.
+The reference Energy EOS and the finite-strain order describe different parts
+of the calibration. The EOS fixes the shared cold reference state; the
+component model describes how each symmetry-independent stiffness changes with
+Eulerian strain.
 
-``BM2``
-   Fixes :math:`K'_0=4`.  It has the fewest free elastic-curvature parameters
-   and can be useful when the static energy range is narrow or cannot support
-   an independent :math:`K'_0`.  Its limitation is structural rigidity: a poor
-   BM2 reference can bias every component fit through the shared
-   :math:`V_0`, :math:`K_0`, and :math:`K'_0`.
+.. list-table:: Reference EOS choices
+   :header-rows: 1
+   :widths: 18 37 45
 
-``BM3`` — default
-   Fits :math:`K'_0` and is the usual balance between flexibility and support
-   for a well-sampled static energy curve.  It is the recommended first
-   production model.
+   * - EOS
+     - Use when
+     - Main caution
+   * - ``BM2``
+     - The static energy range cannot support an independent :math:`K'_0`
+     - Fixing :math:`K'_0=4` can bias all component fits if the reference curve is too rigid
+   * - ``BM3`` (default)
+     - A well-sampled equilibrium basin resolves :math:`K'_0`
+     - Parameter correlation still needs inspection
+   * - ``BM4``
+     - A broad, precise compression range genuinely resolves :math:`K''_0`
+     - A lower residual alone is not evidence that the extra curvature is supported
 
-``BM4``
-   Also fits :math:`K''_0`.  It requires a sufficiently broad and precise
-   static compression range.  The cold component formula uses
-   :math:`V_0`, :math:`K_0`, and :math:`K'_0`; therefore BM4 affects the
-   thermoelastic calibration mainly by changing those estimates and their
-   covariance.  It does not add a separate :math:`K''_0` term to the current
-   :math:`C_{IJ}(V)` expression.
+At each volume, symmetry-equivalent entries are combined into the independent
+component set. Derived identities are reconstructed after fitting, and a
+component below ``zero_tolerance`` is retained as an exact symmetry zero rather
+than sent through an optimizer.
 
-A lower EOS residual alone is not sufficient reason to select BM4.  Inspect:
+Each active component fits :math:`C^0_{IJ}` and its reference pressure
+derivative :math:`C'^0_{IJ}`. The current CRYSTAL interface does not provide
+per-observation uncertainties for these coefficients, so the production fit is
+ordinary least squares; residual statistics are descriptive rather than a
+complete probabilistic error model.
 
-- parameter uncertainties;
-- correlation and covariance;
-- physical plausibility of :math:`K'_0` and :math:`K''_0`;
-- stability of :math:`V_0` and :math:`K_0` under model changes;
-- consequences for the reconstructed elastic field.
-
-Independent components and symmetry averaging
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Quantas detects the elastic crystal system during input generation.  At each
-sampled volume it then:
-
-1. extracts the symmetry-independent component set;
-2. applies the sign conventions associated with symmetry-equivalent entries;
-3. averages equivalent entries;
-4. records their spread as a diagnostic.
-
-Derived relations such as
-
-.. math::
-
-   C_{66}=\frac{C_{11}-C_{12}}{2}
-
-are reconstructed after fitting from the independent component covariance.
-They are not fitted as unrelated observations.
-
-Exact-zero components
-~~~~~~~~~~~~~~~~~~~~~
-
-If the maximum absolute symmetry-averaged value of a component does not exceed
-``zero_tolerance``, the component is retained as an exact zero.  The default is
-
-.. code-block:: text
-
-   zero_tolerance = 1.0e-10 GPa
-
-No optimizer is called and no artificial uncertainty is assigned.  This is
-intended for symmetry-forbidden entries, not for suppressing a physically small
-but non-zero component.  Increasing the threshold changes the scientific
-model and should not be used as a numerical cleanup tool.
-
-Cold finite-strain component model
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Each active independent component is represented by two fitted parameters:
-
-- :math:`C^0_{IJ}`, its value at the cold reference state;
-- :math:`C'^0_{IJ}=\partial C_{IJ}/\partial P`, its reference pressure
-  derivative.
-
-The fixed EOS parameters and the component-specific Wallace coefficient enter
-the Eulerian finite-strain expression described in
-:doc:`../theory/thermoelasticity`.
-
-The component model is linear in :math:`C^0_{IJ}` and
-:math:`C'^0_{IJ}` once :math:`V_0`, :math:`K_0`, and :math:`K'_0` are fixed.
-Quantas therefore obtains exact conditional linear least-squares estimates for
-support diagnostics and initialisation.  The production fit uses ordinary
-least squares.
-
-Why only OLS is currently available
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The current CRYSTAL SOEC interface does not provide observation uncertainties
-for each elastic component.  Quantas therefore does not pretend that a
-statistically meaningful WLS or ODR problem exists.  Every sampled volume has
-equal regression weight.
-
-The reported residual sum of squares and reduced unweighted chi-square are
-therefore descriptive measures in GPa\ :sup:`2`; they are not probability-based
-chi-square statistics.  A small residual does not account for systematic DFT
-error, incomplete strain convergence, or model-form discrepancy.
-
-Second- and third-order finite strain
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-``finite_strain_order=2`` retains terms through first order in the Eulerian
-strain inside the constitutive polynomial.  It is more constrained and can be
-useful when:
-
-- only a modest strain interval is sampled;
-- the data do not resolve order sensitivity;
-- a third-order description produces unstable parameters.
-
-``finite_strain_order=3`` — default — includes the quadratic strain term
-required by the thermodynamically consistent third-order cold finite-strain
-formulation.  It is generally preferred when the volume range is sufficiently
-broad and the response shows resolved curvature.
-
-Both orders still fit only :math:`C^0_{IJ}` and :math:`C'^0_{IJ}`.  The
-quadratic coefficient of the third-order expression is constrained by these
-component parameters, the reference EOS, and the Wallace hydrostatic term; it
-is not an additional freely fitted coefficient.
-
-A third-order fit should not be accepted merely because it is available.
-Compare:
-
-- leave-one-out sensitivity;
-- second-versus-third-order parameter changes;
-- residual structure;
-- reference-volume bracketing;
-- behavior near the ends of the sampled volume interval.
+``finite_strain_order=2`` is the more constrained choice for modest strain
+ranges. ``finite_strain_order=3`` is the default when resolved curvature and
+volume support justify the thermodynamically consistent quadratic strain term.
+Both orders fit the same two component parameters; the higher-order term is
+constrained by those parameters, the reference EOS, and the QSA Wallace term.
+The order should therefore be selected from support and sensitivity, not merely
+from the smaller residual.
 
 Scientific support diagnostics
 ------------------------------
@@ -1068,238 +867,47 @@ Choosing the main scientific options
      - exploratory, followed by explicit mask inspection
      - Retain finite results without confusing them with validated predictions
 
-Recommended sensitivity study
------------------------------
+Sensitivity checks
+------------------
 
-A defensible production analysis should vary the assumptions that can
-materially change the result.  A compact study can be organized as follows.
+A production calibration should test the assumptions that can materially
+change the reconstructed tensor field. At minimum, compare a small set of
+representative central and near-boundary states while varying: the reference EOS
+when its extra parameters are supported, second- versus third-order finite
+strain, the QHA route used to obtain :math:`V(P,T)`, and the source-QHA
+resolution when interpolation error is a concern.
 
-Reference EOS and finite-strain order
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+For each comparison, inspect component residual structure, leverage, symmetry-
+equivalent spread, leave-one-out sensitivity, reference-volume bracketing,
+stability eigenvalues, and the two extrapolation masks. Refining only the
+**target** P--T grid does not add thermodynamic information; interpolation
+convergence requires a refined **source QHA** calculation evaluated at the same
+physical states.
 
-Evaluate a few representative states with:
+Depth profiles are external paths through the same calibrated field. Varying a
+pressure or temperature profile tests the geological path, not the mineral
+model itself. The worked sensitivity tables and example commands belong to
+:doc:`../tutorials/thermoelasticity`.
 
-.. list-table:: Calibration sensitivity table to complete
-   :header-rows: 1
+Performance and reuse
+---------------------
 
-   * - Reference EOS
-     - Strain order
-     - :math:`V_0`
-     - :math:`K_0`
-     - :math:`K'_0`
-     - :math:`C_{11}`
-     - :math:`C_{33}`
-     - Minimum eigenvalue
-   * - BM2
-     - 2
-     - ...
-     - ...
-     - 4 fixed
-     - ...
-     - ...
-     - ...
-   * - BM2
-     - 3
-     - ...
-     - ...
-     - 4 fixed
-     - ...
-     - ...
-     - ...
-   * - BM3
-     - 2
-     - ...
-     - ...
-     - ...
-     - ...
-     - ...
-     - ...
-   * - BM3
-     - 3
-     - ...
-     - ...
-     - ...
-     - ...
-     - ...
-     - ...
-   * - BM4
-     - 3
-     - ...
-     - ...
-     - ...
-     - ...
-     - ...
-     - ...
+Calibration is normally inexpensive compared with generating the underlying
+electronic-structure and QHA datasets. Its purpose is to create a reusable fit
+archive, so repeated point, grid, profile, plot, or export operations should
+reuse that archive rather than recalibrate the elastic series.
 
-Compare both central states and states near the edge of elastic support.
-Differences often appear first in pressure derivatives and boundary behavior,
-not at the reference state.
+Post-fit work scales with the number of requested states and the tensors,
+uncertainties, and optional adiabatic fields retained for each state. For large
+studies, validate representative points first, prefer a profile when only one
+geological path is needed, and expand to dense grids only after extrapolation
+and stability have been inspected.
 
-Observation support
-~~~~~~~~~~~~~~~~~~~
-
-Inspect for every component:
-
-- residual pattern versus volume;
-- leverage;
-- maximum symmetry-equivalent spread;
-- leave-one-out changes;
-- order sensitivity;
-- whether :math:`V_0` is bracketed.
-
-A useful exercise is to remove one endpoint, recalibrate, and compare a few
-states.  This is more informative than relying only on the full-data residual.
-Do not remove points solely because they worsen a preferred model; first check
-whether they reveal real curvature, structural change, or a source-calculation
-problem.
-
-QHA sensitivity
-~~~~~~~~~~~~~~~
-
-The thermoelastic result inherits every important assumption of the QHA volume
-surface.  Compare, where scientifically possible:
-
-- ``freq`` and ``td`` interpolation;
-- polynomial and EOS minimization;
-- alternative QHA polynomial degrees;
-- thermal-expansion methods when adiabatic tensors are required.
-
-If two QHA routes produce similar :math:`V(P,T)` but different expansion
-tensors, the QSA isothermal stiffness may agree while the adiabatic correction
-differs.
-
-Interpolation resolution
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Refining the **target** grid tests only the presentation and localization of
-features.  To test the interpolation itself, refine the **source QHA** grid and
-repeat the comparison at identical physical states.
-
-A practical table is:
-
-.. list-table:: QHA-grid sensitivity table to complete
-   :header-rows: 1
-
-   * - Source QHA spacing
-     - State
-     - Volume
-     - :math:`C_{11}^T`
-     - :math:`C_{11}^S`
-     - :math:`C_{44}^T`
-   * - coarse
-     - 0 GPa, 300 K
-     - ...
-     - ...
-     - ...
-     - ...
-   * - coarse
-     - 5 GPa, 1000 K
-     - ...
-     - ...
-     - ...
-     - ...
-   * - refined
-     - 0 GPa, 300 K
-     - ...
-     - ...
-     - ...
-     - ...
-   * - refined
-     - 5 GPa, 1000 K
-     - ...
-     - ...
-     - ...
-     - ...
-
-Depth-profile sensitivity
-~~~~~~~~~~~~~~~~~~~~~~~~~
-
-A geological profile is an external path through the same calibrated field.
-Compare plausible pressure and temperature models separately.  A change in the
-profile is not a change in the mineral model, and a stable mineral tensor does
-not prove that the phase is thermodynamically stable at that depth.
-
-Performance and acceleration
-----------------------------
-
-Calibration cost
-~~~~~~~~~~~~~~~~
-
-Calibration includes:
-
-- one nonlinear static energy EOS fit;
-- one two-parameter OLS fit for each active independent component;
-- leave-one-out exact conditional fits;
-- one alternate-order exact conditional fit;
-- reference-EOS sensitivity refits for uncertainty propagation.
-
-For ordinary crystal symmetries and tens of elastic volumes, calibration is
-usually inexpensive compared with generating the electronic-structure and QHA
-data.  Reuse the fit archive rather than recalibrating for each plot or
-profile.
-
-``max_iterations`` is only a ceiling on model evaluations for the reference
-EOS and component fits.  Increasing it can help a fit that stops prematurely;
-it cannot cure a singular design, inadequate strain span, inconsistent data,
-or an unsuitable model.
-
-Post-fit cost and memory
-~~~~~~~~~~~~~~~~~~~~~~~~
-
-Post-fit evaluation is vectorized.  Its work scales approximately with:
-
-.. math::
-
-   N_{\mathrm{state}}N_{\mathrm{component}},
-
-plus reconstruction and eigensolution of one :math:`6\times6` matrix per
-state.  A rectangular grid has
-:math:`N_{\mathrm{state}}=N_TN_P`; a profile has only the number of depth
-samples.
-
-Memory can be more important than CPU time because a grid archive may contain:
-
-- independent component values and covariance;
-- full isothermal tensors and uncertainties;
-- full adiabatic tensors and uncertainties;
-- correction tensors and thermal-stress vectors;
-- stability and extrapolation masks.
-
-For large studies:
-
-1. inspect and calibrate once;
-2. test a few points first;
-3. use a profile rather than an enclosing grid when only one geological path is
-   needed;
-4. use a coarse exploratory grid before a publication grid;
-5. disable adiabatic uncertainty propagation only when its absence is
-   scientifically acceptable;
-6. select ``adiabatic=off`` at calibration when only isothermal tensors are
-   scientifically required; table and export selectors change presentation, not
-   the tensor fields stored by an existing analysis archive;
-7. generate fit and analysis plots after validating the numerical archive.
-
-No ``512`` convergence parameter
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Thermoelasticity has no scientific or numerical control with a default value of
-512.  The post-fit engine evaluates requested state arrays vectorially and does
-not expose a chunk-size control in the CLI.
-
-The default value 512 discussed in :doc:`seismic` is the number of propagation
-directions processed per vectorized SEISMIC batch.  It does not belong to the
-thermoelastic calculation and must not be transferred here.
-
-The controls that actually change thermoelastic resolution or support are:
-
-- the elastic-volume sampling;
-- the QHA source P--T grid;
-- the reference EOS family;
-- the finite-strain order;
-- the requested point, grid, or profile coordinates.
-
-Controls such as plot DPI, contour levels, line width, marker style, or CSV
-format do not alter scientific results.
+There is no thermoelastic convergence parameter with a default value of 512.
+That number belongs to SEISMIC vectorized batching and changes throughput, not
+thermoelastic resolution. The controls that matter here are the source QHA
+resolution, elastic-volume support, EOS choice, finite-strain order, requested
+P--T sampling, and extrapolation policy.
 
 Diagnostics and reporting
 -------------------------

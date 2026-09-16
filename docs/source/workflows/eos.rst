@@ -65,27 +65,19 @@ corresponding sections; repeat the option to show several requested domains.
 This discovery layer is frontend-only: it does not alter EOS equations,
 parameters, fitting, or persistence semantics.
 
-Energy-unit normalization
--------------------------
+Input normalization and units
+-----------------------------
 
-EOS text inputs may declare energy columns through ``E``/``ENERGY`` and
-``SIGMAE`` aliases.  ``UNITS E=... SIGE=...`` declarations, the EOS spec
-``[input] energy_unit`` override, and the CLI ``--energy-unit`` override all use
-the shared Quantas unit converter.  When no explicit energy unit is supplied,
-Hartree is assumed.  Normalized in-memory and HDF5 values use Hartree, while
-raw values and source units are retained as provenance.
+EOS readers normalize supported energy, volume, pressure, temperature, and
+uncertainty columns before fitting while preserving the source representation
+as provenance. Hartree is the canonical Energy-EOS energy unit and kelvin the
+canonical temperature unit; other accepted units are converted through the
+shared unit service. SCF thresholds and printed numerical precision are not
+interpreted as statistical energy uncertainties.
 
-The precedence is the existing EOS input rule: an explicit frontend override
-wins over a data-file ``UNITS`` declaration, which in turn wins over the
-canonical default.  When ``--spec`` is used the specification remains the
-authority for scientific settings, so CLI unit overrides are rejected rather
-than silently taking precedence over the spec.
-
-``sigma_energy`` is supported and converted with the same linear factor as
-``energy`` for completeness.  Backend input generation from deterministic
-DFT/QM total energies will normally leave it absent; SCF thresholds, printing
-precision, and convergence criteria are not interpreted as statistical energy
-uncertainties.
+The normative column grammar, unit precedence, and uncertainty fields belong to
+:doc:`../formats/eos_input`. When a specification file is used, its scientific
+settings remain authoritative over conflicting frontend overrides.
 
 Backend Energy EOS collection
 -----------------------------
@@ -235,31 +227,17 @@ current accepted result.  Different targets occupy independent slots, so a
 single archive may legitimately contain accepted fits for volume and several
 cell axes.
 
-Input normalization and preserved provenance
---------------------------------------------
+Input and archive ownership
+---------------------------
 
-The reader is content-directed: the filename suffix does not select the
-parser.  Column declarations determine which coordinates, targets,
-uncertainties, and groups are present.
+The workflow keeps the normalized dataset used numerically and the original
+source representation needed for auditability. Detailed input fields are
+defined in :doc:`../formats/eos_input`; the persistent archive contract is
+defined in :doc:`../formats/eos_hdf5`.
 
-Unit precedence is:
-
-#. explicit command or specification override;
-#. declaration in the data file;
-#. EOS default units.
-
-Internally, Quantas uses Hartree, GPa, angstrom or cubic angstrom where
-appropriate, and kelvin.  Relative quantities such as ``V/V0`` and ``L/L0`` remain
-dimensionless.  Standard uncertainties are converted with the same scale as
-their corresponding observations.
-
-The archive retains both:
-
-- original text, raw arrays, unit labels, grouping, and exclusion markers;
-- normalized float64 arrays used by the calculation.
-
-This separation is important for auditability: normalization never destroys
-the representation supplied by the user.
+This workflow chapter therefore focuses on **selection and model history**: the
+input dataset is immutable, each fit request carries its own selection mask, and
+every fit attempt is retained as a separate archive record.
 
 Targets, groups, and non-destructive data selection
 ---------------------------------------------------
@@ -450,87 +428,34 @@ silently fixing a hidden arbitrary value.
 Regression methods and their interpretation
 -------------------------------------------
 
-All regressions return a common passive result and diagnostic contract, but
-they do not represent the same statistical assumptions.
+The four regression methods share one result contract but encode different
+statistical assumptions. The presence of uncertainty columns never selects a
+solver implicitly.
 
-Ordinary least squares (OLS)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-OLS minimizes unweighted residuals in the dependent response.  Available
-uncertainty columns are preserved and reported but do not enter the objective.
-
-Use OLS when:
-
-- uncertainties are unavailable or not comparable;
-- a reproducible unweighted baseline is needed;
-- the purpose is an initial model comparison.
-
-Do not interpret OLS parameter standard errors as though externally calibrated
-measurement variances had been supplied.
-
-Weighted least squares (WLS)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-WLS uses the standard uncertainty of the dependent response.  Every selected
-observation must therefore provide a valid positive uncertainty for that
-response.
-
-Use WLS when response uncertainties are meaningful and independent-coordinate
-uncertainties are negligible relative to them.
-
-Iterative effective variance
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-Effective variance augments the response variance by projecting uncertainty in
-independent coordinates through local model derivatives.  Because those
-derivatives depend on the current model parameters, the weights are updated
-iteratively around repeated weighted fits.
-
-This method is useful when both coordinate and response uncertainties matter,
-but it remains a local variance projection rather than a full orthogonal
-probability model.  Strong non-linearity, very large coordinate uncertainty, or
-poor initial parameters can make the iteration difficult.
-
-Orthogonal distance regression (ODR)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-ODR treats corrections along all fitted coordinates and requires positive
-uncertainties for them.  It is provided through the required ``odrpack``
-runtime dependency installed with the base Quantas package.
-
-ODR may be appropriate when coordinate uncertainties are scientifically
-important and the orthogonal error model is defensible.  It is not
-automatically superior to effective variance; the result depends on the
-meaning of the supplied uncertainties and on the geometry of the model.
-
-Choosing a regression
-~~~~~~~~~~~~~~~~~~~~~
-
-.. list-table:: Initial regression guide
+.. list-table:: EOS regression choices
    :header-rows: 1
-   :widths: 25 25 50
+   :widths: 22 38 40
 
-   * - Available information
-     - Suggested first fit
-     - Interpretation
-   * - No reliable uncertainties
-     - OLS
-     - Unweighted scientific baseline.
-   * - Reliable response uncertainty only
-     - WLS
-     - Heteroscedastic response errors enter explicitly.
-   * - Reliable response and coordinate uncertainties
-     - Effective variance
-     - Practical derivative-projected treatment.
-   * - Full orthogonal-error interpretation justified
-     - ODR
-     - Explicit coordinate corrections through the required ODRPACK95 backend.
-   * - Unsure whether uncertainties are meaningful
-     - Compare OLS and weighted fits
-     - Large changes indicate that the uncertainty model controls the result.
+   * - Method
+     - Objective
+     - Appropriate use
+   * - Ordinary least squares (OLS)
+     - Unweighted residuals in the dependent response
+     - Deterministic calculations or data for which supplied uncertainties are not part of the fit model
+   * - Weighted least squares (WLS)
+     - Response residuals weighted by positive response uncertainties
+     - Independent-coordinate uncertainty is negligible compared with the response uncertainty
+   * - Iterative effective variance
+     - Iteratively augments response variance with projected coordinate uncertainty
+     - Both coordinate and response uncertainty matter and a local variance projection is defensible
+   * - Orthogonal distance regression (ODR)
+     - Orthogonal corrections along all fitted coordinates
+     - Coordinate uncertainty is scientifically meaningful and the orthogonal-error model is appropriate
 
-A solver is never selected implicitly because uncertainty columns happen to be
-present.
+Effective variance is a local approximation, while ODR uses a different error
+model rather than being an automatically superior replacement. Model
+non-linearity, starting values, and the physical meaning of supplied
+uncertainties should determine which route is defensible.
 
 Initial values, fixed parameters, and bounds
 --------------------------------------------
@@ -834,84 +759,28 @@ The default smooth-curve sampling is 300 points.  This value changes only the
 rendered line smoothness; it does not change fitted parameters or diagnostic
 residuals.  Increasing it is not a convergence test for the fit.
 
-Defaults and rationale
-----------------------
+Defaults and runtime
+--------------------
 
-The direct command provides conservative, inspectable defaults:
+The direct command starts from conservative, inspectable choices: ``pv`` and
+``volume`` for the domain/target, BM3 for ordinary E--V and P--V work, Berman
+for the simplest V--T baseline, ``linear`` for the minimal P--V--T coupling,
+and OLS unless the uncertainty model justifies another regression. A successful
+one-job run is accepted automatically so the archive is immediately usable.
 
-.. list-table:: Principal direct-command defaults
-   :header-rows: 1
-   :widths: 30 20 50
+These are starting points rather than model recommendations. The exact option
+syntax and defaults belong to :doc:`../cli/eos`; model suitability belongs to
+:doc:`../theory/eos` and the worked comparisons in :doc:`../tutorials/eos`.
 
-   * - Control
-     - Default
-     - Rationale
-   * - Domain
-     - ``pv``
-     - Historical standalone default; change it explicitly for E--V, V--T, or P--V--T.
-   * - Target
-     - ``volume``
-     - Unambiguous volumetric baseline.
-   * - E--V model
-     - Birch--Murnaghan order 3
-     - Common equilibrium Energy EOS baseline; SJEOS and other integrated models remain explicit choices.
-   * - P--V model
-     - Birch--Murnaghan order 3
-     - Widely applicable balance between flexibility and parameter count.
-   * - V--T model
-     - Berman
-     - Simple reference thermal-expansion model; variant may be selected explicitly.
-   * - P--V--T coupling
-     - ``linear``
-     - Minimal coupled baseline; more structured couplings remain explicit decisions.
-   * - Solver
-     - OLS
-     - Never assumes uncertainty semantics merely because uncertainty columns are present.
-   * - Failure policy
-     - ``stop``
-     - Prevents later jobs from obscuring the first failed required step.
-   * - Covariance scaling for weighted fits
-     - ``inflate-only``
-     - Inflate-only policy that does not shrink covariance below supplied uncertainty scale.
-   * - Accepted result
-     - yes for a successful direct job
-     - Makes a simple one-job archive immediately usable while retaining the immutable record.
+EOS fitting is normally inexpensive compared with phonon or directional-field
+workflows. Use ``--dry-run`` before a large specification, validate difficult
+models with a simple regression first, and calculate dense post-fit curves only
+after a record has been accepted. Numerical stopping tolerances control solver
+termination; tightening them cannot repair an underconstrained model, poor
+normalization, or an unsuitable EOS family.
 
-Defaults are starting points, not automatic model recommendations for every
-dataset.  The tutorial exercises demonstrate why the model and solver should be
-compared when the data support such a comparison.
-
-Performance and numerical controls
-----------------------------------
-
-EOS fitting is normally inexpensive compared with phonon or spherical-sampling
-workflows.  Runtime is governed mainly by:
-
-- number of selected observations;
-- number of free parameters;
-- model-evaluation cost;
-- number of batch jobs;
-- effective-variance outer cycles;
-- ODR coordinate corrections;
-- convergence limits and poor starting values;
-- P--V--T thermal integrals and repeated derivative evaluation.
-
-Useful performance practices are:
-
-#. run ``--dry-run`` before a large specification;
-#. start with OLS or WLS to validate the model and initial state;
-#. add effective variance or ODR only when justified by uncertainty semantics;
-#. compare a few candidate models before launching a large combinatorial plan;
-#. avoid unnecessarily broad parameter bounds;
-#. use explicit initial values for difficult coupled P--V--T models;
-#. calculate dense curves only after an accepted fit exists.
-
-``max_iterations``, ``ftol``, ``xtol``, and ``gtol`` control numerical
-termination, not scientific accuracy.  Tightening them cannot repair an
-underconstrained model or incorrect data normalization.
-
-EOS has no batching control analogous to SEISMIC ``batch_size=512``.  The
-number 512 is not an EOS convergence parameter.
+EOS has no batching control analogous to SEISMIC ``batch_size``; increasing an
+unrelated batch-size value is therefore not an EOS convergence strategy.
 
 Recommended staged workflow
 ---------------------------

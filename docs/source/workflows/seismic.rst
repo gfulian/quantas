@@ -544,77 +544,29 @@ reports, export, and GUI reuse.
 Performance and memory strategy
 -------------------------------
 
-The principal costs are:
+SEISMIC cost scales approximately with the number of sampled wave normals and
+with the selected calculation level. ``phase`` is the least expensive,
+``group`` adds analytical first derivatives, and ``enhancement`` adds Hessians
+and curvature fields. HDF5 size grows with the same sampled grid and with the
+number of stored fields.
 
-``phase``
-   Batched ``3 × 3`` eigensystems and polarization storage.
+For convergence work, validate the tensor first, start from ``phase`` on a
+moderate upper-hemisphere grid, refine the angular sampling, and enable group or
+enhancement quantities only when they are part of the scientific question.
+``batch_size`` is a throughput/memory control and must not be interpreted as an
+accuracy parameter. Plot DPI, contour levels, colormap, and polarization stride
+change rendering only.
 
-``group``
-   Phase cost plus analytical gradient tensors and group vectors.
+Defaults and their role
+-----------------------
 
-``enhancement``
-   Group cost plus Hessians, pseudoinverses, ray gradients, cofactors, and area
-   factors.
-
-``polarization tracking``
-   A separate deterministic traversal after phase sampling.  Its cost is
-   usually lower than enhancement but grows with every grid position.
-
-Practical acceleration sequence:
-
-1. validate a new tensor with Elasticity first;
-2. start with ``level=phase`` and a moderate grid;
-3. disable tracking if no polarization output is needed;
-4. refine angular resolution before enabling enhancement;
-5. select the upper hemisphere unless a lower/full domain is specifically
-   required;
-6. use ``batch_size`` only to balance memory and throughput;
-7. render only the maps and surfaces required for the study.
-
-The number of contour levels, image DPI, colormap, polarization stride, and 3D
-plot geometry affect rendering only.  They do not refine the stored acoustic
-field.
-
-Defaults and rationale
-----------------------
-
-.. list-table:: SEISMIC defaults
-   :header-rows: 1
-   :widths: 28 23 49
-
-   * - Control
-     - Default
-     - Rationale
-   * - Hemisphere
-     - upper
-     - Uses antipodal symmetry without duplicating the physical axis field.
-   * - Sampling level
-     - enhancement
-     - Produces the complete persisted acoustic dataset in one run.
-   * - Polar grid
-     - 91
-     - Approximately one-degree spacing over the upper hemisphere.
-   * - Azimuthal grid
-     - 181
-     - Approximately two-degree spacing without a duplicated seam.
-   * - Batch size
-     - 512
-     - Balances vectorization, temporary memory, and progress cadence.
-   * - Polarization tracking
-     - enabled
-     - Produces continuous axes suitable for maps and branch analysis.
-   * - Eigenvalue tolerance
-     - ``1e-10`` relative, ``1e-12`` absolute
-     - Clamps only tiny negative numerical eigenvalues.
-   * - Degeneracy tolerance
-     - ``1e-8`` relative, ``1e-10`` absolute
-     - Marks near-equal eigenspaces without requiring exact equality.
-   * - Pseudoinverse cutoff
-     - ``1e-10``
-     - Regularizes analytical Hessians near singular shifted systems.
-   * - Caustic tolerance
-     - ``1e-10`` relative, ``1e-12`` absolute
-     - Identifies sampled area factors numerically consistent with zero.
+The default grid and tolerances provide a reproducible starting point, not a
+universal convergence prescription. The scientific controls that may require a
+material-specific sensitivity study are angular resolution, degeneracy
+tolerances, eigenvalue-clamping tolerances, pseudoinverse cutoff, and the
+caustic-candidate threshold. The complete option inventory and exact defaults
+belong to :doc:`../cli/seismic`; this workflow chapter explains what those
+controls change physically.
 
 Warnings and diagnostic masks
 -----------------------------

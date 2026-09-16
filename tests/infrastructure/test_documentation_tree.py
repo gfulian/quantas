@@ -522,19 +522,17 @@ def test_ha_qha_workflow_pages_are_complete() -> None:
     for phrase in (
         "Preflight inspection",
         "Frequency and thermodynamic schemes",
-        "Polynomial minimization",
-        "EOS minimization",
+        "Polynomial and EOS minimization",
         "Polynomial thermoelastic derivatives",
         "Three routes to volumetric thermal expansion",
         "Failure policies and partial results",
-        "Performance and practical acceleration",
-        "There is no HA/QHA numerical control with a default value of",
+        "Performance notes",
     ):
         assert phrase in qha
 
-    assert "**5 points**" in qha
-    assert "**0.05%**" in qha
-    assert "mixed derivative — default".lower() in qha.lower()
+    assert "five points" in qha
+    assert "0.05%" in qha
+    assert "``mixed_derivative`` (default)" in qha
 
 
 def test_elasticity_seismic_workflow_pages_are_complete() -> None:
@@ -576,32 +574,31 @@ def test_thermoelasticity_workflow_page_is_complete() -> None:
     )
 
     for phrase in (
-        "CRYSTAL pressure resolution and finite-pressure tensors",
-        "Reference point and frame normalization",
-        "What is and is not fitted from the elastic outputs",
+        "Preparing the elastic-volume series",
+        "CRYSTAL finite-pressure tensors",
+        "Structural continuity and reference frame",
+        "What the elastic outputs contribute",
         "Cold reference EOS",
-        "Choosing BM2, BM3, or BM4",
-        "Second- and third-order finite strain",
+        "Reference EOS and cold-component model",
         "Scientific support diagnostics",
         "Validation presets",
         "Shared reference-EOS covariance",
         "Two independent extrapolation masks",
         "Isothermal-to-adiabatic conversion",
-        "Recommended sensitivity study",
-        "Performance and acceleration",
-        "No ``512`` convergence parameter",
+        "Sensitivity checks",
+        "Performance and reuse",
         "Common interpretation errors",
     ):
         assert phrase in text
 
     for value in (
-        "0.05 GPa",
-        "0.5 Å",
-        "1.0e-10 GPa",
+        "zero_tolerance",
         "0.005",
         ":math:`10^6`",
         "piecewise-linear interpolation",
         "C^S=C^T",
+        ":doc:`../formats/thermoelastic_input`",
+        ":doc:`../developer/interfaces`",
     ):
         assert value in text
 

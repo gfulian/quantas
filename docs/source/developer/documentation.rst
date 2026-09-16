@@ -63,6 +63,47 @@ The public documentation separates:
 Do not copy the same long explanation into every section. Link to the
 authoritative discussion and repeat only the context required for readability.
 
+Information ownership
+---------------------
+
+The manual is easiest to navigate when each kind of information has one
+canonical home. Other pages may summarize the point needed for local context,
+but they should link back instead of reproducing the full explanation.
+
+.. list-table:: Canonical information ownership
+   :header-rows: 1
+   :widths: 24 38 38
+
+   * - Section
+     - Canonical content
+     - Content to avoid duplicating
+   * - Scientific Background
+     - Equations, physical assumptions, conventions, and primary references
+     - CLI syntax, file schemas, and implementation-specific option inventories
+   * - Implementation and Workflows
+     - How Quantas composes the scientific operations, default strategy,
+       diagnostics, limitations, and decision points
+     - Long theory derivations, complete tutorials, and field-by-field schemas
+   * - Tutorials
+     - Reproducible analyses and interpretation of concrete results
+     - Full option catalogues and repeated derivations
+   * - Input and Output Formats
+     - Normative fields, units, shapes, schemas, and persistence contracts
+     - Scientific motivation already covered by theory or workflows
+   * - Command / API Reference
+     - Public syntax and callable contracts
+     - Narrative workflow guidance that belongs in the manual chapters
+   * - Scientific Validation
+     - Reference data, comparison targets, tolerances, outcomes, and traceability
+     - Re-teaching the algorithm being validated
+   * - Development Guide
+     - Internal architecture, extension points, and contributor procedures
+     - User-facing workflow instructions
+
+A useful review question is: *where should a reader go for the authoritative
+version of this statement?* If the answer is unclear, the information is
+probably duplicated or placed at the wrong level.
+
 Docstrings
 ----------
 
