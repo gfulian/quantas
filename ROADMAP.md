@@ -2,13 +2,35 @@
 
 ## Current pre-RC development
 
-The standalone Energy EOS work completed the ``2.0.0b11`` scientific tranche.
-Development is now on ``2.0.0b12`` in ``dev/prerelease-hardening``.  This branch
-adds no new scientific workflow: it is closing architecture, documentation,
-validation, packaging, and release-readiness gaps before the next pre-release
-checkpoint.
+The ``2.0.0b12`` pre-release hardening tranche has been merged into
+``dev/refactor`` after the complete local and GitHub CI gates passed.
+Development is now on ``2.0.0b13`` in ``dev/interface-vasp-maintenance``.
+This is a deliberately narrow external-interface tranche: its purpose is to
+make data produced directly by VASP calculations available through the same
+backend-neutral structural and computational contracts already used by CRYSTAL.
 
-The b12 hardening tranche has:
+The b13 VASP tranche is intended to:
+
+- accept one VASP calculation directory or a list of calculation directories;
+- use ``vasprun.xml`` as the primary structured run record and ``OUTCAR`` as a
+  complementary source where VASP version quirks or run-state semantics require
+  it;
+- reconstruct canonical structures, species, volumes, energies, forces,
+  stresses, run metadata, and optimization histories without frontend
+  dependencies;
+- preserve the distinct VASP energy quantities and the exact source used for
+  each normalized observation;
+- expose one final structure--energy state per compatible run so the existing
+  Energy EOS input generator can consume VASP series without acquiring
+  VASP-specific logic;
+- consolidate specialized readers, such as elasticity, only after the generic
+  VASP run contract is characterized.
+
+Phonopy support is explicitly outside this branch.  DFT-code + Phonopy
+interoperability and cross-backend phonon normalization will be developed as a
+separate follow-up once the direct VASP interface is stable.
+
+The completed b12 hardening tranche:
 
 - separated documented EOS request errors from unexpected failures;
 - unified energy-derived pressure assignment and provenance across Kieffer and
@@ -20,10 +42,8 @@ The b12 hardening tranche has:
   information ownership;
 - made the validation record explicit about completed and work-in-progress
   scopes;
-- prepared synchronized release metadata and final distribution checks.
-
-VASP/Phonopy cleanup and common MgO cross-backend characterization are planned
-for a small b13 follow-up rather than being mixed into b12.
+- synchronized release metadata and hardened the final distribution and
+  publication checks.
 
 The completed b11 Energy EOS tranche:
 

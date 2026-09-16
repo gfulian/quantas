@@ -15,11 +15,11 @@ state.
 | Item | Current value |
 |---|---|
 | Last updated | 2026-09-16 |
-| Current development version | `2.0.0b12` |
-| Stable development baseline | `2.0.0b11`, `dev/energyeos` |
-| Active engineering branch | `dev/prerelease-hardening` |
-| Current focus | Pre-release hardening: architecture consistency, documentation, validation traceability, packaging, and release readiness |
-| Development status | Pre-RC scientific closure and validation |
+| Current development version | `2.0.0b13` |
+| Stable development baseline | `2.0.0b12`, `dev/refactor` |
+| Active engineering branch | `dev/interface-vasp-maintenance` |
+| Current focus | VASP run-output interface maintenance: structured run parsing, geometry/energy normalization, and backend-neutral EOS input generation |
+| Development status | Pre-RC external-interface consolidation |
 | Numerical precision | `float64` for real calculations and native HDF5 values; `complex128` for complex quantities |
 | Persistence | Native HDF5 envelope retained; HA/QHA and Thermoelasticity payloads have been extended additively with Kieffer and pressure/provenance data |
 
@@ -86,11 +86,44 @@ The `2.0.0b9` baseline already provides:
 Python support remains 3.10 through 3.13 until the complete scientific
 stack is validated on Python 3.14.
 
-## Current `2.0.0b12` / `dev/prerelease-hardening` tranche
+## Current `2.0.0b13` / `dev/interface-vasp-maintenance` tranche
 
-The Energy EOS feature work is complete.  The current branch does not add a
-new scientific workflow; it hardens the existing Quantas 2 surface before the
-next pre-release checkpoint.  The b12 work has focused on:
+The b12 pre-release hardening branch has been merged into ``dev/refactor`` with
+the complete local and GitHub CI gates green.  The current b13 branch is a
+narrow external-interface tranche dedicated to information produced directly
+by VASP calculations.  It does not add a new scientific workflow and it does
+not yet address Phonopy interoperability.
+
+The b13 work is focused on:
+
+- treating a VASP calculation directory as one run source, with
+  ``vasprun.xml`` as the primary structured record and ``OUTCAR`` as a
+  complementary source where required;
+- reconstructing canonical ``CrystalStructure`` objects from VASP lattice,
+  fractional-coordinate, and species information;
+- exposing run metadata, electronic and ionic histories, energies, forces,
+  stresses, termination, and optimization state through backend-neutral Quantas
+  contracts where those contracts already exist;
+- normalizing one final structure--energy state per independent VASP run so a
+  directory or list of directories can feed the existing Energy EOS input
+  generator;
+- preserving VASP-specific energy semantics and source provenance rather than
+  collapsing distinct reported quantities into an unlabeled scalar;
+- characterizing historical VASP output-version quirks before selecting
+  authoritative values;
+- retaining the existing VASP elasticity reader until its specialized parsing
+  can be consolidated on top of the generic run interface without changing
+  scientific tensor semantics silently.
+
+DFT-code + Phonopy interoperability, including a common cross-backend phonon
+contract, is deliberately deferred to a separate branch after the VASP run
+interface is stable.
+
+## Previous `2.0.0b12` / `dev/prerelease-hardening` tranche
+
+The Energy EOS feature work was already complete before b12.  The b12 branch
+hardened the existing Quantas 2 surface before the next pre-release checkpoint.
+Its work included:
 
 - keeping request/input failures distinct from unexpected numerical or
   programming errors in EOS workflows;
@@ -113,11 +146,9 @@ next pre-release checkpoint.  The b12 work has focused on:
   matches the authoritative source version, while keeping TestPyPI as the manual
   candidate-publication path.
 
-The release gate remains the staged test runner plus static checks, Sphinx with
-warnings as errors, wheel/sdist construction, installed-distribution smoke
-tests, and archive inspection.  VASP/Phonopy interface cleanup and common MgO
-cross-backend characterization are intentionally deferred to a small b13
-follow-up rather than being folded into this hardening branch.
+The complete b12 gate included the staged test runner, static checks, Sphinx
+with warnings as errors, wheel/sdist construction, installed-distribution smoke
+tests, archive inspection, and the GitHub CI matrix.
 
 ## Previous `2.0.0b11` / `dev/energyeos` tranche
 

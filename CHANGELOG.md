@@ -5,6 +5,23 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
+## [2.0.0b13] - Unreleased
+
+### Changed
+
+- Advanced the development baseline to ``2.0.0b13`` on
+  ``dev/interface-vasp-maintenance`` after the b12 pre-release hardening branch
+  merged into ``dev/refactor`` with green local and GitHub CI gates.
+- Scoped b13 specifically to direct VASP run-output ingestion and normalization;
+  DFT-code + Phonopy interoperability is deferred to a separate follow-up
+  branch.
+
+### Scientific compatibility
+
+- This baseline patch changes release/development metadata only.  It does not
+  alter numerical formulas, units, array conventions, parsers, or persisted
+  scientific results.
+
 ## [2.0.0b12] - Unreleased
 
 ### Added
@@ -802,6 +819,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b13]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b13
 [2.0.0b12]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b12
 [2.0.0b11]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b11
 [2.0.0b10]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b10
