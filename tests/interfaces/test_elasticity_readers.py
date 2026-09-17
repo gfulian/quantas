@@ -65,9 +65,14 @@ def test_vasp_reader_prefers_relaxed_moduli(
     relaxed = np.diag([2000.0, 2100.0, 2200.0, 700.0, 800.0, 900.0])
 
     def block(header: str, matrix: np.ndarray) -> list[str]:
-        lines = [header, "separator", "separator"]
+        labels = ("XX", "YY", "ZZ", "XY", "YZ", "ZX")
+        lines = [
+            header,
+            "Direction XX YY ZZ XY YZ ZX",
+            "--------------------------------------------------------------------------------",
+        ]
         lines.extend(
-            f"{row + 1} " + " ".join(str(value) for value in matrix[row])
+            f"{labels[row]} " + " ".join(str(value) for value in matrix[row])
             for row in range(6)
         )
         return lines
@@ -91,9 +96,7 @@ def test_vasp_reader_prefers_relaxed_moduli(
 
     assert reader.completed is True
     assert reader.error is None
-    expected = relaxed / 10.0
-    expected[[3, 5]] = expected[[5, 3]]
-    expected[:, [3, 5]] = expected[:, [5, 3]]
+    expected = relaxed[np.ix_([0, 1, 2, 4, 5, 3], [0, 1, 2, 4, 5, 3])] / 10.0
     np.testing.assert_allclose(reader.stiffness, expected)
     expected_density = 2.0 * 24.305 / 80.0 * 1660.53906660
     assert reader.density == pytest.approx(expected_density)
@@ -186,3 +189,71 @@ def test_crystal_reader_uses_unstrained_elastic_reference(tmp_path: Path) -> Non
     assert reader.density == pytest.approx(3200.0)
     assert reader.energy == pytest.approx(-20.0)
     assert reader.stress_pressure == pytest.approx(1.5)
+
+
+@pytest.mark.interfaces
+@pytest.mark.elasticity
+def test_vasp_reader_uses_label_based_voigt_mapping(tmp_path: Path) -> None:
+    """VASP XY,YZ,ZX shear order is mapped to Quantas YZ,ZX,XY order."""
+    matrix = np.diag([1000.0, 2000.0, 3000.0, 4000.0, 5000.0, 6000.0])
+    labels = ("XX", "YY", "ZZ", "XY", "YZ", "ZX")
+    lines = [
+        "SYMMETRIZED ELASTIC MODULI (kBar)",
+        "Direction XX YY ZZ XY YZ ZX",
+        "--------------------------------------------------------------------------------",
+    ]
+    lines.extend(
+        f"{label} " + " ".join(str(value) for value in matrix[index])
+        for index, label in enumerate(labels)
+    )
+    source = tmp_path / "OUTCAR"
+    source.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+    reader = VASPElasticityReader(source)
+
+    assert reader.completed is True
+    np.testing.assert_allclose(
+        np.diag(reader.stiffness),
+        np.asarray([100.0, 200.0, 300.0, 500.0, 600.0, 400.0]),
+    )
+
+
+@pytest.mark.interfaces
+@pytest.mark.elasticity
+def test_vasp_mgo_excerpt_preserves_tensors_and_prestress(
+    tmp_path: Path,
+) -> None:
+    """Real MgO VASP-5 output supplies tensor levels and reference stress facts."""
+    run = tmp_path / "mgo-soec"
+    run.mkdir()
+    source = DATA / "vasp_mgo_soec_00_v544.OUTCAR"
+    (run / "OUTCAR").write_bytes(source.read_bytes())
+
+    reader = VASPElasticityReader(run)
+
+    assert reader.completed is True
+    assert reader.error is None
+    assert reader.ibrion == 6
+    assert reader.isif == 3
+    assert reader.selected_level == "relaxed_ion"
+    assert reader.tensor_kind.value == "unknown"
+    assert reader.metadata["quantas_prestress_correction_applied"] is False
+    assert reader.metadata["finite_prestress_semantics"] == "unresolved"
+    assert reader.reference_pressure_gpa == pytest.approx(-0.781768)
+    assert reader.reference_stress_gpa is not None
+    np.testing.assert_allclose(
+        reader.reference_stress_gpa,
+        np.eye(3) * -0.781768,
+        atol=1.0e-12,
+    )
+    assert reader.prestress.pressure_gpa == pytest.approx(-0.781768)
+    assert reader.prestress.pressure_source.value == "output_stress"
+    assert reader.stiffness[0, 0] == pytest.approx(271.25302)
+    assert reader.stiffness[0, 1] == pytest.approx(87.63414)
+    assert reader.stiffness[3, 3] == pytest.approx(140.94755)
+    assert reader.ionic_relaxation_stiffness is not None
+    np.testing.assert_allclose(reader.ionic_relaxation_stiffness, 0.0)
+    assert reader.relaxed_stiffness is not None
+    np.testing.assert_allclose(reader.relaxed_stiffness, reader.clamped_stiffness)
+    expected_density = (16.000 + 24.305) / 19.28 * 1660.53906660
+    assert reader.density == pytest.approx(expected_density)

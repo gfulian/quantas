@@ -216,6 +216,35 @@ correction in VASP 6.  It is an interface-level source correction; workflow
 adapters select scientific quantities only after the three VASP energy values
 have been resolved.
 
+VASP elasticity adaptation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The VASP elasticity reader accepts either a calculation directory, ``OUTCAR``,
+or ``vasprun.xml`` with a sibling ``OUTCAR``.  Elastic moduli are read from the
+human-readable OUTCAR because that is where VASP 5.4.4 reports the complete
+finite-difference elasticity decomposition.  Quantas preserves separately:
+
+* ``SYMMETRIZED ELASTIC MODULI`` (clamped-ion);
+* ``ELASTIC MODULI CONTR FROM IONIC RELAXATION`` when present;
+* ``TOTAL ELASTIC MODULI`` (relaxed-ion), selected by default when available.
+
+VASP labels the six components ``XX YY ZZ XY YZ ZX``.  The parser maps both
+matrix axes explicitly by label to Quantas' ``11 22 33 23 13 12`` convention;
+it does not use positional shear swaps.  The first stress block is retained as
+the unstrained reference stress, with VASP's positive-compression sign
+convention, and the first reported cell volume is used for density because
+later ``IBRION=6`` records contain trial lattice distortions.
+
+No CRYSTAL finite-prestress transformation is applied to a VASP tensor.  VASP
+documents ``IBRION=6, ISIF>=3`` elastic moduli as finite-difference
+strain--stress derivatives and also describes them as energy second
+derivatives, with clamped- and relaxed-ion variants.  Those descriptions do
+not by themselves establish equivalence to Quantas' named hydrostatic Wallace
+convention at finite pre-stress.  Until that mapping is independently
+validated, the interface therefore records ``tensor_kind=unknown``, the
+reference pressure, and ``quantas_prestress_correction_applied=False`` rather
+than guessing or reusing the CRYSTAL correction.
+
 VASP Energy EOS adaptation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

@@ -324,7 +324,7 @@ def run(
 
 @seismic.command(name="inpgen", cls=GroupedCommand)
 @click.argument(
-    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    "filename", type=click.Path(exists=True, path_type=Path)
 )
 @click.option(
     "-o",
@@ -345,7 +345,7 @@ def run(
 def inpgen(filename: Path, outfile: Path | None, interface: str) -> None:
     """Generate a Quantas SEISMIC input from CRYSTAL or VASP output."""
     if outfile is None:
-        stem = filename.with_suffix("")
+        stem = filename if filename.is_dir() else filename.with_suffix("")
         outfile = stem.with_name(stem.name + "_seismic_input").with_suffix(".dat")
     else:
         outfile = outfile.with_suffix(".dat")

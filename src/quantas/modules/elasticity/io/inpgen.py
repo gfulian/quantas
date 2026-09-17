@@ -47,7 +47,7 @@ class ElasticityInputCreator:
         Parameters
         ----------
         filename : str or Path
-            Path to the external output file.
+            Path to the external output file or VASP calculation directory.
 
         Returns
         -------

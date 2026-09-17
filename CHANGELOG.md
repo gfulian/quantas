@@ -8,6 +8,11 @@ public contract; they must still be documented and validated.
 ## [2.0.0b13] - Unreleased
 
 ### Added
+- Consolidated VASP elasticity ingestion around calculation directories/OUTCAR,
+  preserving clamped-ion, ionic-relaxation, and total relaxed-ion tensors, the
+  unstrained reference stress/pressure, and explicit source-convention provenance.
+- Added real MgO VASP 5.4.4 elasticity characterization coverage and corrected
+  the VASP ``XX YY ZZ XY YZ ZX`` to Quantas ``11 22 33 23 13 12`` shear mapping.
 
 - Added a generic VASP run-document interface that resolves calculation
   directories, reads ``vasprun.xml`` with optional ``OUTCAR`` cross-checks,
@@ -25,6 +30,11 @@ public contract; they must still be documented and validated.
   multiplicity when a source cell is reduced.
 
 ### Changed
+- Kept VASP finite-prestress semantics conservative: Quantas does not apply the
+  CRYSTAL Erba/Barron--Klein transformation to VASP tensors and records the
+  convention as unresolved until independently validated.
+- Relaxed the Energy-EOS cross-unit uncertainty characterization tolerance to
+  accommodate sub-per-mille platform variation in nonlinear covariance estimates.
 
 - Advanced the development baseline to ``2.0.0b13`` on
   ``dev/interface-vasp-maintenance`` after the b12 pre-release hardening branch

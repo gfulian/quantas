@@ -52,7 +52,7 @@ A shared Quantas elastic input can be generated directly from supported external
 outputs with either the public API or the CLI::
 
    quantas seismic inpgen OUTPUT --interface crystal --output material.dat
-   quantas seismic inpgen OUTCAR --interface vasp --output material.dat
+   quantas seismic inpgen vasp-run --interface vasp --output material.dat
 
 Both entry points use ``quantas.api.seismic.create_input`` and require density
 metadata in addition to the stiffness tensor.

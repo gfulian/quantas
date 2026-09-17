@@ -159,16 +159,19 @@ source output to provide enough metadata for finite positive density.
        jobname="Crystal",
    )
    seismic.create_input(
-       "OUTCAR",
+       "vasp-run/",
        "seismic.dat",
        interface="vasp",
-       jobname="Crystal",
+       jobname="VASP",
    )
 
-For VASP, density is derived from the species ``POMASS`` values, ``ions per
-type`` populations, and the final reported cell volume.  If these metadata are
-missing or inconsistent, Elasticity can still generate a stiffness-only input,
-whereas SEISMIC input generation fails explicitly.
+For VASP, the source may be a calculation directory or ``OUTCAR``.  Density
+is derived from the species ``POMASS`` values, ``ions per type`` populations,
+and the **reference** (first) reported cell volume; later ``IBRION=6`` volumes
+are finite trial distortions and are not used for density.  If these metadata
+are missing or inconsistent, Elasticity can still generate a stiffness-only
+input, whereas SEISMIC input generation fails explicitly.  The VASP tensor is
+passed through without an added CRYSTAL-style prestress correction.
 
 The parser preserves the Cartesian frame reported by the source code.  User
 rotations belong to the scientific workflow and are recorded in the result;

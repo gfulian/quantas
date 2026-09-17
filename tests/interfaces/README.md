@@ -24,3 +24,7 @@ already primitive structure and a conventional rocksalt MgO cell.
 The compact fixtures do not establish scientific validation for every VASP 6
 minor version.  Additional real-version fixtures should be added before making
 such a claim.
+
+- VASP elasticity: OUTCAR clamped/ionic/total tensor decomposition, explicit
+  shear-order mapping, directory-source handling, reference pressure/stress,
+  and no implicit CRYSTAL prestress conversion.
