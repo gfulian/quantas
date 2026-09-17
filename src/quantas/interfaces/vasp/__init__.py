@@ -10,6 +10,7 @@ from .energy_volume import (
 )
 from .document import VaspRunDocument, VaspRunSource, resolve_vasp_run_source
 from .output import VaspEnergyComponents, VaspIonicStep, VaspOutputParser
+from .phonons import VaspPhononReader
 
 __all__ = [
     "VASPElasticityReader",
@@ -19,6 +20,7 @@ __all__ = [
     "VaspEnergyComponents",
     "VaspIonicStep",
     "VaspOutputParser",
+    "VaspPhononReader",
     "VaspRunDocument",
     "VaspRunSource",
     "resolve_vasp_run_source",

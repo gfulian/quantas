@@ -51,6 +51,18 @@ tracks modes between adjacent volumes, treats numerical degeneracies as
 subspaces, and writes the resulting continuity status and diagnostics to the
 YAML.
 
+Primitive-cell VASP Gamma calculations use the same generator.  For a
+multi-volume series, list one VASP calculation directory per line:
+
+.. code-block:: console
+
+   quantas qha inpgen vasp-runs.txt --list --interface vasp \
+      --reference 0 --output material.yaml
+
+This route is currently Gamma-only.  Quantas does not yet reconstruct direct
+phonon dispersion from VASP supercell outputs or parse VASP-6 direct q-point
+dispersion data.
+
 A monolithic CRYSTAL QHA output uses the source-managed route:
 
 .. code-block:: console

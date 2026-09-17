@@ -8,6 +8,10 @@ public contract; they must still be documented and validated.
 ## [2.0.0b13] - Unreleased
 
 ### Added
+- Added primitive-cell VASP Gamma-phonon ingestion from ``vasprun.xml`` +
+  ``OUTCAR`` with backend-neutral frequencies/eigenvectors, physically
+  identified rigid translations, direct HA/QHA input generation, and explicit
+  provenance that direct VASP phonon-dispersion parsing is not implemented.
 - Consolidated VASP elasticity ingestion around calculation directories/OUTCAR,
   preserving clamped-ion, ionic-relaxation, and total relaxed-ion tensors, the
   unstrained reference stress/pressure, and explicit source-convention provenance.

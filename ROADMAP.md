@@ -24,12 +24,15 @@ The b13 VASP tranche is intended to:
   Energy EOS input generator can consume VASP series without acquiring
   VASP-specific logic;
 - consolidate specialized readers, such as elasticity, only after the generic
-  VASP run contract is characterized.
+  VASP run contract is characterized;
+- expose primitive-cell VASP Gamma phonons through the shared HA/QHA input
+  contract while leaving direct VASP dispersion reconstruction to a later
+  tranche.
 
-The generic VASP run contract and its first Energy EOS adapter are now under
-characterization.  Remaining b13 work should harden the direct VASP surface,
-add real-version fixtures where needed, and only then decide whether existing
-specialized VASP readers should consume the shared run layer.
+The generic VASP run contract, Energy EOS adapter, consolidated elasticity
+reader, and primitive-cell Gamma-phonon route are now under characterization.
+Direct phonon dispersion from VASP outputs is intentionally not implemented in
+b13; supercell folding/unfolding and VASP-6 dispersion output remain later work.
 
 Phonopy support is explicitly outside this branch.  DFT-code + Phonopy
 interoperability and cross-backend phonon normalization will be developed as a

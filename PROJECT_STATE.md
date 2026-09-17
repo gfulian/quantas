@@ -14,11 +14,11 @@ state.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-09-16 |
+| Last updated | 2026-09-17 |
 | Current development version | `2.0.0b13` |
 | Stable development baseline | `2.0.0b12`, `dev/refactor` |
 | Active engineering branch | `dev/interface-vasp-maintenance` |
-| Current focus | VASP run-output interface maintenance: structured run parsing, geometry/energy normalization, and backend-neutral EOS input generation |
+| Current focus | VASP run-output interface maintenance: structured run parsing, EOS/elasticity adaptation, and primitive-cell Gamma phonon ingestion |
 | Development status | Pre-RC external-interface consolidation |
 | Numerical precision | `float64` for real calculations and native HDF5 values; `complex128` for complex quantities |
 | Persistence | Native HDF5 envelope retained; HA/QHA and Thermoelasticity payloads have been extended additively with Kieffer and pressure/provenance data |
@@ -122,6 +122,14 @@ uses ``energy(sigma->0)`` for the static ground-state E--V surface, normalizes
 non-primitive source cells and their energies to one primitive cell, preserves
 already primitive VASP bases, and rejects incompatible electronic-setting
 signatures across independent runs.
+
+The direct VASP surface now also includes primitive-cell Gamma phonons from
+VASP 5.4.4 finite-difference runs.  Quantas reads signed Gamma frequencies and
+mass-weighted Cartesian eigenvectors, identifies the three rigid translations
+from their eigenvector subspace rather than a frequency threshold, and exposes
+the result through the shared HA/QHA input generator.  Direct phonon dispersion
+from VASP outputs, including folded-supercell reconstruction and VASP 6
+``LPHON_DISPERSION``/``QPOINTS`` data, is not implemented in this tranche.
 
 DFT-code + Phonopy interoperability, including a common cross-backend phonon
 contract, is deliberately deferred to a separate branch after the VASP run

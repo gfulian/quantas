@@ -28,3 +28,5 @@ such a claim.
 - VASP elasticity: OUTCAR clamped/ionic/total tensor decomposition, explicit
   shear-order mapping, directory-source handling, reference pressure/stress,
   and no implicit CRYSTAL prestress conversion.
+
+- VASP Gamma phonons: primitive-cell q=0 frequencies/eigenvectors, rigid translations, and explicit rejection of unsupported dispersion/supercell folding.

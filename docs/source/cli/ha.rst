@@ -26,7 +26,7 @@ archive without repeating harmonic sums.
 Generating the phonon input
 ---------------------------
 
-The shared ``inpgen`` command supports three interface routes:
+The shared ``inpgen`` command supports four interface routes:
 
 .. code-block:: console
 
@@ -36,6 +36,8 @@ The shared ``inpgen`` command supports three interface routes:
       --reference 0 --output material.yaml
 
    quantas ha inpgen qha.out --interface crystal-qha --output material.yaml
+
+   quantas ha inpgen vasp_run --interface vasp --output material.yaml
 
 ``--reference`` selects the source structure used for reference metadata and
 final branch labels in a multi-file series.  It does not change the local

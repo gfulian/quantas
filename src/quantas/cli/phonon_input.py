@@ -35,7 +35,7 @@ from quantas.api.qha import create_input as create_qha_input
     ),
 )
 @click.argument(
-    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    "filename", type=click.Path(exists=True, path_type=Path)
 )
 @click.option(
     "-o",
@@ -47,7 +47,7 @@ from quantas.api.qha import create_input as create_qha_input
 )
 @click.option(
     "--interface",
-    type=click.Choice(["crystal", "crystal-qha", "phonopy"], case_sensitive=False),
+    type=click.Choice(["crystal", "crystal-qha", "phonopy", "vasp"], case_sensitive=False),
     default="crystal",
     show_default=True,
     help="Interface used to read the QM phonon output.",
@@ -122,7 +122,7 @@ def phonon_inpgen(
         Destination YAML path.  If ``None``, the source suffix is replaced by
         ``.yaml``.
     interface : str
-        Input interface: ``crystal``, ``crystal-qha``, or ``phonopy``.
+        Input interface: ``crystal``, ``crystal-qha``, ``phonopy``, or ``vasp``.
     is_list : bool
         Interpret ``filename`` as a file list when ``True``.
     reference : int

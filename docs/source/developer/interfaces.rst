@@ -245,6 +245,41 @@ validated, the interface therefore records ``tensor_kind=unknown``, the
 reference pressure, and ``quantas_prestress_correction_applied=False`` rather
 than guessing or reusing the CRYSTAL correction.
 
+VASP Gamma phonon adaptation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`quantas.interfaces.vasp.phonons.VaspPhononReader` currently exposes
+only primitive-cell Gamma phonons from a completed VASP run.  Frequencies and
+the real/imaginary mode label are read from the human-readable ``OUTCAR``;
+higher-precision normalized eigenvectors are read from
+``vasprun.xml/dynmat/eigenvectors``.  The interface stores those vectors as the
+backend-neutral unit-norm mass-weighted representation used by
+:class:`~quantas.models.phonons.PhononModeData`.
+
+The three Gamma translations are not identified by a fixed frequency cutoff.
+Quantas projects every VASP eigenvector onto the three-dimensional
+mass-weighted rigid-translation subspace.  Exactly three well-resolved
+translations are required.  Their raw VASP frequencies and projection scores
+remain in provenance, while the thermodynamic frequencies are set to exactly
+zero so numerical acoustic-sum-rule drift is not counted as a physical
+harmonic oscillator.  Other imaginary modes retain negative frequencies.
+
+.. important::
+
+   Direct phonon dispersion from VASP output is **not implemented yet**.  The
+   current VASP reader requires the calculation cell itself to be primitive and
+   exposes a single q-point, ``Gamma = (0, 0, 0)``, with unit weight and an
+   identity phonon-supercell matrix.  A reducible source cell is rejected
+   rather than treating folded supercell Gamma modes as a primitive-cell
+   dispersion.  VASP 6 ``LPHON_DISPERSION``/``QPOINTS`` output is likewise
+   outside the current parser contract.
+
+The initial undistorted VASP state supplies the static
+``energy(sigma->0)`` value for HA/QHA input generation.  Its source unit remains
+``eV``; phonon frequencies are exposed in ``cm^-1`` and structural quantities
+in angstrom.  The first validated characterization target is VASP 5.4.4
+``IBRION=6`` output for primitive MgO.
+
 VASP Energy EOS adaptation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 

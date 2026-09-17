@@ -30,7 +30,7 @@ from quantas.models.phonons import PhononInputData
 from .plotting import PlotCollection
 
 PayloadT = TypeVar("PayloadT")
-PhononInterface = Literal["crystal", "crystal-qha", "phonopy"]
+PhononInterface = Literal["crystal", "crystal-qha", "phonopy", "vasp"]
 
 
 def get_result_payload(
