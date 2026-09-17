@@ -38,10 +38,10 @@ The ``2.0.0b11`` Energy EOS tranche promotes the integrated E--V service to a
 public standalone workflow.  Static total energies can now be fitted directly
 through the ``ev/energy`` slot, persisted in the ordinary EOS archive, inspected
 with diagnostics and plots, and evaluated through the common post-fit
-calculator.  The public parameter convention is ``E0`` in Hartree, ``V0`` in
-angstrom cubed, ``K0`` in GPa, ``KP`` dimensionless, and ``KPP`` in GPa
-:math:`^{-1}`.  Conversion to the natural energy-density units used by the
-numerical core occurs only at the E--V adapter boundary.
+calculator.  The public parameter convention keeps ``E0`` in the dataset's
+declared energy unit, ``V0`` in angstrom cubed, ``K0`` in GPa, ``KP``
+dimensionless, and ``KPP`` in GPa :math:`^{-1}`.  Conversion between energy
+density and pressure occurs only at the E--V adapter boundary.
 
 SJEOS is registered as an E--V model with physical parameters ``E0``, ``V0``,
 ``K0``, and ``KP``.  Its analytical ``P(V) = -dE/dV`` relation is available for
@@ -68,12 +68,13 @@ parameters, fitting, or persistence semantics.
 Input normalization and units
 -----------------------------
 
-EOS readers normalize supported energy, volume, pressure, temperature, and
-uncertainty columns before fitting while preserving the source representation
-as provenance. Hartree is the canonical Energy-EOS energy unit and kelvin the
-canonical temperature unit; other accepted units are converted through the
-shared unit service. SCF thresholds and printed numerical precision are not
-interpreted as statistical energy uncertainties.
+EOS readers normalize structural dimensions, pressure, and temperature while
+preserving the source representation as provenance. Energy-EOS data are
+different: energy and ``sigma_energy`` retain the dataset's declared unit, so
+Hartree, eV, and Ry datasets are fitted directly on their own energy scale.
+The shared unit service is used only for dimensionally required conversions,
+such as energy density to GPa. SCF thresholds and printed numerical precision
+are not interpreted as statistical energy uncertainties.
 
 The normative column grammar, unit precedence, and uncertainty fields belong to
 :doc:`../formats/eos_input`. When a specification file is used, its scientific
@@ -308,12 +309,13 @@ E--V implementation choices
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 E--V fitting uses static total energy as the dependent response and absolute
-volume as the independent coordinate.  The public fitting boundary uses
-Hartree and angstrom cubed for energy and volume, while equilibrium elastic
-parameters are reported in the ordinary EOS convention: ``K0`` in GPa, ``KP``
-dimensionless, and ``KPP`` in GPa :math:`^{-1}`.  The adapter converts these
-parameters to and from the energy-density units required by the shared
-numerical core; the core equations themselves are unchanged.
+volume as the independent coordinate.  Energy is fitted directly in the unit
+declared by the dataset, while volume remains normalized to angstrom cubed.
+Equilibrium elastic parameters are reported in the ordinary EOS convention:
+``K0`` in GPa, ``KP`` dimensionless, and ``KPP`` in GPa :math:`^{-1}`.  The
+adapter converts pressure parameters to and from the corresponding energy-
+density scale required by the shared numerical core; the core equations
+themselves are unchanged.
 
 The fitted E--V record stores calculated energy and, at every observed volume,
 the analytically derived pressure, bulk modulus, and its first and second

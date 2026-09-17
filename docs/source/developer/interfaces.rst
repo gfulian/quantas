@@ -210,10 +210,11 @@ pattern was observed remain in metadata.  When an ``OUTCAR`` can be paired
 unambiguously, the resolved XML energies are checked against its final
 ``TOTEN``, ``energy without entropy``, and ``energy(sigma->0)`` values.
 
-This resolution policy follows the VASP developers' description of the VASP
-5.4.4 XML issue and its correction in VASP 6 [#vasp_xml_energy_bug]_.  It is an
-interface-level source correction; workflow adapters select scientific
-quantities only after the three VASP energy values have been resolved.
+This resolution policy follows the `VASP developers' description of the VASP
+5.4.4 XML issue <https://vasp.at/forum/viewtopic.php?t=17839>`_ and its
+correction in VASP 6.  It is an interface-level source correction; workflow
+adapters select scientific quantities only after the three VASP energy values
+have been resolved.
 
 VASP Energy EOS adaptation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -229,7 +230,8 @@ thermodynamic semantics.  For accurate bulk total-energy calculations VASP
 recommends the tetrahedron method with Blöchl corrections (``ISMEAR=-5``);
 when Gaussian or Methfessel--Paxton smearing is used, ``energy(sigma->0)`` is
 an extrapolation and convergence with respect to ``SIGMA`` remains the user's
-scientific responsibility [#vasp_smearing]_.
+scientific responsibility.  See the `VASP smearing guidance
+<https://www.vasp.at/wiki/index.php/Smearing_technique>`_.
 
 Each Energy EOS source must resolve to exactly one ionic state.  An optimization
 history is therefore never flattened into the E--V series.  The source cell is
@@ -255,15 +257,6 @@ The first characterization fixture is MgO/periclase calculated with VASP
 three consecutive cell optimizations and seven fixed-cell EOS states; compact
 fixtures retain the real generator, INCAR, atom, structure, electronic-energy,
 force, stress, and convergence records needed by the repository tests.
-
-.. rubric:: VASP references
-
-.. [#vasp_xml_energy_bug] VASP Forum, *Bug in vasprun.xml energies*, report and
-   developer response confirming the behavior in VASP 5.4.4 and its correction
-   in VASP 6.1.1: https://vasp.at/forum/viewtopic.php?t=17839
-.. [#vasp_smearing] VASP Wiki, *Smearing technique*: guidance for total-energy
-   Brillouin-zone integration, ``ISMEAR=-5``, and zero-smearing extrapolation:
-   https://www.vasp.at/wiki/index.php/Smearing_technique
 
 CRYSTAL static-energy semantics
 -------------------------------

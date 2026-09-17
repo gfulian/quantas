@@ -35,14 +35,16 @@ public contract; they must still be documented and validated.
 - Extended the existing backend-neutral Energy EOS input generator to accept
   VASP calculation directories as sources while retaining CRYSTAL-specific
   correction diagnostics and established error semantics.
+- Changed Energy-EOS fitting to retain the dataset energy unit end to end
+  instead of silently normalizing eV/Ry input to Hartree; energy-density to
+  pressure conversion remains explicit at the E--V model boundary.
 
 ### Scientific compatibility
 
 - VASP Energy-EOS ingestion is additive.  Existing CRYSTAL Energy-EOS behavior
   and correction semantics are retained.  VASP observations are normalized to
   the primitive cell before entering the shared EOS collector; generated eV
-  energies are converted by the existing EOS reader to its native Hartree
-  representation.
+  energies remain eV through fitting and persistence.
 - The VASP Energy-EOS policy is explicitly a ground-state/static E--V policy.
   It uses ``e_0_energy`` / ``energy(sigma->0)`` and rejects mixed electronic
   settings rather than treating optimization and static-run energies as

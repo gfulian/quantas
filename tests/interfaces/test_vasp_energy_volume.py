@@ -12,7 +12,6 @@ import pytest
 
 from quantas.api import eos
 from quantas.cli.main import main
-from quantas.core.physics.units import convert_energy
 from quantas.interfaces.vasp.energy_volume import (
     VaspEnergyVolumeReader,
     read_vasp_energy_volume,
@@ -285,10 +284,10 @@ def test_vasp_eos_input_generation_accepts_directory_list(
 ) -> None:
     """The shared EOS generator should consume a list of VASP run directories."""
     _patch_symmetry(monkeypatch)
-    run_a = _modified_single_state_run(
+    _modified_single_state_run(
         tmp_path, name="state01", volume=18.0, energy=-11.80
     )
-    run_b = _modified_single_state_run(
+    _modified_single_state_run(
         tmp_path, name="state02", volume=20.0, energy=-11.90
     )
     listing = tmp_path / "vasp-runs.txt"
@@ -303,11 +302,8 @@ def test_vasp_eos_input_generation_accepts_directory_list(
     dataset = eos.read_input(written)
 
     assert dataset.npoints == 2
-    assert dataset.units["energy"] == "Ha"
+    assert dataset.units["energy"] == "eV"
     assert dataset.column("volume").tolist() == pytest.approx([18.0, 20.0])
-    np.testing.assert_allclose(
-        dataset.column("energy"),
-        convert_energy(np.array([-11.80, -11.90]), "eV", "Ha"),
-    )
+    np.testing.assert_allclose(dataset.column("energy"), [-11.80, -11.90])
     assert dataset.metadata["crystal_reference"] == "primitive"
     assert dataset.metadata["space_group_number"] == 225

@@ -67,9 +67,9 @@ primitive-cell structure--energy observation.  If the source cell contains
 ``N`` primitive repetitions, its total energy and volume are both divided by
 ``N``; an already primitive cell retains its original VASP basis.  The generated
 text therefore has the same primitive/crystallographic meaning as a CRYSTAL-
-derived table.  VASP energies are written in eV in the generated text and are
-converted by the EOS reader to the native Energy-EOS Hartree representation,
-just as other declared input units are normalized at the reader boundary.
+derived table.  VASP energies are written in eV and remain in eV throughout
+the Energy-EOS fit.  CRYSTAL-derived Hartree datasets and future datasets in
+other supported energy units retain their own declared energy scale.
 
 Minimal examples
 ----------------
@@ -236,10 +236,10 @@ group                ``GROUP``, ``GRP``
 use                  ``USE``, ``INCLUDE``
 ==================== ================================
 
-All normalized numerical arrays use ``float64``. Every uncertainty column must
-have its corresponding measured quantity, and negative uncertainties are
-rejected. Energy and ``sigma_energy`` are normalized together to Hartree when
-present. ``sigma_energy`` is retained for completeness, but Quantas does not
+All numerical arrays use ``float64``. Every uncertainty column must have its
+corresponding measured quantity, and negative uncertainties are rejected.
+Energy and ``sigma_energy`` retain the same declared dataset unit when present.
+``sigma_energy`` is retained for completeness, but Quantas does not
 synthesize a statistical energy uncertainty from SCF thresholds, convergence
 changes, or printed numerical precision in electronic-structure outputs. Raw
 and normalized columns are both retained by ``EOSDataset`` for future
@@ -431,13 +431,16 @@ CLI overrides are rejected. Without an explicit source, EOS assumes Hartree,
 GPa, Angstrom/Angstrom cubed, and kelvin. Absolute values and their standard
 uncertainties are normalized together; the raw arrays and original unit labels
 remain available in :class:`~quantas.api.eos.Dataset` and in the native HDF5
-archive.
+archive.  Pressure, absolute length/volume, and temperature continue to use the
+EOS canonical GPa, Angstrom/Angstrom cubed, and kelvin representations.
 
-Energy conversion uses the shared Quantas unit layer. Hartree, electronvolt,
-Rydberg, and the other energy aliases supported by that layer are accepted;
-energy is normalized to Hartree. File-level ``UNITS`` may declare ``E`` and
-``SIGE`` separately; an explicit frontend ``energy_unit`` override applies to
-both columns so the measured value and its uncertainty remain on one scale.
+Energy handling uses the shared Quantas unit layer only where dimensions meet,
+for example when converting the fitted energy density to ``K0`` in GPa.
+Hartree, electronvolt, Rydberg, and the other energy aliases supported by that
+layer are accepted directly by Energy-EOS fitting. File-level ``UNITS`` may
+declare ``E`` and ``SIGE`` separately; an explicit frontend ``energy_unit``
+override applies to both columns so the measured value and its uncertainty
+remain on one scale.
 
 The length unit defines both cell-length columns and the cube used by absolute
 volume columns. Supported metric length scales include metre, centimetre,

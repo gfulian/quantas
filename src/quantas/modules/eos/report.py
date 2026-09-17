@@ -469,7 +469,7 @@ def eos_data_table(dataset: EOSDataset, *, max_rows: int | None = None) -> Repor
         "pressure": "eos_pressure",
         "temperature": "eos_temperature",
         "volume": "eos_structural",
-        "energy": "energy_ha",
+        "energy": "energy",
         "a": "eos_structural",
         "b": "eos_structural",
         "c": "eos_structural",
@@ -1463,8 +1463,8 @@ def eos_observed_calculated_table(
         ]
         formats = [
             "eos_structural",
-            "energy_ha",
-            "energy_ha",
+            "energy",
+            "energy",
             "eos_residual",
             "eos_pressure",
         ]

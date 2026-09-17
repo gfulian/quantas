@@ -186,12 +186,13 @@ one or more requested sections.  Bash/Zsh/Fish use Click completion and Quantas
 adds a native PowerShell completion backend so model discovery remains useful on
 the project's primary Windows development platform.
 
-Energy and ``sigma_energy`` columns now participate in the same EOS unit
-normalization contract as pressure, length, and temperature.  Data-file
-``UNITS`` declarations, EOS spec ``[input] energy_unit``, and direct reader/CLI
-overrides are normalized to Hartree while raw values and source labels are
-retained.  ``sigma_energy`` is a completeness feature only; deterministic QM
-input generation is not expected to synthesize statistical energy errors.
+Energy and ``sigma_energy`` now retain the declared dataset unit through the
+Energy-EOS fit and HDF5 result path.  Data-file ``UNITS`` declarations, EOS spec
+``[input] energy_unit``, and direct reader/CLI overrides therefore define the
+actual fitting scale instead of triggering an implicit Hartree conversion.
+Pressure, structural dimensions, and temperature retain their established EOS
+canonical units. ``sigma_energy`` is a completeness feature only; deterministic
+QM input generation is not expected to synthesize statistical energy errors.
 
 The Energy EOS input layer now exposes ``quantas eos inpgen`` and the same
 operation through ``quantas.api.eos.create_input``.  The initial CRYSTAL

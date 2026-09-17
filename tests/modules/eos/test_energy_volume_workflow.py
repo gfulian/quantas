@@ -12,7 +12,11 @@ from quantas.api import eos as public_eos
 from quantas.cli.main import main
 from quantas.core.math.fitting import OLSOptions, WLSOptions
 from quantas.core.physics.eos import EnergyEOS, PressureEOS
-from quantas.core.physics.units import energy_to_pressure, pressure_to_energy
+from quantas.core.physics.units import (
+    convert_energy,
+    energy_to_pressure,
+    pressure_to_energy,
+)
 from quantas.modules.eos import (
     EOSArchive,
     EOSBatchJob,
@@ -128,6 +132,88 @@ def test_public_energy_fit_recovers_dft_scale_parameters(model: str) -> None:
     }
 
 
+@pytest.mark.parametrize("energy_unit", ["Ha", "eV", "Ry"])
+def test_energy_fit_retains_dataset_energy_unit(energy_unit: str) -> None:
+    """Equivalent E-V datasets fit directly in their declared energy unit."""
+    reference = _energy_dataset("BM3")
+    energy = np.asarray(
+        convert_energy(reference.column("energy"), "Ha", energy_unit),
+        dtype=np.float64,
+    )
+    dataset = EOSDataset(
+        jobname=f"BM3 in {energy_unit}",
+        columns={"volume": reference.column("volume"), "energy": energy},
+        units={"volume": "angstrom^3", "energy": energy_unit},
+    )
+
+    _, result = _fit_energy_dataset(dataset, "BM3")
+
+    assert result.parameter_values["E0"] == pytest.approx(
+        float(convert_energy(-275.0, "Ha", energy_unit)), rel=2.0e-10
+    )
+    assert result.parameter_values["V0"] == pytest.approx(19.0, abs=2.0e-5)
+    assert result.parameter_values["K0"] == pytest.approx(180.0, rel=2.0e-5)
+    assert result.parameter_values["KP"] == pytest.approx(4.2, rel=2.0e-5)
+    np.testing.assert_allclose(
+        result.predictions["energy"],
+        energy,
+        rtol=2.0e-8,
+        atol=2.0e-8 * max(1.0, float(np.max(np.abs(energy)))),
+    )
+
+
+def test_energy_fit_uncertainty_scales_with_energy_unit() -> None:
+    """E0 uncertainty and energy covariance retain the dataset unit scale."""
+    base = _energy_dataset("BM3", include_sigma=True)
+    perturbation = np.linspace(-1.0, 1.0, base.npoints) * 1.0e-6
+
+    results = {}
+    for energy_unit in ("Ha", "eV"):
+        energy = np.asarray(
+            convert_energy(base.column("energy") + perturbation, "Ha", energy_unit),
+            dtype=np.float64,
+        )
+        sigma = np.asarray(
+            convert_energy(base.column("sigma_energy"), "Ha", energy_unit),
+            dtype=np.float64,
+        )
+        dataset = EOSDataset(
+            jobname=f"BM3 uncertainty in {energy_unit}",
+            columns={
+                "volume": base.column("volume"),
+                "energy": energy,
+                "sigma_energy": sigma,
+            },
+            units={
+                "volume": "angstrom^3",
+                "energy": energy_unit,
+                "sigma_energy": energy_unit,
+            },
+        )
+        request = EOSFitRequest(
+            model="BM3",
+            domain="ev",
+            target="energy",
+            options=EOSFitOptions(
+                solver_options=WLSOptions(max_iterations=5000)
+            ),
+        )
+        result = EOSFitter().fit(dataset, request)
+        assert result.fit.success, result.fit.message
+        results[energy_unit] = result
+
+    factor = float(convert_energy(1.0, "Ha", "eV"))
+    ha = results["Ha"].fit
+    ev = results["eV"].fit
+    assert ev.errors[0] == pytest.approx(ha.errors[0] * factor, rel=5.0e-4)
+    assert ev.covariance[0, 0] == pytest.approx(
+        ha.covariance[0, 0] * factor**2, rel=1.0e-3
+    )
+    assert ev.errors[1] == pytest.approx(ha.errors[1], rel=2.0e-2)
+    assert ev.errors[2] == pytest.approx(ha.errors[2], rel=2.0e-2)
+    assert ev.errors[4] == pytest.approx(ha.errors[4], rel=2.0e-2)
+
+
 def test_energy_wls_uses_explicit_sigma_energy() -> None:
     dataset = _energy_dataset(include_sigma=True)
     request = EOSFitRequest(
@@ -166,6 +252,38 @@ def test_energy_diagnostics_compare_optional_source_pressure() -> None:
     )
     assert diagnostic.units["residual"] == "Ha"
     assert diagnostic.units["eos_pressure"] == "GPa"
+
+
+def test_energy_archive_preserves_non_hartree_unit(tmp_path: Path) -> None:
+    """HDF5, diagnostics, and post-fit calculation retain eV semantics."""
+    reference = _energy_dataset("BM3")
+    energy = np.asarray(
+        convert_energy(reference.column("energy"), "Ha", "eV"),
+        dtype=np.float64,
+    )
+    dataset = EOSDataset(
+        jobname="BM3 eV archive",
+        columns={"volume": reference.column("volume"), "energy": energy},
+        units={"volume": "angstrom^3", "energy": "eV"},
+    )
+    request, result = _fit_energy_dataset(dataset)
+    path = tmp_path / "energy-ev.hdf5"
+    with EOSArchive.create(path, dataset=dataset) as archive:
+        archive.store_fit(1, request, result)
+
+    calculated = EOSCalculator.from_archive(path).calculate(
+        volume=[19.0],
+        propagate_uncertainty=False,
+    )
+    diagnostic = EOSDiagnostics.from_archive(path).build()
+
+    assert calculated.units["energy"] == "eV"
+    assert calculated.columns["energy"][0] == pytest.approx(
+        float(convert_energy(-275.0, "Ha", "eV")), rel=2.0e-10
+    )
+    assert diagnostic.units["observed_energy"] == "eV"
+    assert diagnostic.units["calculated_energy"] == "eV"
+    assert diagnostic.units["residual"] == "eV"
 
 
 def test_energy_archive_calculator_and_plot_round_trip(tmp_path: Path) -> None:
@@ -316,8 +434,8 @@ def test_energy_extended_report_data(
     ]
     assert observed.metadata["column_formats"] == [
         "eos_structural",
-        "energy_ha",
-        "energy_ha",
+        "energy",
+        "energy",
         "eos_residual",
         "eos_pressure",
     ]

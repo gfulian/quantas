@@ -58,8 +58,9 @@ The completed b11 Energy EOS tranche:
 - centralized EOS model discovery through the shared resolver, compact
   historical tags, ``quantas eos show-models``, and shell completion including
   native PowerShell support;
-- added canonical Hartree normalization for energy and ``sigma_energy`` while
-  retaining raw units and provenance;
+- originally added canonical Hartree normalization for energy and
+  ``sigma_energy``; b13 supersedes that boundary by retaining the declared
+  energy unit through Energy-EOS fitting while preserving raw provenance;
 - promoted ``ev/energy`` to public fitting, diagnostics, HDF5 persistence,
   reporting, plotting, and post-fit calculation;
 - exposed ``P(V) = -dE/dV`` together with ``K(V)``, ``K'(V)``, and ``K''(V)``

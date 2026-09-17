@@ -39,7 +39,7 @@ def test_public_facade_declares_ev_as_public_workflow() -> None:
 
 
 def test_public_reader_forwards_energy_unit_override(tmp_path: Path) -> None:
-    """The public EOS facade preserves energy-unit normalization."""
+    """The public EOS facade preserves the selected dataset energy unit."""
     source = tmp_path / "energy.dat"
     source.write_text(
         "UNITS E=eV V=angstrom^3\nFORMAT V E\n10.0 2.0\n11.0 4.0\n",
@@ -48,9 +48,9 @@ def test_public_reader_forwards_energy_unit_override(tmp_path: Path) -> None:
 
     dataset = eos.read_input(source, energy_unit="Ry")
 
-    assert dataset.units["energy"] == "Ha"
+    assert dataset.units["energy"] == "Ry"
     assert dataset.raw_units["energy"] == "Ry"
-    assert dataset.column("energy").tolist() == pytest.approx([1.0, 2.0])
+    assert dataset.column("energy").tolist() == pytest.approx([2.0, 4.0])
 
 
 def test_public_eos_namespace_is_the_single_application_facade() -> None:

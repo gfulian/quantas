@@ -204,9 +204,9 @@ class VaspRunDocument:
                     return _typed_xml_value(item)
         incar = self.root.find("incar")
         if incar is not None:
-            item = incar.find(f"i[@name='{name}']")
-            if item is not None:
-                return _typed_xml_value(item)
+            incar_item = incar.find(f"i[@name='{name}']")
+            if incar_item is not None:
+                return _typed_xml_value(incar_item)
         return default
 
     def parameter_vector(self, name: str) -> tuple[Any, ...] | None:
@@ -377,9 +377,9 @@ def _parameter_vector(root: ET.Element, name: str) -> tuple[Any, ...] | None:
                 return _typed_xml_vector(item)
     incar = root.find("incar")
     if incar is not None:
-        item = incar.find(f"v[@name='{name}']")
-        if item is not None:
-            return _typed_xml_vector(item)
+        incar_item = incar.find(f"v[@name='{name}']")
+        if incar_item is not None:
+            return _typed_xml_vector(incar_item)
     return None
 
 

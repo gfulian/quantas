@@ -10,6 +10,7 @@ from typing import Any
 
 import numpy as np
 
+from quantas.core.physics.units import convert_energy
 from quantas.models import ReportTable
 
 from .calculator import EOSCalculationResult
@@ -290,9 +291,9 @@ def _display_name(name: str) -> str:
 
 def _property_format(name: str, unit: str | None = None) -> str | None:
     if name == "residual":
-        return "eos_residual" if unit == "Ha" else "eos_pressure"
-    if "energy" in name or unit == "Ha":
-        return "energy_ha"
+        return "eos_residual" if _is_energy_unit(unit) else "eos_pressure"
+    if "energy" in name or _is_energy_unit(unit):
+        return "energy"
     if "pressure" in name or "modulus" in name:
         return "eos_pressure"
     if name == "temperature":
@@ -308,6 +309,17 @@ def _property_format(name: str, unit: str | None = None) -> str | None:
     if name.startswith("sigma_"):
         return "eos_uncertainty"
     return "eos_structural"
+
+
+def _is_energy_unit(unit: str | None) -> bool:
+    """Return whether *unit* is recognized by the shared energy converter."""
+    if unit is None or not str(unit).strip():
+        return False
+    try:
+        convert_energy(1.0, str(unit), "Ha")
+    except NotImplementedError:
+        return False
+    return True
 
 
 __all__ = [
