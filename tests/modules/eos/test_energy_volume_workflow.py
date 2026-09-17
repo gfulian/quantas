@@ -206,11 +206,12 @@ def test_energy_fit_uncertainty_scales_with_energy_unit() -> None:
     ha = results["Ha"].fit
     ev = results["eV"].fit
     # Covariance comes from a nonlinear numerical Jacobian.  The physical unit
-    # scaling is exact, while sub-per-mille roundoff varies slightly across
-    # supported Python/NumPy/SciPy combinations.
-    assert ev.errors[0] == pytest.approx(ha.errors[0] * factor, rel=1.0e-3)
+    # scaling is exact, while a few-per-mille numerical variation is observed
+    # across supported Python/NumPy/SciPy combinations.  The variance inherits
+    # roughly twice the relative variation of the standard error.
+    assert ev.errors[0] == pytest.approx(ha.errors[0] * factor, rel=2.0e-3)
     assert ev.covariance[0, 0] == pytest.approx(
-        ha.covariance[0, 0] * factor**2, rel=2.0e-3
+        ha.covariance[0, 0] * factor**2, rel=4.0e-3
     )
     assert ev.errors[1] == pytest.approx(ha.errors[1], rel=2.0e-2)
     assert ev.errors[2] == pytest.approx(ha.errors[2], rel=2.0e-2)

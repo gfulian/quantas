@@ -34,7 +34,10 @@ public contract; they must still be documented and validated.
   CRYSTAL Erba/Barron--Klein transformation to VASP tensors and records the
   convention as unresolved until independently validated.
 - Relaxed the Energy-EOS cross-unit uncertainty characterization tolerance to
-  accommodate sub-per-mille platform variation in nonlinear covariance estimates.
+  accommodate few-per-mille platform variation in nonlinear covariance estimates.
+- Allowed ``quantas elasticity inpgen --interface vasp`` to accept the VASP
+  calculation directory already supported by the interface reader, not only a direct
+  ``OUTCAR`` path.
 
 - Advanced the development baseline to ``2.0.0b13`` on
   ``dev/interface-vasp-maintenance`` after the b12 pre-release hardening branch

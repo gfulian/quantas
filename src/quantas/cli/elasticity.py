@@ -367,7 +367,7 @@ def export(filename: Path, outfile: Path | None) -> None:
 
 @elasticity.command(name="inpgen", cls=GroupedCommand)
 @click.argument(
-    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    "filename", type=click.Path(exists=True, path_type=Path)
 )
 @click.option(
     "-o",
