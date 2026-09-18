@@ -84,12 +84,10 @@ class VASPElasticityReader(BasicReader[None]):
 
     The reference stress/pressure is collected from the first unstrained stress
     record in the OUTCAR using VASP's sign convention (positive compression).  No
-    CRYSTAL-specific finite-prestress transformation is applied.  Current VASP
-    documentation identifies the reported moduli as finite-difference strain--stress
-    derivatives / energy second derivatives, but does not establish equivalence to
-    Quantas' named finite-prestress conventions.  The reader therefore records the
-    tensor kind as :class:`~quantas.models.elastic_states.ElasticTensorKind.UNKNOWN`
-    until that convention is validated independently.
+    CRYSTAL-specific finite-prestress transformation is applied.  The selected
+    VASP moduli are classified as raw stress--strain coefficients and therefore
+    remain unsuitable for Christoffel acoustics until the separate VASP
+    hydrostatic conversion has been requested explicitly.
 
     Parameters
     ----------
@@ -486,7 +484,7 @@ class VASPElasticityReader(BasicReader[None]):
             return 0.0
 
         try:
-            masses = np.asarray([_float(value) for value in mass_matches], dtype=float)
+            masses = np.asarray([_float(value) for value in mass_matches], dtype=np.float64)
             counts = np.asarray(
                 [int(value) for value in count_matches[0].split()], dtype=int
             )

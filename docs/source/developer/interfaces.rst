@@ -267,7 +267,9 @@ the VASP stiffness matrix raw; only the explicit hydrostatic conversion marks
 the tensor incremental.  The original VASP reference stress is still retained
 and must itself be hydrostatic, while the selected correction pressure and its
 difference from the VASP output pressure are recorded in provenance.  No
-Kieffer/HA/QHA coupling is introduced at this checkpoint.
+backend-specific Kieffer numerics are introduced here: HA/QHA enrichment now
+consumes this converted series through the same backend-neutral
+``build_kieffer_volume_series()`` path used by CRYSTAL.
 
 VASP Gamma phonon adaptation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -481,10 +483,12 @@ Kieffer input enrichment
 ------------------------
 
 The public HA and QHA APIs expose ``add_kieffer_input``.  Their shared
-implementation reads the phonon input and the CRYSTAL elastic volume series,
-builds the anisotropic acoustic averages, validates the appropriate HA or QHA
-applicability contract, and writes a new YAML file.  The corresponding command
-is registered under both workflows:
+implementation reads the phonon input and a backend-specific elastic volume
+series, builds the anisotropic acoustic averages, validates the appropriate HA
+or QHA applicability contract, and writes a new YAML file.  CRYSTAL and VASP
+share the backend-neutral Kieffer builder but retain separate raw-tensor and
+finite-prestress semantics.  The corresponding command is registered under
+both workflows:
 
 .. code-block:: console
 
@@ -492,12 +496,19 @@ is registered under both workflows:
    quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
        --interface crystal -o qha-kieffer.yaml
 
+   quantas ha add-kieffer ha.yaml vasp-run/ --interface vasp \
+       --pressure-source output-stress -o ha-vasp-kieffer.yaml
+
 Paths inside ``elastic-files.txt`` are resolved relative to the list file. Blank
 lines and lines beginning with ``#`` are ignored. This makes the list portable
-when the complete calculation directory is moved.
+when the complete calculation directory is moved. List entries may name files
+or VASP calculation directories.
 
 The default ``--pressure-source auto`` preserves tensors corrected by CRYSTAL's
 ``PRESSURE`` keyword and otherwise uses pressure from the unstrained stress.
+For VASP, ``auto`` uses the unstrained output-stress pressure retained beside
+the raw ``TOTAL ELASTIC MODULI`` tensor; no VASP tensor is treated as already
+pressure-corrected by analogy with CRYSTAL.
 Manual pressure values can be supplied in input-file order:
 
 .. code-block:: console
@@ -527,9 +538,10 @@ service combines the selected E(V) fit with explicit volume matching and
 pressure assignment while leaving the raw stiffness coefficients unchanged.
 Both Kieffer enrichment and thermoelastic input generation use this same
 pressure-resolution path.  The subsequent hydrostatic tensor correction
-remains interface-specific, so CRYSTAL conventions do not leak into the shared
-core.  This boundary lets tests verify that ``P(V)`` is attached to an
-unmodified raw tensor before the tensor is corrected exactly once.
+remains interface-specific, so CRYSTAL conventions do not leak into VASP and
+VASP conventions do not leak into CRYSTAL.  This boundary lets tests verify
+that ``P(V)`` is attached to an unmodified raw tensor before the selected
+backend converts it exactly once.
 
 The destination defaults to ``<input-stem>-kieffer.yaml`` and must differ from
 the source path. An existing Kieffer block is never replaced silently.  The

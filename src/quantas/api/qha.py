@@ -155,9 +155,10 @@ def add_kieffer_input(
     source, destination : str or Path
         Existing QHA YAML input and distinct enriched output path.
     elastic_outputs : sequence of str or Path
-        One elastic-output file per sampled QHA volume.
+        One elastic calculation source per sampled QHA volume. CRYSTAL uses
+        output files; VASP also accepts calculation directories.
     interface : str, optional
-        Elastic-output reader identifier.
+        Elastic-output reader identifier (``"crystal"`` or ``"vasp"``).
     pressure_policy : str, optional
         Pressure source: ``"auto"``, ``"output_stress"``, ``"manual"``,
         ``"energy_eos"``, or ``"energy_polynomial"``. Hyphenated forms are

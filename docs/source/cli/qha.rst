@@ -91,13 +91,14 @@ The equations and acceptance criteria are documented in
 Adding volume-resolved Kieffer branches
 ---------------------------------------
 
-``add-kieffer`` requires one CRYSTAL ELASTCON or ELAPIEZO output for every QHA
-volume. The files may be supplied as positional arguments or through
-``--elastic-list``. Select the reader with ``--interface crystal``, following
-the same interface naming used by ``inpgen``. Quantas sorts the independently
-calculated elastic states, matches them to the QHA volumes under the explicit
-matching policy, applies the CRYSTAL finite-pressure correction when necessary,
-and writes a separate ``*-kieffer.yaml`` input.
+``add-kieffer`` requires one elastic calculation source for every QHA volume.
+CRYSTAL uses ELASTCON/ELAPIEZO output files. VASP uses calculation directories,
+``OUTCAR`` files, or ``vasprun.xml`` files with sibling ``OUTCAR`` files. The
+sources may be supplied as positional arguments or through ``--elastic-list``.
+Select ``--interface crystal`` or ``--interface vasp``. Quantas sorts the
+independently calculated elastic states, matches them to the QHA volumes under
+the explicit matching policy, applies the selected backend's finite-pressure
+conversion when necessary, and writes a separate ``*-kieffer.yaml`` input.
 
 For raw elastic tensors, pressure can be reconstructed directly from the
 static ``volume`` and ``energy`` arrays already stored in the QHA input:
@@ -126,8 +127,10 @@ and the physical :math:`dE/dV` derivative remain independently inspectable.
 ``energy-eos`` and ``energy-polynomial`` deliberately require raw elastic
 tensors. Their parsed output-stress value is not substituted into the fit.
 The derived pressures are attached first and the hydrostatic Wallace
-CRYSTAL finite-pressure correction is then applied once, with both operations
-retained in provenance.
+backend-specific finite-pressure correction is then applied once, with both
+operations retained in provenance. CRYSTAL uses its Erba energy--strain
+conversion; VASP uses its separately characterized raw stress--strain
+hydrostatic conversion. Neither rule is reused for the other backend.
 The hydrostatic assumption is not valid for a path carrying substantial
 deviatoric stress.
 

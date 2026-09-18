@@ -129,9 +129,10 @@ def add_kieffer_input(
     source, destination : str or Path
         Existing HA YAML input and distinct enriched output path.
     elastic_outputs : sequence of str or Path
-        Elastic-output files containing the state at the HA volume.
+        Elastic calculation sources containing the state at the HA volume.
+        CRYSTAL uses output files; VASP also accepts calculation directories.
     interface : str, optional
-        Elastic-output reader identifier.
+        Elastic-output reader identifier (``"crystal"`` or ``"vasp"``).
     pressure_policy : str, optional
         ``"auto"``, ``"output_stress"``, or ``"manual"``.
     manual_pressures_gpa : sequence of float or None, optional

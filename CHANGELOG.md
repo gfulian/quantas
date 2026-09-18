@@ -11,6 +11,12 @@ public contract; they must still be documented and validated.
 - Added explicit manual and E(V)-derived pressure reassignment for raw VASP elastic-state series, preserving the original output-stress provenance and keeping pressure assignment separate from the subsequent hydrostatic stiffness conversion.
 - Added an explicit VASP hydrostatic pressure-adjustment step for raw stress--strain elastic states, following Singh et al. (MechElastic, CPC 267, 108068, 2021, Appendix A), with full-reference-stress hydrostaticity checks, one-time provenance, and conversion to the shared hydrostatic incremental tensor kind.
 - Added a raw VASP elastic-state-series adapter that preserves parsed stiffness, density, volume, and reference-pressure provenance without applying a finite-prestress correction; updated the QHA help-order contract for the split unit groups.
+- Extended HA/QHA Kieffer enrichment to VASP elastic calculation sources without
+  changing the CRYSTAL ingestion path.  ``--interface vasp`` accepts calculation
+  directories as well as resolvable ``OUTCAR``/``vasprun.xml`` sources, keeps
+  output-stress, manual, and E(V)-derived pressure assignment separate from the
+  raw stiffness tensor, applies the VASP hydrostatic conversion exactly once,
+  and records the VASP-specific correction in Kieffer provenance.
 - Added primitive-cell VASP Gamma-phonon ingestion from ``vasprun.xml`` +
   ``OUTCAR`` with backend-neutral frequencies/eigenvectors, physically
   identified rigid translations, direct HA/QHA input generation, and explicit

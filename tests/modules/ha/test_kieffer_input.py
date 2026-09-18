@@ -21,6 +21,9 @@ from quantas.io.kieffer import (
 from quantas.models.kieffer import KiefferCutoffState, KiefferVolumeSeries
 
 
+VASP_DATA = Path(__file__).parents[2] / "interfaces" / "data"
+
+
 def _phonon_input(path: Path, volumes: list[float]) -> Path:
     """Write a primitive Gamma-only phonon input."""
     data = {
@@ -75,6 +78,21 @@ def _elastic_output(path: Path, volume: float, energy: float, pressure: float) -
         *rows,
     ]
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return path
+
+
+def _vasp_elastic_run(path: Path, *, volume: float | None = None) -> Path:
+    """Write one VASP elastic calculation directory from the MgO fixture."""
+    path.mkdir()
+    text = (VASP_DATA / "vasp_mgo_soec_00_v544.OUTCAR").read_text(
+        encoding="utf-8"
+    )
+    if volume is not None:
+        text = text.replace(
+            "volume of cell :       19.28",
+            f"volume of cell :       {volume:.2f}",
+        )
+    (path / "OUTCAR").write_text(text, encoding="utf-8")
     return path
 
 
@@ -167,6 +185,75 @@ def test_public_ha_api_creates_new_enriched_input(tmp_path) -> None:
     raw = yaml.safe_load(destination.read_text(encoding="utf-8"))
     assert raw["kieffer"]["composition"] == "additional-acoustic-branches"
     assert raw["kieffer"]["states"][0]["metadata"]["pressure_gpa"] == 2.0
+
+
+def test_public_ha_api_accepts_vasp_run_directory(tmp_path) -> None:
+    """VASP run directories feed the same backend-neutral Kieffer builder."""
+    source = _phonon_input(tmp_path / "ha-vasp.yaml", [19.28])
+    run = _vasp_elastic_run(tmp_path / "vasp-elastic")
+    destination = tmp_path / "ha-vasp-kieffer.yaml"
+
+    ha.add_kieffer_input(
+        source,
+        destination,
+        [run],
+        interface="vasp",
+        mu_order=2,
+        phi_order=4,
+        refinement_factor=2,
+    )
+
+    cutoffs = ha.read_kieffer_input(destination)
+    assert len(cutoffs.states) == 1
+    assert np.all(cutoffs.frequencies_hz > 0.0)
+    raw = yaml.safe_load(destination.read_text(encoding="utf-8"))
+    provenance = raw["kieffer"]["provenance"]
+    state_metadata = raw["kieffer"]["states"][0]["metadata"]
+    assert provenance["elastic_interface"] == "vasp"
+    assert provenance["pressure_source"] == "auto"
+    assert provenance["prestress_correction"] == "vasp-residual-pressure-hydrostatic"
+    assert state_metadata["pressure_source"] == "output_stress"
+    assert state_metadata["pressure_gpa"] == pytest.approx(-0.781768)
+
+
+def test_qha_vasp_enrichment_uses_energy_derived_pressures(tmp_path) -> None:
+    """QHA may replace VASP output pressure before the VASP-only conversion."""
+    volumes = [18.0, 19.0, 20.0, 21.0]
+    source = _phonon_input(tmp_path / "qha-vasp.yaml", volumes)
+    raw = yaml.safe_load(source.read_text(encoding="utf-8"))
+    raw["energy"] = [
+        -10.0 + 1.0e-5 * (volume - 19.5) ** 2 for volume in volumes
+    ]
+    source.write_text(yaml.safe_dump(raw, sort_keys=False), encoding="utf-8")
+    runs = [
+        _vasp_elastic_run(tmp_path / f"vasp-{index}", volume=volume)
+        for index, volume in enumerate(volumes)
+    ]
+    destination = tmp_path / "qha-vasp-kieffer.yaml"
+
+    qha.add_kieffer_input(
+        source,
+        destination,
+        runs,
+        interface="vasp",
+        pressure_policy="energy_polynomial",
+        polynomial_degree=2,
+        mu_order=2,
+        phi_order=4,
+        refinement_factor=2,
+    )
+
+    enriched = yaml.safe_load(destination.read_text(encoding="utf-8"))
+    provenance = enriched["kieffer"]["provenance"]
+    states = enriched["kieffer"]["states"]
+    assert provenance["elastic_interface"] == "vasp"
+    assert provenance["pressure_source"] == "energy_polynomial"
+    assert provenance["prestress_correction"] == "vasp-residual-pressure-hydrostatic"
+    assert provenance["pressure_model"]["settings"] == {"degree": 2}
+    assert all(
+        state["metadata"]["pressure_source"] == "energy_polynomial"
+        for state in states
+    )
 
 
 def test_public_qha_api_matches_outputs_independently_of_file_order(tmp_path) -> None:

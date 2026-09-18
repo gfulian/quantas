@@ -14,11 +14,11 @@ state.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-09-17 |
+| Last updated | 2026-09-18 |
 | Current development version | `2.0.0b13` |
 | Stable development baseline | `2.0.0b12`, `dev/refactor` |
 | Active engineering branch | `dev/interface-vasp-maintenance` |
-| Current focus | VASP run-output interface maintenance: structured run parsing, EOS/elasticity adaptation, and primitive-cell Gamma phonon ingestion |
+| Current focus | VASP run-output interface maintenance: structured run parsing, EOS/elasticity adaptation, primitive-cell Gamma phonons, and HA/QHA Kieffer enrichment |
 | Development status | Pre-RC external-interface consolidation |
 | Numerical precision | `float64` for real calculations and native HDF5 values; `complex128` for complex quantities |
 | Persistence | Native HDF5 envelope retained; HA/QHA and Thermoelasticity payloads have been extended additively with Kieffer and pressure/provenance data |
@@ -135,8 +135,12 @@ hydrostatic within tolerance; only the converted series is marked as suitable
 for the shared incremental-stiffness gate.  Raw VASP series can now explicitly
 replace the output-stress pressure with manual values or backend-neutral E(V)
 pressures before conversion.  The original VASP pressure remains in provenance,
-and pressure reassignment never changes the raw Cij values.  Kieffer coupling
-remains outside this checkpoint.
+and pressure reassignment never changes the raw Cij values.  HA/QHA Kieffer
+input enrichment now consumes the same VASP series: calculation directories are
+first-class elastic sources, pressure selection remains separate from tensor
+conversion, and only the explicitly converted incremental series reaches the
+backend-neutral Christoffel/Kieffer builder.  The established CRYSTAL path is
+unchanged and retains its distinct Erba finite-prestress semantics.
 
 The direct VASP surface now also includes primitive-cell Gamma phonons from
 VASP 5.4.4 finite-difference runs.  Quantas reads signed Gamma frequencies and
@@ -281,10 +285,11 @@ normalizations.  The two representations recover identical ``K0`` and ``KP``;
 ``4.2222125 A``, and the cubic response satisfies ``M_a = 3 K0`` to numerical
 precision.
 
-Remaining b11 work is release-oriented rather than architectural: complete the
-combined validation matrix and manual, decide whether VASP Energy EOS ingestion
-is required before the release candidate or can follow behind the same
-``StructureEnergySeries`` contract, and perform the final schema/API freeze.
+The b11 Energy EOS work is complete.  The VASP Energy EOS ingestion that was
+left as a pre-RC decision at the end of that tranche is now implemented by b13
+through the same ``StructureEnergySeries`` contract.  Remaining work is
+release-oriented rather than architectural: complete the combined validation
+matrix and manual, then perform the final schema/API freeze.
 
 ## What `2.0.0b10` / `dev/kieffer` added
 

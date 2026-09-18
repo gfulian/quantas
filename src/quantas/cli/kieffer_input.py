@@ -31,22 +31,22 @@ from quantas.cli.eos_model_type import ENERGY_EOS_MODEL
 @click.argument(
     "elastic_outputs",
     nargs=-1,
-    type=click.Path(exists=True, dir_okay=False, path_type=Path),
+    type=click.Path(exists=True, file_okay=True, dir_okay=True, path_type=Path),
 )
 @grouped_option(
     "--interface",
-    type=click.Choice(["crystal"]),
+    type=click.Choice(["crystal", "vasp"]),
     default="crystal",
     show_default=True,
     group=SCIENTIFIC_GROUP,
-    help="Interface used to read the elastic output files.",
+    help="Interface used to read the elastic calculation sources.",
 )
 @grouped_option(
     "--elastic-list",
     type=click.Path(exists=True, dir_okay=False, path_type=Path),
     default=None,
     group=SCIENTIFIC_GROUP,
-    help="Text file listing elastic outputs, one path per line.",
+    help="Text file listing elastic sources, one path per line.",
 )
 @grouped_option(
     "--pressure-source",
@@ -235,8 +235,8 @@ def _read_elastic_list(filename: Path) -> tuple[Path, ...]:
         path = Path(value)
         if not path.is_absolute():
             path = filename.parent / path
-        if not path.is_file():
-            raise click.UsageError(f"elastic output does not exist: {path}")
+        if not path.exists():
+            raise click.UsageError(f"elastic source does not exist: {path}")
         outputs.append(path)
     return tuple(outputs)
 
