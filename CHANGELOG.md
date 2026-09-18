@@ -8,6 +8,9 @@ public contract; they must still be documented and validated.
 ## [2.0.0b13] - Unreleased
 
 ### Added
+- Added explicit manual and E(V)-derived pressure reassignment for raw VASP elastic-state series, preserving the original output-stress provenance and keeping pressure assignment separate from the subsequent hydrostatic stiffness conversion.
+- Added an explicit VASP hydrostatic pressure-adjustment step for raw stress--strain elastic states, following Singh et al. (MechElastic, CPC 267, 108068, 2021, Appendix A), with full-reference-stress hydrostaticity checks, one-time provenance, and conversion to the shared hydrostatic incremental tensor kind.
+- Added a raw VASP elastic-state-series adapter that preserves parsed stiffness, density, volume, and reference-pressure provenance without applying a finite-prestress correction; updated the QHA help-order contract for the split unit groups.
 - Added primitive-cell VASP Gamma-phonon ingestion from ``vasprun.xml`` +
   ``OUTCAR`` with backend-neutral frequencies/eigenvectors, physically
   identified rigid translations, direct HA/QHA input generation, and explicit
@@ -34,9 +37,9 @@ public contract; they must still be documented and validated.
   multiplicity when a source cell is reduced.
 
 ### Changed
-- Kept VASP finite-prestress semantics conservative: Quantas does not apply the
-  CRYSTAL Erba/Barron--Klein transformation to VASP tensors and records the
-  convention as unresolved until independently validated.
+- Made HA/QHA phonon-input measurement units self-describing at execution time: energy, length/volume, and frequency now default to the YAML ``units`` mapping, with ``--eunit``, ``--lunit``/legacy ``--vunit``, and ``--funit`` acting only as explicit interpretation overrides. Pressure and temperature remain calculation/I/O units.
+- Audited EOS unit handling: EOS already uses explicit CLI overrides only when provided and otherwise honors file declarations before historical fallbacks; its unit options are now grouped accordingly in CLI help.
+- Classified VASP ``TOTAL ELASTIC MODULI`` ingestion as raw stress--strain stiffness and kept the raw series separate from pressure adjustment; only explicitly converted hydrostatic output-stress states are marked incremental, and no CRYSTAL finite-prestress transformation is reused.
 - Relaxed the Energy-EOS cross-unit uncertainty characterization tolerance to
   accommodate few-per-mille platform variation in nonlinear covariance estimates.
 - Allowed ``quantas elasticity inpgen --interface vasp`` to accept the VASP

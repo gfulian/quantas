@@ -24,6 +24,7 @@ from .kieffer import (
 )
 from .module import ModuleContract
 from .phonons import PhononInputData, PhononModeData
+from .phonon_units import PhononMeasurementUnits, resolve_phonon_measurement_units
 from .plot import (
     AxisFieldLayer,
     ColoredPathSeries,
@@ -107,6 +108,8 @@ __all__ = [
     "ModuleContract",
     "PhononInputData",
     "PhononModeData",
+    "PhononMeasurementUnits",
+    "resolve_phonon_measurement_units",
     "PressureSource",
     "PrestressProvenance",
     "AxisFieldLayer",

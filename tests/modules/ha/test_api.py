@@ -44,6 +44,32 @@ def test_read_ha_input_raises_for_missing_file(tmp_path: Path) -> None:
         read_ha_input(missing)
 
 
+
+def test_run_ha_without_options_uses_input_measurement_units() -> None:
+    """API defaults should inherit self-describing phonon measurement units."""
+    ha_input = HAInput(
+        jobname="unit-aware",
+        natoms=2,
+        qpoints=1,
+        volume=np.array([20.0]),
+        energy=np.array([-10.0]),
+        frequencies=np.full((1, 6, 1), 100.0),
+        weights=np.array([1.0]),
+        units={
+            "energy": "eV",
+            "volume": "angstrom^3",
+            "frequency": "THz",
+            "length": "angstrom",
+        },
+    )
+
+    result = run_ha(ha_input)
+
+    assert result.options["energy_unit"] == "eV"
+    assert result.options["volume_unit"] == "A"
+    assert result.options["frequency_unit"] == "THz"
+    assert result.options["temperature_unit"] == "K"
+
 def test_run_ha_accepts_input_object() -> None:
     """run_ha should accept an already normalized HAInput object."""
     ha_input = read_ha_input(DATA)

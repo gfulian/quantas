@@ -17,6 +17,7 @@ class ElasticTensorKind(str, Enum):
     """Identify the physical convention of an elastic stiffness tensor."""
 
     RAW_ENERGY_STRAIN = "raw_energy_strain"
+    RAW_STRESS_STRAIN = "raw_stress_strain"
     # Historical serialized name retained for HDF5/input compatibility.
     # It identifies a hydrostatic incremental stress--strain tensor, not the
     # algorithm used to convert any particular backend's raw derivatives.

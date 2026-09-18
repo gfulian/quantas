@@ -277,7 +277,8 @@ def inspect(
     input_data : Input, PhononInputData, str, or Path
         QHA input contract, neutral phonon data, or YAML path.
     options : Options or None, optional
-        QHA defaults used by the preview.
+        QHA defaults used by the preview. When omitted, stored input
+        measurement units are used automatically.
     include_polynomial : bool, optional
         Include the static polynomial preview.
     include_eos : bool, optional
@@ -366,7 +367,10 @@ def run(
     input_data : Input, PhononInputData, str, or Path
         QHA input contract, neutral phonon data, or YAML path.
     options : Options or None, optional
-        Thermodynamic domain, fitting, minimization, and unit controls.
+        Thermodynamic domain, fitting, minimization, and unit controls. When
+        omitted, energy, length/volume, and frequency units are inherited from
+        the self-describing phonon input; pressure and temperature retain the
+        historical GPa and kelvin defaults.
     kieffer_cutoffs : KiefferVolumeSeries or None, optional
         Direct multi-volume acoustic cutoffs for either QHA scheme.
     observer : Observer or None, optional

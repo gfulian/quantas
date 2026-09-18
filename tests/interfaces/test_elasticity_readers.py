@@ -236,9 +236,9 @@ def test_vasp_mgo_excerpt_preserves_tensors_and_prestress(
     assert reader.ibrion == 6
     assert reader.isif == 3
     assert reader.selected_level == "relaxed_ion"
-    assert reader.tensor_kind.value == "unknown"
+    assert reader.tensor_kind.value == "raw_stress_strain"
     assert reader.metadata["quantas_prestress_correction_applied"] is False
-    assert reader.metadata["finite_prestress_semantics"] == "unresolved"
+    assert reader.metadata["finite_prestress_semantics"] == "raw-stress-strain-requires-pressure-adjustment"
     assert reader.reference_pressure_gpa == pytest.approx(-0.781768)
     assert reader.reference_stress_gpa is not None
     np.testing.assert_allclose(

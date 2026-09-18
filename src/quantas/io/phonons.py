@@ -17,6 +17,10 @@ import yaml
 
 from quantas.models.reader import BasicReader
 from quantas.models.phonons import PhononInputData, default_phonon_input_units
+from quantas.models.phonon_units import (
+    PhononMeasurementUnits,
+    resolve_phonon_measurement_units,
+)
 from quantas.models.structures import (
     CellNormalization,
     CrystalStructure,
@@ -728,4 +732,47 @@ def _structure_series_from_mapping(mapping: Any) -> StructureVolumeSeries:
         orientation=str(mapping.get("orientation", "crystal")),
         reference_index=int(mapping.get("reference_index", 0)),
         metadata=dict(mapping.get("metadata", {})),
+    )
+
+
+def read_phonon_measurement_units(
+    filename: str | Path,
+    *,
+    energy_unit: str | None = None,
+    length_unit: str | None = None,
+    frequency_unit: str | None = None,
+) -> PhononMeasurementUnits:
+    """Read only the measurement-unit contract from one phonon YAML file.
+
+    This lightweight helper intentionally does not require the complete
+    scientific input to validate.  It is used by frontend adapters before the
+    normal HA/QHA reader performs full workflow validation.  Malformed or
+    unreadable YAML still raises a user-facing error instead of silently
+    falling back to legacy units.
+
+    Parameters
+    ----------
+    filename : str or Path
+        Quantas HA/QHA phonon YAML input path.
+    energy_unit, length_unit, frequency_unit : str or None, optional
+        Explicit measurement-unit overrides.
+
+    Returns
+    -------
+    PhononMeasurementUnits
+        Resolved input measurement units.
+
+    Raises
+    ------
+    ValueError
+        If the YAML cannot be read or its unit metadata are invalid.
+    """
+    reader = PhononInputFileReader(filename)
+    if reader.data is None:
+        raise ValueError(reader.error or "Unable to read phonon input file")
+    return resolve_phonon_measurement_units(
+        reader.units,
+        energy_unit=energy_unit,
+        length_unit=length_unit,
+        frequency_unit=frequency_unit,
     )

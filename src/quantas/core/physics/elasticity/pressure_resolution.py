@@ -84,6 +84,7 @@ def resolve_energy_derived_pressures(
     eos: str = "BM3",
     polynomial_degree: int = 3,
     maxfev: int | None = None,
+    replace_existing_pressure: bool = False,
 ) -> EnergyPressureResolution:
     """Fit ``E(V)``, match volumes, and attach hydrostatic pressures.
 
@@ -112,6 +113,9 @@ def resolve_energy_derived_pressures(
         Polynomial degree used by ``energy_polynomial``.
     maxfev : int or None, optional
         Optional maximum number of EOS fitting function evaluations.
+    replace_existing_pressure : bool, optional
+        Replace existing raw pressure provenance while retaining the previous
+        value and source in metadata. The default is ``False``.
 
     Returns
     -------
@@ -220,6 +224,7 @@ def resolve_energy_derived_pressures(
         pressure_source=source,
         assignment_method=source.value,
         metadata=provenance,
+        replace_existing=replace_existing_pressure,
     )
     return EnergyPressureResolution(
         series=assigned,

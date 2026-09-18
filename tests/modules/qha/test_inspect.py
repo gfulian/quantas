@@ -42,6 +42,28 @@ def test_pressure_volume_preview_returns_polynomial_and_eos_estimates() -> None:
     assert preview.pressure_unit == "GPa"
 
 
+
+def test_public_inspection_without_options_uses_input_measurement_units() -> None:
+    """QHA API inspection should inherit energy and length units from input metadata."""
+    qha_input = make_static_input()
+    qha_input.units = {
+        "energy": "eV",
+        "volume": "angstrom^3",
+        "frequency": "cm^-1",
+        "length": "angstrom",
+    }
+
+    preview = public_qha.inspect(
+        qha_input,
+        options=None,
+        include_eos=False,
+        polynomial_degree=2,
+    )
+
+    assert preview.metadata["energy_unit"] == "eV"
+    assert preview.metadata["volume_unit"] == "A"
+    assert preview.pressure_unit == "GPa"
+
 def test_pressure_volume_preview_table_rows_are_neutral_records() -> None:
     """Preview rows should be frontend-neutral dictionaries."""
     qha_input = make_static_input()

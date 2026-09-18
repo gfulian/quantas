@@ -185,7 +185,7 @@ class VASPElasticityReader(BasicReader[None]):
     @property
     def tensor_kind(self) -> ElasticTensorKind:
         """Return the current conservative Quantas tensor-convention classification."""
-        return ElasticTensorKind.UNKNOWN
+        return ElasticTensorKind.RAW_STRESS_STRAIN
 
     @property
     def prestress(self) -> PrestressProvenance:
@@ -193,11 +193,11 @@ class VASPElasticityReader(BasicReader[None]):
         pressure = self.reference_pressure_gpa
         if pressure is None:
             return PrestressProvenance(
-                tensor_kind=ElasticTensorKind.UNKNOWN,
+                tensor_kind=ElasticTensorKind.RAW_STRESS_STRAIN,
                 pressure_source=PressureSource.UNAVAILABLE,
             )
         return PrestressProvenance(
-            tensor_kind=ElasticTensorKind.UNKNOWN,
+            tensor_kind=ElasticTensorKind.RAW_STRESS_STRAIN,
             pressure_gpa=pressure,
             pressure_source=PressureSource.OUTPUT_STRESS,
         )
@@ -214,8 +214,13 @@ class VASPElasticityReader(BasicReader[None]):
             "tensor_definition": "vasp-finite-difference-strain-stress",
             "tensor_kind": self.tensor_kind.value,
             "quantas_prestress_correction_applied": False,
-            "finite_prestress_semantics": "unresolved",
+            "finite_prestress_semantics": "raw-stress-strain-requires-pressure-adjustment",
             "stress_sign_convention": "positive-compression",
+            "reference_stress_gpa": (
+                None
+                if self.reference_stress_gpa is None
+                else self.reference_stress_gpa.tolist()
+            ),
             "ibrion": self.ibrion,
             "isif": self.isif,
             "reference_pressure_gpa": self.reference_pressure_gpa,

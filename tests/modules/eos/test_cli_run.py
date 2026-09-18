@@ -21,7 +21,7 @@ def test_eos_run_help_groups_options_by_responsibility() -> None:
     assert result.exit_code == 0
     for heading in (
         "Scientific model:",
-        "Units:",
+        "Input measurement-unit overrides:",
         "Fit selection:",
         "P-V model:",
         "V-T model:",

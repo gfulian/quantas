@@ -236,7 +236,10 @@ def run(
     input_data : Input, PhononInputData, str, or Path
         Harmonic input contract, neutral phonon data, or YAML path.
     options : Options or None, optional
-        Temperature grid, units, and scientific calculation controls.
+        Temperature grid, units, and scientific calculation controls. When
+        omitted, energy, length/volume, and frequency units are inherited from
+        the self-describing phonon input while the historical temperature
+        default remains kelvin.
     kieffer_cutoffs : KiefferVolumeSeries or None, optional
         Direct cutoff state used to add the three Kieffer acoustic branches.
     observer : Observer or None, optional

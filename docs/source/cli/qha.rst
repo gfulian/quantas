@@ -153,6 +153,14 @@ available.
 Choosing options
 ----------------
 
+Input measurement units and calculation/output units are intentionally distinct.
+The YAML ``units`` block is authoritative for stored energy, length/volume, and
+phonon-frequency values.  ``--eunit``, ``--lunit`` (legacy alias ``--vunit``),
+and ``--funit`` override that interpretation only when explicitly supplied.
+``--punit`` and ``--tunit`` instead define the pressure and temperature scales
+used by the requested calculation domain and reporting.  Historical YAML files
+without a ``units`` block retain the legacy Ha / angstrom / cm^-1 interpretation.
+
 * ``--scheme=freq`` retains mode-resolved information but requires defensible
   mode continuity.  ``--scheme=td`` interpolates integrated harmonic
   properties and is less dependent on branch tracking.

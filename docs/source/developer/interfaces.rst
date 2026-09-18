@@ -235,15 +235,39 @@ the unstrained reference stress, with VASP's positive-compression sign
 convention, and the first reported cell volume is used for density because
 later ``IBRION=6`` records contain trial lattice distortions.
 
-No CRYSTAL finite-prestress transformation is applied to a VASP tensor.  VASP
-documents ``IBRION=6, ISIF>=3`` elastic moduli as finite-difference
-strain--stress derivatives and also describes them as energy second
-derivatives, with clamped- and relaxed-ion variants.  Those descriptions do
-not by themselves establish equivalence to Quantas' named hydrostatic Wallace
-convention at finite pre-stress.  Until that mapping is independently
-validated, the interface therefore records ``tensor_kind=unknown``, the
-reference pressure, and ``quantas_prestress_correction_applied=False`` rather
-than guessing or reusing the CRYSTAL correction.
+The interface also exposes :func:`quantas.interfaces.vasp.read_vasp_elastic_series`
+to collect several VASP elastic calculations into the shared
+:class:`~quantas.models.elastic_states.ElasticStateSeries` contract.  This raw
+adapter remains factual: it sorts states by primitive-cell volume, preserves
+the selected VASP stiffness, density, and reference stress/pressure provenance,
+and applies **no** finite-prestress correction.  Raw VASP states are classified
+as ``raw_stress_strain`` and therefore continue to fail the shared incremental
+stiffness gate.
+
+For a genuinely hydrostatic VASP reference stress, Quantas now provides an
+explicit second step via
+:func:`quantas.interfaces.vasp.convert_vasp_hydrostatic_elastic_series`.  The
+conversion follows Appendix A of Singh et al., *MechElastic* (Computer Physics
+Communications 267, 108068, 2021): pressure is subtracted from all
+six Voigt diagonal terms and added to ``C12``, ``C13`` and ``C23`` (and their
+symmetric partners).  Pressure is positive in compression.  The complete
+unstrained stress tensor is checked against ``P I`` before this scalar
+hydrostatic adjustment is allowed; appreciable deviatoric stress is rejected.
+The corrected state is then labelled ``wallace_hydrostatic`` and records the
+raw ``raw_stress_strain`` source kind and correction DOI in provenance.
+
+This is a VASP-specific ingestion rule.  The CRYSTAL Erba/Barron--Klein
+energy--strain transformation and Quantas' generic Eulerian finite-strain
+operator are not reused.  Pressure selection remains a separate operation from
+tensor conversion.  :func:`quantas.interfaces.vasp.assign_vasp_manual_pressures`
+can replace the raw output-stress pressure with explicit hydrostatic values, and
+:func:`quantas.interfaces.vasp.resolve_vasp_energy_derived_pressures` reuses the
+backend-neutral E(V) pressure fitter and volume matcher.  Both operations leave
+the VASP stiffness matrix raw; only the explicit hydrostatic conversion marks
+the tensor incremental.  The original VASP reference stress is still retained
+and must itself be hydrostatic, while the selected correction pressure and its
+difference from the VASP output pressure are recorded in provenance.  No
+Kieffer/HA/QHA coupling is introduced at this checkpoint.
 
 VASP Gamma phonon adaptation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~

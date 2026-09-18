@@ -126,7 +126,18 @@ phonon dataset:
      length: angstrom
 
 All four labels are required when an explicit ``units`` mapping is present.
-They describe the numerical input, not merely the display format.
+They describe the numerical input, not merely the display format.  HA and QHA
+therefore resolve measurement units in the following order:
+
+1. an explicit CLI/API interpretation override;
+2. the ``units`` metadata stored in the input;
+3. the historical Quantas fallback for files without unit metadata.
+
+The length label is the fundamental structural measurement unit: its cube defines
+the stored volume unit.  Current CLIs expose this as ``--lunit``; ``--vunit`` is
+retained as a compatibility alias.  Pressure and temperature are not part of this
+measurement override contract for HA/QHA because they define calculation/output
+domains rather than values stored in the phonon input.
 
 Historical Quantas phonon YAML files without ``units`` remain readable.  For
 backward compatibility they use the established interpretation:

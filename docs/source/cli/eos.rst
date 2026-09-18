@@ -140,6 +140,12 @@ scientific documentation.
 Important option families
 -------------------------
 
+EOS already follows the self-describing-input rule for unit handling.  Its
+``--eunit``, ``--lunit``, ``--punit``, and ``--tunit`` options are input-unit
+overrides: when omitted, declarations in the EOS data file are used before the
+historical fallbacks.  This differs from HA/QHA, where pressure and temperature
+primarily describe the requested calculation/output domain.
+
 * domain and target options define the scientific slot;
 * E--V, P--V, V--T, and P--V--T options define the model rather than solver behavior;
 * ``--axial-eos`` is an optional secondary pressure-form parameterization for

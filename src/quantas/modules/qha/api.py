@@ -19,6 +19,7 @@ from quantas.models import (
     ReportTable,
     ResultData,
     input_data_table,
+    resolve_phonon_measurement_units,
     mapping_table,
 )
 from quantas.models.phonons import PhononInputData
@@ -124,8 +125,9 @@ def run_qha(
         Normalized QHA input object, normalized phonon input object, or path to a
         Quantas phonon YAML input file.
     options : QHAOptions or None, optional
-        Options controlling the QHA calculation. If ``None``, default options
-        are used.
+        Options controlling the QHA calculation. If ``None``, measurement units
+        are inherited from the phonon input and the remaining historical QHA
+        defaults are used.
     kieffer_cutoffs : KiefferVolumeSeries or None, optional
         Direct cutoff states for additive thermodynamic-scheme enrichment.
     observer : Observer or None, optional
@@ -146,6 +148,13 @@ def run_qha(
         If the input file or input object is invalid.
     """
     qha_input = normalize_qha_input(input_data)
+    if options is None:
+        measurement_units = resolve_phonon_measurement_units(qha_input.units)
+        options = QHAOptions(
+            energy_unit=measurement_units.energy,
+            volume_unit=measurement_units.length,
+            frequency_unit=measurement_units.frequency,
+        )
     calculator = QHACalculator(
         qha_input=qha_input,
         options=options,
@@ -173,7 +182,9 @@ def inspect_qha_input(
         Normalized QHA input object, normalized phonon input object, or path to a
         Quantas phonon YAML input file.
     options : QHAOptions or None, optional
-        Options providing units, polynomial degree and default EOS.
+        Options providing units, polynomial degree and default EOS. If omitted,
+        the input measurement units are used with the historical pressure,
+        polynomial-degree, and EOS defaults.
     include_polynomial : bool, optional
         If ``True``, include pressure estimates from the polynomial fit.
     include_eos : bool, optional
@@ -198,6 +209,13 @@ def inspect_qha_input(
         If input volume and energy arrays are missing or inconsistent.
     """
     qha_input = normalize_qha_input(input_data)
+    if options is None:
+        measurement_units = resolve_phonon_measurement_units(qha_input.units)
+        options = QHAOptions(
+            energy_unit=measurement_units.energy,
+            volume_unit=measurement_units.length,
+            frequency_unit=measurement_units.frequency,
+        )
     return pressure_volume_preview(
         qha_input,
         options,

@@ -141,6 +141,43 @@ def test_qha_export_help_documents_structural_selection() -> None:
     assert "anisotropic thermal expansion" in result.output
 
 
+
+def test_qha_inspect_uses_input_measurement_units_by_default(
+    tmp_path, monkeypatch
+) -> None:
+    """QHA inspect should prefer YAML units over historical CLI defaults."""
+    filename = tmp_path / "qha-units.yaml"
+    filename.write_text(
+        "job: units\n"
+        "units:\n"
+        "  energy: eV\n"
+        "  volume: angstrom^3\n"
+        "  frequency: cm^-1\n"
+        "  length: angstrom\n",
+        encoding="utf-8",
+    )
+    captured = {}
+
+    def fake_inspect(input_data, *, options, **kwargs):
+        captured["options"] = options
+        return PressureVolumePreview(
+            volume=np.array([1.0]),
+            energy=np.array([-1.0]),
+            pressure_unit=options.pressure_unit,
+        )
+
+    monkeypatch.setattr("quantas.cli.qha.inspect_qha_input", fake_inspect)
+    monkeypatch.setattr("quantas.cli.qha.build_inspection_report", lambda preview: [])
+
+    result = CliRunner().invoke(qha, ["inspect", str(filename), "--quiet"])
+
+    assert result.exit_code == 0, result.output
+    options = captured["options"]
+    assert options.energy_unit == "eV"
+    assert options.volume_unit == "A"
+    assert options.frequency_unit == "cm^-1"
+    assert options.pressure_unit == "GPa"
+
 def test_qha_progress_is_not_persisted_in_plain_report() -> None:
     observer = QHATextObserver(silent=True, show_progress=True)
     observer(
@@ -215,6 +252,9 @@ def test_qha_run_help_exposes_polynomial_derivative_options() -> None:
     assert "--mode-gruneisen" in result.output
     assert "--gruneisen-min-cv-fraction" in result.output
     assert "--kieffer" in result.output
+    assert "Input measurement-unit overrides:" in result.output
+    assert "I/O units:" in result.output
+    assert "--lunit" in result.output
 
 
 def test_qha_run_activates_embedded_kieffer_and_disables_modal_default(

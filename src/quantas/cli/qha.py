@@ -19,10 +19,11 @@ from quantas.cli.reference_help import apply_reference_help
 
 from quantas.cli.contracts import (
     DOMAIN_GROUP,
+    INPUT_UNITS_GROUP,
+    IO_UNITS_GROUP,
     NUMERICAL_GROUP,
     OUTPUT_GROUP,
     SCIENTIFIC_GROUP,
-    UNITS_GROUP,
     VALIDATION_GROUP,
     default_hdf5_path,
     default_report_path,
@@ -51,6 +52,7 @@ from quantas.api.common import Event, EventLevel
 from quantas.api.qha import (
     CurveAxis as QHACurveAxis,
     FitFailurePolicy as QHAFitFailurePolicy,
+    Input as QHAInput,
     Minimization as QHAMinimization,
     ModeContinuity as QHAModeContinuity,
     Options as QHAOptions,
@@ -73,6 +75,7 @@ from quantas.cli.output import CLIOutput
 from quantas.cli.eos_model_type import ENERGY_EOS_MODEL
 from quantas.cli.kieffer_input import add_kieffer
 from quantas.cli.qha_observer import QHATextObserver
+from quantas.io.phonons import read_phonon_measurement_units
 from quantas.cli.phonon_input import phonon_inpgen
 from quantas.renderers.plots import MatplotlibOptions, render_plot_collection
 from quantas.references import (
@@ -150,23 +153,26 @@ qha.add_command(add_kieffer)
 )
 @grouped_option(
     "--eunit",
-    group=UNITS_GROUP,
+    group=INPUT_UNITS_GROUP,
     type=click.Choice(["Ha", "eV", "Ry"], case_sensitive=True),
-    default="Ha",
-    show_default=True,
-    help="Measurement unit for energy values.",
+    default=None,
+    help="Override the energy unit declared by the input file.",
 )
 @grouped_option(
+    "--lunit",
     "--vunit",
-    group=UNITS_GROUP,
+    "lunit",
+    group=INPUT_UNITS_GROUP,
     type=click.Choice(["A", "bohr"], case_sensitive=True),
-    default="A",
-    show_default=True,
-    help="Measurement unit for volume values.",
+    default=None,
+    help=(
+        "Override the input length unit; stored volumes are interpreted in "
+        "the corresponding cubic unit. --vunit is a legacy alias."
+    ),
 )
 @grouped_option(
     "--punit",
-    group=UNITS_GROUP,
+    group=IO_UNITS_GROUP,
     type=click.Choice(["GPa", "kbar"], case_sensitive=True),
     default="GPa",
     show_default=True,
@@ -207,8 +213,8 @@ def inspect(
     filename: Path,
     eos: str,
     degree: int,
-    eunit: str,
-    vunit: str,
+    eunit: str | None,
+    lunit: str | None,
     punit: str,
     no_polynomial: bool,
     no_eos: bool,
@@ -216,15 +222,20 @@ def inspect(
     report: Path | None,
 ) -> None:
     """Inspect static energy-volume data before a full QHA run."""
-    options = QHAOptions(
-        energy_unit=eunit,
-        volume_unit=vunit,
-        pressure_unit=punit,
-        eos=eos,
-        energy_degree=degree,
-    )
-
     try:
+        measurement_units = read_phonon_measurement_units(
+            filename,
+            energy_unit=eunit,
+            length_unit=lunit,
+        )
+        options = QHAOptions(
+            energy_unit=measurement_units.energy,
+            volume_unit=measurement_units.length,
+            frequency_unit=measurement_units.frequency,
+            pressure_unit=punit,
+            eos=eos,
+            energy_degree=degree,
+        )
         preview = inspect_qha_input(
             filename,
             options=options,
@@ -414,28 +425,41 @@ def inspect(
     help="Policy applied when local fits fail.",
 )
 @grouped_option(
-    "--eunit", group=UNITS_GROUP, default="Ha", show_default=True, help="Energy unit."
+    "--eunit",
+    group=INPUT_UNITS_GROUP,
+    type=click.Choice(["Ha", "eV", "Ry"], case_sensitive=True),
+    default=None,
+    help="Override the energy unit declared by the input file.",
 )
 @grouped_option(
-    "--vunit", group=UNITS_GROUP, default="A", show_default=True, help="Volume unit."
+    "--lunit",
+    "--vunit",
+    "lunit",
+    group=INPUT_UNITS_GROUP,
+    type=click.Choice(["A", "bohr"], case_sensitive=True),
+    default=None,
+    help=(
+        "Override the input length unit; stored volumes are interpreted in "
+        "the corresponding cubic unit. --vunit is a legacy alias."
+    ),
 )
 @grouped_option(
     "--funit",
-    group=UNITS_GROUP,
-    default="cm^-1",
-    show_default=True,
-    help="Frequency unit.",
+    group=INPUT_UNITS_GROUP,
+    type=click.Choice(["cm-1", "cm^-1", "THz", "Hz"], case_sensitive=True),
+    default=None,
+    help="Override the phonon-frequency unit declared by the input file.",
 )
 @grouped_option(
     "--tunit",
-    group=UNITS_GROUP,
+    group=IO_UNITS_GROUP,
     default="K",
     show_default=True,
     help="Temperature unit.",
 )
 @grouped_option(
     "--punit",
-    group=UNITS_GROUP,
+    group=IO_UNITS_GROUP,
     default="GPa",
     show_default=True,
     help="Pressure unit.",
@@ -470,9 +494,9 @@ def run(
     gruneisen_min_cv_fraction: float,
     max_failures: int,
     failure_policy: str,
-    eunit: str,
-    vunit: str,
-    funit: str,
+    eunit: str | None,
+    lunit: str | None,
+    funit: str | None,
     tunit: str,
     punit: str,
     output: Path | None,
@@ -498,43 +522,6 @@ def run(
 
     echo_highlight(quantas_title(), silent=quiet)
 
-    options = QHAOptions(
-        temperature_min=temperature[0],
-        temperature_max=temperature[1],
-        temperature_step=temperature[2],
-        pressure_min=pressure[0],
-        pressure_max=pressure[1],
-        pressure_step=pressure[2],
-        scheme=cast(QHAScheme, scheme),
-        minimization=cast(QHAMinimization, minimization),
-        eos=eos,
-        energy_degree=energy_degree,
-        free_energy_degree=energy_degree,
-        frequency_degree=frequency_degree,
-        polynomial_derivative_method=cast(
-            QHAPolynomialDerivativeMethod, polynomial_derivative_method
-        ),
-        polynomial_grid_points=polynomial_grid_points,
-        polynomial_grid_separation=polynomial_grid_separation,
-        calculate_gruneisen=calculate_gruneisen,
-        calculate_mode_gruneisen=calculate_mode_gruneisen,
-        thermal_expansion_method=cast(
-            QHAThermalExpansionMethod, thermal_expansion_method
-        ),
-        gruneisen_min_cv_fraction=gruneisen_min_cv_fraction,
-        energy_unit=eunit,
-        volume_unit=vunit,
-        frequency_unit="cm^-1" if funit == "cm-1" else funit,
-        temperature_unit=tunit,
-        pressure_unit=punit,
-        debug=report_verbosity.includes_debug,
-        max_consecutive_failures=max_failures,
-        fit_failure_policy=cast(QHAFitFailurePolicy, failure_policy),
-    )
-    if disabled_default_mode_gruneisen:
-        options.metadata["kieffer_cli"] = {
-            "mode_gruneisen_default_disabled": True,
-        }
     observer = QHATextObserver(
         report_file=report,
         silent=quiet,
@@ -552,28 +539,65 @@ def run(
         )
 
     try:
+        measurement_units = read_phonon_measurement_units(
+            filename,
+            energy_unit=eunit,
+            length_unit=lunit,
+            frequency_unit=funit,
+        )
+        options = QHAOptions(
+            temperature_min=temperature[0],
+            temperature_max=temperature[1],
+            temperature_step=temperature[2],
+            pressure_min=pressure[0],
+            pressure_max=pressure[1],
+            pressure_step=pressure[2],
+            scheme=cast(QHAScheme, scheme),
+            minimization=cast(QHAMinimization, minimization),
+            eos=eos,
+            energy_degree=energy_degree,
+            free_energy_degree=energy_degree,
+            frequency_degree=frequency_degree,
+            polynomial_derivative_method=cast(
+                QHAPolynomialDerivativeMethod, polynomial_derivative_method
+            ),
+            polynomial_grid_points=polynomial_grid_points,
+            polynomial_grid_separation=polynomial_grid_separation,
+            calculate_gruneisen=calculate_gruneisen,
+            calculate_mode_gruneisen=calculate_mode_gruneisen,
+            thermal_expansion_method=cast(
+                QHAThermalExpansionMethod, thermal_expansion_method
+            ),
+            gruneisen_min_cv_fraction=gruneisen_min_cv_fraction,
+            energy_unit=measurement_units.energy,
+            volume_unit=measurement_units.length,
+            frequency_unit=measurement_units.frequency,
+            temperature_unit=tunit,
+            pressure_unit=punit,
+            debug=report_verbosity.includes_debug,
+            max_consecutive_failures=max_failures,
+            fit_failure_policy=cast(QHAFitFailurePolicy, failure_policy),
+        )
+        if disabled_default_mode_gruneisen:
+            options.metadata["kieffer_cli"] = {
+                "mode_gruneisen_default_disabled": True,
+            }
         kieffer_cutoffs = (
             read_qha_kieffer_input(filename) if kieffer else None
         )
-        calculation_input = filename
+        calculation_input: QHAInput | Path = filename
         if mode_continuity is not None:
             input_data = read_qha_input(filename)
             continuity = cast(QHAModeContinuity, mode_continuity)
             input_data.mode_continuity = continuity
             input_data.metadata["mode_continuity"] = continuity
-            result = run_qha(
-                input_data,
-                options=options,
-                kieffer_cutoffs=kieffer_cutoffs,
-                observer=observer,
-            )
-        else:
-            result = run_qha(
-                calculation_input,
-                options=options,
-                kieffer_cutoffs=kieffer_cutoffs,
-                observer=observer,
-            )
+            calculation_input = input_data
+        result = run_qha(
+            calculation_input,
+            options=options,
+            kieffer_cutoffs=kieffer_cutoffs,
+            observer=observer,
+        )
     except Exception as exc:
         observer.close()
         echo_error(quantas_error(), bold=True)

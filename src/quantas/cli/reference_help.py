@@ -639,6 +639,16 @@ def _expand_option_help(
             " This affects the generated figure only and does not modify the stored "
             "scientific result."
         )
+    elif group == "input measurement-unit overrides":
+        suffix = (
+            " When omitted, self-describing file metadata are authoritative; use an "
+            "override only to reinterpret legacy or externally prepared input."
+        )
+    elif group == "i/o units":
+        suffix = (
+            " This selects the unit used for the requested calculation domain and "
+            "reported values; it does not reinterpret stored phonon measurements."
+        )
     elif "unit" in group or _looks_like_unit_option(parameter):
         suffix = (
             " Input values are converted to Quantas internal canonical units before "

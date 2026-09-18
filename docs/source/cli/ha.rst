@@ -92,8 +92,12 @@ Important distinctions
 ----------------------
 
 * ``--temperature`` controls the calculated grid and stored arrays.
-* unit options on ``run`` describe the YAML values; unit options on ``plot`` or
-  ``export`` convert an existing result for presentation.
+* ``run`` treats the YAML ``units`` block as authoritative for energy, length/volume,
+  and phonon frequency. ``--eunit``, ``--lunit`` (legacy alias ``--vunit``), and
+  ``--funit`` are explicit interpretation overrides, not display preferences.
+  ``--tunit`` instead controls the calculation/input-output temperature scale.
+* unit options on ``plot`` or ``export`` convert an existing result for
+  presentation and do not reinterpret the stored HA input.
 * plotting during ``run`` is a convenience.  The standalone ``plot`` command is
   preferable when several figure variants are required.
 * ``plot --axis temperature`` produces one curve per selected sampled volume;

@@ -123,6 +123,21 @@ non-primitive source cells and their energies to one primitive cell, preserves
 already primitive VASP bases, and rejects incompatible electronic-setting
 signatures across independent runs.
 
+
+The VASP elasticity path is now split into two auditable stages.  The raw
+volume-series adapter preserves ``TOTAL ELASTIC MODULI`` as
+``raw_stress_strain`` together with the unstrained reference stress.  A
+separate VASP-specific hydrostatic conversion, characterized against the
+MechElastic Appendix-A relation, subtracts pressure from all six Voigt
+diagonal coefficients and adds it to the three normal off-diagonal pairs.
+The conversion is allowed only when the retained VASP reference stress is
+hydrostatic within tolerance; only the converted series is marked as suitable
+for the shared incremental-stiffness gate.  Raw VASP series can now explicitly
+replace the output-stress pressure with manual values or backend-neutral E(V)
+pressures before conversion.  The original VASP pressure remains in provenance,
+and pressure reassignment never changes the raw Cij values.  Kieffer coupling
+remains outside this checkpoint.
+
 The direct VASP surface now also includes primitive-cell Gamma phonons from
 VASP 5.4.4 finite-difference runs.  Quantas reads signed Gamma frequencies and
 mass-weighted Cartesian eigenvectors, identifies the three rigid translations
@@ -134,6 +149,14 @@ from VASP outputs, including folded-supercell reconstruction and VASP 6
 DFT-code + Phonopy interoperability, including a common cross-backend phonon
 contract, is deliberately deferred to a separate branch after the VASP run
 interface is stable.
+
+HA/QHA execution now treats the normalized phonon YAML unit metadata as the
+authoritative measurement contract. Energy, structural length/volume, and
+frequency are inherited from the file unless explicitly overridden; pressure
+and temperature remain calculation/output-domain choices. This removes the
+historical implicit-Hartree interpretation for VASP-generated eV datasets.
+The QSA/thermoelastic workflow inherits the resolved units persisted by QHA,
+while EOS already followed file-declaration-first unit precedence.
 
 ## Previous `2.0.0b12` / `dev/prerelease-hardening` tranche
 

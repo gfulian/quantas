@@ -31,6 +31,14 @@ The b13 VASP tranche is intended to:
 
 The generic VASP run contract, Energy EOS adapter, consolidated elasticity
 reader, and primitive-cell Gamma-phonon route are now under characterization.
+The elasticity route now distinguishes raw VASP stress--strain tensors from an
+explicit hydrostatic pressure-adjustment step.  Manual and E(V)-derived pressure
+reassignment are available as separate provenance-preserving operations;
+coupling the resulting incremental series to Kieffer remains a follow-up patch.
+HA/QHA unit interpretation is also being consolidated so self-describing YAML
+metadata are authoritative and CLI unit options act as explicit overrides;
+pressure and temperature remain calculation/output-domain units. EOS already
+uses file-declaration-first input-unit precedence.
 Direct phonon dispersion from VASP outputs is intentionally not implemented in
 b13; supercell folding/unfolding and VASP-6 dispersion output remain later work.
 

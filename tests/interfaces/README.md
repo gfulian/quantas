@@ -25,8 +25,12 @@ The compact fixtures do not establish scientific validation for every VASP 6
 minor version.  Additional real-version fixtures should be added before making
 such a claim.
 
-- VASP elasticity: OUTCAR clamped/ionic/total tensor decomposition, explicit
+- VASP elasticity including raw elastic-series pressure reassignment: OUTCAR clamped/ionic/total tensor decomposition, explicit
   shear-order mapping, directory-source handling, reference pressure/stress,
   and no implicit CRYSTAL prestress conversion.
 
 - VASP Gamma phonons: primitive-cell q=0 frequencies/eigenvectors, rigid translations, and explicit rejection of unsupported dispersion/supercell folding.
+
+- VASP raw elastic-series adaptation preserves stiffness, density, source pressure provenance, volume sorting, and reference-source identity without applying a finite-prestress correction.
+
+- VASP hydrostatic pressure adjustment is characterized separately: raw stress--strain states are converted with the MechElastic Appendix-A matrix only when the retained reference stress is hydrostatic, and the resulting series must pass the shared incremental-stiffness gate exactly once.

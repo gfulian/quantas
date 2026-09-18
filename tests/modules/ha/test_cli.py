@@ -19,7 +19,10 @@ def test_ha_run_help_is_available():
         "Harmonic-approximation" in result.output
         or "harmonic-approximation" in result.output
     )
+    assert "Input measurement-unit overrides:" in result.output
+    assert "I/O units:" in result.output
     assert "--eunit" in result.output
+    assert "--lunit" in result.output
     assert "--funit" in result.output
     assert "--kieffer" in result.output
 
@@ -69,6 +72,49 @@ def test_ha_run_activates_embedded_kieffer_cutoffs(tmp_path, monkeypatch) -> Non
     report = filename.with_suffix(".log").read_text(encoding="utf-8")
     assert "S. W. Kieffer" in report
 
+
+
+def test_ha_run_uses_input_measurement_units_unless_overridden(
+    tmp_path, monkeypatch
+) -> None:
+    """HA should honor self-describing input units and explicit CLI overrides."""
+    filename = tmp_path / "ha-units.yaml"
+    filename.write_text(
+        "job: units\n"
+        "units:\n"
+        "  energy: eV\n"
+        "  volume: angstrom^3\n"
+        "  frequency: THz\n"
+        "  length: angstrom\n",
+        encoding="utf-8",
+    )
+    captured = {}
+
+    def fake_run(input_data, *, options, kieffer_cutoffs, observer):
+        captured["options"] = options
+        return object()
+
+    monkeypatch.setattr("quantas.cli.ha.run_ha", fake_run)
+    monkeypatch.setattr("quantas.cli.ha.write_ha_hdf5", lambda *args, **kwargs: None)
+
+    result = CliRunner().invoke(
+        ha,
+        [
+            "run",
+            str(filename),
+            "--eunit",
+            "Ry",
+            "--quiet",
+            "--no-progress",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    options = captured["options"]
+    assert options.energy_unit == "Ry"
+    assert options.volume_unit == "A"
+    assert options.frequency_unit == "THz"
+    assert options.temperature_unit == "K"
 
 def test_ha_export_help_is_available():
     runner = CliRunner()
