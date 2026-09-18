@@ -32,6 +32,7 @@ from quantas.models.structures import StructureVolumeSeries
 _CrystalPhononReader: type[Any] | None
 _CrystalQHAReader: type[Any] | None
 _PhonopyReader: type[Any] | None
+_VaspPhononReader: type[Any] | None
 
 try:  # pragma: no cover - import availability depends on installed interfaces
     from quantas.interfaces.crystal.phonons import (
@@ -60,6 +61,15 @@ try:  # pragma: no cover - import availability depends on installed interfaces
 except Exception:  # pragma: no cover
     _PhonopyReader = None
 
+try:  # pragma: no cover - import availability depends on installed interfaces
+    from quantas.interfaces.vasp.phonons import (
+        VaspPhononReader as _ImportedVaspPhononReader,
+    )
+
+    _VaspPhononReader = _ImportedVaspPhononReader
+except Exception:  # pragma: no cover
+    _VaspPhononReader = None
+
 
 class HAInputCreator:
     """
@@ -69,7 +79,7 @@ class HAInputCreator:
     ----------
     interface : str or None, optional
         Input interface name. Supported values are ``"crystal"``,
-        ``"crystal-qha"``, and ``"phonopy"``.
+        ``"crystal-qha"``, ``"phonopy"``, and ``"vasp"``.
     interface_filter : dict or None, optional
         Optional mapping used to override the default interface readers. This
         is mainly useful for tests and for external applications that provide
@@ -92,6 +102,7 @@ class HAInputCreator:
         "crystal": _CrystalPhononReader,
         "crystal-qha": _CrystalQHAReader,
         "phonopy": _PhonopyReader,
+        "vasp": _VaspPhononReader,
     }
 
     def __init__(
@@ -155,10 +166,11 @@ class HAInputCreator:
         Parameters
         ----------
         filename : str or pathlib.Path
-            Electronic-structure output file or text file containing one filename per
-            line when ``is_list`` is ``True``.
+            Electronic-structure output source (file or supported calculation
+            directory), or text file containing one source path per line when
+            ``is_list`` is ``True``.
         is_list : bool, optional
-            Interpret ``filename`` as a list of source files.
+            Interpret ``filename`` as a list of source paths.
         reference : int, optional
             Reference source index used to define structural and q-point conventions for
             multiple-file input generation.
@@ -203,7 +215,7 @@ class HAInputCreator:
             return False, "Invalid reference provided"
 
         self.emit(
-            f"Reading {len(files)} phonon output file(s) with the "
+            f"Reading {len(files)} phonon output source(s) with the "
             f"{self.interface_flag} interface",
             data={
                 "kind": "phonon_input_sources",
@@ -1913,9 +1925,17 @@ def _energy_provenance_dict(readers: list[Any]) -> dict[str, Any]:
 
     if not states:
         return {}
+    reference_raw = getattr(readers[0], "energy_provenance", {})
+    selected_quantity = "total_energy"
+    unit = _reader_units(readers[0])["energy"]
+    if isinstance(reference_raw, dict):
+        selected_quantity = str(
+            reference_raw.get("selected_quantity", selected_quantity)
+        )
+        unit = str(reference_raw.get("unit", unit))
     return {
-        "selected_quantity": "total_energy",
-        "unit": "Ha",
+        "selected_quantity": selected_quantity,
+        "unit": unit,
         "states": states,
     }
 

@@ -17,7 +17,7 @@ from .supercells import (
     reconstruct_primitive_structure,
     supercell_repetitions,
 )
-from .symmetry import analyze_symmetry, find_primitive_structure
+from .symmetry import analyze_symmetry, find_primitive_structure, reduce_to_primitive_cell
 from .rotations import (
     DEFAULT_ROTATION_TOLERANCE,
     TensorRotation,
@@ -55,6 +55,7 @@ __all__ = [
     "cartesian_to_fractional",
     "cell_volume",
     "find_primitive_structure",
+    "reduce_to_primitive_cell",
     "fold_supercell_positions",
     "fractional_to_cartesian",
     "lattice_from_parameters",

@@ -83,7 +83,7 @@ def elasticity() -> None:
 
 @elasticity.command(name="run", cls=GroupedCommand)
 @click.argument(
-    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    "filename", type=click.Path(exists=True, path_type=Path)
 )
 @grouped_option(
     "--2d",
@@ -367,7 +367,7 @@ def export(filename: Path, outfile: Path | None) -> None:
 
 @elasticity.command(name="inpgen", cls=GroupedCommand)
 @click.argument(
-    "filename", type=click.Path(exists=True, dir_okay=False, path_type=Path)
+    "filename", type=click.Path(exists=True, path_type=Path)
 )
 @click.option(
     "-o",
@@ -388,7 +388,7 @@ def export(filename: Path, outfile: Path | None) -> None:
 def inpgen(filename: Path, outfile: Path | None, interface: str) -> None:
     """Generate a Quantas elasticity input from CRYSTAL or VASP output."""
     if outfile is None:
-        stem = filename.with_suffix("")
+        stem = filename if filename.is_dir() else filename.with_suffix("")
         outfile = stem.with_name(stem.name + "_elasticity_input").with_suffix(".dat")
     else:
         outfile = outfile.with_suffix(".dat")

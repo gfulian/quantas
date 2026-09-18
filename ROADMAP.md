@@ -2,13 +2,53 @@
 
 ## Current pre-RC development
 
-The standalone Energy EOS work completed the ``2.0.0b11`` scientific tranche.
-Development is now on ``2.0.0b12`` in ``dev/prerelease-hardening``.  This branch
-adds no new scientific workflow: it is closing architecture, documentation,
-validation, packaging, and release-readiness gaps before the next pre-release
-checkpoint.
+The ``2.0.0b12`` pre-release hardening tranche has been merged into
+``dev/refactor`` after the complete local and GitHub CI gates passed.
+Development is now on ``2.0.0b13`` in ``dev/interface-vasp-maintenance``.
+This is a deliberately narrow external-interface tranche: its purpose is to
+make data produced directly by VASP calculations available through the same
+backend-neutral structural and computational contracts already used by CRYSTAL.
 
-The b12 hardening tranche has:
+The b13 VASP tranche is intended to:
+
+- accept one VASP calculation directory or a list of calculation directories;
+- use ``vasprun.xml`` as the primary structured run record and ``OUTCAR`` as a
+  complementary source where VASP version quirks or run-state semantics require
+  it;
+- reconstruct canonical structures, species, volumes, energies, forces,
+  stresses, run metadata, and optimization histories without frontend
+  dependencies;
+- preserve the distinct VASP energy quantities and the exact source used for
+  each normalized observation;
+- expose one final structure--energy state per compatible run so the existing
+  Energy EOS input generator can consume VASP series without acquiring
+  VASP-specific logic;
+- consolidate specialized readers, such as elasticity, only after the generic
+  VASP run contract is characterized;
+- expose primitive-cell VASP Gamma phonons through the shared HA/QHA input
+  contract while leaving direct VASP dispersion reconstruction to a later
+  tranche.
+
+The generic VASP run contract, Energy EOS adapter, consolidated elasticity
+reader, and primitive-cell Gamma-phonon route are now implemented and
+characterized for b13.  The elasticity route distinguishes raw VASP
+stress--strain tensors from an explicit hydrostatic pressure-adjustment step.
+Manual and E(V)-derived pressure reassignment are separate provenance-preserving
+operations, and HA/QHA Kieffer enrichment consumes only the explicitly converted
+incremental VASP series through the existing backend-neutral acoustic builder.
+The CRYSTAL path retains its independent Erba finite-prestress semantics.
+HA/QHA unit interpretation now treats self-describing YAML metadata as
+authoritative while CLI unit options remain explicit overrides; pressure and
+temperature remain calculation/output-domain units. EOS uses the same
+file-declaration-first input-unit precedence.
+Direct phonon dispersion from VASP outputs is intentionally not implemented in
+b13; supercell folding/unfolding and VASP-6 dispersion output remain later work.
+
+Phonopy support is explicitly outside this branch.  DFT-code + Phonopy
+interoperability and cross-backend phonon normalization will be developed as a
+separate follow-up once the direct VASP interface is stable.
+
+The completed b12 hardening tranche:
 
 - separated documented EOS request errors from unexpected failures;
 - unified energy-derived pressure assignment and provenance across Kieffer and
@@ -20,10 +60,8 @@ The b12 hardening tranche has:
   information ownership;
 - made the validation record explicit about completed and work-in-progress
   scopes;
-- prepared synchronized release metadata and final distribution checks.
-
-VASP/Phonopy cleanup and common MgO cross-backend characterization are planned
-for a small b13 follow-up rather than being mixed into b12.
+- synchronized release metadata and hardened the final distribution and
+  publication checks.
 
 The completed b11 Energy EOS tranche:
 
@@ -33,8 +71,9 @@ The completed b11 Energy EOS tranche:
 - centralized EOS model discovery through the shared resolver, compact
   historical tags, ``quantas eos show-models``, and shell completion including
   native PowerShell support;
-- added canonical Hartree normalization for energy and ``sigma_energy`` while
-  retaining raw units and provenance;
+- originally added canonical Hartree normalization for energy and
+  ``sigma_energy``; b13 supersedes that boundary by retaining the declared
+  energy unit through Energy-EOS fitting while preserving raw provenance;
 - promoted ``ev/energy`` to public fitting, diagnostics, HDF5 persistence,
   reporting, plotting, and post-fit calculation;
 - exposed ``P(V) = -dE/dV`` together with ``K(V)``, ``K'(V)``, and ``K''(V)``

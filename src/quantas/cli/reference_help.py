@@ -85,12 +85,14 @@ _COMMAND_HELP: Final[Mapping[tuple[str, ...], str]] = {
         "calculation."
     ),
     ("ha", "add-kieffer"): (
-        "Create a new HA YAML input with Kieffer sine-wave acoustic cutoffs.\n\n"
-        "FILENAME must be a primitive, single-volume Gamma-only phonon input. "
-        "Supply one completed CRYSTAL ELASTCON or ELAPIEZO output either as a "
-        "positional argument or through '--elastic-list'. Quantas derives the "
-        "three acoustic cutoff frequencies from the incremental elastic tensor "
-        "and writes a separate YAML file without replacing any calculated mode."
+        "Create a new HA/QHA YAML input with Kieffer sine-wave acoustic cutoffs.\n\n"
+        "FILENAME must contain primitive Gamma-only phonons. Supply one completed "
+        "CRYSTAL ELASTCON/ELAPIEZO output or VASP elastic calculation source for "
+        "every stored phonon volume, directly or through '--elastic-list'. HA "
+        "therefore uses one elastic source and QHA uses one per sampled volume. "
+        "Quantas keeps backend-specific finite-prestress conversion separate, "
+        "matches volumes explicitly, and preserves the source input unchanged. "
+        "Energy-derived pressure sources are available only for multi-volume QHA."
     ),
     ("ha", "run"): (
         "Run a harmonic-approximation calculation from a Quantas YAML input file.\n\n"
@@ -127,12 +129,14 @@ _COMMAND_HELP: Final[Mapping[tuple[str, ...], str]] = {
         "calculation."
     ),
     ("qha", "add-kieffer"): (
-        "Create a new QHA YAML input with volume-resolved Kieffer cutoffs.\n\n"
+        "Create a new HA/QHA YAML input with Kieffer sine-wave acoustic cutoffs.\n\n"
         "FILENAME must contain primitive Gamma-only phonons. Supply one completed "
-        "CRYSTAL ELASTCON or ELAPIEZO output for every QHA volume, directly or "
-        "through '--elastic-list'. Quantas matches volumes explicitly, applies "
-        "the recorded hydrostatic pre-stress treatment once, evaluates the "
-        "anisotropic acoustic averages, and preserves the source input unchanged."
+        "CRYSTAL ELASTCON/ELAPIEZO output or VASP elastic calculation source for "
+        "every stored phonon volume, directly or through '--elastic-list'. HA "
+        "therefore uses one elastic source and QHA uses one per sampled volume. "
+        "Quantas keeps backend-specific finite-prestress conversion separate, "
+        "matches volumes explicitly, and preserves the source input unchanged. "
+        "Energy-derived pressure sources are available only for multi-volume QHA."
     ),
     ("qha", "inspect"): (
         "Inspect the sampled static energy–volume relation before a full QHA run.\n\n"
@@ -638,6 +642,16 @@ def _expand_option_help(
         suffix = (
             " This affects the generated figure only and does not modify the stored "
             "scientific result."
+        )
+    elif group == "input measurement-unit overrides":
+        suffix = (
+            " When omitted, self-describing file metadata are authoritative; use an "
+            "override only to reinterpret legacy or externally prepared input."
+        )
+    elif group == "i/o units":
+        suffix = (
+            " This selects the unit used for the requested calculation domain and "
+            "reported values; it does not reinterpret stored phonon measurements."
         )
     elif "unit" in group or _looks_like_unit_option(parameter):
         suffix = (

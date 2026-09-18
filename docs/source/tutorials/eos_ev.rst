@@ -246,3 +246,39 @@ list may therefore combine single-state and multi-state sources.  Quantas
 requires compatible atom count, chemical composition, total-energy correction
 semantics, and non-duplicate volumes before writing one normalized Energy EOS
 dataset.
+
+Generating the dataset from VASP
+--------------------------------
+
+For VASP, put one completed calculation directory per line in the list file::
+
+   eos/01
+   eos/02
+   eos/03
+   eos/00
+   eos/04
+   eos/05
+   eos/06
+
+Then generate the same Quantas Energy EOS format with:
+
+.. code-block:: console
+
+   quantas eos inpgen vasp-runs.txt --interface vasp --list \
+      --jobname "MgO static energy-volume EOS" -o mgo_vasp_ev.dat
+
+Each directory must contain ``vasprun.xml`` and may also contain ``OUTCAR``.
+The current adapter accepts exactly one ionic state from each source: use a
+dedicated static E--V series rather than inserting an optimization history.
+For the zero-electronic-temperature E--V workflow Quantas selects VASP
+``energy(sigma->0)`` and rejects a list whose smearing, Brillouin-zone sampling,
+pseudopotentials, or other relevant electronic settings define incompatible
+energy surfaces.  This means that an optimized reference geometry may be reused
+for a static EOS calculation, but its optimization-run energy is not mixed into
+the static EOS dataset.
+
+VASP cells are reduced to their primitive normalization where translational
+symmetry permits it.  If the run already uses a primitive cell, its original
+basis is preserved.  ``--crystal-reference crystallographic`` can then be used
+exactly as for CRYSTAL to express the generated table in one fixed
+crystallographic-cell normalization.

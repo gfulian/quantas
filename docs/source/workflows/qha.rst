@@ -144,6 +144,13 @@ documented for CRYSTAL finite-pressure elasticity
    +\frac{P_i}{2}\left(2\delta_{ij}\delta_{kl}
    -\delta_{il}\delta_{jk}-\delta_{ik}\delta_{jl}\right).
 
+VASP follows a separate ingestion rule. ``TOTAL ELASTIC MODULI`` are retained
+as ``raw_stress_strain`` coefficients together with the unstrained reference
+stress. After the selected hydrostatic pressure has been attached, the VASP
+interface applies its own pressure adjustment and only the resulting
+``wallace_hydrostatic`` state is admitted to Christoffel/Kieffer acoustics.
+Quantas does not reuse the CRYSTAL/Erba transformation for VASP.
+
 Pressure is positive in compression.  This CRYSTAL adapter rule is distinct
 from the finite-strain ``wallace_delta`` term used by the QSA equations.  The
 source of every :math:`P_i` is part of the data contract: it may come from the
@@ -151,7 +158,7 @@ output stress, a manually supplied value, an integrated energy EOS, or a
 polynomial derivative of the QHA input's static :math:`E(V)` series. For the
 latter two routes, the importer first treats the tensors as raw, matches elastic
 and phonon volumes explicitly, evaluates :math:`P(V)=-dE/dV`, and only then
-applies the CRYSTAL correction. The generated input records the selected EOS
+applies the selected backend correction. The generated input records the selected EOS
 tag or polynomial degree, fit diagnostics, units,
 evaluated pressures, and volume associations. The correction produces a new
 elastic state and records the source and target tensor kinds, method, pressure
@@ -164,9 +171,11 @@ Eulerian operators ``eulerian_hydrostatic_incremental_stiffness()``,
 ``convert_eulerian_hydrostatic_elastic_state()``, and
 ``convert_eulerian_hydrostatic_elastic_series()`` for tensors whose derivative
 definition is explicitly compatible with that convention.  These operators
-are **not** used as a substitute for the CRYSTAL adapter: raw CRYSTAL tensors
+are **not** used as a substitute for external-code adapters: raw CRYSTAL tensors
 are converted by ``crystal_hydrostatic_stiffness()`` in
-:mod:`quantas.interfaces.crystal`.  Historical ``hydrostatic_wallace_*`` and
+:mod:`quantas.interfaces.crystal`, while raw VASP stress--strain tensors are
+converted by ``vasp_hydrostatic_incremental_stiffness()`` in
+:mod:`quantas.interfaces.vasp`.  Historical ``hydrostatic_wallace_*`` and
 ``correct_hydrostatic_*`` names remain compatibility aliases only.  A
 correctly converted series can be passed directly to
 ``build_kieffer_volume_series()``.

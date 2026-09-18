@@ -18,8 +18,9 @@ from quantas.cli.reference_help import apply_reference_help
 
 from quantas.cli.contracts import (
     DOMAIN_GROUP,
+    INPUT_UNITS_GROUP,
+    IO_UNITS_GROUP,
     PLOTTING_GROUP,
-    UNITS_GROUP,
     VALIDATION_GROUP,
     default_hdf5_path,
     default_report_path,
@@ -57,6 +58,7 @@ from quantas.api.ha import (
     write_table as write_ha_table,
 )
 from quantas.cli.ha_observer import HATextObserver
+from quantas.io.phonons import read_phonon_measurement_units
 from quantas.cli.kieffer_input import add_kieffer
 from quantas.cli.phonon_input import phonon_inpgen
 from quantas.references import (
@@ -94,31 +96,33 @@ ha.add_command(add_kieffer)
 )
 @grouped_option(
     "--eunit",
-    group=UNITS_GROUP,
+    group=INPUT_UNITS_GROUP,
     type=click.Choice(["Ha", "eV", "Ry"], case_sensitive=True),
-    default="Ha",
-    show_default=True,
-    help="Measurement unit for energy values.",
+    default=None,
+    help="Override the energy unit declared by the input file.",
 )
 @grouped_option(
+    "--lunit",
     "--vunit",
-    group=UNITS_GROUP,
+    "lunit",
+    group=INPUT_UNITS_GROUP,
     type=click.Choice(["A", "bohr"], case_sensitive=True),
-    default="A",
-    show_default=True,
-    help="Measurement unit for volume values.",
+    default=None,
+    help=(
+        "Override the input length unit; stored volumes are interpreted in "
+        "the corresponding cubic unit. --vunit is a legacy alias."
+    ),
 )
 @grouped_option(
     "--funit",
-    group=UNITS_GROUP,
+    group=INPUT_UNITS_GROUP,
     type=click.Choice(["cm-1", "cm^-1", "THz", "Hz"], case_sensitive=True),
-    default="cm-1",
-    show_default="cm^-1",
-    help="Measurement unit for phonon frequency values.",
+    default=None,
+    help="Override the phonon-frequency unit declared by the input file.",
 )
 @grouped_option(
     "--tunit",
-    group=UNITS_GROUP,
+    group=IO_UNITS_GROUP,
     type=click.Choice(["K", "C"], case_sensitive=True),
     default="K",
     show_default=True,
@@ -184,9 +188,9 @@ def run(
     filename: Path,
     output: Path | None,
     temperature: tuple[float, float, float],
-    eunit: str,
-    vunit: str,
-    funit: str,
+    eunit: str | None,
+    lunit: str | None,
+    funit: str | None,
     tunit: str,
     benchmark: bool,
     kieffer: bool,
@@ -210,15 +214,6 @@ def run(
 
     echo_highlight(quantas_title(), silent=quiet)
 
-    options = HAOptions(
-        temperature_min=temperature[0],
-        temperature_max=temperature[1],
-        temperature_step=temperature[2],
-        energy_unit=eunit,
-        volume_unit=vunit,
-        frequency_unit="cm^-1" if funit == "cm-1" else funit,
-        temperature_unit=tunit,
-    )
     observer = HATextObserver(
         report_file=report,
         silent=quiet,
@@ -228,6 +223,21 @@ def run(
     )
 
     try:
+        measurement_units = read_phonon_measurement_units(
+            filename,
+            energy_unit=eunit,
+            length_unit=lunit,
+            frequency_unit=funit,
+        )
+        options = HAOptions(
+            temperature_min=temperature[0],
+            temperature_max=temperature[1],
+            temperature_step=temperature[2],
+            energy_unit=measurement_units.energy,
+            volume_unit=measurement_units.length,
+            frequency_unit=measurement_units.frequency,
+            temperature_unit=tunit,
+        )
         kieffer_cutoffs = (
             read_ha_kieffer_input(filename) if kieffer else None
         )

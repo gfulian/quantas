@@ -1,0 +1,20 @@
+------------------------ aborting loop because EDIFF is reached ----------------------------------------
+  free  energy   TOTEN  =       -11.87755416 eV
+  energy  without entropy=      -11.87944087  energy(sigma->0) =      -11.87818306
+------------------------ aborting loop because EDIFF is reached ----------------------------------------
+  free  energy   TOTEN  =       -11.87757546 eV
+  energy  without entropy=      -11.87945241  energy(sigma->0) =      -11.87820111
+------------------------ aborting loop because EDIFF is reached ----------------------------------------
+  free  energy   TOTEN  =       -11.87757629 eV
+  energy  without entropy=      -11.87945520  energy(sigma->0) =      -11.87820259
+------------------------ aborting loop because EDIFF is reached ----------------------------------------
+  free  energy   TOTEN  =       -11.87757620 eV
+  energy  without entropy=      -11.87945435  energy(sigma->0) =      -11.87820225
+------------------------ aborting loop because EDIFF is reached ----------------------------------------
+  free  energy   TOTEN  =       -11.87757625 eV
+  energy  without entropy=      -11.87945462  energy(sigma->0) =      -11.87820237
+------------------------ aborting loop because EDIFF is reached ----------------------------------------
+  free  energy   TOTEN  =       -11.87757624 eV
+  energy  without entropy=      -11.87945457  energy(sigma->0) =      -11.87820235
+ reached required accuracy - stopping structural energy minimisation
+ General timing and accounting informations for this job:

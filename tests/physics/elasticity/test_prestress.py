@@ -172,6 +172,28 @@ def test_external_pressure_assignment_cannot_replace_provenance() -> None:
             assignment_method="energy_polynomial",
         )
 
+
+def test_pressure_assignment_replaces_raw_stress_pressure() -> None:
+    """Explicit replacement supports raw stress-strain tensors without mutation."""
+    raw_state = _state(100.0, 1.0, kind=ElasticTensorKind.RAW_STRESS_STRAIN)
+    raw = ElasticStateSeries(states=(raw_state,), reference_index=0)
+
+    assigned = assign_hydrostatic_pressures(
+        raw,
+        [2.0],
+        pressure_source=PressureSource.MANUAL,
+        assignment_method="manual-test",
+        replace_existing=True,
+    )
+
+    np.testing.assert_allclose(assigned.states[0].stiffness, raw_state.stiffness)
+    assert assigned.states[0].prestress.tensor_kind is ElasticTensorKind.RAW_STRESS_STRAIN
+    assert assigned.states[0].prestress.pressure_gpa == pytest.approx(2.0)
+    assignment = assigned.states[0].metadata["pressure_assignment"]
+    assert assignment["replaced_pressure_gpa"] == pytest.approx(1.0)
+    assert assignment["replaced_pressure_source"] == "output_stress"
+    assert assigned.metadata["pressure_assignment"]["replaced_existing"] is True
+
 def test_compatibility_names_match_eulerian_api() -> None:
     """Historical public names preserve numerics while new code uses Eulerian names."""
     raw_matrix = np.diag([200.0, 210.0, 220.0, 70.0, 75.0, 80.0])

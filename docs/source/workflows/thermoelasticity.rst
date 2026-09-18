@@ -171,6 +171,12 @@ same normalization.
 Coupling to QHA
 ---------------
 
+Thermoelastic calibration consumes the units persisted with the source QHA result.
+It does not reinterpret the original phonon YAML independently.  Consequently,
+QHA input-unit resolution (file metadata first, explicit measurement overrides
+only when requested) propagates into the QSA reference EOS and thermal fields.
+Pressure and temperature coordinates retain the units recorded by the QHA run.
+
 Required cold-QSA fields
 ~~~~~~~~~~~~~~~~~~~~~~~~
 

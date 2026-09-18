@@ -26,7 +26,7 @@ archive without repeating harmonic sums.
 Generating the phonon input
 ---------------------------
 
-The shared ``inpgen`` command supports three interface routes:
+The shared ``inpgen`` command supports four interface routes:
 
 .. code-block:: console
 
@@ -36,6 +36,8 @@ The shared ``inpgen`` command supports three interface routes:
       --reference 0 --output material.yaml
 
    quantas ha inpgen qha.out --interface crystal-qha --output material.yaml
+
+   quantas ha inpgen vasp_run --interface vasp --output material.yaml
 
 ``--reference`` selects the source structure used for reference metadata and
 final branch labels in a multi-file series.  It does not change the local
@@ -55,17 +57,21 @@ Adding Kieffer acoustic branches
 --------------------------------
 
 ``add-kieffer`` is available only for primitive Gamma-only phonons calculated
-with the identity supercell. It reads one elastic output at the same volume,
-selected with ``--interface crystal``, and writes a new input whose calculated
-Gamma frequencies are unchanged. The three Kieffer branches are stored as a
-separate additive component.
+with the identity supercell. It reads one elastic state at the same volume and
+writes a new input whose calculated Gamma frequencies are unchanged. Select
+``--interface crystal`` for CRYSTAL ELASTCON/ELAPIEZO outputs or
+``--interface vasp`` for a VASP calculation directory, ``OUTCAR``, or
+``vasprun.xml`` with a sibling ``OUTCAR``. The three Kieffer branches are
+stored as a separate additive component.
 
 Use ``--pressure-source auto`` for the usual case. A raw CRYSTAL tensor is
 corrected from its unstrained-stress pressure with the finite-pressure
 transformation of Erba *et al.* (2014); a tensor produced with CRYSTAL's
-``PRESSURE`` keyword is recognized as already corrected. Use
-``--pressure-source manual --pressure VALUE`` only when no usable output-stress
-pressure is available.
+``PRESSURE`` keyword is recognized as already corrected. VASP ``TOTAL ELASTIC
+MODULI`` remain raw stress--strain coefficients: ``auto`` uses the retained
+unstrained output stress and then applies the VASP-specific hydrostatic
+conversion. Use ``--pressure-source manual --pressure VALUE`` only when an
+explicit alternative hydrostatic pressure is required.
 
 The ``energy-eos`` and ``energy-polynomial`` pressure sources require a
 multi-volume energy path and are therefore available only through
@@ -90,8 +96,12 @@ Important distinctions
 ----------------------
 
 * ``--temperature`` controls the calculated grid and stored arrays.
-* unit options on ``run`` describe the YAML values; unit options on ``plot`` or
-  ``export`` convert an existing result for presentation.
+* ``run`` treats the YAML ``units`` block as authoritative for energy, length/volume,
+  and phonon frequency. ``--eunit``, ``--lunit`` (legacy alias ``--vunit``), and
+  ``--funit`` are explicit interpretation overrides, not display preferences.
+  ``--tunit`` instead controls the calculation/input-output temperature scale.
+* unit options on ``plot`` or ``export`` convert an existing result for
+  presentation and do not reinterpret the stored HA input.
 * plotting during ``run`` is a convenience.  The standalone ``plot`` command is
   preferable when several figure variants are required.
 * ``plot --axis temperature`` produces one curve per selected sampled volume;

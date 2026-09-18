@@ -57,6 +57,17 @@ class CrystalEnergyVolumeParseResult:
     primitive_to_crystallographic: np.ndarray | None = None
     space_group_number: int | None = None
 
+    @property
+    def energy_signature(self) -> tuple[str, ...]:
+        """Return the compatibility signature used by Energy EOS collection.
+
+        Returns
+        -------
+        tuple of str
+            Canonical CRYSTAL a-posteriori correction labels.
+        """
+        return tuple(self.corrections)
+
 
 class CrystalEnergyVolumeReader:
     """Read one CRYSTAL output as one or more Energy EOS observations.

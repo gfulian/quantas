@@ -129,9 +129,10 @@ def add_kieffer_input(
     source, destination : str or Path
         Existing HA YAML input and distinct enriched output path.
     elastic_outputs : sequence of str or Path
-        Elastic-output files containing the state at the HA volume.
+        Elastic calculation sources containing the state at the HA volume.
+        CRYSTAL uses output files; VASP also accepts calculation directories.
     interface : str, optional
-        Elastic-output reader identifier.
+        Elastic-output reader identifier (``"crystal"`` or ``"vasp"``).
     pressure_policy : str, optional
         ``"auto"``, ``"output_stress"``, or ``"manual"``.
     manual_pressures_gpa : sequence of float or None, optional
@@ -236,7 +237,10 @@ def run(
     input_data : Input, PhononInputData, str, or Path
         Harmonic input contract, neutral phonon data, or YAML path.
     options : Options or None, optional
-        Temperature grid, units, and scientific calculation controls.
+        Temperature grid, units, and scientific calculation controls. When
+        omitted, energy, length/volume, and frequency units are inherited from
+        the self-describing phonon input while the historical temperature
+        default remains kelvin.
     kieffer_cutoffs : KiefferVolumeSeries or None, optional
         Direct cutoff state used to add the three Kieffer acoustic branches.
     observer : Observer or None, optional

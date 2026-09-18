@@ -9,6 +9,8 @@ import click
 from click.testing import CliRunner
 
 from quantas.cli.contracts import (
+    INPUT_UNITS_GROUP,
+    IO_UNITS_GROUP,
     OUTPUT_GROUP,
     ReportVerbosity,
     default_report_path,
@@ -114,7 +116,8 @@ def test_qha_help_orders_science_before_domain_numerics_and_output() -> None:
         result.output.index("Calculation domain:"),
         result.output.index("Numerical method:"),
         result.output.index("Validation and diagnostics:"),
-        result.output.index("Units:"),
+        result.output.index(f"{INPUT_UNITS_GROUP}:"),
+        result.output.index(f"{IO_UNITS_GROUP}:"),
         result.output.index(f"{OUTPUT_GROUP}:"),
     ]
     assert positions == sorted(positions)

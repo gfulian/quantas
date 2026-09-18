@@ -35,6 +35,12 @@ CRYSTAL_CALCITE = (
     / "data"
     / "calcite_crystal_elastcon_excerpt.out"
 )
+VASP_MGO_SOEC = (
+    Path(__file__).parents[2]
+    / "interfaces"
+    / "data"
+    / "vasp_mgo_soec_00_v544.OUTCAR"
+)
 
 
 def _properties(value: float) -> IsotropicElasticProperties:
@@ -246,6 +252,33 @@ def test_inpgen_preserves_crystal_source_components(tmp_path) -> None:
     assert response.exit_code == 0, response.output
     text = outfile.read_text(encoding="utf-8")
     assert "quantas_tensor_frame" not in text
+
+
+def test_inpgen_accepts_vasp_calculation_directory(tmp_path) -> None:
+    """The VASP CLI boundary accepts a calculation directory, not only OUTCAR."""
+    run = tmp_path / "vasp-run"
+    run.mkdir()
+    (run / "OUTCAR").write_bytes(VASP_MGO_SOEC.read_bytes())
+    outfile = tmp_path / "mgo-elasticity.dat"
+
+    response = CliRunner().invoke(
+        elasticity,
+        [
+            "inpgen",
+            str(run),
+            "--output",
+            str(outfile),
+            "--interface",
+            "vasp",
+        ],
+        input="MgO VASP source\n",
+    )
+
+    assert response.exit_code == 0, response.output
+    assert outfile.exists()
+    text = outfile.read_text(encoding="utf-8")
+    assert "271.253020" in text
+    assert "3471." in text
 
 
 def test_elasticity_help_uses_current_dimension_flags() -> None:

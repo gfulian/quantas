@@ -126,6 +126,73 @@ class CrystalStructure:
 
 
 @dataclass(slots=True)
+class PrimitiveCellReduction:
+    """Primitive-cell reduction of one source structure.
+
+    Parameters
+    ----------
+    structure : CrystalStructure
+        Primitive-normalized structure.  An already primitive source keeps its
+        original backend basis; a multiple cell uses the symmetry-backend
+        primitive representation.
+    repetitions : int
+        Number of primitive cells represented by the source structure.
+    source_to_primitive : array_like
+        Row-basis transformation ``P`` satisfying approximately
+        ``primitive_lattice = P @ source_lattice``.
+    source_atoms : int
+        Number of atoms in the source structure.
+    source_volume : float
+        Source-cell volume in cubic angstrom.
+
+    Raises
+    ------
+    ValueError
+        If counts, volume, or transformation shape are invalid.
+    """
+
+    structure: CrystalStructure
+    repetitions: int
+    source_to_primitive: FloatArray
+    source_atoms: int
+    source_volume: float
+
+    def __post_init__(self) -> None:
+        """Normalize values and validate primitive-cell bookkeeping."""
+        self.repetitions = int(self.repetitions)
+        self.source_atoms = int(self.source_atoms)
+        self.source_volume = float(self.source_volume)
+        self.source_to_primitive = np.asarray(
+            self.source_to_primitive,
+            dtype=np.float64,
+        )
+        if self.repetitions <= 0:
+            raise ValueError("primitive-cell repetitions must be positive")
+        if self.source_atoms <= 0:
+            raise ValueError("source atom count must be positive")
+        if self.source_volume <= 0.0 or not np.isfinite(self.source_volume):
+            raise ValueError("source volume must be finite and positive")
+        if self.source_to_primitive.shape != (3, 3):
+            raise ValueError("source_to_primitive must have shape (3, 3)")
+
+    def as_dict(self) -> dict[str, Any]:
+        """Return a recursively serializable normalization mapping.
+
+        Returns
+        -------
+        dict
+            Primitive structure and source-normalization metadata.
+        """
+        return {
+            "structure": self.structure.as_dict(),
+            "repetitions": int(self.repetitions),
+            "source_to_primitive": self.source_to_primitive.copy(),
+            "source_atoms": int(self.source_atoms),
+            "source_volume_angstrom3": float(self.source_volume),
+        }
+
+
+@dataclass(slots=True)
 class CellNormalization:
     """Describe the cell basis used to normalize phonon thermodynamics.
 

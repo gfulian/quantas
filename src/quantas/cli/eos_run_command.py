@@ -11,8 +11,8 @@ from click.core import ParameterSource
 
 from quantas.cli.contracts import (
     OUTPUT_GROUP,
+    INPUT_UNITS_GROUP,
     SCIENTIFIC_GROUP,
-    UNITS_GROUP,
     VALIDATION_GROUP,
     default_hdf5_path,
     default_report_path,
@@ -71,7 +71,7 @@ from quantas.references import module_citation_keys, render_citation_notice
 @grouped_option(
     "--energy-unit",
     "--eunit",
-    group=UNITS_GROUP,
+    group=INPUT_UNITS_GROUP,
     default=None,
     metavar="UNIT",
     help="Input energy unit override. File declaration or Ha is used when omitted.",
@@ -79,7 +79,7 @@ from quantas.references import module_citation_keys, render_citation_notice
 @grouped_option(
     "--pressure-unit",
     "--punit",
-    group=UNITS_GROUP,
+    group=INPUT_UNITS_GROUP,
     default=None,
     metavar="UNIT",
     help="Input pressure unit override. File declaration or GPa is used when omitted.",
@@ -87,7 +87,7 @@ from quantas.references import module_citation_keys, render_citation_notice
 @grouped_option(
     "--length-unit",
     "--lunit",
-    group=UNITS_GROUP,
+    group=INPUT_UNITS_GROUP,
     default=None,
     metavar="UNIT",
     help="Input length unit override; the corresponding cubic unit is used for volume.",
@@ -95,7 +95,7 @@ from quantas.references import module_citation_keys, render_citation_notice
 @grouped_option(
     "--temperature-unit",
     "--tunit",
-    group=UNITS_GROUP,
+    group=INPUT_UNITS_GROUP,
     type=click.Choice(["K", "C", "F"], case_sensitive=False),
     default=None,
     help="Input temperature scale override. Normalized calculations always use kelvin.",

@@ -12,6 +12,7 @@ Recommended sequence
 .. code-block:: console
 
    quantas elasticity inpgen crystal-elastic.out --interface crystal
+   quantas elasticity inpgen vasp-run --interface vasp --output vasp-elastic.dat
    quantas elasticity run crystal-elastic_elasticity_input.dat --2d --3d
    quantas elasticity plot crystal-elastic_elasticity.hdf5 --2d --3d \
       --property young --preset publication

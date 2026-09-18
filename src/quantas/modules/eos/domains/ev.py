@@ -49,7 +49,8 @@ class EnergyEOSFitModel(BaseFitModel):
     model : EOSModel or str
         Integrated EOS family and order.
     energy_unit : str, optional
-        Public energy unit.  The normalized EOS workflow currently uses Ha.
+        Public energy unit retained by the Energy-EOS workflow, for example
+        ``Ha``, ``eV``, or ``Ry``.
     volume_unit : str, optional
         Public volume unit.  The normalized theoretical workflow currently
         uses ``angstrom^3``.
@@ -78,10 +79,15 @@ class EnergyEOSFitModel(BaseFitModel):
         self.energy_unit = str(energy_unit)
         self.volume_unit = str(volume_unit)
         self.pressure_unit = str(pressure_unit)
-        if self.energy_unit != "Ha" or self.volume_unit != "angstrom^3":
+        if self.volume_unit != "angstrom^3":
             raise ValueError(
-                "public E-V fitting currently requires normalized Ha and angstrom^3"
+                "public E-V fitting currently requires absolute volumes normalized "
+                "to angstrom^3"
             )
+        # Validate the public energy unit at construction time.  Conversion to
+        # pressure units is needed only where E/V and pressure meet; the fitted
+        # energy values themselves remain in the declared dataset unit.
+        _pressure_per_energy_density(self.energy_unit, self.pressure_unit)
         self._energy = EnergyEOS()
 
     @property

@@ -51,6 +51,8 @@ DOMAIN_GROUP = "Calculation domain"
 NUMERICAL_GROUP = "Numerical method"
 VALIDATION_GROUP = "Validation and diagnostics"
 UNITS_GROUP = "Units"
+INPUT_UNITS_GROUP = "Input measurement-unit overrides"
+IO_UNITS_GROUP = "I/O units"
 OUTPUT_GROUP = "Output and reporting"
 PLOTTING_GROUP = "Plotting"
 ADVANCED_GROUP = "Advanced numerical controls"
@@ -337,6 +339,8 @@ __all__ = [
     "ReportVerbosity",
     "SCIENTIFIC_GROUP",
     "UNITS_GROUP",
+    "INPUT_UNITS_GROUP",
+    "IO_UNITS_GROUP",
     "VALIDATION_GROUP",
     "default_hdf5_path",
     "default_report_path",

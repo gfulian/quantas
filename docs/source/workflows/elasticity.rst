@@ -74,6 +74,21 @@ to the Cartesian tensor :math:`S_{ijkl}`.  Users should therefore supply the
 same engineering-Voigt convention described in :doc:`../formats/elasticity_input`
 and must not manually alter shear rows or columns to mimic a Cartesian tensor.
 
+External VASP tensors
+---------------------
+
+``quantas elasticity inpgen VASP_RUN --interface vasp`` accepts a VASP
+calculation directory or OUTCAR.  The interface selects the relaxed-ion
+``TOTAL ELASTIC MODULI`` table when available and otherwise uses the clamped-ion
+table.  It converts kbar to GPa and maps VASP's Cartesian shear ordering to the
+Quantas engineering-Voigt convention.
+
+At finite reference stress, Quantas currently preserves the VASP tensor as
+reported and records the reference stress in the interface layer; it does not
+apply the CRYSTAL-specific finite-prestress conversion.  This is deliberate:
+the exact mapping of VASP's finite-difference elastic modulus onto Quantas'
+finite-prestress tensor taxonomy remains a separate validation question.
+
 Tensor rotation and analysis frame
 ----------------------------------
 

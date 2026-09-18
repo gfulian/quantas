@@ -53,8 +53,8 @@ def create_input(
     Parameters
     ----------
     source : str or Path
-        CRYSTAL or VASP output containing an elastic stiffness tensor and,
-        when available, density metadata.
+        CRYSTAL output file or VASP calculation directory/OUTCAR containing an
+        elastic stiffness tensor and, when available, density metadata.
     destination : str or Path
         Destination text path. The ``.dat`` suffix is applied when absent.
     interface : {"crystal", "vasp"}, optional

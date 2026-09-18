@@ -20,6 +20,7 @@ from quantas.models import (
     ReportTable,
     ResultData,
     input_data_table,
+    resolve_phonon_measurement_units,
     mapping_table,
 )
 from quantas.models.kieffer import KiefferVolumeSeries
@@ -86,8 +87,9 @@ def run_ha(
     input_data : HAInput, PhononInputData, str, or Path
         Normalized HA input object or path to a Quantas phonon YAML input file.
     options : HAOptions or None, optional
-        Options controlling the harmonic calculation. If ``None``, default
-        options are used.
+        Options controlling the harmonic calculation. If ``None``, measurement
+        units are inherited from the phonon input and the remaining historical
+        HA defaults are used.
     kieffer_cutoffs : KiefferVolumeSeries or None, optional
         Direct acoustic cutoff state for additive Kieffer enrichment.
     observer : Observer or None, optional
@@ -106,6 +108,13 @@ def run_ha(
         If the input file or input object is invalid.
     """
     ha_input = normalize_ha_input(input_data)
+    if options is None:
+        measurement_units = resolve_phonon_measurement_units(ha_input.units)
+        options = HAOptions(
+            energy_unit=measurement_units.energy,
+            volume_unit=measurement_units.length,
+            frequency_unit=measurement_units.frequency,
+        )
 
     calculator = HACalculator(
         ha_input=ha_input,

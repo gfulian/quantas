@@ -24,6 +24,7 @@ from .kieffer import (
 )
 from .module import ModuleContract
 from .phonons import PhononInputData, PhononModeData
+from .phonon_units import PhononMeasurementUnits, resolve_phonon_measurement_units
 from .plot import (
     AxisFieldLayer,
     ColoredPathSeries,
@@ -68,6 +69,7 @@ from .structures import (
     CellNormalization,
     CrystalStructure,
     LatticeVolumeSeries,
+    PrimitiveCellReduction,
     StructureReconstructionDiagnostics,
     StructureVolumeSeries,
     SymmetryMetadata,
@@ -95,6 +97,7 @@ __all__ = [
     "ElasticTensorKind",
     "HarmonicThermodynamicResult",
     "LatticeVolumeSeries",
+    "PrimitiveCellReduction",
     "StructureReconstructionDiagnostics",
     "StructureVolumeSeries",
     "SymmetryMetadata",
@@ -105,6 +108,8 @@ __all__ = [
     "ModuleContract",
     "PhononInputData",
     "PhononModeData",
+    "PhononMeasurementUnits",
+    "resolve_phonon_measurement_units",
     "PressureSource",
     "PrestressProvenance",
     "AxisFieldLayer",

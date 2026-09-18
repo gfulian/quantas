@@ -5,6 +5,77 @@ Semantic Versioning after the first stable Quantas 2 release.  During the curren
 beta, breaking changes are permitted when they simplify and stabilize the final
 public contract; they must still be documented and validated.
 
+## [2.0.0b13] - Unreleased
+
+### Added
+- Added explicit manual and E(V)-derived pressure reassignment for raw VASP elastic-state series, preserving the original output-stress provenance and keeping pressure assignment separate from the subsequent hydrostatic stiffness conversion.
+- Added an explicit VASP hydrostatic pressure-adjustment step for raw stress--strain elastic states, following Singh et al. (MechElastic, CPC 267, 108068, 2021, Appendix A), with full-reference-stress hydrostaticity checks, one-time provenance, and conversion to the shared hydrostatic incremental tensor kind.
+- Added a raw VASP elastic-state-series adapter that preserves parsed stiffness, density, volume, and reference-pressure provenance without applying a finite-prestress correction; updated the QHA help-order contract for the split unit groups.
+- Extended HA/QHA Kieffer enrichment to VASP elastic calculation sources without
+  changing the CRYSTAL ingestion path.  ``--interface vasp`` accepts calculation
+  directories as well as resolvable ``OUTCAR``/``vasprun.xml`` sources, keeps
+  output-stress, manual, and E(V)-derived pressure assignment separate from the
+  raw stiffness tensor, applies the VASP hydrostatic conversion exactly once,
+  and records the VASP-specific correction in Kieffer provenance.
+- Added primitive-cell VASP Gamma-phonon ingestion from ``vasprun.xml`` +
+  ``OUTCAR`` with backend-neutral frequencies/eigenvectors, physically
+  identified rigid translations, direct HA/QHA input generation, and explicit
+  provenance that direct VASP phonon-dispersion parsing is not implemented.
+- Consolidated VASP elasticity ingestion around calculation directories/OUTCAR,
+  preserving clamped-ion, ionic-relaxation, and total relaxed-ion tensors, the
+  unstrained reference stress/pressure, and explicit source-convention provenance.
+- Added real MgO VASP 5.4.4 elasticity characterization coverage and corrected
+  the VASP ``XX YY ZZ XY YZ ZX`` to Quantas ``11 22 33 23 13 12`` shear mapping.
+
+- Added a generic VASP run-document interface that resolves calculation
+  directories, reads ``vasprun.xml`` with optional ``OUTCAR`` cross-checks,
+  reconstructs canonical structures, and preserves VASP energy, force, stress,
+  run-version, and convergence provenance without coupling the parser to EOS.
+- Added MgO/periclase VASP 5.4.4 characterization fixtures derived from real
+  optimization and Energy-EOS calculations, including regression coverage for
+  the documented VASP-5 outer ``vasprun.xml`` energy-tag bug.
+- Added VASP Energy-EOS adaptation from calculation directories to the shared
+  ``StructureEnergySeries`` contract, including ``energy(sigma->0)`` selection,
+  primitive-cell energy/volume normalization, electronic-setting compatibility
+  checks, and direct ``quantas eos inpgen --interface vasp`` support.
+- Added a backend-neutral primitive-cell reduction contract that preserves an
+  already primitive source basis and records the integer thermodynamic
+  multiplicity when a source cell is reduced.
+
+### Changed
+- Made HA/QHA phonon-input measurement units self-describing at execution time: energy, length/volume, and frequency now default to the YAML ``units`` mapping, with ``--eunit``, ``--lunit``/legacy ``--vunit``, and ``--funit`` acting only as explicit interpretation overrides. Pressure and temperature remain calculation/I/O units.
+- Audited EOS unit handling: EOS already uses explicit CLI overrides only when provided and otherwise honors file declarations before historical fallbacks; its unit options are now grouped accordingly in CLI help.
+- Classified VASP ``TOTAL ELASTIC MODULI`` ingestion as raw stress--strain stiffness and kept the raw series separate from pressure adjustment; only explicitly converted hydrostatic output-stress states are marked incremental, and no CRYSTAL finite-prestress transformation is reused.
+- Relaxed the Energy-EOS cross-unit uncertainty characterization tolerance to
+  accommodate few-per-mille platform variation in nonlinear covariance estimates.
+- Allowed ``quantas elasticity inpgen --interface vasp`` to accept the VASP
+  calculation directory already supported by the interface reader, not only a direct
+  ``OUTCAR`` path.
+
+- Advanced the development baseline to ``2.0.0b13`` on
+  ``dev/interface-vasp-maintenance`` after the b12 pre-release hardening branch
+  merged into ``dev/refactor`` with green local and GitHub CI gates.
+- Scoped b13 specifically to direct VASP run-output ingestion and normalization;
+  DFT-code + Phonopy interoperability is deferred to a separate follow-up
+  branch.
+- Extended the existing backend-neutral Energy EOS input generator to accept
+  VASP calculation directories as sources while retaining CRYSTAL-specific
+  correction diagnostics and established error semantics.
+- Changed Energy-EOS fitting to retain the dataset energy unit end to end
+  instead of silently normalizing eV/Ry input to Hartree; energy-density to
+  pressure conversion remains explicit at the E--V model boundary.
+
+### Scientific compatibility
+
+- VASP Energy-EOS ingestion is additive.  Existing CRYSTAL Energy-EOS behavior
+  and correction semantics are retained.  VASP observations are normalized to
+  the primitive cell before entering the shared EOS collector; generated eV
+  energies remain eV through fitting and persistence.
+- The VASP Energy-EOS policy is explicitly a ground-state/static E--V policy.
+  It uses ``e_0_energy`` / ``energy(sigma->0)`` and rejects mixed electronic
+  settings rather than treating optimization and static-run energies as
+  interchangeable.
+
 ## [2.0.0b12] - Unreleased
 
 ### Added
@@ -802,6 +873,7 @@ precision, tensor conventions, HDF5 numerical payloads, or validated tolerances 
 the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar-volume
 units declared through the historical `VSCALE` keyword.
 
+[2.0.0b13]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b13
 [2.0.0b12]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b12
 [2.0.0b11]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b11
 [2.0.0b10]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b10

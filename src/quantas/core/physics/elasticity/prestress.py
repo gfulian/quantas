@@ -36,13 +36,14 @@ def assign_hydrostatic_pressures(
     pressure_source: PressureSource | str,
     assignment_method: str,
     metadata: Mapping[str, Any] | None = None,
+    replace_existing: bool = False,
 ) -> ElasticStateSeries:
     """Attach externally derived pressures to an explicitly raw series.
 
     This operation does not alter any stiffness coefficient.  It prepares raw
-    energy--strain tensors for a subsequent, separately auditable finite-
-    prestress conversion.  Existing pressure or correction provenance cannot
-    be replaced.
+    elastic tensors for a subsequent, separately auditable finite-prestress
+    conversion. Existing pressure provenance is preserved by default; an
+    explicit replacement is allowed only when ``replace_existing=True``.
 
     Parameters
     ----------
@@ -56,6 +57,9 @@ def assign_hydrostatic_pressures(
         Stable description of the calculation that produced the values.
     metadata : mapping, optional
         Additional series-level provenance, for example EOS fit diagnostics.
+    replace_existing : bool, optional
+        Replace an existing raw pressure value while retaining the previous
+        value and source in metadata. The default is ``False``.
 
     Returns
     -------
@@ -67,7 +71,8 @@ def assign_hydrostatic_pressures(
     TypeError
         If ``series`` has an unsupported type.
     ValueError
-        If values, sources, or existing tensor provenance are incompatible.
+        If values, sources, tensor provenance, or replacement semantics are
+        incompatible.
     """
     if not isinstance(series, ElasticStateSeries):
         raise TypeError("series must be an ElasticStateSeries")
@@ -81,47 +86,19 @@ def assign_hydrostatic_pressures(
     if not method:
         raise ValueError("assignment_method must be non-empty")
 
-    states: list[ElasticState] = []
-    for index, (state, pressure) in enumerate(
-        zip(series.states, pressures, strict=True)
-    ):
-        tensor_kind = ElasticTensorKind(state.prestress.tensor_kind)
-        state_source = PressureSource(state.prestress.pressure_source)
-        if tensor_kind is not ElasticTensorKind.RAW_ENERGY_STRAIN:
-            raise ValueError(
-                f"elastic state {index}: pressure assignment requires an "
-                "explicitly raw energy-strain tensor"
-            )
-        if state.prestress.pressure_gpa is not None or (
-            state_source is not PressureSource.UNAVAILABLE
-        ):
-            raise ValueError(
-                f"elastic state {index}: existing pressure provenance cannot "
-                "be replaced"
-            )
-        state_metadata = dict(state.metadata)
-        state_metadata["pressure_assignment"] = {
-            "method": method,
-            "pressure_gpa": float(pressure),
-            "pressure_source": source.value,
-        }
-        states.append(
-            ElasticState(
-                volume=state.volume,
-                density=state.density,
-                stiffness=state.stiffness,
-                prestress=PrestressProvenance(
-                    tensor_kind=tensor_kind,
-                    pressure_gpa=float(pressure),
-                    pressure_source=source,
-                ),
-                energy=state.energy,
-                energy_unit=state.energy_unit,
-                lattice=state.lattice,
-                source=state.source,
-                metadata=state_metadata,
-            )
+    states = tuple(
+        _state_with_assigned_pressure(
+            state,
+            float(pressure),
+            pressure_source=source,
+            assignment_method=method,
+            replace_existing=replace_existing,
+            state_index=index,
         )
+        for index, (state, pressure) in enumerate(
+            zip(series.states, pressures, strict=True)
+        )
+    )
 
     series_metadata = dict(series.metadata)
     assignment: dict[str, Any] = {
@@ -129,14 +106,70 @@ def assign_hydrostatic_pressures(
         "pressure_source": source.value,
         "pressure_unit": "GPa",
         "state_count": series.nstates,
+        "replaced_existing": bool(replace_existing),
     }
     assignment.update(dict(metadata or {}))
     series_metadata["pressure_assignment"] = assignment
     return ElasticStateSeries(
-        states=tuple(states),
+        states=states,
         reference_index=series.reference_index,
         orientation=series.orientation,
         metadata=series_metadata,
+    )
+
+
+def _state_with_assigned_pressure(
+    state: ElasticState,
+    pressure_gpa: float,
+    *,
+    pressure_source: PressureSource,
+    assignment_method: str,
+    replace_existing: bool,
+    state_index: int,
+) -> ElasticState:
+    """Return one raw state carrying explicit hydrostatic pressure provenance."""
+    tensor_kind = ElasticTensorKind(state.prestress.tensor_kind)
+    state_source = PressureSource(state.prestress.pressure_source)
+    if tensor_kind not in {
+        ElasticTensorKind.RAW_ENERGY_STRAIN,
+        ElasticTensorKind.RAW_STRESS_STRAIN,
+    }:
+        raise ValueError(
+            f"elastic state {state_index}: pressure assignment requires an "
+            "explicitly raw elastic tensor"
+        )
+    has_existing = state.prestress.pressure_gpa is not None or (
+        state_source is not PressureSource.UNAVAILABLE
+    )
+    if has_existing and not replace_existing:
+        raise ValueError(
+            f"elastic state {state_index}: existing pressure provenance cannot "
+            "be replaced"
+        )
+    assignment: dict[str, Any] = {
+        "method": assignment_method,
+        "pressure_gpa": pressure_gpa,
+        "pressure_source": pressure_source.value,
+    }
+    if has_existing:
+        assignment["replaced_pressure_gpa"] = state.prestress.pressure_gpa
+        assignment["replaced_pressure_source"] = state_source.value
+    metadata = dict(state.metadata)
+    metadata["pressure_assignment"] = assignment
+    return ElasticState(
+        volume=state.volume,
+        density=state.density,
+        stiffness=state.stiffness,
+        prestress=PrestressProvenance(
+            tensor_kind=tensor_kind,
+            pressure_gpa=pressure_gpa,
+            pressure_source=pressure_source,
+        ),
+        energy=state.energy,
+        energy_unit=state.energy_unit,
+        lattice=state.lattice,
+        source=state.source,
+        metadata=metadata,
     )
 
 

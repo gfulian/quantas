@@ -56,6 +56,16 @@ interfaces are:
    Quantas tracker, multi-volume continuity is recorded as ``unknown`` rather
    than guessed.
 
+``vasp``
+   One primitive-cell VASP Gamma-phonon run, or a list of compatible runs at
+   different volumes.  Quantas reads the signed frequencies from ``OUTCAR`` and
+   the normalized dynamical-matrix eigenvectors from ``vasprun.xml``.  The three
+   rigid translations are identified from the mass-weighted translational
+   subspace and set to exactly zero for thermodynamic use; their raw numerical
+   frequencies remain in provenance.  Direct VASP phonon dispersion is not
+   implemented: reducible/supercell sources are rejected rather than silently
+   interpreting folded Gamma modes as primitive-cell q points.
+
 The same generated YAML can be read by HA and QHA.  HA does not require
 mode-by-mode continuity because it evaluates each sampled volume independently.
 QHA with ``scheme=freq`` does require defensible branch correspondence.
@@ -769,6 +779,28 @@ the terminal only; the complete sampling remains in the generated YAML file.
 Use ``--debug`` when the continuity diagnostics need to be inspected in detail,
 and ``--quiet`` for successful batch generation with no normal terminal output.
 The two modes are mutually exclusive.
+
+Primitive-cell VASP Gamma series
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+A single VASP run directory can be converted directly:
+
+.. code-block:: console
+
+   quantas ha inpgen vasp_run --interface vasp --output material.yaml
+
+For a multi-volume Gamma-only series, put one VASP calculation directory per
+line and use the same shared QHA generator:
+
+.. code-block:: console
+
+   quantas qha inpgen vasp-runs.txt --list --interface vasp \
+      --reference 0 --output material_qha.yaml
+
+The current VASP route requires the calculation cell itself to be primitive and
+contains exactly one q point, Gamma.  It does **not** reconstruct phonon
+dispersion from a VASP supercell and does not parse direct VASP-6 q-point
+dispersion output.
 
 Native CRYSTAL QHA output
 ~~~~~~~~~~~~~~~~~~~~~~~~~

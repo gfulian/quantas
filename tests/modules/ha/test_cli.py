@@ -19,7 +19,10 @@ def test_ha_run_help_is_available():
         "Harmonic-approximation" in result.output
         or "harmonic-approximation" in result.output
     )
+    assert "Input measurement-unit overrides:" in result.output
+    assert "I/O units:" in result.output
     assert "--eunit" in result.output
+    assert "--lunit" in result.output
     assert "--funit" in result.output
     assert "--kieffer" in result.output
 
@@ -70,6 +73,49 @@ def test_ha_run_activates_embedded_kieffer_cutoffs(tmp_path, monkeypatch) -> Non
     assert "S. W. Kieffer" in report
 
 
+
+def test_ha_run_uses_input_measurement_units_unless_overridden(
+    tmp_path, monkeypatch
+) -> None:
+    """HA should honor self-describing input units and explicit CLI overrides."""
+    filename = tmp_path / "ha-units.yaml"
+    filename.write_text(
+        "job: units\n"
+        "units:\n"
+        "  energy: eV\n"
+        "  volume: angstrom^3\n"
+        "  frequency: THz\n"
+        "  length: angstrom\n",
+        encoding="utf-8",
+    )
+    captured = {}
+
+    def fake_run(input_data, *, options, kieffer_cutoffs, observer):
+        captured["options"] = options
+        return object()
+
+    monkeypatch.setattr("quantas.cli.ha.run_ha", fake_run)
+    monkeypatch.setattr("quantas.cli.ha.write_ha_hdf5", lambda *args, **kwargs: None)
+
+    result = CliRunner().invoke(
+        ha,
+        [
+            "run",
+            str(filename),
+            "--eunit",
+            "Ry",
+            "--quiet",
+            "--no-progress",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    options = captured["options"]
+    assert options.energy_unit == "Ry"
+    assert options.volume_unit == "A"
+    assert options.frequency_unit == "THz"
+    assert options.temperature_unit == "K"
+
 def test_ha_export_help_is_available():
     runner = CliRunner()
     result = runner.invoke(ha, ["export", "--help"])
@@ -118,7 +164,12 @@ def test_add_kieffer_help_exposes_pressure_and_quadrature_controls():
     result = CliRunner().invoke(ha, ["add-kieffer", "--help"])
 
     assert result.exit_code == 0
+    assert "HA/QHA YAML input" in result.output
+    assert "VASP elastic calculation source" in result.output
+    assert "Energy-derived pressure sources" in result.output
+    assert "multi-volume QHA" in result.output
     assert "--interface" in result.output
+    assert "vasp" in result.output
     assert "--elastic-list" in result.output
     assert "--pressure-source" in result.output
     assert "energy-eos" in result.output
@@ -175,6 +226,86 @@ def test_qha_add_kieffer_forwards_interface_and_energy_fit_options(
     assert captured["pressure_policy"] == "energy_polynomial"
     assert captured["polynomial_degree"] == 4
     assert captured["eos"] == "V3"
+
+
+def test_add_kieffer_accepts_vasp_directory_source(tmp_path, monkeypatch) -> None:
+    """The shared CLI treats a VASP calculation directory as one elastic source."""
+    source = tmp_path / "ha.yaml"
+    source.write_text("job: test\n", encoding="utf-8")
+    run = tmp_path / "vasp-run"
+    run.mkdir()
+    destination = tmp_path / "ha-kieffer.yaml"
+    captured = {}
+
+    def fake_add(source, destination, outputs, **kwargs):
+        captured["outputs"] = outputs
+        captured.update(kwargs)
+        return destination
+
+    monkeypatch.setattr(
+        "quantas.cli.kieffer_input.ha_api.add_kieffer_input",
+        fake_add,
+    )
+    result = CliRunner().invoke(
+        ha,
+        [
+            "add-kieffer",
+            str(source),
+            str(run),
+            "--interface",
+            "vasp",
+            "--pressure-source",
+            "output-stress",
+            "--output",
+            str(destination),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["outputs"] == (run,)
+    assert captured["interface"] == "vasp"
+    assert captured["pressure_policy"] == "output_stress"
+
+
+def test_add_kieffer_elastic_list_accepts_relative_vasp_directory(
+    tmp_path, monkeypatch
+) -> None:
+    """VASP directories listed relative to --elastic-list remain portable."""
+    source = tmp_path / "ha.yaml"
+    source.write_text("job: test\n", encoding="utf-8")
+    run = tmp_path / "vasp-run"
+    run.mkdir()
+    elastic_list = tmp_path / "elastic-sources.txt"
+    elastic_list.write_text("vasp-run\n", encoding="utf-8")
+    destination = tmp_path / "ha-kieffer.yaml"
+    captured = {}
+
+    def fake_add(source, destination, outputs, **kwargs):
+        captured["outputs"] = outputs
+        captured.update(kwargs)
+        return destination
+
+    monkeypatch.setattr(
+        "quantas.cli.kieffer_input.ha_api.add_kieffer_input",
+        fake_add,
+    )
+    result = CliRunner().invoke(
+        ha,
+        [
+            "add-kieffer",
+            str(source),
+            "--elastic-list",
+            str(elastic_list),
+            "--interface",
+            "vasp",
+            "--output",
+            str(destination),
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert captured["outputs"] == (run,)
+    assert captured["interface"] == "vasp"
 
 
 def test_generated_structure_summary_does_not_require_new_reader_property(

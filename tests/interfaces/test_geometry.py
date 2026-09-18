@@ -106,3 +106,74 @@ def test_translationally_perturbed_supercell_is_averaged_not_hidden_by_symprec()
     assert diagnostics.status == "averaged"
     assert 0.0 < diagnostics.maximum_translation_residual < 0.05
     assert diagnostics.minimum_replica_count == diagnostics.maximum_replica_count == 8
+
+
+def test_spglib_primitive_reduction_reports_thermodynamic_multiplicity():
+    """The shared reduction helper should expose energy/volume normalization."""
+    from quantas.core.geometry import reduce_to_primitive_cell
+
+    reference = CrystalGeometryParser(DATA).initial_primitive_cell()
+    source = _diagonal_supercell(reference, 2)
+
+    reduction = reduce_to_primitive_cell(source, symprec=1.0e-7)
+
+    assert reduction.structure.natoms == reference.natoms
+    assert reduction.repetitions == 8
+    assert reduction.source_atoms == 8 * reference.natoms
+    assert reduction.source_volume == pytest.approx(8.0 * reference.volume)
+    assert abs(np.linalg.det(reduction.source_to_primitive)) == pytest.approx(1.0 / 8.0)
+
+
+def test_spglib_primitive_reduction_preserves_already_primitive_basis():
+    """An already primitive backend cell should not be gratuitously reoriented."""
+    from quantas.core.geometry import reduce_to_primitive_cell
+
+    reference = CrystalGeometryParser(DATA).initial_primitive_cell()
+
+    reduction = reduce_to_primitive_cell(reference, symprec=1.0e-7)
+
+    assert reduction.repetitions == 1
+    np.testing.assert_allclose(reduction.structure.lattice, reference.lattice)
+    np.testing.assert_allclose(
+        reduction.structure.fractional_positions,
+        reference.fractional_positions,
+    )
+    np.testing.assert_array_equal(
+        reduction.structure.atomic_numbers,
+        reference.atomic_numbers,
+    )
+    np.testing.assert_allclose(reduction.source_to_primitive, np.eye(3))
+    assert reduction.structure.metadata["source_basis_preserved"] is True
+
+
+def test_spglib_primitive_reduction_handles_conventional_mgo_cell():
+    """A conventional rocksalt MgO cell should reduce to one MgO primitive cell."""
+    from quantas.core.geometry import reduce_to_primitive_cell
+
+    a = 4.25
+    fcc = np.asarray(
+        [
+            [0.0, 0.0, 0.0],
+            [0.0, 0.5, 0.5],
+            [0.5, 0.0, 0.5],
+            [0.5, 0.5, 0.0],
+        ],
+        dtype=np.float64,
+    )
+    source = CrystalStructure(
+        lattice=np.eye(3, dtype=np.float64) * a,
+        fractional_positions=np.vstack((fcc, (fcc + 0.5) % 1.0)),
+        atomic_numbers=np.asarray([12] * 4 + [8] * 4, dtype=np.int64),
+        label="conventional rocksalt MgO",
+    )
+
+    reduction = reduce_to_primitive_cell(source, symprec=1.0e-7)
+
+    assert reduction.repetitions == 4
+    assert reduction.structure.natoms == 2
+    assert reduction.structure.volume == pytest.approx(source.volume / 4.0)
+    assert abs(np.linalg.det(reduction.source_to_primitive)) == pytest.approx(0.25)
+    np.testing.assert_array_equal(
+        np.sort(reduction.structure.atomic_numbers),
+        [8, 12],
+    )

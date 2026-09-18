@@ -163,6 +163,191 @@ elastic pressure are scientifically relevant because they establish whether
 the output contains the stress-corrected coefficients required under
 hydrostatic pre-stress.
 
+VASP run documents
+------------------
+
+The generic VASP interface treats one calculation directory as one run source.
+:func:`quantas.interfaces.vasp.resolve_vasp_run_source` accepts the directory
+itself, ``vasprun.xml``, or ``OUTCAR`` and resolves the sibling files.  During
+the b13 interface-maintenance tranche, ``vasprun.xml`` is the required primary
+structured document and ``OUTCAR`` is optional complementary evidence.  An
+``OUTCAR`` without the sibling XML file is therefore not silently promoted to a
+complete run source.
+
+:class:`quantas.interfaces.vasp.document.VaspRunDocument` owns XML/text syntax.
+It exposes generator metadata, explicitly recorded INCAR values, effective
+scalar parameters, atom ordering, and ionic-state containers without deciding
+which state or energy should feed a Quantas scientific workflow.
+:class:`quantas.interfaces.vasp.output.VaspOutputParser` converts these records
+to canonical :class:`quantas.models.structures.CrystalStructure` objects and
+VASP-specific ionic-state records containing:
+
+* lattice vectors in angstrom and fractional coordinates as ``float64``;
+* atomic numbers in the exact VASP atom order;
+* ``e_fr_energy``, ``e_wo_entrp``, and ``e_0_energy`` as separate values in eV;
+* forces in eV/angstrom;
+* stress tensors in kbar, without a premature sign or pressure conversion;
+* electronic/ionic convergence facts that can be established explicitly;
+* source and resolution provenance.
+
+The parser accepts the older layout in which each ionic state is enclosed by a
+``<calculation>`` element and the current documented flat ionic-state layout.
+Support for a layout means that Quantas understands its structure; scientific
+validation against a specific VASP version still requires a real reference
+output for that version.
+
+VASP energy semantics require special care.  In VASP 5.4.4 the outer
+``calculation/energy`` record is affected by a documented output bug: the
+``e_wo_entrp`` and ``e_0_energy`` tags can contain the extrapolated energy and
+electronic entropy term, respectively, instead of their nominal quantities.
+The b13 parser does not branch on a hard-coded version string.  For
+``<calculation>``-style output it instead takes the relative values of ``F``,
+``E``, and ``E0`` from the final electronic ``scstep`` and transfers only the
+shift in the outer ``e_fr_energy``.  This preserves an additive correction that
+is present only in the ionic-state total while avoiding the mislabeled outer
+tags.  The raw outer values, the applied shift, and whether the known VASP-5
+pattern was observed remain in metadata.  When an ``OUTCAR`` can be paired
+unambiguously, the resolved XML energies are checked against its final
+``TOTEN``, ``energy without entropy``, and ``energy(sigma->0)`` values.
+
+This resolution policy follows the `VASP developers' description of the VASP
+5.4.4 XML issue <https://vasp.at/forum/viewtopic.php?t=17839>`_ and its
+correction in VASP 6.  It is an interface-level source correction; workflow
+adapters select scientific quantities only after the three VASP energy values
+have been resolved.
+
+VASP elasticity adaptation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The VASP elasticity reader accepts either a calculation directory, ``OUTCAR``,
+or ``vasprun.xml`` with a sibling ``OUTCAR``.  Elastic moduli are read from the
+human-readable OUTCAR because that is where VASP 5.4.4 reports the complete
+finite-difference elasticity decomposition.  Quantas preserves separately:
+
+* ``SYMMETRIZED ELASTIC MODULI`` (clamped-ion);
+* ``ELASTIC MODULI CONTR FROM IONIC RELAXATION`` when present;
+* ``TOTAL ELASTIC MODULI`` (relaxed-ion), selected by default when available.
+
+VASP labels the six components ``XX YY ZZ XY YZ ZX``.  The parser maps both
+matrix axes explicitly by label to Quantas' ``11 22 33 23 13 12`` convention;
+it does not use positional shear swaps.  The first stress block is retained as
+the unstrained reference stress, with VASP's positive-compression sign
+convention, and the first reported cell volume is used for density because
+later ``IBRION=6`` records contain trial lattice distortions.
+
+The interface also exposes :func:`quantas.interfaces.vasp.read_vasp_elastic_series`
+to collect several VASP elastic calculations into the shared
+:class:`~quantas.models.elastic_states.ElasticStateSeries` contract.  This raw
+adapter remains factual: it sorts states by primitive-cell volume, preserves
+the selected VASP stiffness, density, and reference stress/pressure provenance,
+and applies **no** finite-prestress correction.  Raw VASP states are classified
+as ``raw_stress_strain`` and therefore continue to fail the shared incremental
+stiffness gate.
+
+For a genuinely hydrostatic VASP reference stress, Quantas now provides an
+explicit second step via
+:func:`quantas.interfaces.vasp.convert_vasp_hydrostatic_elastic_series`.  The
+conversion follows Appendix A of Singh et al., *MechElastic* (Computer Physics
+Communications 267, 108068, 2021): pressure is subtracted from all
+six Voigt diagonal terms and added to ``C12``, ``C13`` and ``C23`` (and their
+symmetric partners).  Pressure is positive in compression.  The complete
+unstrained stress tensor is checked against ``P I`` before this scalar
+hydrostatic adjustment is allowed; appreciable deviatoric stress is rejected.
+The corrected state is then labelled ``wallace_hydrostatic`` and records the
+raw ``raw_stress_strain`` source kind and correction DOI in provenance.
+
+This is a VASP-specific ingestion rule.  The CRYSTAL Erba/Barron--Klein
+energy--strain transformation and Quantas' generic Eulerian finite-strain
+operator are not reused.  Pressure selection remains a separate operation from
+tensor conversion.  :func:`quantas.interfaces.vasp.assign_vasp_manual_pressures`
+can replace the raw output-stress pressure with explicit hydrostatic values, and
+:func:`quantas.interfaces.vasp.resolve_vasp_energy_derived_pressures` reuses the
+backend-neutral E(V) pressure fitter and volume matcher.  Both operations leave
+the VASP stiffness matrix raw; only the explicit hydrostatic conversion marks
+the tensor incremental.  The original VASP reference stress is still retained
+and must itself be hydrostatic, while the selected correction pressure and its
+difference from the VASP output pressure are recorded in provenance.  No
+backend-specific Kieffer numerics are introduced here: HA/QHA enrichment now
+consumes this converted series through the same backend-neutral
+``build_kieffer_volume_series()`` path used by CRYSTAL.
+
+VASP Gamma phonon adaptation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`quantas.interfaces.vasp.phonons.VaspPhononReader` currently exposes
+only primitive-cell Gamma phonons from a completed VASP run.  Frequencies and
+the real/imaginary mode label are read from the human-readable ``OUTCAR``;
+higher-precision normalized eigenvectors are read from
+``vasprun.xml/dynmat/eigenvectors``.  The interface stores those vectors as the
+backend-neutral unit-norm mass-weighted representation used by
+:class:`~quantas.models.phonons.PhononModeData`.
+
+The three Gamma translations are not identified by a fixed frequency cutoff.
+Quantas projects every VASP eigenvector onto the three-dimensional
+mass-weighted rigid-translation subspace.  Exactly three well-resolved
+translations are required.  Their raw VASP frequencies and projection scores
+remain in provenance, while the thermodynamic frequencies are set to exactly
+zero so numerical acoustic-sum-rule drift is not counted as a physical
+harmonic oscillator.  Other imaginary modes retain negative frequencies.
+
+.. important::
+
+   Direct phonon dispersion from VASP output is **not implemented yet**.  The
+   current VASP reader requires the calculation cell itself to be primitive and
+   exposes a single q-point, ``Gamma = (0, 0, 0)``, with unit weight and an
+   identity phonon-supercell matrix.  A reducible source cell is rejected
+   rather than treating folded supercell Gamma modes as a primitive-cell
+   dispersion.  VASP 6 ``LPHON_DISPERSION``/``QPOINTS`` output is likewise
+   outside the current parser contract.
+
+The initial undistorted VASP state supplies the static
+``energy(sigma->0)`` value for HA/QHA input generation.  Its source unit remains
+``eV``; phonon frequencies are exposed in ``cm^-1`` and structural quantities
+in angstrom.  The first validated characterization target is VASP 5.4.4
+``IBRION=6`` output for primitive MgO.
+
+VASP Energy EOS adaptation
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+:class:`quantas.interfaces.vasp.energy_volume.VaspEnergyVolumeReader` adapts one
+completed VASP run to one backend-neutral
+:class:`~quantas.models.computation.StructureEnergyPoint`.  The current b13
+scope is a zero-electronic-temperature/static E--V dataset, so the adapter
+selects VASP ``e_0_energy`` / ``energy(sigma->0)``.  This is not a statement
+that ``E0`` is the appropriate quantity for every VASP workflow: a calculation
+that intentionally represents finite electronic temperature has different
+thermodynamic semantics.  For accurate bulk total-energy calculations VASP
+recommends the tetrahedron method with Blöchl corrections (``ISMEAR=-5``);
+when Gaussian or Methfessel--Paxton smearing is used, ``energy(sigma->0)`` is
+an extrapolation and convergence with respect to ``SIGMA`` remains the user's
+scientific responsibility.  See the `VASP smearing guidance
+<https://www.vasp.at/wiki/index.php/Smearing_technique>`_.
+
+Each Energy EOS source must resolve to exactly one ionic state.  An optimization
+history is therefore never flattened into the E--V series.  The source cell is
+passed through the shared spglib primitive-cell normalization.  If the VASP
+cell is already primitive, its lattice basis and orientation are preserved.  If
+it contains multiple primitive repetitions, structure and volume are reduced
+and the source-cell energy is divided by the same integer multiplicity.  This
+produces the same primitive normalization expected by the backend-neutral EOS
+collector; ``--crystal-reference crystallographic`` may subsequently scale the
+complete series to one fixed crystallographic cell.
+
+Before independent runs are merged, Quantas requires one explicit VASP energy
+compatibility signature.  It records the selected quantity, ``ISMEAR`` and
+``SIGMA`` where active, relevant exchange-correlation/spin/charge/hybrid/DFT+U
+settings, plane-wave precision/cutoff, Brillouin-zone sampling, and the
+pseudopotential labels stored in ``vasprun.xml``.  A mismatch is rejected rather
+than silently mixing energies computed on different electronic surfaces.  The
+check is intentionally conservative; a future workflow may relax individual
+fields only with an explicit scientific policy and characterization tests.
+
+The first characterization fixture is MgO/periclase calculated with VASP
+``5.4.4.18Apr17-6-g9f103f2a35``.  Full user calculations were used to verify
+three consecutive cell optimizations and seven fixed-cell EOS states; compact
+fixtures retain the real generator, INCAR, atom, structure, electronic-energy,
+force, stress, and convergence records needed by the repository tests.
+
 CRYSTAL static-energy semantics
 -------------------------------
 
@@ -298,10 +483,12 @@ Kieffer input enrichment
 ------------------------
 
 The public HA and QHA APIs expose ``add_kieffer_input``.  Their shared
-implementation reads the phonon input and the CRYSTAL elastic volume series,
-builds the anisotropic acoustic averages, validates the appropriate HA or QHA
-applicability contract, and writes a new YAML file.  The corresponding command
-is registered under both workflows:
+implementation reads the phonon input and a backend-specific elastic volume
+series, builds the anisotropic acoustic averages, validates the appropriate HA
+or QHA applicability contract, and writes a new YAML file.  CRYSTAL and VASP
+share the backend-neutral Kieffer builder but retain separate raw-tensor and
+finite-prestress semantics.  The corresponding command is registered under
+both workflows:
 
 .. code-block:: console
 
@@ -309,12 +496,19 @@ is registered under both workflows:
    quantas qha add-kieffer qha.yaml --elastic-list elastic-files.txt \
        --interface crystal -o qha-kieffer.yaml
 
+   quantas ha add-kieffer ha.yaml vasp-run/ --interface vasp \
+       --pressure-source output-stress -o ha-vasp-kieffer.yaml
+
 Paths inside ``elastic-files.txt`` are resolved relative to the list file. Blank
 lines and lines beginning with ``#`` are ignored. This makes the list portable
-when the complete calculation directory is moved.
+when the complete calculation directory is moved. List entries may name files
+or VASP calculation directories.
 
 The default ``--pressure-source auto`` preserves tensors corrected by CRYSTAL's
 ``PRESSURE`` keyword and otherwise uses pressure from the unstrained stress.
+For VASP, ``auto`` uses the unstrained output-stress pressure retained beside
+the raw ``TOTAL ELASTIC MODULI`` tensor; no VASP tensor is treated as already
+pressure-corrected by analogy with CRYSTAL.
 Manual pressure values can be supplied in input-file order:
 
 .. code-block:: console
@@ -344,9 +538,10 @@ service combines the selected E(V) fit with explicit volume matching and
 pressure assignment while leaving the raw stiffness coefficients unchanged.
 Both Kieffer enrichment and thermoelastic input generation use this same
 pressure-resolution path.  The subsequent hydrostatic tensor correction
-remains interface-specific, so CRYSTAL conventions do not leak into the shared
-core.  This boundary lets tests verify that ``P(V)`` is attached to an
-unmodified raw tensor before the tensor is corrected exactly once.
+remains interface-specific, so CRYSTAL conventions do not leak into VASP and
+VASP conventions do not leak into CRYSTAL.  This boundary lets tests verify
+that ``P(V)`` is attached to an unmodified raw tensor before the selected
+backend converts it exactly once.
 
 The destination defaults to ``<input-stem>-kieffer.yaml`` and must differ from
 the source path. An existing Kieffer block is never replaced silently.  The

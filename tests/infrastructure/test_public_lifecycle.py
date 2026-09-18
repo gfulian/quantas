@@ -40,15 +40,16 @@ def _write_vasp_elasticity_output(
                 "volume of cell : 80.000000",
             ]
         )
+    labels = ("XX", "YY", "ZZ", "XY", "YZ", "ZX")
     lines.extend(
         [
             "SYMMETRIZED ELASTIC MODULI (kBar)",
-            "separator",
-            "separator",
+            "Direction XX YY ZZ XY YZ ZX",
+            "--------------------------------------------------------------------------------",
         ]
     )
     lines.extend(
-        f"{row + 1} " + " ".join(str(value) for value in matrix[row])
+        f"{labels[row]} " + " ".join(str(value) for value in matrix[row])
         for row in range(6)
     )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
@@ -155,6 +156,27 @@ def test_seismic_and_elasticity_generators_share_input_text(tmp_path: Path) -> N
 
     assert seismic_path.read_bytes() == elastic_path.read_bytes()
 
+
+
+
+def test_elasticity_vasp_directory_source(tmp_path: Path) -> None:
+    """VASP elasticity generation accepts a calculation directory as source."""
+    run = tmp_path / "vasp-run"
+    run.mkdir()
+    _write_vasp_elasticity_output(run / "OUTCAR")
+
+    output = elasticity.create_input(
+        run,
+        tmp_path / "vasp-elasticity",
+        interface="vasp",
+        jobname="VASP directory",
+    )
+    parsed = elasticity.read_input(output)
+
+    assert parsed.jobname == "VASP directory"
+    assert parsed.stiffness is not None
+    assert parsed.stiffness[0, 0] == pytest.approx(200.0)
+    assert parsed.stiffness[3, 3] == pytest.approx(80.0)
 
 def test_seismic_vasp_generator_preserves_density(
     tmp_path: Path,

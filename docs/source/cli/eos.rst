@@ -47,18 +47,29 @@ Energy EOS input generation
 ---------------------------
 
 ``quantas eos inpgen`` collects structure--energy states from electronic-structure
-outputs without selecting an EOS formulation or fit settings.  The first public
-interface is CRYSTAL::
+outputs without selecting an EOS formulation or fit settings.  CRYSTAL output
+files and independent VASP calculation directories use the same command::
 
    quantas eos inpgen crystal.out --interface crystal -o energy.dat
    quantas eos inpgen files.txt --interface crystal --list -o energy.dat
+   quantas eos inpgen vasp-runs.txt --interface vasp --list -o energy.dat
 
 A CRYSTAL source may contain one static state, one completed geometry
 optimization, or a native multi-volume ``EOS`` calculation.  With ``--list``,
-each listed output may contribute one or several states; the resulting points
-are flattened, checked for compatible composition and total-energy semantics,
-and sorted by volume.  This supports extending a native CRYSTAL EOS series with
-additional independently calculated compressed or expanded points.
+each listed output may contribute one or several states.  A VASP source is one
+calculation directory (or its ``vasprun.xml``/``OUTCAR`` path) and contributes
+exactly one completed ionic state; an optimization history is rejected for this
+workflow.  ``vasprun.xml`` is the primary VASP record and a sibling ``OUTCAR``
+is used as a consistency check when available.
+
+VASP E--V collection selects ``energy(sigma->0)`` and requires a homogeneous
+electronic-energy signature across all listed runs.  This prevents an
+optimization performed with one smearing scheme from being inserted silently
+into a static EOS series calculated with another scheme.  VASP source cells are
+normalized to the primitive cell before collection, with source energy scaled
+by the same integer cell multiplicity.  The resulting points from either
+backend are checked for compatible composition and energy semantics and sorted
+by volume.
 
 The generated table contains ``V A B C ALPHA BETA GAMMA E`` and explicit units.
 It also records ``SYSTEM``, the reference space group, ``CRYSTAL_REFERENCE``,
@@ -75,6 +86,7 @@ For a static Energy EOS generated from electronic-structure outputs:
 .. code-block:: console
 
    quantas eos inpgen crystal-files.txt --interface crystal --list -o mgo_ev.dat
+   # or: quantas eos inpgen vasp-runs.txt --interface vasp --list -o mgo_ev.dat
    quantas eos run mgo_ev.dat --domain ev --ev-eos BM3 -o mgo_ev.hdf5
    # Optional pressure-form parameterization of the derived axial path:
    quantas eos run mgo_ev.dat --domain ev --ev-eos SJ --axial-eos BM3 \
@@ -127,6 +139,12 @@ scientific documentation.
 
 Important option families
 -------------------------
+
+EOS already follows the self-describing-input rule for unit handling.  Its
+``--eunit``, ``--lunit``, ``--punit``, and ``--tunit`` options are input-unit
+overrides: when omitted, declarations in the EOS data file are used before the
+historical fallbacks.  This differs from HA/QHA, where pressure and temperature
+primarily describe the requested calculation/output domain.
 
 * domain and target options define the scientific slot;
 * E--V, P--V, V--T, and P--V--T options define the model rather than solver behavior;

@@ -11,7 +11,6 @@ import re
 import numpy as np
 
 from quantas.core.physics.units import (
-    convert_energy,
     convert_length,
     convert_pressure,
     convert_volume,
@@ -155,8 +154,8 @@ class EOSInputFileReader(BasicReader[EOSDataset]):
         File loaded during construction.
     pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
         Explicit input-unit overrides. Energy and matching ``sigma_energy``
-        values are normalized to Hartree; other physical quantities retain the
-        established EOS canonical units.
+        values retain the declared input unit throughout Energy-EOS fitting;
+        other physical quantities retain the established EOS canonical units.
     """
 
     def __init__(
@@ -474,9 +473,6 @@ def _build_dataset(
         volume_scale=volume_scale,
         linear_scale=linear_scale,
     )
-    for name in ("energy", "sigma_energy"):
-        if name in columns:
-            units[name] = "Ha"
     for name in ("pressure", "sigma_pressure"):
         if name in columns:
             units[name] = "GPa"
@@ -574,8 +570,8 @@ def read_eos_input(
     pressure_unit, length_unit, temperature_unit, energy_unit : str or None, optional
         Explicit input-unit overrides. When omitted, declarations in the file
         are used, followed by the EOS defaults GPa, Angstrom, kelvin, and
-        Hartree. Normalized in-memory values always use GPa,
-        Angstrom/Angstrom^3, K, and Ha.
+        Hartree. Energy values retain the declared input unit; the remaining
+        normalized in-memory values use GPa, Angstrom/Angstrom^3, and K.
 
     Returns
     -------
@@ -938,16 +934,8 @@ def _normalize_physical_units(
     volume_scale: str,
     linear_scale: str,
 ) -> None:
-    """Convert supported physical input columns to EOS internal units."""
+    """Normalize non-energy physical columns to EOS canonical units."""
     _convert_temperature(columns, temperature_scale)
-    for name in ("energy", "sigma_energy"):
-        if name in columns:
-            source_unit = raw_units.get(name, "Ha")
-            if not _unit_is(source_unit, {"ha", "hartree"}):
-                columns[name] = np.asarray(
-                    convert_energy(columns[name], source_unit, "Ha"),
-                    dtype=np.float64,
-                )
     for name in ("pressure", "sigma_pressure"):
         if name in columns:
             source_unit = raw_units.get(name, "GPa")

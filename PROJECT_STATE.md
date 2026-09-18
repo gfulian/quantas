@@ -14,12 +14,12 @@ state.
 
 | Item | Current value |
 |---|---|
-| Last updated | 2026-09-16 |
-| Current development version | `2.0.0b12` |
-| Stable development baseline | `2.0.0b11`, `dev/energyeos` |
-| Active engineering branch | `dev/prerelease-hardening` |
-| Current focus | Pre-release hardening: architecture consistency, documentation, validation traceability, packaging, and release readiness |
-| Development status | Pre-RC scientific closure and validation |
+| Last updated | 2026-09-18 |
+| Current development version | `2.0.0b13` |
+| Stable development baseline | `2.0.0b12`, `dev/refactor` |
+| Active engineering branch | `dev/interface-vasp-maintenance` |
+| Current focus | VASP run-output interface maintenance: structured run parsing, EOS/elasticity adaptation, primitive-cell Gamma phonons, and HA/QHA Kieffer enrichment |
+| Development status | Pre-RC external-interface consolidation |
 | Numerical precision | `float64` for real calculations and native HDF5 values; `complex128` for complex quantities |
 | Persistence | Native HDF5 envelope retained; HA/QHA and Thermoelasticity payloads have been extended additively with Kieffer and pressure/provenance data |
 
@@ -86,11 +86,87 @@ The `2.0.0b9` baseline already provides:
 Python support remains 3.10 through 3.13 until the complete scientific
 stack is validated on Python 3.14.
 
-## Current `2.0.0b12` / `dev/prerelease-hardening` tranche
+## Current `2.0.0b13` / `dev/interface-vasp-maintenance` tranche
 
-The Energy EOS feature work is complete.  The current branch does not add a
-new scientific workflow; it hardens the existing Quantas 2 surface before the
-next pre-release checkpoint.  The b12 work has focused on:
+The b12 pre-release hardening branch has been merged into ``dev/refactor`` with
+the complete local and GitHub CI gates green.  The current b13 branch is a
+narrow external-interface tranche dedicated to information produced directly
+by VASP calculations.  It does not add a new scientific workflow and it does
+not yet address Phonopy interoperability.
+
+The b13 work is focused on:
+
+- treating a VASP calculation directory as one run source, with
+  ``vasprun.xml`` as the primary structured record and ``OUTCAR`` as a
+  complementary source where required;
+- reconstructing canonical ``CrystalStructure`` objects from VASP lattice,
+  fractional-coordinate, and species information;
+- exposing run metadata, electronic and ionic histories, energies, forces,
+  stresses, termination, and optimization state through backend-neutral Quantas
+  contracts where those contracts already exist;
+- normalizing one final structure--energy state per independent VASP run so a
+  directory or list of directories can feed the existing Energy EOS input
+  generator;
+- preserving VASP-specific energy semantics and source provenance rather than
+  collapsing distinct reported quantities into an unlabeled scalar;
+- characterizing historical VASP output-version quirks before selecting
+  authoritative values;
+- retaining the existing VASP elasticity reader until its specialized parsing
+  can be consolidated on top of the generic run interface without changing
+  scientific tensor semantics silently.
+
+The first b13 layers are now characterized: the generic run parser resolves
+VASP 5.4.4 geometry and energy semantics, and the Energy EOS adapter maps one
+single-state run to the shared ``StructureEnergySeries`` contract.  The adapter
+uses ``energy(sigma->0)`` for the static ground-state E--V surface, normalizes
+non-primitive source cells and their energies to one primitive cell, preserves
+already primitive VASP bases, and rejects incompatible electronic-setting
+signatures across independent runs.
+
+
+The VASP elasticity path is now split into two auditable stages.  The raw
+volume-series adapter preserves ``TOTAL ELASTIC MODULI`` as
+``raw_stress_strain`` together with the unstrained reference stress.  A
+separate VASP-specific hydrostatic conversion, characterized against the
+MechElastic Appendix-A relation, subtracts pressure from all six Voigt
+diagonal coefficients and adds it to the three normal off-diagonal pairs.
+The conversion is allowed only when the retained VASP reference stress is
+hydrostatic within tolerance; only the converted series is marked as suitable
+for the shared incremental-stiffness gate.  Raw VASP series can now explicitly
+replace the output-stress pressure with manual values or backend-neutral E(V)
+pressures before conversion.  The original VASP pressure remains in provenance,
+and pressure reassignment never changes the raw Cij values.  HA/QHA Kieffer
+input enrichment now consumes the same VASP series: calculation directories are
+first-class elastic sources, pressure selection remains separate from tensor
+conversion, and only the explicitly converted incremental series reaches the
+backend-neutral Christoffel/Kieffer builder.  The established CRYSTAL path is
+unchanged and retains its distinct Erba finite-prestress semantics.
+
+The direct VASP surface now also includes primitive-cell Gamma phonons from
+VASP 5.4.4 finite-difference runs.  Quantas reads signed Gamma frequencies and
+mass-weighted Cartesian eigenvectors, identifies the three rigid translations
+from their eigenvector subspace rather than a frequency threshold, and exposes
+the result through the shared HA/QHA input generator.  Direct phonon dispersion
+from VASP outputs, including folded-supercell reconstruction and VASP 6
+``LPHON_DISPERSION``/``QPOINTS`` data, is not implemented in this tranche.
+
+DFT-code + Phonopy interoperability, including a common cross-backend phonon
+contract, is deliberately deferred to a separate branch after the VASP run
+interface is stable.
+
+HA/QHA execution now treats the normalized phonon YAML unit metadata as the
+authoritative measurement contract. Energy, structural length/volume, and
+frequency are inherited from the file unless explicitly overridden; pressure
+and temperature remain calculation/output-domain choices. This removes the
+historical implicit-Hartree interpretation for VASP-generated eV datasets.
+The QSA/thermoelastic workflow inherits the resolved units persisted by QHA,
+while EOS already followed file-declaration-first unit precedence.
+
+## Previous `2.0.0b12` / `dev/prerelease-hardening` tranche
+
+The Energy EOS feature work was already complete before b12.  The b12 branch
+hardened the existing Quantas 2 surface before the next pre-release checkpoint.
+Its work included:
 
 - keeping request/input failures distinct from unexpected numerical or
   programming errors in EOS workflows;
@@ -113,11 +189,9 @@ next pre-release checkpoint.  The b12 work has focused on:
   matches the authoritative source version, while keeping TestPyPI as the manual
   candidate-publication path.
 
-The release gate remains the staged test runner plus static checks, Sphinx with
-warnings as errors, wheel/sdist construction, installed-distribution smoke
-tests, and archive inspection.  VASP/Phonopy interface cleanup and common MgO
-cross-backend characterization are intentionally deferred to a small b13
-follow-up rather than being folded into this hardening branch.
+The complete b12 gate included the staged test runner, static checks, Sphinx
+with warnings as errors, wheel/sdist construction, installed-distribution smoke
+tests, archive inspection, and the GitHub CI matrix.
 
 ## Previous `2.0.0b11` / `dev/energyeos` tranche
 
@@ -147,12 +221,13 @@ one or more requested sections.  Bash/Zsh/Fish use Click completion and Quantas
 adds a native PowerShell completion backend so model discovery remains useful on
 the project's primary Windows development platform.
 
-Energy and ``sigma_energy`` columns now participate in the same EOS unit
-normalization contract as pressure, length, and temperature.  Data-file
-``UNITS`` declarations, EOS spec ``[input] energy_unit``, and direct reader/CLI
-overrides are normalized to Hartree while raw values and source labels are
-retained.  ``sigma_energy`` is a completeness feature only; deterministic QM
-input generation is not expected to synthesize statistical energy errors.
+Energy and ``sigma_energy`` now retain the declared dataset unit through the
+Energy-EOS fit and HDF5 result path.  Data-file ``UNITS`` declarations, EOS spec
+``[input] energy_unit``, and direct reader/CLI overrides therefore define the
+actual fitting scale instead of triggering an implicit Hartree conversion.
+Pressure, structural dimensions, and temperature retain their established EOS
+canonical units. ``sigma_energy`` is a completeness feature only; deterministic
+QM input generation is not expected to synthesize statistical energy errors.
 
 The Energy EOS input layer now exposes ``quantas eos inpgen`` and the same
 operation through ``quantas.api.eos.create_input``.  The initial CRYSTAL
@@ -210,10 +285,11 @@ normalizations.  The two representations recover identical ``K0`` and ``KP``;
 ``4.2222125 A``, and the cubic response satisfies ``M_a = 3 K0`` to numerical
 precision.
 
-Remaining b11 work is release-oriented rather than architectural: complete the
-combined validation matrix and manual, decide whether VASP Energy EOS ingestion
-is required before the release candidate or can follow behind the same
-``StructureEnergySeries`` contract, and perform the final schema/API freeze.
+The b11 Energy EOS work is complete.  The VASP Energy EOS ingestion that was
+left as a pre-RC decision at the end of that tranche is now implemented by b13
+through the same ``StructureEnergySeries`` contract.  Remaining work is
+release-oriented rather than architectural: complete the combined validation
+matrix and manual, then perform the final schema/API freeze.
 
 ## What `2.0.0b10` / `dev/kieffer` added
 
