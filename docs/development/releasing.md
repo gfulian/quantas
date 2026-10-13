@@ -1,7 +1,15 @@
-# Quantas release procedure
+# Releasing Quantas
 
-A release is permitted only from a clean tagged commit.  Numerical reliability and
-reproducibility take precedence over publication speed.
+This page describes the maintainer workflow used to prepare and publish a
+Quantas release.
+
+Because Quantas is scientific software, a release is made only from a clean,
+validated source state. Numerical reliability and reproducibility take
+priority over publication speed.
+
+The ordinary development workflow is described in the repository
+`DEVELOPMENT.md`. The steps below apply only when a version is being prepared
+for publication.
 
 ## 1. Prepare
 

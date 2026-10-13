@@ -13,16 +13,17 @@ solid-state properties. It was created to make demanding thermodynamic,
 elastic, seismic, and equation-of-state calculations easier to perform,
 inspect, reproduce, and reuse.
 
-This is a complete refactoring of the original program (version 0.9.1) into a
-modern Python library with a command-line interface and frontend-neutral
-scientific workflows. The same numerical calculation can be used from Python,
-from the terminal, or by graphical applications such as Quantas GUI.
+The code was redesigned from its original implementation (v0.9.1) as a reusable 
+scientific library, where the same numerical implementation are used by the Python 
+API and the command-line interface, and are intended to support other frontends 
+without duplicating scientific logic.
 
 > **Quantas 2 is currently in beta.**
 >
-> The numerical workflows are extensively tested, but the public API, file
-> schemas, and user interface may still receive changes before the first stable
-> 2.0 release.
+> The main scientific workflows are extensively tested and are already being
+> used for research calculations. The public API, file schemas, interfaces, and
+> documentation may nevertheless receive further changes before the first
+> stable 2.0 release.
 
 A graphical user interface is in active development, and it will be provided as
 a separate package.
@@ -32,61 +33,108 @@ a separate package.
 Quantas currently provides workflows for:
 
 - harmonic and quasi-harmonic thermodynamics;
-- second-order elasticity, stability, VRH averages, rotations, and directional
-  properties;
+- Kieffer acoustic thermodynamics for suitable Gamma-point phonon calculations;
+- second-order elasticity, mechanical stability, Voigt-Reuss-Hill averages,
+  tensor rotations, and directional elastic properties;
 - Christoffel analysis, phase and group velocities, polarization, anisotropy,
   and seismic surfaces;
-- pressure-volume, volume-temperature, and pressure-volume-temperature
-  equations of state;
-- thermoelastic properties over pressure, temperature, and geological profiles,
-  within the quasi-static approximation (QSA).
+- pressure-volume, energy-volume, volume-temperature, and coupled
+  pressure-volume-temperature equations of state;
+- quasi-static thermoelastic properties as functions of pressure and
+  temperature, including geological-profile calculations.
 
-Results are stored in self-describing HDF5 archives and can be inspected,
-plotted, exported, and passed between compatible workflows.
+The scientific workflows can be used from the command line or through the
+public `quantas.api` Python interface.
+
+Quantas also provides interfaces for reading and normalising data produced by
+electronic-structure and lattice-dynamics codes. Current support includes
+CRYSTAL and VASP workflows, with code-specific parsing kept separate from the
+scientific models.
+
+Results from the main workflows are stored in self-describing HDF5 archives.
+These archives retain numerical results together with units, calculation
+options, provenance, warnings, diagnostics, and other information required to
+understand how a result was obtained.
 
 ## Requirements and installation
 
-Quantas currently supports Python 3.10 through 3.13. Python 3.14 is not yet supported because the complete scientific dependency stack has not been validated on that runtime.
+Quantas currently supports Python 3.10 through 3.13. Python 3.14 is not yet 
+supported because the complete scientific dependency stack has not been validated 
+on that runtime.
 
-Clone the repository and install the current beta with:
+The current Quantas 2 beta can be installed directly from the GitHub
+repository:
 
 ```bash
-git clone --branch dev/refactor https://github.com/gfulian/quantas.git
+git clone https://github.com/gfulian/quantas.git
 cd quantas
 python -m pip install .
 ```
 
-Install optional plotting support or the complete development environment with:
+Installation inside a dedicated virtual environment is recommended.
+
+Optional plotting support can be installed with:
 
 ```bash
 python -m pip install ".[plot]"
+```
+
+For development work, install the complete development dependency set instead:
+
+```bash
 python -m pip install ".[dev]"
 ```
 
+Development builds and feature branches may change more frequently than the
+current master branch. Contributors should refer to
+[CONTRIBUTING.md](CONTRIBUTING.md) and [DEVELOPMENT.md](DEVELOPMENT.md) before
+starting new work.
+
 ## Documentation
 
-The complete Quantas 2 beta manual includes installation instructions,
-tutorials, command-line reference, Python API reference, interoperability
-examples, scientific methods, and validation material:
+The Quantas documentation contains installation guidance, scientific
+background, tutorials, command-line reference, Python API documentation,
+input-format descriptions, interoperability examples, and validation material.
 
 [Read the Quantas 2.0 beta documentation](https://quantas.readthedocs.io/en/2.0.0-beta/)
 
 Documentation for the historical Quantas 0.9.1 release remains available
 through the Read the Docs version selector.
 
+## Scientific reliability
+
+Quantas is developed as scientific software. Changes to formulas, numerical
+methods, units, tensor conventions, or data interpretation are treated
+separately from presentation and structural cleanup.
+
+Numerical changes are characterised with tests and, where possible, compared
+against analytical results, legacy behaviour, published data, or independent
+implementations before they are accepted.
+
+Native calculations use double precision: real-valued scientific data are
+stored as `float64`, and complex-valued data as `complex128`. Display precision
+is handled separately and does not alter stored results.
+
 ## Citation
 
-Quantas is academic, open-source software. Please cite Quantas and the relevant
-scientific methods when publishing results derived from the package. Canonical
-software and method references are provided through `CITATION.cff` and the
-internal citation registry.
+Quantas is an academic, open-source software. If you use it in published work,
+please cite Quantas together with the scientific methods relevant to the
+calculation that was performed.
 
+The canonical software citation is provided in [CITATION.cff](CITATION.cff). 
+Method-specific references are also included in the documentation and in the 
+internal citation registry used by Quantas reports.
 
 
 ## Contributing and license
 
-Contributions, bug reports, validation datasets, and scientific comparisons
-are welcome. See [How to contribute](CONTRIBUTING.md) and the
-[expected development roadmap](ROADMAP.md).
+Contributions, bug reports, validation datasets, comparisons with independent
+implementations, and documentation improvements are welcome.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution guidelines and
+[DEVELOPMENT.md](DEVELOPMENT.md) for the development and branch workflow.
+
+Planned scientific and engineering work is summarised in
+[ROADMAP.md](ROADMAP.md).
 
 Quantas is distributed under the BSD 3-Clause license. See [LICENSE](LICENSE).

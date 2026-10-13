@@ -1,11 +1,19 @@
 # Changelog
 
-All notable public changes to Quantas are recorded here.  The project follows
-Semantic Versioning after the first stable Quantas 2 release.  During the current
-beta, breaking changes are permitted when they simplify and stabilize the final
-public contract; they must still be documented and validated.
+Notable changes to Quantas are recorded here.
 
-## [2.0.0b13] - Unreleased
+Quantas 2 was developed through a series of beta milestones before becoming
+the main development line of the project. These milestones are retained below
+because they document important scientific, architectural, and compatibility
+changes, but they do not necessarily correspond to tagged GitHub releases.
+
+From `v2.0.0b13` onwards, tagged releases are identified explicitly. Quantas
+will follow Semantic Versioning from the first stable 2.0 release. During the
+beta and release-candidate stages, changes to the public API or data contracts
+may still be made when required to establish a reliable long-term interface;
+such changes remain documented and validated.
+
+## [2.0.0b13] - 2026-10-13
 
 ### Added
 - Added explicit manual and E(V)-derived pressure reassignment for raw VASP elastic-state series, preserving the original output-stress provenance and keeping pressure assignment separate from the subsequent hydrostatic stiffness conversion.
@@ -64,6 +72,10 @@ public contract; they must still be documented and validated.
 - Changed Energy-EOS fitting to retain the dataset energy unit end to end
   instead of silently normalizing eV/Ry input to Hartree; energy-density to
   pressure conversion remains explicit at the E--V model boundary.
+  
+- Promoted Quantas 2 to the main public development line and reorganized the
+  repository documentation around the current package, its development
+  workflow, release history, and future roadmap.
 
 ### Scientific compatibility
 
@@ -76,7 +88,7 @@ public contract; they must still be documented and validated.
   settings rather than treating optimization and static-run energies as
   interchangeable.
 
-## [2.0.0b12] - Unreleased
+## [2.0.0b12] - development milestone
 
 ### Added
 
@@ -128,7 +140,7 @@ public contract; they must still be documented and validated.
   and thermoelastic QSA validation traceability while keeping Elasticity,
   SEISMIC, V--T/P--V--T EOS, and tolerance-catalogue completion explicitly WIP.
 
-## [2.0.0b11] - Unreleased
+## [2.0.0b11] - development milestone
 
 ### Added
 
@@ -513,7 +525,7 @@ an input that incorrectly assumed raw printed mode order was continuous; that
 change is the purpose of the correction rather than a display or rounding
 change.  Generated YAML formatting does not round stored scientific values.
 
-## [2.0.0b9] - Unreleased
+## [2.0.0b9] - development milestone
 
 ### Added
 
@@ -874,14 +886,3 @@ the Quantas 2 beta cleanup.  One EOS input enhancement recognizes absolute molar
 units declared through the historical `VSCALE` keyword.
 
 [2.0.0b13]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b13
-[2.0.0b12]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b12
-[2.0.0b11]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b11
-[2.0.0b10]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b10
-[2.0.0b9]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b9
-[2.0.0b8]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b8
-[2.0.0b6]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b6
-[2.0.0b5]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b5
-[2.0.0b4]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b4
-[2.0.0b3]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b3
-[2.0.0b2]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b2
-[2.0.0b1]: https://github.com/gfulian/quantas/releases/tag/v2.0.0b1
