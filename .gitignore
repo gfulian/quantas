@@ -5,6 +5,7 @@ __pycache__/
 .mypy_cache/
 .ruff_cache/
 .coverage
+.coverage.*
 htmlcov/
 
 # Environments and IDE files
@@ -48,10 +49,8 @@ docs/source/_downloads/calcite_elasticity.hdf5
 docs/source/_static/generated/
 docs/source/_downloads/calcite_elasticity.hdf5
 
-# Internal refactoring workspace: retained in local archives, not public GitHub
+# Local/internal development material
 project_internal/
 
 # Maintainer-only validation output
 /validation/
-PROJECT_STATUS.md
-PACKAGE_MANIFEST_SHA256.txt
