@@ -54,8 +54,6 @@ def validate_release_identity(*, tag: str | None = None) -> str:
     version = str(namespace["__version__"])
 
     citation = (PROJECT_ROOT / "CITATION.cff").read_text(encoding="utf-8")
-    project_state = (PROJECT_ROOT / "PROJECT_STATE.md").read_text(encoding="utf-8")
-    roadmap = (PROJECT_ROOT / "ROADMAP.md").read_text(encoding="utf-8")
     changelog = (PROJECT_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 
     _require(
@@ -64,17 +62,8 @@ def validate_release_identity(*, tag: str | None = None) -> str:
         source="CITATION.cff",
     )
     _require(
-        rf"^\| Current development version \| `{re.escape(version)}` \|$",
-        project_state,
-        source="PROJECT_STATE.md",
-    )
-    _require(
-        rf"Development is now on ``{re.escape(version)}``",
-        roadmap,
-        source="ROADMAP.md",
-    )
-    _require(
-        rf"^## \[{re.escape(version)}\] - Unreleased$",
+        rf"^## \[{re.escape(version)}\] - "
+        rf"(?:Unreleased|\d{{4}}-\d{{2}}-\d{{2}})$",
         changelog,
         source="CHANGELOG.md",
     )
@@ -83,8 +72,16 @@ def validate_release_identity(*, tag: str | None = None) -> str:
         expected_tag = f"v{version}"
         if tag != expected_tag:
             raise RuntimeError(
-                f"Release tag {tag!r} does not match package version {expected_tag!r}."
+                f"Release tag {tag!r} does not match "
+                f"package version {expected_tag!r}."
             )
+
+        _require(
+            rf"^## \[{re.escape(version)}\] - "
+            rf"\d{{4}}-\d{{2}}-\d{{2}}$",
+            changelog,
+            source="CHANGELOG.md",
+        )
 
     return version
 

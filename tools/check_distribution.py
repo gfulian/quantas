@@ -64,8 +64,6 @@ def _artifacts(dist_dir: Path, kind: ArtifactKind) -> tuple[Path, ...]:
     return selected
 
 
-
-
 def _archive_names(artifact: Path) -> tuple[str, ...]:
     """Return normalized member names from one wheel or source archive."""
     if artifact.suffix == ".whl":
@@ -78,12 +76,13 @@ def _archive_names(artifact: Path) -> tuple[str, ...]:
 def _validate_archive_contents(artifacts: Sequence[Path]) -> None:
     """Validate public-file boundaries before installing distributions."""
     required_sdist_suffixes = (
+        "/README.md",
+        "/LICENSE",
         "/CHANGELOG.md",
         "/CONTRIBUTING.md",
         "/SECURITY.md",
         "/ROADMAP.md",
-        "/PROJECT_STATE.md",
-        "/RELEASE.md",
+        "/DEVELOPMENT.md",
         "/CITATION.cff",
         "/requirements/minimum.txt",
         "/requirements/typecheck.txt",

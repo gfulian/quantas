@@ -74,8 +74,6 @@ def test_release_metadata_matches_authoritative_version() -> None:
     version = authoritative_version
 
     citation = (root / "CITATION.cff").read_text(encoding="utf-8")
-    project_state = (root / "PROJECT_STATE.md").read_text(encoding="utf-8")
-    roadmap = (root / "ROADMAP.md").read_text(encoding="utf-8")
     changelog = (root / "CHANGELOG.md").read_text(encoding="utf-8")
     lifecycle_tool = (
         root / "tools" / "validate_public_lifecycle_api.ps1"
@@ -83,9 +81,9 @@ def test_release_metadata_matches_authoritative_version() -> None:
     tools_readme = (root / "tools" / "README.md").read_text(encoding="utf-8")
 
     assert f"version: {version}" in citation
-    assert f"| Current development version | `{version}` |" in project_state
-    assert f"Development is now on ``{version}``" in roadmap
-    assert f"## [{version}] - Unreleased" in changelog
+    assert f"## [{version}] - " in changelog
     assert version in lifecycle_tool
     assert version in tools_readme
-    assert not (root / "tools" / "validate_public_lifecycle_api_step6.ps1").exists()
+    assert not (
+        root / "tools" / "validate_public_lifecycle_api_step6.ps1"
+    ).exists()
