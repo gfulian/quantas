@@ -110,6 +110,7 @@ def _draw_line_plot(plt: Any, figure: Any, axis: Any, spec: LinePlotSpec) -> Non
                 title=spec.legend_title,
                 fontsize="small",
                 ncol=max(1, spec.legend_columns),
+                loc='best'
             )
 
 
@@ -119,7 +120,7 @@ def _line_colorbar_pad(spec: LinePlotSpec) -> float:
         secondary.orientation == "y" and secondary.location == "right"
         for secondary in spec.secondary_axes
     )
-    return 0.30 if has_right_axis else 0.04
+    return 0.14 if has_right_axis else 0.04
 
 
 def _draw_series(axis: Any, series: PlotSeries) -> None:
@@ -301,7 +302,7 @@ def _draw_secondary_axis(axis: Any, secondary: SecondaryAxis) -> None:
         else:
             target.yaxis.set_label_position("right")
             target.yaxis.tick_right()
-            target.spines["right"].set_position(("outward", 28))
+            target.spines["right"].set_position(("outward", 0))
             target.set_ylabel(secondary.label, labelpad=8)
     else:
         target = axis.twiny()
