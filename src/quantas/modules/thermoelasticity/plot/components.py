@@ -18,29 +18,35 @@ from quantas.modules.thermoelasticity.components import (
 
 
 _COMPONENT_MARKERS: tuple[str, ...] = (
-    "o",   
+    "o",
     "s",
-    "d",   
-    "X",   
+    "d",
+    "X",
     "*",
-    "+", 
-    "D",   
-    "1",   
-    "<",   
-    "2",   
-    "3",  
-    "_", 
-    "x",  
-    "^",    
-    "h",  
-    "v", 
-    ">",   
-    "P",  
+    "+",
+    "D",
+    "1",
+    "<",
+    "2",
+    "3",
+    "_",
+    "x",
+    "^",
+    "h",
+    "v",
+    ">",
+    "P",
     "4",
-    "|",  
-    "p",    
+    "|",
+    "p", 
 )
 
+_COMPONENT_LINE_STYLES: tuple[LineStyle, ...] = (
+    "solid",
+    "dashed",
+    "dotted",
+    "dashdot",
+)
 
 @dataclass(frozen=True, slots=True)
 class ThermoelasticComponentStyle:
@@ -90,10 +96,11 @@ def component_style(label: str) -> ThermoelasticComponentStyle:
     index = VOIGT_COMPONENTS.index(canonical)
     return ThermoelasticComponentStyle(
         label=canonical,
-        marker=(_COMPONENT_MARKERS[index]), 
-        line_style=_component_category_line_style(canonical),
+        marker=(_COMPONENT_MARKERS[index] if index < len(_COMPONENT_MARKERS) else None),
+        line_style=_COMPONENT_LINE_STYLES[index % len(_COMPONENT_LINE_STYLES)],
         color_index=index,
     )
+
 
 
 def plot_series_style(
