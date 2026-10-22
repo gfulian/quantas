@@ -18,25 +18,27 @@ from quantas.modules.thermoelasticity.components import (
 
 
 _COMPONENT_MARKERS: tuple[str, ...] = (
-    "o",
+    "o",   
     "s",
-    "^",
-    "v",
-    "D",
-    "P",
-    "X",
-    "<",
-    ">",
-    "h",
-    "p",
-    "d",
-    "8",
-)
-_COMPONENT_LINE_STYLES: tuple[LineStyle, ...] = (
-    "solid",
-    "dashed",
-    "dotted",
-    "dashdot",
+    "d",   
+    "X",   
+    "*",
+    "+", 
+    "D",   
+    "1",   
+    "<",   
+    "2",   
+    "3",  
+    "_", 
+    "x",  
+    "^",    
+    "h",  
+    "v", 
+    ">",   
+    "P",  
+    "4",
+    "|",  
+    "p",    
 )
 
 
@@ -62,6 +64,14 @@ class ThermoelasticComponentStyle:
     line_style: LineStyle
     color_index: int
 
+def _component_category_line_style(canonical: str) -> LineStyle:
+    """Line style from the Voigt index pair, independent of crystal symmetry."""
+    i, j = int(canonical[1]), int(canonical[2])
+    if i == j:
+        return "solid" if i <= 3 else "dotted"
+    if i <= 3 and j <= 3:
+        return "dashed"
+    return "dashdot"
 
 def component_style(label: str) -> ThermoelasticComponentStyle:
     """Return the stable style assignment for one component.
@@ -80,8 +90,8 @@ def component_style(label: str) -> ThermoelasticComponentStyle:
     index = VOIGT_COMPONENTS.index(canonical)
     return ThermoelasticComponentStyle(
         label=canonical,
-        marker=(_COMPONENT_MARKERS[index] if index < len(_COMPONENT_MARKERS) else None),
-        line_style=_COMPONENT_LINE_STYLES[index % len(_COMPONENT_LINE_STYLES)],
+        marker=(_COMPONENT_MARKERS[index]), 
+        line_style=_component_category_line_style(canonical),
         color_index=index,
     )
 
